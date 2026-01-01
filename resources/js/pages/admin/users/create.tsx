@@ -10,6 +10,19 @@ const availablePermissions = [
     { id: 'admin', label: 'Administrador' },
 ];
 
+const companies = [
+    'Primera Compañía',
+    'Segunda Compañía',
+    'Tercera Compañía',
+    'Cuarta Compañía',
+    'Quinta Compañía',
+    'Séptima Compañía',
+    'Octava Compañía',
+    'Novena Compañía',
+    'Décima Compañía',
+    'Comandancia',
+];
+
 export default function UserCreate() {
     const { data, setData, post, processing, errors } = useForm({
         name: '',

@@ -11,8 +11,17 @@ class EquipmentLogController extends Controller
 {
     public function index()
     {
+        $user = request()->user();
+        $query = EquipmentLog::with('user')->latest();
+
+        if ($user->role !== 'admin' && $user->company) {
+            $query->whereHas('user', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
         return Inertia::render('equipment/index', [
-            'logs' => EquipmentLog::with('user')->latest()->get()
+            'logs' => $query->get()
         ]);
     }
 

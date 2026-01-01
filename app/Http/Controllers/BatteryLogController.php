@@ -16,7 +16,7 @@ class BatteryLogController extends Controller
         // Ensure user has a company, otherwise show empty or all (depending on logic, safer to show empty)
         $query = BatteryLog::with('user')->latest();
 
-        if ($user->company) {
+        if ($user->company && $user->role !== 'admin') {
             $query->where('company', $user->company);
         }
 
