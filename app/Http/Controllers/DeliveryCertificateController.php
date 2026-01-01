@@ -81,18 +81,18 @@ class DeliveryCertificateController extends Controller
         return redirect()->route('deliveries.index');
     }
 
-    public function show(DeliveryCertificate $deliveryCertificate)
+    public function show(DeliveryCertificate $delivery)
     {
-        $deliveryCertificate->load('firefighter', 'user', 'items.material');
+        $delivery->load('firefighter', 'user', 'items.material');
         return Inertia::render('deliveries/show', [
-            'certificate' => $deliveryCertificate
+            'certificate' => $delivery
         ]);
     }
 
-    public function downloadPdf(DeliveryCertificate $deliveryCertificate)
+    public function downloadPdf(DeliveryCertificate $delivery)
     {
-        $deliveryCertificate->load('firefighter', 'user', 'items.material');
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.delivery-certificate', ['certificate' => $deliveryCertificate]);
-        return $pdf->download('acta-entrega-' . $deliveryCertificate->id . '.pdf');
+        $delivery->load('firefighter', 'user', 'items.material');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.delivery-certificate', ['certificate' => $delivery]);
+        return $pdf->download('acta-entrega-' . $delivery->id . '.pdf');
     }
 }

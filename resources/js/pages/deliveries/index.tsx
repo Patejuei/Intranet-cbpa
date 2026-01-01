@@ -111,7 +111,7 @@ export default function DeliveryIndex({
                                                 <div className="flex gap-2">
                                                     <Link
                                                         href={`/deliveries/${cert.id}`}
-                                                        className="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs font-medium hover:bg-secondary/80"
+                                                        className="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80"
                                                     >
                                                         <Eye className="size-3" />{' '}
                                                         Ver

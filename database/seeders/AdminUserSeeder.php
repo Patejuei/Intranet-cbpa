@@ -12,13 +12,19 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\User::create([
-            'name' => 'Administrador',
-            'email' => 'admin@cbpa.cl',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
-            'role' => 'admin',
-            'permissions' => ['batteries', 'equipment', 'tickets', 'admin'],
-            'company' => 'Comandancia'
-        ]);
+        $exists = \Illuminate\Support\Facades\DB::table('users')->where('email', 'admin@cbpa.cl')->exists();
+
+        if (!$exists) {
+            \Illuminate\Support\Facades\DB::table('users')->insert([
+                'name' => 'Administrador',
+                'email' => 'admin@cbpa.cl',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'role' => 'admin',
+                'permissions' => json_encode(['batteries', 'equipment', 'tickets', 'admin']),
+                'company' => 'Comandancia',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

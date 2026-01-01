@@ -34,7 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('module:equipment')->group(function () {
         Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store']);
         Route::resource('deliveries', \App\Http\Controllers\DeliveryCertificateController::class);
-        Route::get('deliveries/{delivery_certificate}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
+        Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
     });
 });
 
