@@ -1,3 +1,4 @@
+import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -12,52 +13,26 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Battery, Box, LayoutGrid, Ticket } from 'lucide-react';
-import AppLogo from './app-logo';
+import {
+    Battery,
+    Box,
+    FileText,
+    LayoutGrid,
+    Package,
+    Shield,
+    Ticket,
+    Users,
+} from 'lucide-react'; // Added icons
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Baterías',
-        href: '/batteries',
-        icon: Battery,
-    },
-    {
-        title: 'Material Menor',
-        href: '/equipment',
-        icon: Box,
-    },
-    {
-        title: 'Ticketera',
-        href: '/tickets',
-        icon: Ticket,
-    },
-];
-
-import { type SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
-import { Shield } from 'lucide-react'; // Add Shield icon for Admin
-
-// ... (keep helper component imports)
-
-export function AppSidebar() {
-    const { auth } = usePage<SharedData>().props;
-    const user = auth.user;
-
-    // Define items logic dynamically inside component
-    const filteredNavItems = [
+export function AppSidebar({ user }: { user: any }) {
+    const filteredNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: 'Panel Principal',
             href: '/dashboard',
             icon: LayoutGrid,
         },
     ];
 
-    // Helper check
     const hasPermission = (module: string) =>
         user.role === 'admin' ||
         (user.permissions as string[])?.includes(module);
@@ -78,6 +53,23 @@ export function AppSidebar() {
         });
     }
 
+    // New Modules
+    if (hasPermission('inventory')) {
+        filteredNavItems.push({
+            title: 'Inventario',
+            href: '/inventory',
+            icon: Package,
+        });
+    }
+
+    if (hasPermission('deliveries')) {
+        filteredNavItems.push({
+            title: 'Actas de Entrega',
+            href: '/deliveries',
+            icon: FileText,
+        });
+    }
+
     if (hasPermission('tickets')) {
         filteredNavItems.push({
             title: 'Ticketera',
@@ -88,9 +80,14 @@ export function AppSidebar() {
 
     if (user.role === 'admin') {
         filteredNavItems.push({
-            title: 'Admin Usuarios',
+            title: 'Administrar Usuarios',
             href: '/admin/users',
             icon: Shield,
+        });
+        filteredNavItems.push({
+            title: 'Administrar Bomberos',
+            href: '/admin/firefighters',
+            icon: Users,
         });
     }
 

@@ -1,3 +1,10 @@
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { Check, Shield } from 'lucide-react';
@@ -7,6 +14,8 @@ const availablePermissions = [
     { id: 'batteries', label: 'Baterías' },
     { id: 'equipment', label: 'Material Menor' },
     { id: 'tickets', label: 'Ticketera' },
+    { id: 'inventory', label: 'Inventario' },
+    { id: 'deliveries', label: 'Actas de Entrega' },
     { id: 'admin', label: 'Administrador' },
 ];
 
@@ -132,26 +141,28 @@ export default function UserCreate() {
                                         </p>
                                     )}
                                 </div>
+                                // ...
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
                                         Compañía
                                     </label>
-                                    <select
+                                    <Select
                                         value={data.company}
-                                        onChange={(e) =>
-                                            setData('company', e.target.value)
+                                        onValueChange={(value) =>
+                                            setData('company', value)
                                         }
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                     >
-                                        <option value="">
-                                            Seleccione una Compañía
-                                        </option>
-                                        {companies.map((c) => (
-                                            <option key={c} value={c}>
-                                                {c}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Seleccione una Compañía" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {companies.map((c) => (
+                                                <SelectItem key={c} value={c}>
+                                                    {c}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     {errors.company && (
                                         <p className="mt-1 text-xs text-destructive">
                                             {errors.company}
@@ -171,20 +182,24 @@ export default function UserCreate() {
                                 <label className="mb-2 block text-sm font-medium">
                                     Rol del Sistema
                                 </label>
-                                <select
+                                <Select
                                     value={data.role}
-                                    onChange={(e) =>
-                                        setData('role', e.target.value)
+                                    onValueChange={(value) =>
+                                        setData('role', value)
                                     }
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                 >
-                                    <option value="user">
-                                        Usuario Estándar
-                                    </option>
-                                    <option value="admin">
-                                        Administrador del Sistema
-                                    </option>
-                                </select>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Seleccione un Rol" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="user">
+                                            Usuario Estándar
+                                        </SelectItem>
+                                        <SelectItem value="admin">
+                                            Administrador del Sistema
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     Los administradores tienen acceso total a
                                     todos los módulos.

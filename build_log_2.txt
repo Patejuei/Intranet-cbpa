@@ -1,0 +1,68 @@
+
+> build
+> vite build
+
+[36mvite v7.1.5 [32mbuilding for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32mÔ£ô[39m 2713 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mpublic/build/[22m[32mmanifest.json                            [39m[1m[2m 20.03 kB[22m[1m[22m[2m Ôöé gzip:   2.05 kB[22m
+[2mpublic/build/[22m[35massets/app-t96HWaHz.css                  [39m[1m[2m 84.08 kB[22m[1m[22m[2m Ôöé gzip:  13.70 kB[22m
+[2mpublic/build/[22m[36massets/index-C6vvoy3-.js                 [39m[1m[2m  0.23 kB[22m[1m[22m[2m Ôöé gzip:   0.17 kB[22m
+[2mpublic/build/[22m[36massets/check-veaweS9m.js                 [39m[1m[2m  0.29 kB[22m[1m[22m[2m Ôöé gzip:   0.24 kB[22m
+[2mpublic/build/[22m[36massets/loader-circle-mF0yjwgM.js         [39m[1m[2m  0.32 kB[22m[1m[22m[2m Ôöé gzip:   0.26 kB[22m
+[2mpublic/build/[22m[36massets/plus-CFn9Eyre.js                  [39m[1m[2m  0.33 kB[22m[1m[22m[2m Ôöé gzip:   0.25 kB[22m
+[2mpublic/build/[22m[36massets/search-D-KhisUz.js                [39m[1m[2m  0.34 kB[22m[1m[22m[2m Ôöé gzip:   0.27 kB[22m
+[2mpublic/build/[22m[36massets/index-BAZgUeQY.js                 [39m[1m[2m  0.37 kB[22m[1m[22m[2m Ôöé gzip:   0.22 kB[22m
+[2mpublic/build/[22m[36massets/trash-ClnZOp5_.js                 [39m[1m[2m  0.41 kB[22m[1m[22m[2m Ôöé gzip:   0.31 kB[22m
+[2mpublic/build/[22m[36massets/circle-alert-Cly36Tvc.js          [39m[1m[2m  0.42 kB[22m[1m[22m[2m Ôöé gzip:   0.29 kB[22m
+[2mpublic/build/[22m[36massets/eye-C3AQ2Hqz.js                   [39m[1m[2m  0.42 kB[22m[1m[22m[2m Ôöé gzip:   0.30 kB[22m
+[2mpublic/build/[22m[36massets/input-error-B5rIWNc0.js           [39m[1m[2m  0.43 kB[22m[1m[22m[2m Ôöé gzip:   0.31 kB[22m
+[2mpublic/build/[22m[36massets/shield-BFjE1g0w.js                [39m[1m[2m  0.44 kB[22m[1m[22m[2m Ôöé gzip:   0.33 kB[22m
+[2mpublic/build/[22m[36massets/spinner-bmRiUmEy.js               [39m[1m[2m  0.45 kB[22m[1m[22m[2m Ôöé gzip:   0.33 kB[22m
+[2mpublic/build/[22m[36massets/welcome-B3EdpTW4.js               [39m[1m[2m  0.48 kB[22m[1m[22m[2m Ôöé gzip:   0.34 kB[22m
+[2mpublic/build/[22m[36massets/save-BfvMSseH.js                  [39m[1m[2m  0.50 kB[22m[1m[22m[2m Ôöé gzip:   0.33 kB[22m
+[2mpublic/build/[22m[36massets/index-Dn-aXJJi.js                 [39m[1m[2m  0.57 kB[22m[1m[22m[2m Ôöé gzip:   0.40 kB[22m
+[2mpublic/build/[22m[36massets/text-link-BAk05WJW.js             [39m[1m[2m  0.60 kB[22m[1m[22m[2m Ôöé gzip:   0.40 kB[22m
+[2mpublic/build/[22m[36massets/label-CvZhfP45.js                 [39m[1m[2m  0.84 kB[22m[1m[22m[2m Ôöé gzip:   0.52 kB[22m
+[2mpublic/build/[22m[36massets/user-plus-CRA_Md7g.js             [39m[1m[2m  0.88 kB[22m[1m[22m[2m Ôöé gzip:   0.46 kB[22m
+[2mpublic/build/[22m[36massets/input-CyTivpUL.js                 [39m[1m[2m  1.04 kB[22m[1m[22m[2m Ôöé gzip:   0.59 kB[22m
+[2mpublic/build/[22m[36massets/verify-email-CYCNG2Cp.js          [39m[1m[2m  1.34 kB[22m[1m[22m[2m Ôöé gzip:   0.75 kB[22m
+[2mpublic/build/[22m[36massets/confirm-password-CSLy9pDK.js      [39m[1m[2m  1.44 kB[22m[1m[22m[2m Ôöé gzip:   0.73 kB[22m
+[2mpublic/build/[22m[36massets/index-ClVGKC6u.js                 [39m[1m[2m  1.50 kB[22m[1m[22m[2m Ôöé gzip:   0.51 kB[22m
+[2mpublic/build/[22m[36massets/forgot-password-kU-JpkAm.js       [39m[1m[2m  2.00 kB[22m[1m[22m[2m Ôöé gzip:   0.96 kB[22m
+[2mpublic/build/[22m[36massets/reset-password-xGcaVR9p.js        [39m[1m[2m  2.31 kB[22m[1m[22m[2m Ôöé gzip:   0.96 kB[22m
+[2mpublic/build/[22m[36massets/auth-layout-BVvw1r3_.js           [39m[1m[2m  2.72 kB[22m[1m[22m[2m Ôöé gzip:   1.26 kB[22m
+[2mpublic/build/[22m[36massets/index-AvoDGuqU.js                 [39m[1m[2m  2.76 kB[22m[1m[22m[2m Ôöé gzip:   0.71 kB[22m
+[2mpublic/build/[22m[36massets/register-BX_g_HHn.js              [39m[1m[2m  2.76 kB[22m[1m[22m[2m Ôöé gzip:   1.08 kB[22m
+[2mpublic/build/[22m[36massets/two-factor-challenge-D0bROk6i.js  [39m[1m[2m  2.88 kB[22m[1m[22m[2m Ôöé gzip:   1.35 kB[22m
+[2mpublic/build/[22m[36massets/dashboard-CCZR0EZU.js             [39m[1m[2m  3.04 kB[22m[1m[22m[2m Ôöé gzip:   0.90 kB[22m
+[2mpublic/build/[22m[36massets/appearance-W5zcpGrj.js            [39m[1m[2m  3.16 kB[22m[1m[22m[2m Ôöé gzip:   1.40 kB[22m
+[2mpublic/build/[22m[36massets/index-Dro-r2mg.js                 [39m[1m[2m  3.64 kB[22m[1m[22m[2m Ôöé gzip:   1.34 kB[22m
+[2mpublic/build/[22m[36massets/password-GsrHTKwx.js              [39m[1m[2m  3.83 kB[22m[1m[22m[2m Ôöé gzip:   1.34 kB[22m
+[2mpublic/build/[22m[36massets/dialog-C35pGOIN.js                [39m[1m[2m  3.99 kB[22m[1m[22m[2m Ôöé gzip:   1.18 kB[22m
+[2mpublic/build/[22m[36massets/index-DYuOG6wv.js                 [39m[1m[2m  4.13 kB[22m[1m[22m[2m Ôöé gzip:   0.83 kB[22m
+[2mpublic/build/[22m[36massets/index-fiOeM9qW.js                 [39m[1m[2m  4.44 kB[22m[1m[22m[2m Ôöé gzip:   1.83 kB[22m
+[2mpublic/build/[22m[36massets/layout-_uObLZi2.js                [39m[1m[2m  4.62 kB[22m[1m[22m[2m Ôöé gzip:   1.70 kB[22m
+[2mpublic/build/[22m[36massets/index-DpNA1cOl.js                 [39m[1m[2m  4.91 kB[22m[1m[22m[2m Ôöé gzip:   2.07 kB[22m
+[2mpublic/build/[22m[36massets/show-nflXXAms.js                  [39m[1m[2m  6.02 kB[22m[1m[22m[2m Ôöé gzip:   2.30 kB[22m
+[2mpublic/build/[22m[36massets/index-CllJjO3T.js                 [39m[1m[2m  6.81 kB[22m[1m[22m[2m Ôöé gzip:   2.64 kB[22m
+[2mpublic/build/[22m[36massets/profile-drRTyWZd.js               [39m[1m[2m  7.00 kB[22m[1m[22m[2m Ôöé gzip:   2.43 kB[22m
+[2mpublic/build/[22m[36massets/login-q__PfILA.js                 [39m[1m[2m  7.14 kB[22m[1m[22m[2m Ôöé gzip:   2.96 kB[22m
+[2mpublic/build/[22m[36massets/index-CjQAGRw0.js                 [39m[1m[2m  8.59 kB[22m[1m[22m[2m Ôöé gzip:   3.08 kB[22m
+[2mpublic/build/[22m[36massets/create-DJblHRr3.js                [39m[1m[2m  8.83 kB[22m[1m[22m[2m Ôöé gzip:   3.17 kB[22m
+[2mpublic/build/[22m[36massets/create-C9VO58j1.js                [39m[1m[2m  9.08 kB[22m[1m[22m[2m Ôöé gzip:   3.38 kB[22m
+[2mpublic/build/[22m[36massets/edit-BG0bvZb0.js                  [39m[1m[2m  9.28 kB[22m[1m[22m[2m Ôöé gzip:   3.41 kB[22m
+[2mpublic/build/[22m[36massets/index-DBjGC2Rv.js                 [39m[1m[2m  9.53 kB[22m[1m[22m[2m Ôöé gzip:   2.83 kB[22m
+[2mpublic/build/[22m[36massets/index-DXZd_c1g.js                 [39m[1m[2m 10.26 kB[22m[1m[22m[2m Ôöé gzip:   3.74 kB[22m
+[2mpublic/build/[22m[36massets/index-se9UyMPz.js                 [39m[1m[2m 10.44 kB[22m[1m[22m[2m Ôöé gzip:   3.90 kB[22m
+[2mpublic/build/[22m[36massets/use-two-factor-auth-VFghQ-b0.js   [39m[1m[2m 13.74 kB[22m[1m[22m[2m Ôöé gzip:   5.52 kB[22m
+[2mpublic/build/[22m[36massets/transition-BJJJCHWA.js            [39m[1m[2m 14.15 kB[22m[1m[22m[2m Ôöé gzip:   5.63 kB[22m
+[2mpublic/build/[22m[36massets/two-factor-BoxGTvUG.js            [39m[1m[2m 21.29 kB[22m[1m[22m[2m Ôöé gzip:   6.83 kB[22m
+[2mpublic/build/[22m[36massets/select-DKvYGmXe.js                [39m[1m[2m 23.57 kB[22m[1m[22m[2m Ôöé gzip:   8.12 kB[22m
+[2mpublic/build/[22m[36massets/index-DqtGi2o2.js                 [39m[1m[2m 33.63 kB[22m[1m[22m[2m Ôöé gzip:  11.01 kB[22m
+[2mpublic/build/[22m[36massets/app-layout-F0BKbG7-.js            [39m[1m[2m123.40 kB[22m[1m[22m[2m Ôöé gzip:  38.42 kB[22m
+[2mpublic/build/[22m[36massets/app-oRP60Gjq.js                   [39m[1m[2m351.57 kB[22m[1m[22m[2m Ôöé gzip: 114.69 kB[22m
+[32mÔ£ô built in 15.70s[39m

@@ -35,7 +35,32 @@ class EquipmentLogController extends Controller
             'status' => 'nullable|string',
         ]);
 
-        EquipmentLog::create($validated + ['user_id' => $request->user()->id]);
+        $user = $request->user();
+
+        // Sync with Inventory
+        $material = \App\Models\Material::where('company', $user->company)
+            ->where('product_name', $validated['item_name'])
+            ->first();
+
+        if ($validated['type'] === 'ALTA') {
+            if ($material) {
+                $material->increment('stock_quantity');
+            } else {
+                // Create new material if it doesn't exist
+                // Note: brand/model/code will be null as they are not in the log form yet
+                \App\Models\Material::create([
+                    'product_name' => $validated['item_name'],
+                    'stock_quantity' => 1,
+                    'company' => $user->company,
+                ]);
+            }
+        } elseif ($validated['type'] === 'BAJA') {
+            if ($material) {
+                $material->decrement('stock_quantity');
+            }
+        }
+
+        EquipmentLog::create($validated + ['user_id' => $user->id]);
         return redirect()->back();
     }
 }
