@@ -29,13 +29,22 @@ class EquipmentLogController extends Controller
     {
         $validated = $request->validate([
             'item_name' => 'required|string',
+            'brand' => 'nullable|string',
+            'model' => 'nullable|string',
             'serial_number' => 'nullable|string',
             'type' => 'required|in:ALTA,BAJA',
             'reason' => 'nullable|string',
             'status' => 'nullable|string',
+            'document' => 'nullable|file|max:10240', // 10MB limit
         ]);
 
         $user = $request->user();
+
+        // Handle File Upload
+        $documentPath = null;
+        if ($request->hasFile('document')) {
+            $documentPath = $request->file('document')->store('equipment_docs', 'public');
+        }
 
         // Sync with Inventory
         $material = \App\Models\Material::where('company', $user->company)
@@ -45,11 +54,13 @@ class EquipmentLogController extends Controller
         if ($validated['type'] === 'ALTA') {
             if ($material) {
                 $material->increment('stock_quantity');
+                // Optional: Update brand/model if provided and currently null?
             } else {
                 // Create new material if it doesn't exist
-                // Note: brand/model/code will be null as they are not in the log form yet
                 \App\Models\Material::create([
                     'product_name' => $validated['item_name'],
+                    'brand' => $validated['brand'],
+                    'model' => $validated['model'],
                     'stock_quantity' => 1,
                     'company' => $user->company,
                 ]);
@@ -60,7 +71,18 @@ class EquipmentLogController extends Controller
             }
         }
 
-        EquipmentLog::create($validated + ['user_id' => $user->id]);
+        EquipmentLog::create([
+            'item_name' => $validated['item_name'],
+            'brand' => $validated['brand'],
+            'model' => $validated['model'],
+            'serial_number' => $validated['serial_number'],
+            'type' => $validated['type'],
+            'reason' => $validated['reason'],
+            'status' => $validated['status'],
+            'document_path' => $documentPath,
+            'user_id' => $user->id,
+        ]);
+
         return redirect()->back();
     }
 }

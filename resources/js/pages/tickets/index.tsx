@@ -1,12 +1,16 @@
+import CompanyFilter from '@/components/app/CompanyFilter';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
-import { AlertCircle, Send, Ticket } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Eye, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
 
 interface TicketModel {
     id: number;
-    title: string;
-    description: string;
+    subject: string;
+    company: string;
     priority: string;
     status: string;
     created_at: string;
@@ -14,17 +18,67 @@ interface TicketModel {
 }
 
 export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
-    const { data, setData, post, processing, reset, errors } = useForm({
-        title: '',
-        description: '',
-        priority: 'MEDIA',
-    });
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-        post('/tickets', {
-            onSuccess: () => reset(),
-        });
+    const filteredTickets = tickets.filter(
+        (t) =>
+            t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            t.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            t.id.toString().includes(searchTerm),
+    );
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'ABIERTO':
+                return (
+                    <Badge
+                        variant="default"
+                        className="bg-yellow-500 hover:bg-yellow-600"
+                    >
+                        Pendiente
+                    </Badge>
+                );
+            case 'EN_PROCESO':
+                return (
+                    <Badge
+                        variant="default"
+                        className="bg-blue-500 hover:bg-blue-600"
+                    >
+                        En Proceso
+                    </Badge>
+                );
+            case 'CERRADO':
+                return <Badge variant="secondary">Cerrado</Badge>;
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    };
+
+    const getPriorityBadge = (priority: string) => {
+        switch (priority) {
+            case 'ALTA':
+                return <Badge variant="destructive">Alta</Badge>;
+            case 'MEDIA':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-yellow-600 text-yellow-600"
+                    >
+                        Media
+                    </Badge>
+                );
+            case 'BAJA':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-green-600 text-green-600"
+                    >
+                        Baja
+                    </Badge>
+                );
+            default:
+                return <Badge variant="outline">{priority}</Badge>;
+        }
     };
 
     return (
@@ -37,154 +91,127 @@ export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
             <Head title="Ticketera / Solicitudes" />
 
             <div className="flex flex-col gap-6 p-4">
-                <div className="grid gap-6 md:grid-cols-2">
-                    {/* Formulario */}
-                    <div className="rounded-xl border bg-card p-6 shadow-sm">
-                        <div className="mb-6 flex items-center gap-2 text-primary">
-                            <Ticket className="size-5" />
-                            <h2 className="text-lg font-semibold text-foreground">
-                                Crear Solicitud / Reporte
-                            </h2>
-                        </div>
-
-                        <form onSubmit={submit} className="space-y-4">
-                            <div>
-                                <label className="mb-1 block text-sm font-medium">
-                                    Asunto
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.title}
-                                    onChange={(e) =>
-                                        setData('title', e.target.value)
-                                    }
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                    placeholder="Ej: Falla en equipo X, Solicitud de insumos..."
-                                />
-                                {errors.title && (
-                                    <p className="mt-1 text-xs text-destructive">
-                                        {errors.title}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="mb-1 block text-sm font-medium">
-                                    Prioridad
-                                </label>
-                                <select
-                                    value={data.priority}
-                                    onChange={(e) =>
-                                        setData('priority', e.target.value)
-                                    }
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                >
-                                    <option value="BAJA">Baja</option>
-                                    <option value="MEDIA">Media</option>
-                                    <option value="ALTA">Alta</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="mb-1 block text-sm font-medium">
-                                    Descripción Detallada
-                                </label>
-                                <textarea
-                                    value={data.description}
-                                    onChange={(e) =>
-                                        setData('description', e.target.value)
-                                    }
-                                    className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                    placeholder="Describa el problema o solicitud con detalle..."
-                                />
-                                {errors.description && (
-                                    <p className="mt-1 text-xs text-destructive">
-                                        {errors.description}
-                                    </p>
-                                )}
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                            >
-                                <Send className="size-4" />
-                                Enviar Ticket
-                            </button>
-                        </form>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Solicitudes y Soporte
+                        </h2>
+                        <p className="text-muted-foreground">
+                            Gestión de requerimientos a Comandancia.
+                        </p>
                     </div>
+                    <Link href="/tickets/create">
+                        <Button className="gap-2">
+                            <Plus className="size-4" />
+                            Nuevo Ticket
+                        </Button>
+                    </Link>
+                </div>
 
-                    {/* Lista Tickets */}
-                    <div className="flex max-h-[600px] flex-col overflow-hidden rounded-xl border bg-card p-6 shadow-sm">
-                        <div className="mb-6 flex items-center gap-2 text-primary">
-                            <AlertCircle className="size-5" />
-                            <h2 className="text-lg font-semibold text-foreground">
-                                Mis Tickets Recientes
-                            </h2>
-                        </div>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex max-w-sm items-center gap-2">
+                        <Search className="size-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar ticket..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-9"
+                        />
+                    </div>
+                    <CompanyFilter />
+                </div>
 
-                        <div className="flex-1 overflow-y-auto pr-2">
-                            {tickets.length === 0 ? (
-                                <p className="py-8 text-center text-muted-foreground">
-                                    No hay tickets registrados.
-                                </p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {tickets.map((ticket) => (
-                                        <div
+                <div className="rounded-xl border bg-card shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-muted/50 text-muted-foreground">
+                                <tr>
+                                    <th className="px-4 py-3 font-medium">
+                                        ID
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Asunto
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Prioridad
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Estado
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Compañía
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Solicitante
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Fecha
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {filteredTickets.length > 0 ? (
+                                    filteredTickets.map((ticket) => (
+                                        <tr
                                             key={ticket.id}
-                                            className="rounded-lg border bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+                                            className="hover:bg-muted/30"
                                         >
-                                            <div className="mb-2 flex items-start justify-between">
-                                                <span className="block truncate pr-2 font-semibold">
-                                                    {ticket.title}
-                                                </span>
-                                                <div className="flex shrink-0 gap-2">
-                                                    <span
-                                                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                            ticket.priority ===
-                                                            'ALTA'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : ticket.priority ===
-                                                                    'MEDIA'
-                                                                  ? 'bg-yellow-100 text-yellow-700'
-                                                                  : 'bg-blue-100 text-blue-700'
-                                                        }`}
-                                                    >
-                                                        {ticket.priority}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-                                                {ticket.description}
-                                            </p>
-                                            <div className="flex items-center justify-between border-t border-border/50 pt-2 text-xs text-muted-foreground">
-                                                <span>
-                                                    {ticket.user.name} -{' '}
-                                                    {new Date(
-                                                        ticket.created_at,
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                                <span
-                                                    className={`font-bold uppercase ${
-                                                        ticket.status ===
-                                                        'ABIERTO'
-                                                            ? 'text-green-600'
-                                                            : 'text-neutral-500'
-                                                    }`}
+                                            <td className="px-4 py-3 font-medium">
+                                                #{ticket.id}
+                                            </td>
+                                            <td className="px-4 py-3 font-medium">
+                                                {ticket.subject}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {getPriorityBadge(
+                                                    ticket.priority,
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {getStatusBadge(ticket.status)}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {ticket.company}
+                                            </td>
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {ticket.user.name}
+                                            </td>
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {new Date(
+                                                    ticket.created_at,
+                                                ).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Link
+                                                    href={`/tickets/${ticket.id}`}
                                                 >
-                                                    {ticket.status.replace(
-                                                        '_',
-                                                        ' ',
-                                                    )}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 gap-2"
+                                                    >
+                                                        <Eye className="size-4" />
+                                                        Ver
+                                                    </Button>
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td
+                                            colSpan={8}
+                                            className="px-4 py-8 text-center text-muted-foreground"
+                                        >
+                                            No se encontraron tickets.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

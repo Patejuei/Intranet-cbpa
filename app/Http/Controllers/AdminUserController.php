@@ -73,7 +73,7 @@ class AdminUserController extends Controller
 
         $user->update($userData);
 
-        return redirect()->route('admin.users.index'); // Correct route name if standard resource used, likely 'users.index' or similar check route list. 
+        return redirect()->route('users.index');
         // Based on previous code: route('users.index') was used in store. I will stick to that or check routes.
     }
 

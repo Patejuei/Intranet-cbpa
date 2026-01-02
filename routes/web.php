@@ -16,12 +16,43 @@ use App\Http\Controllers\TicketController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
+        $user = request()->user();
+        $query = \App\Models\BatteryLog::query()
+            ->whereDate('next_change_date', '>=', now())
+            ->orderBy('next_change_date');
+
+        if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+            $query->where('company', $user->company);
+        }
+
+        $upcomingBatteries = $query->take(5)->get();
+
+        // Ticket Logic
+        $pendingTickets = [];
+        $respondedTickets = [];
+
+        if ($user->company === 'Comandancia') {
+            $pendingTickets = \App\Models\Ticket::where('status', 'ABIERTO')->with('user')->take(5)->get();
+        } else {
+            $respondedTickets = \App\Models\Ticket::where('company', $user->company)
+                ->where('status', 'EN_PROCESO') // Assuming En Proceso means responded/active
+                ->with('user')
+                ->take(5)
+                ->get();
+        }
+
+        return Inertia::render('dashboard', [
+            'upcomingBatteries' => $upcomingBatteries,
+            'pendingTickets' => $pendingTickets,
+            'respondedTickets' => $respondedTickets,
+        ]);
     })->name('dashboard');
 
     Route::resource('batteries', BatteryLogController::class)->only(['index', 'store'])->middleware('module:batteries');
     Route::resource('equipment', EquipmentLogController::class)->only(['index', 'store'])->middleware('module:equipment');
-    Route::resource('tickets', TicketController::class)->only(['index', 'store'])->middleware('module:tickets');
+    Route::resource('tickets', TicketController::class)->middleware('module:tickets');
+    Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
+    Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
 
     // Admin Routes
     Route::middleware('module:admin')->group(function () {

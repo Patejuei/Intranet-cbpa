@@ -21,6 +21,8 @@ import { Head, useForm } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import CompanyFilter from '@/components/app/CompanyFilter';
+
 export default function InventoryIndex({
     materials,
 }: {
@@ -38,13 +40,11 @@ export default function InventoryIndex({
         stock_quantity: 0,
         company: 'Segunda Compañía', // Default fallback, should be handled by logic or dropdown
         category: '',
+        document_path: null as File | null,
     });
 
     // Note: Assuming company comes from user context in backend, but form needs it if Admin implies mult-tenant add?
     // The MaterialController logic requires company. If regular user, backend forces company.
-    // If admin, we should probably allow selecting company, but for now I'll stick to a simple input or default.
-    // Actually, let's add a company selector for Admin, or just hidden for user.
-    // Since I don't have user prop here easily passed (unless shared props), I'll make it generic.
 
     const openCreate = () => {
         reset();
@@ -92,14 +92,17 @@ export default function InventoryIndex({
                     </Button>
                 </div>
 
-                <div className="flex max-w-sm items-center gap-2">
-                    <Search className="size-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar material..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-9"
-                    />
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex max-w-sm items-center gap-2">
+                        <Search className="size-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar material..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-9"
+                        />
+                    </div>
+                    <CompanyFilter />
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
@@ -314,6 +317,29 @@ export default function InventoryIndex({
                                 }
                                 placeholder="Ej: EPP, Uniforme, Radio..."
                             />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="document_path">
+                                Documento de Alta (Opcional)
+                            </Label>
+                            <Input
+                                id="document_path"
+                                type="file"
+                                onChange={(e) =>
+                                    setData(
+                                        'document_path',
+                                        e.target.files
+                                            ? e.target.files[0]
+                                            : null,
+                                    )
+                                }
+                                className="cursor-pointer"
+                            />
+                            <p className="text-[0.8rem] text-muted-foreground">
+                                Adjuntar factura, guía de despacho o acta de
+                                alta.
+                            </p>
                         </div>
 
                         <div className="flex justify-end gap-2">

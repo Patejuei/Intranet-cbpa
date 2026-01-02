@@ -7,22 +7,20 @@ use Illuminate\Http\Request;
 use App\Models\BatteryLog;
 use Inertia\Inertia;
 
+use App\Traits\CompanyScopeTrait;
+
 class BatteryLogController extends Controller
 {
+    use CompanyScopeTrait;
+
     public function index(Request $request)
     {
-        $user = $request->user();
-
-        // Ensure user has a company, otherwise show empty or all (depending on logic, safer to show empty)
         $query = BatteryLog::with('user')->latest();
-
-        if ($user->company && $user->role !== 'admin') {
-            $query->where('company', $user->company);
-        }
+        $this->applyCompanyScope($query, $request);
 
         return Inertia::render('batteries/index', [
             'logs' => $query->get(),
-            'userCompany' => $user->company // Pass to frontend for context if needed
+            'userCompany' => $request->user()->company
         ]);
     }
 

@@ -1,20 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Activity, Battery, Save } from 'lucide-react';
-import { FormEventHandler } from 'react';
-
-interface Log {
-    id: number;
-    unit_name: string;
-    battery_code: string;
-    action: string;
-    notes: string;
-    created_at: string;
-    user: { name: string };
-}
-
-import { Calendar, ClipboardList } from 'lucide-react';
-import { useState } from 'react';
+import { Activity, Battery, Calendar, ClipboardList, Save } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 
 interface Log {
     id: number;
@@ -27,6 +14,8 @@ interface Log {
     created_at: string;
     user: { name: string };
 }
+
+import CompanyFilter from '@/components/app/CompanyFilter';
 
 export default function BatteryIndex({ logs }: { logs: Log[] }) {
     const [activeTab, setActiveTab] = useState<'log' | 'new'>('log');
@@ -59,30 +48,34 @@ export default function BatteryIndex({ logs }: { logs: Log[] }) {
             <Head title="Control de Baterías" />
 
             <div className="flex flex-col gap-6 p-4">
-                {/* Custom Tabs */}
-                <div className="flex w-full space-x-1 rounded-xl bg-muted p-1 md:w-fit">
-                    <button
-                        onClick={() => setActiveTab('log')}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                            activeTab === 'log'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
-                        }`}
-                    >
-                        <ClipboardList className="size-4" />
-                        Bitácora
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('new')}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                            activeTab === 'new'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
-                        }`}
-                    >
-                        <Battery className="size-4" />
-                        Nuevo Registro
-                    </button>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    {/* Custom Tabs */}
+                    <div className="flex w-full space-x-1 rounded-xl bg-muted p-1 md:w-fit">
+                        <button
+                            onClick={() => setActiveTab('log')}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                                activeTab === 'log'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                            }`}
+                        >
+                            <ClipboardList className="size-4" />
+                            Bitácora
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('new')}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                                activeTab === 'new'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                            }`}
+                        >
+                            <Battery className="size-4" />
+                            Nuevo Registro
+                        </button>
+                    </div>
+
+                    <CompanyFilter />
                 </div>
 
                 {activeTab === 'new' ? (

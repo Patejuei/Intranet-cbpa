@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ticket extends Model
 {
-    protected $fillable = ['title', 'description', 'priority', 'status', 'user_id'];
+    protected $fillable = ['subject', 'company', 'priority', 'status', 'user_id', 'image_path'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(TicketMessage::class);
     }
 }

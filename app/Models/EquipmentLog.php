@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EquipmentLog extends Model
 {
-    protected $fillable = ['item_name', 'serial_number', 'type', 'reason', 'status', 'user_id'];
+    protected $fillable = ['item_name', 'brand', 'model', 'serial_number', 'type', 'reason', 'status', 'user_id', 'document_path'];
 
     public function user()
     {

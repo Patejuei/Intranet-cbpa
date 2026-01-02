@@ -25,10 +25,13 @@ export default function EquipmentIndex({ logs }: { logs: Log[] }) {
 
     const { data, setData, post, processing, reset, errors } = useForm({
         item_name: '',
+        brand: '',
+        model: '',
         serial_number: '',
         type: 'ALTA', // Will be updated by effect or click
         reason: '',
         status: 'PENDIENTE',
+        document: null as File | null,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -95,12 +98,44 @@ export default function EquipmentIndex({ logs }: { logs: Log[] }) {
                                     }
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                     placeholder="Ej: Pitón Protek, Hacha..."
+                                    required
                                 />
                                 {errors.item_name && (
                                     <p className="mt-1 text-xs text-destructive">
                                         {errors.item_name}
                                     </p>
                                 )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
+                                        Marca
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={data.brand || ''}
+                                        onChange={(e) =>
+                                            setData('brand', e.target.value)
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        placeholder="Ej: Rosenbauer"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
+                                        Modelo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={data.model || ''}
+                                        onChange={(e) =>
+                                            setData('model', e.target.value)
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        placeholder="Ej: Hercul-X"
+                                    />
+                                </div>
                             </div>
 
                             <div>
@@ -133,6 +168,25 @@ export default function EquipmentIndex({ logs }: { logs: Log[] }) {
                                             ? 'Detalles de la adquisición...'
                                             : 'Razón de la baja (daño, pérdida, etc)...'
                                     }
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium">
+                                    Documento de Respaldo (Opcional)
+                                </label>
+                                <input
+                                    type="file"
+                                    onChange={(e) =>
+                                        setData(
+                                            'document',
+                                            e.target.files
+                                                ? e.target.files[0]
+                                                : null,
+                                        )
+                                    }
+                                    className="w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
+                                    accept=".pdf,.jpg,.png,.jpeg"
                                 />
                             </div>
 

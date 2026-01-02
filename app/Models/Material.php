@@ -18,5 +18,6 @@ class Material extends Model
         'stock_quantity',
         'company',
         'category',
+        'document_path',
     ];
 }

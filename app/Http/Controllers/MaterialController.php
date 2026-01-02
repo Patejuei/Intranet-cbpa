@@ -6,16 +6,16 @@ use App\Models\Material;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use App\Traits\CompanyScopeTrait;
+
 class MaterialController extends Controller
 {
+    use CompanyScopeTrait;
+
     public function index()
     {
-        $user = request()->user();
         $query = Material::query();
-
-        if ($user->role !== 'admin' && $user->company) {
-            $query->where('company', $user->company);
-        }
+        $this->applyCompanyScope($query, request());
 
         return Inertia::render('inventory/index', [
             'materials' => $query->orderBy('product_name')->get()
@@ -32,7 +32,13 @@ class MaterialController extends Controller
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
+            'document_path' => 'nullable|file|max:10240', // Max 10MB
         ]);
+
+        if ($request->hasFile('document_path')) {
+            $path = $request->file('document_path')->store('materials', 'public');
+            $validated['document_path'] = $path;
+        }
 
         Material::create($validated);
 

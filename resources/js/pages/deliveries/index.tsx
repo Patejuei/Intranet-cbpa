@@ -6,6 +6,8 @@ import { Head, Link } from '@inertiajs/react'; // Link moved to inertia
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import CompanyFilter from '@/components/app/CompanyFilter';
+
 export default function DeliveryIndex({
     certificates,
 }: {
@@ -48,14 +50,17 @@ export default function DeliveryIndex({
                     </Link>
                 </div>
 
-                <div className="flex max-w-sm items-center gap-2">
-                    <Search className="size-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por bombero u oficial..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-9"
-                    />
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex max-w-sm items-center gap-2">
+                        <Search className="size-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por bombero u oficial..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-9"
+                        />
+                    </div>
+                    <CompanyFilter />
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">

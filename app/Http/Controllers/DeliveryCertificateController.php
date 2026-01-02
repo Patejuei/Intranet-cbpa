@@ -10,16 +10,16 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
+use App\Traits\CompanyScopeTrait;
+
 class DeliveryCertificateController extends Controller
 {
+    use CompanyScopeTrait;
+
     public function index()
     {
-        $user = request()->user();
         $query = DeliveryCertificate::with('firefighter', 'user', 'items.material')->latest();
-
-        if ($user->role !== 'admin' && $user->company) {
-            $query->where('company', $user->company);
-        }
+        $this->applyCompanyScope($query, request());
 
         return Inertia::render('deliveries/index', [
             'certificates' => $query->get()
@@ -28,15 +28,11 @@ class DeliveryCertificateController extends Controller
 
     public function create()
     {
-        $user = request()->user();
-
         $firefightersQuery = Firefighter::query();
         $materialsQuery = Material::query()->where('stock_quantity', '>', 0);
 
-        if ($user->role !== 'admin' && $user->company) {
-            $firefightersQuery->where('company', $user->company);
-            $materialsQuery->where('company', $user->company);
-        }
+        $this->applyCompanyScope($firefightersQuery, request());
+        $this->applyCompanyScope($materialsQuery, request());
 
         return Inertia::render('deliveries/create', [
             'firefighters' => $firefightersQuery->get(),
@@ -57,12 +53,17 @@ class DeliveryCertificateController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $request) {
+            // Calculate correlative
+            $lastCorrelative = DeliveryCertificate::where('company', $validated['company'])->max('correlative');
+            $nextCorrelative = $lastCorrelative ? $lastCorrelative + 1 : 1;
+
             $certificate = DeliveryCertificate::create([
                 'firefighter_id' => $validated['firefighter_id'],
                 'user_id' => $request->user()->id,
                 'date' => $validated['date'],
                 'observations' => $validated['observations'],
                 'company' => $validated['company'],
+                'correlative' => $nextCorrelative,
             ]);
 
             foreach ($validated['items'] as $item) {
