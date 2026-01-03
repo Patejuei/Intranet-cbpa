@@ -15,17 +15,27 @@ class BatteryLogController extends Controller
 
     public function index(Request $request)
     {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('batteries.view', $user->permissions ?? []) && !in_array('batteries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $query = BatteryLog::with('user')->latest();
         $this->applyCompanyScope($query, $request);
 
         return Inertia::render('batteries/index', [
-            'logs' => $query->get(),
+            'logs' => $query->paginate(10),
             'userCompany' => $request->user()->company
         ]);
     }
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('batteries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'change_date' => 'required|date',
             'equipment_id' => 'required|string',

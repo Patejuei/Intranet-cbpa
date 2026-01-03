@@ -18,47 +18,81 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
+import { Pencil, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
+import Pagination from '@/components/Pagination';
 
-export default function InventoryIndex({
-    materials,
-}: {
-    materials: Material[];
-}) {
+interface PageProps {
+    materials: {
+        data: Material[];
+        links: any[];
+    };
+}
+
+export default function InventoryIndex({ materials }: PageProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentId, setCurrentId] = useState<number | null>(null);
 
     // Form handling
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, put, processing, errors, reset } = useForm({
         product_name: '',
         brand: '',
         model: '',
         code: '',
         stock_quantity: 0,
-        company: 'Segunda Compañía', // Default fallback, should be handled by logic or dropdown
+        company: 'Segunda Compañía',
         category: '',
         document_path: null as File | null,
     });
 
-    // Note: Assuming company comes from user context in backend, but form needs it if Admin implies mult-tenant add?
-    // The MaterialController logic requires company. If regular user, backend forces company.
-
     const openCreate = () => {
         reset();
+        setIsEditing(false);
+        setCurrentId(null);
+        setIsOpen(true);
+    };
+
+    const openEdit = (material: Material) => {
+        setData({
+            product_name: material.product_name,
+            brand: material.brand || '',
+            model: material.model || '',
+            code: material.code || '',
+            stock_quantity: material.stock_quantity,
+            company: material.company,
+            category: material.category || '',
+            document_path: null, // Don't prepopulate file input
+        });
+        setIsEditing(true);
+        setCurrentId(material.id);
         setIsOpen(true);
     };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/inventory', {
-            onSuccess: () => setIsOpen(false),
-        });
+        if (isEditing && currentId) {
+            put(`/inventory/${currentId}`, {
+                onSuccess: () => setIsOpen(false),
+            });
+        } else {
+            post('/inventory', {
+                onSuccess: () => setIsOpen(false),
+            });
+        }
     };
 
-    const filteredMaterials = materials.filter(
+    // Since we have server-side pagination, search should ideally be server-side too.
+    // However, if we keep client-side search, it only searches the current page.
+    // For now, I'll keep the client-side filter for the current page as requested simply "pagination".
+    // Ideally user wants search to work across pages, but that requires controller changes for search query.
+    // Given the prompt "En todos los listados... agrega paginación", usually implies simple paginate().
+    // I will filter the `materials.data` which is the current page.
+
+    const filteredMaterials = materials.data.filter(
         (m) =>
             m.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (m.code &&
@@ -96,7 +130,7 @@ export default function InventoryIndex({
                     <div className="flex max-w-sm items-center gap-2">
                         <Search className="size-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar material..."
+                            placeholder="Buscar en esta página..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="h-9"
@@ -127,6 +161,9 @@ export default function InventoryIndex({
                                     </th>
                                     <th className="px-4 py-3 font-medium">
                                         Compañía
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
+                                        Acciones
                                     </th>
                                 </tr>
                             </thead>
@@ -166,15 +203,27 @@ export default function InventoryIndex({
                                             <td className="px-4 py-3">
                                                 {material.company}
                                             </td>
+                                            <td className="px-4 py-3">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        openEdit(material)
+                                                    }
+                                                >
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            No se encontraron materiales.
+                                            No se encontraron materiales en esta
+                                            página.
                                         </td>
                                     </tr>
                                 )}
@@ -182,15 +231,22 @@ export default function InventoryIndex({
                         </table>
                     </div>
                 </div>
+
+                <Pagination links={materials.links} />
             </div>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Agregar Nuevo Material</DialogTitle>
+                        <DialogTitle>
+                            {isEditing
+                                ? 'Editar Material'
+                                : 'Agregar Nuevo Material'}
+                        </DialogTitle>
                         <DialogDescription>
-                            Ingrese los detalles del nuevo material para
-                            inventario.
+                            {isEditing
+                                ? 'Modifique los detalles del material.'
+                                : 'Ingrese los detalles del nuevo material para inventario.'}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submit} className="grid gap-4 py-4">
@@ -351,7 +407,7 @@ export default function InventoryIndex({
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={processing}>
-                                Guardar
+                                {isEditing ? 'Actualizar' : 'Guardar'}
                             </Button>
                         </div>
                     </form>

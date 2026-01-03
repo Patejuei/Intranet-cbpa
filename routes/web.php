@@ -53,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('tickets', TicketController::class)->middleware('module:tickets');
     Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
     Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
+    Route::patch('tickets/{ticket}/priority', [TicketController::class, 'updatePriority'])->name('tickets.updatePriority');
 
     // Admin Routes
     Route::middleware('module:admin')->group(function () {
@@ -63,7 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Inventory & Deliveries (Protected by equipment permission for now, or just auth?)
     // Assuming users with 'equipment' permission can manage inventory and deliveries
     Route::middleware('module:equipment')->group(function () {
-        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store']);
+        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update']);
         Route::resource('deliveries', \App\Http\Controllers\DeliveryCertificateController::class);
         Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
     });

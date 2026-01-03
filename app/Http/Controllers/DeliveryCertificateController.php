@@ -18,16 +18,26 @@ class DeliveryCertificateController extends Controller
 
     public function index()
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $query = DeliveryCertificate::with('firefighter', 'user', 'items.material')->latest();
         $this->applyCompanyScope($query, request());
 
         return Inertia::render('deliveries/index', [
-            'certificates' => $query->get()
+            'certificates' => $query->paginate(10)
         ]);
     }
 
     public function create()
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $firefightersQuery = Firefighter::query();
         $materialsQuery = Material::query()->where('stock_quantity', '>', 0);
 
@@ -42,6 +52,11 @@ class DeliveryCertificateController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'firefighter_id' => 'required|exists:firefighters,id',
             'date' => 'required|date',
@@ -84,6 +99,11 @@ class DeliveryCertificateController extends Controller
 
     public function show(DeliveryCertificate $delivery)
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $delivery->load('firefighter', 'user', 'items.material');
         return Inertia::render('deliveries/show', [
             'certificate' => $delivery
@@ -92,6 +112,11 @@ class DeliveryCertificateController extends Controller
 
     public function downloadPdf(DeliveryCertificate $delivery)
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $delivery->load('firefighter', 'user', 'items.material');
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.delivery-certificate', ['certificate' => $delivery]);
         return $pdf->download('acta-entrega-' . $delivery->id . '.pdf');

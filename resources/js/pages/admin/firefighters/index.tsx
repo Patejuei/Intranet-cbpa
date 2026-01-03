@@ -1,3 +1,4 @@
+import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,16 +18,22 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Firefighter } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react'; // Added useForm
-import { Pencil, Search, Trash, UserPlus } from 'lucide-react'; // Added Search
+import { Head, router, useForm } from '@inertiajs/react';
+import { Pencil, Search, Trash, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
-export default function FirefighterIndex({
-    firefighters,
-}: {
-    firefighters: Firefighter[];
-}) {
-    const [searchTerm, setSearchTerm] = useState('');
+interface PageProps {
+    firefighters: {
+        data: Firefighter[];
+        links: any[];
+    };
+    filters: {
+        search: string;
+    };
+}
+
+export default function FirefighterIndex({ firefighters, filters }: PageProps) {
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [isEdit, setIsEdit] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -37,6 +44,7 @@ export default function FirefighterIndex({
         full_name: '',
         rut: '',
         company: '',
+        email: '',
     });
 
     const openCreate = () => {
@@ -52,6 +60,7 @@ export default function FirefighterIndex({
             full_name: firefighter.full_name,
             rut: firefighter.rut,
             company: firefighter.company,
+            email: firefighter.email || '',
         });
         setIsEdit(true);
         setIsOpen(true);
@@ -76,13 +85,37 @@ export default function FirefighterIndex({
         }
     };
 
-    const filteredFirefighters = firefighters.filter(
-        (f) =>
-            f.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            f.rut.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (f.general_registry_number &&
-                f.general_registry_number.includes(searchTerm)),
-    );
+    // Debounced search
+    const handleSearch = (term: string) => {
+        setSearchTerm(term);
+        // Basic debounce implementation or just direct replace for now?
+        // Let's us simple timeout or just a keypress effect if possible, but setState is immediate.
+        // We will trigger router visit on a debounce effect.
+    };
+
+    // Effect for debounce
+    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout>();
+
+    const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+
+        if (typingTimeout) clearTimeout(typingTimeout);
+
+        setTypingTimeout(
+            setTimeout(() => {
+                router.get(
+                    '/admin/firefighters',
+                    { search: value },
+                    {
+                        preserveState: true,
+                        preserveScroll: true,
+                        replace: true,
+                    },
+                );
+            }, 300),
+        );
+    };
 
     return (
         <AppLayout
@@ -114,11 +147,10 @@ export default function FirefighterIndex({
                     <Input
                         placeholder="Buscar por nombre, RUT o N° Reg..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={onSearchChange}
                         className="h-9"
                     />
                 </div>
-
                 <div className="rounded-xl border bg-card shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -137,13 +169,16 @@ export default function FirefighterIndex({
                                         Compañía
                                     </th>
                                     <th className="px-4 py-3 font-medium">
+                                        Email
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
                                         Acciones
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {filteredFirefighters.length > 0 ? (
-                                    filteredFirefighters.map((firefighter) => (
+                                {firefighters.data.length > 0 ? (
+                                    firefighters.data.map((firefighter) => (
                                         <tr
                                             key={firefighter.id}
                                             className="hover:bg-muted/30"
@@ -160,6 +195,9 @@ export default function FirefighterIndex({
                                             </td>
                                             <td className="px-4 py-3">
                                                 {firefighter.company}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {firefighter.email || '-'}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex gap-2">
@@ -193,7 +231,8 @@ export default function FirefighterIndex({
                                             colSpan={5}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            No se encontraron bomberos.
+                                            No se encontraron bomberos en esta
+                                            página.
                                         </td>
                                     </tr>
                                 )}
@@ -201,6 +240,8 @@ export default function FirefighterIndex({
                         </table>
                     </div>
                 </div>
+
+                <Pagination links={firefighters.links} />
             </div>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -242,9 +283,6 @@ export default function FirefighterIndex({
                                     <SelectItem value="Quinta Compañía">
                                         Quinta Compañía
                                     </SelectItem>
-                                    <SelectItem value="Sexta Compañía">
-                                        Sexta Compañía
-                                    </SelectItem>
                                     <SelectItem value="Séptima Compañía">
                                         Séptima Compañía
                                     </SelectItem>
@@ -254,8 +292,8 @@ export default function FirefighterIndex({
                                     <SelectItem value="Novena Compañía">
                                         Novena Compañía
                                     </SelectItem>
-                                    <SelectItem value="Brigada Juvenil">
-                                        Brigada Juvenil
+                                    <SelectItem value="Décima Compañía">
+                                        Décima Compañía
                                     </SelectItem>
                                     <SelectItem value="Comandancia">
                                         Comandancia
@@ -319,6 +357,24 @@ export default function FirefighterIndex({
                             {errors.general_registry_number && (
                                 <p className="text-sm text-red-500">
                                     {errors.general_registry_number}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Correo Electrónico</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                value={data.email}
+                                onChange={(e) =>
+                                    setData('email', e.target.value)
+                                }
+                                placeholder="bombero@ejemplo.com"
+                            />
+                            {errors.email && (
+                                <p className="text-sm text-red-500">
+                                    {errors.email}
                                 </p>
                             )}
                         </div>

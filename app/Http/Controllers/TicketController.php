@@ -13,6 +13,11 @@ class TicketController extends Controller
 
     public function index()
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $query = Ticket::with('user');
         $this->applyCompanyScope($query, request());
 
@@ -20,7 +25,7 @@ class TicketController extends Controller
         // Let frontend handle tabs. We return all relevant tickets.
 
         return Inertia::render('tickets/index', [
-            'tickets' => $query->latest()->get()
+            'tickets' => $query->latest()->paginate(10)
         ]);
     }
 
@@ -31,6 +36,11 @@ class TicketController extends Controller
 
     public function store(Request $request)
     {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'priority' => 'required|in:BAJA,MEDIA,ALTA',
@@ -40,6 +50,7 @@ class TicketController extends Controller
 
         $ticket = Ticket::create([
             'subject' => $validated['subject'],
+            'description' => $validated['message'],
             'priority' => $validated['priority'],
             'status' => 'ABIERTO',
             'user_id' => $request->user()->id,
@@ -68,6 +79,10 @@ class TicketController extends Controller
     public function show(Ticket $ticket)
     {
         $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         // Authorization: User must be Comandancia OR belong to the ticket's company
         if ($user->company !== 'Comandancia' && $ticket->company !== $user->company) {
             abort(403);
@@ -83,6 +98,10 @@ class TicketController extends Controller
     public function reply(Request $request, Ticket $ticket)
     {
         $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         if ($user->company !== 'Comandancia' && $ticket->company !== $user->company) {
             abort(403);
         }
@@ -115,6 +134,10 @@ class TicketController extends Controller
     public function updateStatus(Request $request, Ticket $ticket)
     {
         $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         if ($user->company !== 'Comandancia') {
             abort(403, 'Solo Comandancia puede cambiar el estado.');
         }

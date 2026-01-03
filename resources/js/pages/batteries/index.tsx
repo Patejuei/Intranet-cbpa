@@ -1,3 +1,4 @@
+import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { Activity, Battery, Calendar, ClipboardList, Save } from 'lucide-react';
@@ -17,7 +18,14 @@ interface Log {
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 
-export default function BatteryIndex({ logs }: { logs: Log[] }) {
+interface PageProps {
+    logs: {
+        data: Log[];
+        links: any[];
+    };
+}
+
+export default function BatteryIndex({ logs }: PageProps) {
     const [activeTab, setActiveTab] = useState<'log' | 'new'>('log');
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -251,7 +259,7 @@ export default function BatteryIndex({ logs }: { logs: Log[] }) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
-                                    {logs.length === 0 ? (
+                                    {logs.data.length === 0 ? (
                                         <tr>
                                             <td
                                                 colSpan={6}
@@ -261,7 +269,7 @@ export default function BatteryIndex({ logs }: { logs: Log[] }) {
                                             </td>
                                         </tr>
                                     ) : (
-                                        logs.map((log) => (
+                                        logs.data.map((log) => (
                                             <tr
                                                 key={log.id}
                                                 className="hover:bg-muted/30"
@@ -306,6 +314,7 @@ export default function BatteryIndex({ logs }: { logs: Log[] }) {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination links={logs.links} />
                     </div>
                 )}
             </div>

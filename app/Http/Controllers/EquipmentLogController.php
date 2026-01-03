@@ -12,6 +12,10 @@ class EquipmentLogController extends Controller
     public function index()
     {
         $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('equipment.view', $user->permissions ?? []) && !in_array('equipment.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $query = EquipmentLog::with('user')->latest();
 
         if ($user->role !== 'admin' && $user->company) {
@@ -21,12 +25,17 @@ class EquipmentLogController extends Controller
         }
 
         return Inertia::render('equipment/index', [
-            'logs' => $query->get()
+            'logs' => $query->paginate(10)
         ]);
     }
 
     public function store(Request $request)
     {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('equipment.edit', $user->permissions ?? [])) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'item_name' => 'required|string',
             'brand' => 'nullable|string',

@@ -208,9 +208,6 @@ export default function DeliveryCreate({
                                     <SelectItem value="Quinta Compañía">
                                         Quinta Compañía
                                     </SelectItem>
-                                    <SelectItem value="Sexta Compañía">
-                                        Sexta Compañía
-                                    </SelectItem>
                                     <SelectItem value="Séptima Compañía">
                                         Séptima Compañía
                                     </SelectItem>
@@ -220,8 +217,8 @@ export default function DeliveryCreate({
                                     <SelectItem value="Novena Compañía">
                                         Novena Compañía
                                     </SelectItem>
-                                    <SelectItem value="Brigada Juvenil">
-                                        Brigada Juvenil
+                                    <SelectItem value="Décima Compañía">
+                                        Décima Compañía
                                     </SelectItem>
                                     <SelectItem value="Comandancia">
                                         Comandancia

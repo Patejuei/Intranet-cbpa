@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Check, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface User {
@@ -19,13 +19,13 @@ interface User {
     permissions: string[] | null;
 }
 
-const availablePermissions = [
+const modules = [
+    { id: 'inventory', label: 'Inventario' },
+    { id: 'tickets', label: 'Ticketera' },
     { id: 'batteries', label: 'Baterías' },
     { id: 'equipment', label: 'Material Menor' },
-    { id: 'tickets', label: 'Ticketera' },
-    { id: 'inventory', label: 'Inventario' },
     { id: 'deliveries', label: 'Actas de Entrega' },
-    { id: 'admin', label: 'Administrador' },
+    { id: 'firefighters', label: 'Bomberos' },
 ];
 
 const companies = [
@@ -34,11 +34,23 @@ const companies = [
     'Tercera Compañía',
     'Cuarta Compañía',
     'Quinta Compañía',
+    'Sexta Compañía',
     'Séptima Compañía',
     'Octava Compañía',
     'Novena Compañía',
     'Décima Compañía',
+    'Brigada Juvenil',
     'Comandancia',
+];
+
+const roles = [
+    { value: 'user', label: 'Usuario Estándar' },
+    { value: 'admin', label: 'Administrador del Sistema' },
+    { value: 'capitan', label: 'Capitán' },
+    { value: 'teniente', label: 'Teniente' },
+    { value: 'maquinista', label: 'Maquinista' },
+    { value: 'ayudante', label: 'Ayudante' },
+    { value: 'comandancia', label: 'Comandancia' },
 ];
 
 export default function UserEdit({ user }: { user: User }) {
@@ -56,15 +68,27 @@ export default function UserEdit({ user }: { user: User }) {
         put(`/admin/users/${user.id}`);
     };
 
-    const togglePermission = (id: string) => {
-        if (data.permissions.includes(id)) {
-            setData(
-                'permissions',
-                data.permissions.filter((p) => p !== id),
-            );
-        } else {
-            setData('permissions', [...data.permissions, id]);
+    const handlePermissionChange = (moduleId: string, value: string) => {
+        // value: 'none', 'view', 'edit'
+        let newPermissions = data.permissions.filter(
+            (p) => !p.startsWith(`${moduleId}.`),
+        );
+
+        if (value === 'view') {
+            newPermissions.push(`${moduleId}.view`);
+        } else if (value === 'edit') {
+            newPermissions.push(`${moduleId}.view`, `${moduleId}.edit`);
         }
+
+        setData('permissions', newPermissions);
+    };
+
+    const getPermissionValue = (moduleId: string) => {
+        const hasEdit = data.permissions.includes(`${moduleId}.edit`);
+        const hasView = data.permissions.includes(`${moduleId}.view`);
+        if (hasEdit) return 'edit';
+        if (hasView) return 'view';
+        return 'none';
     };
 
     return (
@@ -81,14 +105,13 @@ export default function UserEdit({ user }: { user: User }) {
             <Head title="Editar Usuario" />
 
             <div className="flex flex-col gap-6 p-4">
-                <div className="max-w-2xl rounded-xl border bg-card p-6 shadow-sm">
+                <div className="max-w-4xl rounded-xl border bg-card p-6 shadow-sm">
                     <div className="mb-6">
                         <h2 className="text-lg font-semibold text-foreground">
                             Editar Usuario: {user.name}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Modifique los detalles del usuario. Deje la
-                            contraseña en blanco para mantener la actual.
+                            Modifique los detalles del usuario.
                         </p>
                     </div>
 
@@ -154,7 +177,6 @@ export default function UserEdit({ user }: { user: User }) {
                                         </p>
                                     )}
                                 </div>
-                                // ...
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
                                         Compañía
@@ -191,69 +213,127 @@ export default function UserEdit({ user }: { user: User }) {
                                 <Shield className="size-4" /> Roles y Permisos
                             </h3>
 
-                            <div className="mb-4">
+                            <div className="mb-6">
                                 <label className="mb-2 block text-sm font-medium">
                                     Rol del Sistema
                                 </label>
-                                <select
+                                <Select
                                     value={data.role}
-                                    onChange={(e) =>
-                                        setData('role', e.target.value)
+                                    onValueChange={(value) =>
+                                        setData('role', value)
                                     }
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                 >
-                                    <option value="user">
-                                        Usuario Estándar
-                                    </option>
-                                    <option value="admin">
-                                        Administrador del Sistema
-                                    </option>
-                                </select>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Seleccione un Rol" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {roles.map((role) => (
+                                            <SelectItem
+                                                key={role.value}
+                                                value={role.value}
+                                            >
+                                                {role.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
-                            {data.role !== 'admin' && (
-                                <div>
-                                    <label className="mb-3 block text-sm font-medium">
-                                        Acceso a Módulos
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                        {availablePermissions.map((perm) => (
-                                            <div
-                                                key={perm.id}
-                                                onClick={() =>
-                                                    togglePermission(perm.id)
-                                                }
-                                                className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
-                                                    data.permissions.includes(
-                                                        perm.id,
-                                                    )
-                                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                                        : 'hover:bg-muted/50'
-                                                }`}
-                                            >
-                                                <div
-                                                    className={`flex size-5 items-center justify-center rounded border ${
-                                                        data.permissions.includes(
-                                                            perm.id,
-                                                        )
-                                                            ? 'border-primary bg-primary text-primary-foreground'
-                                                            : 'border-muted-foreground'
-                                                    }`}
-                                                >
-                                                    {data.permissions.includes(
-                                                        perm.id,
-                                                    ) && (
-                                                        <Check className="size-3" />
-                                                    )}
-                                                </div>
-                                                <span className="text-sm font-medium">
-                                                    {perm.label}
-                                                </span>
-                                            </div>
-                                        ))}
+                            {data.role !== 'admin' &&
+                                data.role !== 'capitan' && (
+                                    <div>
+                                        <label className="mb-3 block text-sm font-medium">
+                                            Permisos por Módulo
+                                        </label>
+                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-muted-foreground">
+                                                        <th className="pb-2 font-medium">
+                                                            Módulo
+                                                        </th>
+                                                        <th className="pb-2 font-medium">
+                                                            Nivel de Acceso
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {modules.map((module) => (
+                                                        <tr key={module.id}>
+                                                            <td className="py-2.5 font-medium">
+                                                                {module.label}
+                                                            </td>
+                                                            <td className="py-2">
+                                                                <div className="flex gap-1 rounded-md bg-muted/50 p-1">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handlePermissionChange(
+                                                                                module.id,
+                                                                                'none',
+                                                                            )
+                                                                        }
+                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                            getPermissionValue(
+                                                                                module.id,
+                                                                            ) ===
+                                                                            'none'
+                                                                                ? 'bg-background shadow-sm'
+                                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                                        }`}
+                                                                    >
+                                                                        Ninguno
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handlePermissionChange(
+                                                                                module.id,
+                                                                                'view',
+                                                                            )
+                                                                        }
+                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                            getPermissionValue(
+                                                                                module.id,
+                                                                            ) ===
+                                                                            'view'
+                                                                                ? 'bg-blue-100 text-blue-700 shadow-sm'
+                                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                                        }`}
+                                                                    >
+                                                                        Ver
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handlePermissionChange(
+                                                                                module.id,
+                                                                                'edit',
+                                                                            )
+                                                                        }
+                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                            getPermissionValue(
+                                                                                module.id,
+                                                                            ) ===
+                                                                            'edit'
+                                                                                ? 'bg-green-100 text-green-700 shadow-sm'
+                                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                                        }`}
+                                                                    >
+                                                                        Editar
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            'Editar' incluye permisos de 'Ver'.
+                                        </p>
                                     </div>
-                                </div>
-                            )}
+                                )}
                         </div>
 
                         <div className="flex justify-end pt-4">
@@ -262,7 +342,7 @@ export default function UserEdit({ user }: { user: User }) {
                                 disabled={processing}
                                 className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground text-white transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none disabled:opacity-50"
                             >
-                                Gardar Cambios
+                                Guardar Cambios
                             </button>
                         </div>
                     </form>

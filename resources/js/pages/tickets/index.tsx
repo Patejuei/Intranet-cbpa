@@ -1,4 +1,5 @@
 import CompanyFilter from '@/components/app/CompanyFilter';
+import Pagination from '@/components/Pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,10 +18,17 @@ interface TicketModel {
     user: { name: string };
 }
 
-export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
+interface PageProps {
+    tickets: {
+        data: TicketModel[];
+        links: any[];
+    };
+}
+
+export default function TicketIndex({ tickets }: PageProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredTickets = tickets.filter(
+    const filteredTickets = tickets.data.filter(
         (t) =>
             t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
             t.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,7 +120,7 @@ export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
                     <div className="flex max-w-sm items-center gap-2">
                         <Search className="size-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar ticket..."
+                            placeholder="Buscar en esta página..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="h-9"
@@ -206,7 +214,8 @@ export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
                                             colSpan={8}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            No se encontraron tickets.
+                                            No se encontraron tickets en esta
+                                            página.
                                         </td>
                                     </tr>
                                 )}
@@ -214,6 +223,8 @@ export default function TicketIndex({ tickets }: { tickets: TicketModel[] }) {
                         </table>
                     </div>
                 </div>
+
+                <Pagination links={tickets.links} />
             </div>
         </AppLayout>
     );

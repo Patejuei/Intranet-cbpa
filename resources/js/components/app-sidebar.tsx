@@ -35,7 +35,9 @@ export function AppSidebar({ user }: { user: any }) {
 
     const hasPermission = (module: string) =>
         user.role === 'admin' ||
-        (user.permissions as string[])?.includes(module);
+        user.role === 'capitan' ||
+        (user.permissions as string[])?.includes(module + '.view') ||
+        (user.permissions as string[])?.includes(module + '.edit');
 
     if (hasPermission('batteries')) {
         filteredNavItems.push({
@@ -78,7 +80,7 @@ export function AppSidebar({ user }: { user: any }) {
         });
     }
 
-    if (user.role === 'admin') {
+    if (user.role === 'admin' || user.role === 'capitan') {
         filteredNavItems.push({
             title: 'Administrar Usuarios',
             href: '/admin/users',

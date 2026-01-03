@@ -1,3 +1,4 @@
+import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
@@ -11,7 +12,14 @@ interface User {
     company: string;
 }
 
-export default function UserIndex({ users }: { users: User[] }) {
+interface PageProps {
+    users: {
+        data: User[];
+        links: any[];
+    };
+}
+
+export default function UserIndex({ users }: PageProps) {
     const handleDelete = (id: number) => {
         if (confirm('¿Estás seguro de eliminar este usuario?')) {
             router.delete(`/admin/users/${id}`);
@@ -72,7 +80,7 @@ export default function UserIndex({ users }: { users: User[] }) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {users.map((user) => (
+                                {users.data.map((user) => (
                                     <tr
                                         key={user.id}
                                         className="hover:bg-muted/30"
@@ -145,6 +153,8 @@ export default function UserIndex({ users }: { users: User[] }) {
                         </table>
                     </div>
                 </div>
+
+                <Pagination links={users.links} />
             </div>
         </AppLayout>
     );

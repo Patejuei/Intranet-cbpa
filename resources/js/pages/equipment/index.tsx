@@ -1,3 +1,4 @@
+import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import {
@@ -20,7 +21,14 @@ interface Log {
     user: { name: string };
 }
 
-export default function EquipmentIndex({ logs }: { logs: Log[] }) {
+interface PageProps {
+    logs: {
+        data: Log[];
+        links: any[];
+    };
+}
+
+export default function EquipmentIndex({ logs }: PageProps) {
     const [actionType, setActionType] = useState<'ALTA' | 'BAJA'>('ALTA');
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -212,13 +220,13 @@ export default function EquipmentIndex({ logs }: { logs: Log[] }) {
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-2">
-                            {logs.length === 0 ? (
+                            {logs.data.length === 0 ? (
                                 <p className="py-8 text-center text-muted-foreground">
                                     No hay registros recientes.
                                 </p>
                             ) : (
                                 <div className="space-y-4">
-                                    {logs.map((log) => (
+                                    {logs.data.map((log) => (
                                         <div
                                             key={log.id}
                                             className="rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
@@ -265,6 +273,7 @@ export default function EquipmentIndex({ logs }: { logs: Log[] }) {
                                 </div>
                             )}
                         </div>
+                        <Pagination links={logs.links} />
                     </div>
                 </div>
             </div>

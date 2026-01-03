@@ -1,10 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Paperclip, Send, User } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -114,7 +120,60 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                                 #{ticket.id} - {ticket.subject}
                             </h2>
                             {getStatusBadge(ticket.status)}
-                            <Badge variant="outline">{ticket.priority}</Badge>
+
+                            {/* Priority Badge / Dropdown */}
+                            {currentUser.company === 'Comandancia' ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-6 gap-1 text-xs"
+                                        >
+                                            {ticket.priority}
+                                            <span className="sr-only">
+                                                Cambiar Prioridad
+                                            </span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                router.patch(
+                                                    `/tickets/${ticket.id}/priority`,
+                                                    { priority: 'BAJA' },
+                                                )
+                                            }
+                                        >
+                                            BAJA
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                router.patch(
+                                                    `/tickets/${ticket.id}/priority`,
+                                                    { priority: 'MEDIA' },
+                                                )
+                                            }
+                                        >
+                                            MEDIA
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                router.patch(
+                                                    `/tickets/${ticket.id}/priority`,
+                                                    { priority: 'ALTA' },
+                                                )
+                                            }
+                                        >
+                                            ALTA
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <Badge variant="outline">
+                                    {ticket.priority}
+                                </Badge>
+                            )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                             Iniciado por{' '}

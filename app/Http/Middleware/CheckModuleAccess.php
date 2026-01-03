@@ -21,8 +21,8 @@ class CheckModuleAccess
             abort(403, 'Unauthorized.');
         }
 
-        // Admin has access to everything
-        if ($user->role === 'admin') {
+        // Admin and Capitan have access to everything
+        if ($user->role === 'admin' || $user->role === 'capitan') {
             return $next($request);
         }
 

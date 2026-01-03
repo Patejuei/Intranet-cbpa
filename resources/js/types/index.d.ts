@@ -50,6 +50,7 @@ export interface Firefighter {
     full_name: string;
     rut: string;
     company: string;
+    email?: string | null;
     created_at: string;
     updated_at: string;
 }

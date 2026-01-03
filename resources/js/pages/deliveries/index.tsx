@@ -1,21 +1,25 @@
+import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { DeliveryCertificate } from '@/types';
-import { Head, Link } from '@inertiajs/react'; // Link moved to inertia
+import { Head, Link } from '@inertiajs/react';
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 
-export default function DeliveryIndex({
-    certificates,
-}: {
-    certificates: DeliveryCertificate[];
-}) {
+interface PageProps {
+    certificates: {
+        data: DeliveryCertificate[];
+        links: any[];
+    };
+}
+
+export default function DeliveryIndex({ certificates }: PageProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredCertificates = certificates.filter(
+    const filteredCertificates = certificates.data.filter(
         (c) =>
             c.firefighter?.full_name
                 .toLowerCase()
@@ -140,7 +144,8 @@ export default function DeliveryIndex({
                                             colSpan={6}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            No se encontraron actas.
+                                            No se encontraron actas en esta
+                                            página.
                                         </td>
                                     </tr>
                                 )}
@@ -148,6 +153,8 @@ export default function DeliveryIndex({
                         </table>
                     </div>
                 </div>
+
+                <Pagination links={certificates.links} />
             </div>
         </AppLayout>
     );

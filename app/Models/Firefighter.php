@@ -16,6 +16,7 @@ class Firefighter extends Model
         'full_name',
         'rut',
         'company',
+        'email',
     ];
 
     public function deliveryCertificates()
