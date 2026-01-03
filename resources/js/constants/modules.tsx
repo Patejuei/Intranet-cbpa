@@ -1,11 +1,16 @@
 import {
+    AlertTriangle,
     Battery,
     Box,
+    Clipboard,
     FileText,
     HardHat,
+    List,
     Package,
     Ticket,
+    Truck,
     Users,
+    Wrench,
 } from 'lucide-react';
 
 export type ModuleDefinition = {
@@ -73,5 +78,45 @@ export const MODULES: ModuleDefinition[] = [
         href: '/admin/firefighters',
         pattern: /^\/admin\/firefighters/,
         icon: HardHat,
+    },
+    {
+        key: 'vehicles-status',
+        title: 'Estado Material Mayor',
+        description: 'Estado y ubicación de la flota',
+        href: '/vehicles/status',
+        pattern: /^\/vehicles\/status/,
+        icon: Truck,
+    },
+    {
+        key: 'vehicles-logs',
+        title: 'Bitácoras',
+        description: 'Movimientos y combustible',
+        href: '/vehicles/logs',
+        pattern: /^\/vehicles\/logs/,
+        icon: Clipboard,
+    },
+    {
+        key: 'vehicles-incidents',
+        title: 'Incidencias',
+        description: 'Reporte de fallas y novedades',
+        href: '/vehicles/incidents',
+        pattern: /^\/vehicles\/incidents/,
+        icon: AlertTriangle,
+    },
+    {
+        key: 'vehicles-workshop',
+        title: 'Taller Mecánico',
+        description: 'Gestión de mantenciones',
+        href: '/vehicles/workshop',
+        pattern: /^\/vehicles\/workshop/,
+        icon: Wrench,
+    },
+    {
+        key: 'vehicles-inventory',
+        title: 'Inventario de Unidades',
+        description: 'Equipamiento en carros',
+        href: '/vehicles/inventory',
+        pattern: /^\/vehicles\/inventory/,
+        icon: List,
     },
 ];

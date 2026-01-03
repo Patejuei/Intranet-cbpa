@@ -17,6 +17,11 @@ const modules = [
     { id: 'equipment', label: 'Material Menor' },
     { id: 'deliveries', label: 'Actas de Entrega' },
     { id: 'firefighters', label: 'Bomberos' },
+    { id: 'vehicles', label: 'Material Mayor (General)' },
+    { id: 'vehicles.incidents', label: 'M. Mayor - Incidencias' },
+    { id: 'vehicles.logs', label: 'M. Mayor - Bitácora' },
+    { id: 'vehicles.workshop', label: 'M. Mayor - Taller' },
+    { id: 'vehicles.inventory', label: 'M. Mayor - Inventario' },
 ];
 
 const companies = [
@@ -215,14 +220,21 @@ export default function UserCreate() {
                                         <SelectValue placeholder="Seleccione un Rol" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {roles.map((role) => (
-                                            <SelectItem
-                                                key={role.value}
-                                                value={role.value}
-                                            >
-                                                {role.label}
-                                            </SelectItem>
-                                        ))}
+                                        <SelectItem value="user">
+                                            Usuario (Por Defecto)
+                                        </SelectItem>
+                                        <SelectItem value="admin">
+                                            Administrador
+                                        </SelectItem>
+                                        <SelectItem value="capitan">
+                                            Capitán
+                                        </SelectItem>
+                                        <SelectItem value="cuartelero">
+                                            Cuartelero
+                                        </SelectItem>
+                                        <SelectItem value="mechanic">
+                                            Taller Mecánico
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

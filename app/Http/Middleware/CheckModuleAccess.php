@@ -26,6 +26,11 @@ class CheckModuleAccess
             return $next($request);
         }
 
+        // Roles with implicit module access
+        if ($module === 'vehicles' && in_array($user->role, ['cuartelero', 'mechanic'])) {
+            return $next($request);
+        }
+
         // Check specific permission
         $permissions = $user->permissions ?? [];
         if (!in_array($module, $permissions)) {

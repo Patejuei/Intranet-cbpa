@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->renameColumn('title', 'subject');
-            $table->string('company')->after('user_id');
-            $table->string('image_path')->nullable()->after('status');
+            if (Schema::hasColumn('tickets', 'title') && !Schema::hasColumn('tickets', 'subject')) {
+                $table->renameColumn('title', 'subject');
+            }
+            if (!Schema::hasColumn('tickets', 'company')) {
+                $table->string('company')->after('user_id');
+            }
+            if (!Schema::hasColumn('tickets', 'image_path')) {
+                $table->string('image_path')->nullable()->after('status');
+            }
         });
     }
 

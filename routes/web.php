@@ -46,10 +46,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->get();
         }
 
+        // Material Mayor Logic
+        $vehicleQuery = \App\Models\Vehicle::query()->whereIn('status', ['Out of Service', 'Workshop']);
+        $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
+
+        if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+            $vehicleQuery->where('company', $user->company);
+            $incidentQuery->whereHas('vehicle', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
+        $vehiclesStopped = $vehicleQuery->get();
+        $pendingIncidents = $incidentQuery->take(5)->get();
+
         return Inertia::render('dashboard', [
             'upcomingBatteries' => $upcomingBatteries,
             'pendingTickets' => $pendingTickets,
             'respondedTickets' => $respondedTickets,
+            'vehiclesStopped' => $vehiclesStopped,
+            'pendingIncidents' => $pendingIncidents,
         ]);
     })->name('dashboard');
 
@@ -62,7 +78,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Material Mayor Routes
     Route::middleware('module:vehicles')->prefix('vehicles')->group(function () {
-        Route::get('/dashboard', [VehicleController::class, 'dashboard'])->name('vehicles.dashboard');
         Route::resource('status', VehicleController::class)->names('vehicles.status'); // Main vehicle CRUD/Status
         Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
         Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');

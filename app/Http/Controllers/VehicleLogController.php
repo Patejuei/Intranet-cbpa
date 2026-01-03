@@ -12,7 +12,23 @@ class VehicleLogController extends Controller
      */
     public function index()
     {
-        return Inertia::render('vehicles/logs/index');
+        $user = request()->user();
+
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest();
+
+        // If not admin/comandancia, filter logs by user's company
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
+            $logQuery->whereHas('vehicle', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
+        return Inertia::render('vehicles/logs/index', [
+            'logs' => $logQuery->paginate(15),
+            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            })->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     /**
@@ -28,7 +44,31 @@ class VehicleLogController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'start_km' => 'required|integer',
+            'end_km' => 'nullable|integer|gte:start_km',
+            'activity_type' => 'required|string',
+            'destination' => 'required|string',
+            'date' => 'required|date',
+            'fuel_liters' => 'nullable|numeric',
+            'fuel_coupon' => 'nullable|string',
+            'observations' => 'nullable|string',
+            'receipt' => 'nullable|file|image|max:2048', // 2MB max
+        ]);
+
+        $receiptPath = null;
+        if ($request->hasFile('receipt')) {
+            $receiptPath = $request->file('receipt')->store('receipts', 'public');
+        }
+
+        \App\Models\VehicleLog::create([
+            ...$validated,
+            'driver_id' => $request->user()->id,
+            'receipt_path' => $receiptPath,
+        ]);
+
+        return redirect()->back()->with('success', 'Bitácora registrada correctamente.');
     }
 
     /**

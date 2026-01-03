@@ -135,21 +135,12 @@ export function AppSidebar({ user }: { user: any }) {
                 {/* Material Mayor Group (New) */}
                 {(user.role === 'admin' ||
                     user.role === 'capitan' ||
+                    user.role === 'cuartelero' ||
+                    user.role === 'mechanic' ||
                     hasPermission('vehicles')) && (
                     <SidebarGroup>
                         <SidebarGroupLabel>Material Mayor</SidebarGroupLabel>
                         <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Dashboard M. Mayor"
-                                >
-                                    <Link href="/vehicles/dashboard">
-                                        <LayoutGrid className="text-blue-500" />
-                                        <span>Dashboard</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
@@ -161,17 +152,21 @@ export function AppSidebar({ user }: { user: any }) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Ingreso a Taller"
-                                >
-                                    <Link href="/vehicles/workshop">
-                                        <Wrench />
-                                        <span>Taller Mecánico</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            {(user.role === 'admin' ||
+                                user.role === 'capitan' ||
+                                user.role === 'mechanic') && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Ingreso a Taller"
+                                    >
+                                        <Link href="/vehicles/workshop">
+                                            <Wrench />
+                                            <span>Taller Mecánico</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
@@ -183,25 +178,36 @@ export function AppSidebar({ user }: { user: any }) {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Bitácora">
-                                    <Link href="/vehicles/logs">
-                                        <BookOpen />
-                                        <span>Bitácora</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Inventario M. Mayor"
-                                >
-                                    <Link href="/vehicles/inventory">
-                                        <ClipboardList />
-                                        <span>Inventario</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            {(user.role === 'admin' ||
+                                user.role === 'capitan' ||
+                                user.role === 'cuartelero') && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Bitácora"
+                                    >
+                                        <Link href="/vehicles/logs">
+                                            <BookOpen />
+                                            <span>Bitácora</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+                            {(user.role === 'admin' ||
+                                user.role === 'capitan' ||
+                                user.role === 'cuartelero') && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Inventario M. Mayor"
+                                    >
+                                        <Link href="/vehicles/inventory">
+                                            <ClipboardList />
+                                            <span>Inventario</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                         </SidebarMenu>
                     </SidebarGroup>
                 )}

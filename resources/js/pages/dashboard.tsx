@@ -34,10 +34,14 @@ export default function Dashboard({
     upcomingBatteries = [],
     pendingTickets = [],
     respondedTickets = [],
+    vehiclesStopped = [],
+    pendingIncidents = [],
 }: {
     upcomingBatteries?: UpcomingBattery[];
     pendingTickets?: Ticket[];
     respondedTickets?: Ticket[];
+    vehiclesStopped?: any[]; // Typed loosely here or import from index.d.ts
+    pendingIncidents?: any[];
 }) {
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
 
@@ -145,6 +149,92 @@ export default function Dashboard({
                         </div>
                     </div>
                 )}
+
+                {/* Material Mayor Widgets */}
+                <div className="grid gap-8 md:grid-cols-2">
+                    {vehiclesStopped.length > 0 && (
+                        <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-6 shadow-sm">
+                            <div className="mb-4">
+                                <h2 className="flex items-center gap-2 text-xl font-bold">
+                                    <span className="flex size-3 rounded-full bg-red-500" />
+                                    Material Fuera de Servicio
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Vehículos detenidos o en taller.
+                                </p>
+                            </div>
+                            <div className="space-y-3">
+                                {vehiclesStopped.map((vehicle) => (
+                                    <Link
+                                        key={vehicle.id}
+                                        href={`/vehicles/status/${vehicle.id}`}
+                                        className="block"
+                                    >
+                                        <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                            <div>
+                                                <p className="font-bold">
+                                                    {vehicle.name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {vehicle.company}
+                                                </p>
+                                            </div>
+                                            <div
+                                                className={`rounded px-2 py-1 text-xs font-medium ${vehicle.status === 'Out of Service' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}
+                                            >
+                                                {vehicle.status ===
+                                                'Out of Service'
+                                                    ? 'Fuera de Servicio'
+                                                    : 'En Taller'}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {pendingIncidents.length > 0 && (
+                        <div className="rounded-xl border border-l-4 border-l-orange-500 bg-card p-6 shadow-sm">
+                            <div className="mb-4">
+                                <h2 className="flex items-center gap-2 text-xl font-bold">
+                                    <span className="flex size-3 rounded-full bg-orange-500" />
+                                    Incidencias Pendientes
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Novedades reportadas sin resolver.
+                                </p>
+                            </div>
+                            <div className="space-y-3">
+                                {pendingIncidents.map((incident) => (
+                                    <Link
+                                        key={incident.id}
+                                        href={`/vehicles/incidents`} // Ideally link to specific incident or filtered view
+                                        className="block"
+                                    >
+                                        <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                            <div>
+                                                <p className="line-clamp-1 font-medium">
+                                                    {incident.vehicle.name} -{' '}
+                                                    {incident.description}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Reportado:{' '}
+                                                    {new Date(
+                                                        incident.created_at,
+                                                    ).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <div className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-700">
+                                                {incident.severity}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {upcomingBatteries.length > 0 && (
                     <div className="rounded-xl border bg-card p-6 shadow-sm">

@@ -84,7 +84,23 @@ export interface DeliveryCertificate {
     company: string;
     firefighter?: Firefighter;
     user?: User;
-    items?: DeliveryItem[];
+    delivery_items: DeliveryItem[];
     created_at: string;
     updated_at: string;
+}
+
+export interface Vehicle {
+    id: number;
+    name: string;
+    status: string;
+    company: string;
+}
+
+export interface VehicleIssue {
+    id: number;
+    description: string;
+    severity: string;
+    status: string;
+    vehicle: Vehicle;
+    created_at: string;
 }
