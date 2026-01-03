@@ -1,8 +1,8 @@
 import { MODULES, ModuleDefinition } from '@/constants/modules';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Battery, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -48,6 +48,36 @@ export default function Dashboard({
 }) {
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
 
+    const { auth } = usePage<SharedData>().props;
+
+    const hasPermission = (module: ModuleDefinition) => {
+        const user = auth.user;
+        if (!user) return false;
+
+        // Admin and Capitan see everything
+        if (user.role === 'admin' || user.role === 'capitan') {
+            return true;
+        }
+
+        // Specific Roles check for vehicles
+        if (
+            module.permission === 'vehicles' &&
+            ['cuartelero', 'mechanic'].includes(user.role || '')
+        ) {
+            return true;
+        }
+
+        // Check explicit permissions
+        const permissions = user.permissions || [];
+        const moduleKey = module.permission;
+
+        return (
+            permissions.includes(moduleKey) ||
+            permissions.includes(`${moduleKey}.view`) ||
+            permissions.includes(`${moduleKey}.edit`)
+        );
+    };
+
     useEffect(() => {
         try {
             const stored = localStorage.getItem(RECENT_MODULES_KEY);
@@ -55,13 +85,15 @@ export default function Dashboard({
                 const keys: string[] = JSON.parse(stored);
                 const modules = keys
                     .map((key) => MODULES.find((m) => m.key === key))
-                    .filter((m): m is ModuleDefinition => !!m);
+                    .filter(
+                        (m): m is ModuleDefinition => !!m && hasPermission(m),
+                    );
                 setRecent(modules);
             }
         } catch (e) {
             console.error('Error loading recent modules', e);
         }
-    }, []);
+    }, [auth.user]);
 
     const calculateDaysRemaining = (dateStr: string) => {
         const today = new Date();
@@ -407,6 +439,8 @@ export default function Dashboard({
                     <div className="grid gap-6 md:grid-cols-3">
                         {MODULES.filter((m) => !m.key.startsWith('admin-')).map(
                             (module) => {
+                                if (!hasPermission(module)) return null;
+
                                 const Icon = module.icon;
                                 return (
                                     <Link

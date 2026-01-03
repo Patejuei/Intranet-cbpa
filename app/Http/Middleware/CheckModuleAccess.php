@@ -33,10 +33,16 @@ class CheckModuleAccess
 
         // Check specific permission
         $permissions = $user->permissions ?? [];
-        if (!in_array($module, $permissions)) {
-            abort(403, 'No tienes permiso para acceder a este módulo.');
+
+        // Allow if user has exact module permission OR .view OR .edit suffix
+        if (
+            in_array($module, $permissions) ||
+            in_array($module . '.view', $permissions) ||
+            in_array($module . '.edit', $permissions)
+        ) {
+            return $next($request);
         }
 
-        return $next($request);
+        abort(403, 'No tienes permiso para acceder a este módulo.');
     }
 }

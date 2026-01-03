@@ -30,11 +30,17 @@ import {
 } from 'lucide-react'; // Added icons
 
 export function AppSidebar({ user }: { user: any }) {
-    const hasPermission = (module: string) =>
-        user.role === 'admin' ||
-        user.role === 'capitan' ||
-        (user.permissions as string[])?.includes(module + '.view') ||
-        (user.permissions as string[])?.includes(module + '.edit');
+    const hasPermission = (module: string) => {
+        if (!user) return false;
+        if (user.role === 'admin' || user.role === 'capitan') return true;
+
+        const permissions = (user.permissions as string[]) || [];
+        return (
+            permissions.includes(module) ||
+            permissions.includes(`${module}.view`) ||
+            permissions.includes(`${module}.edit`)
+        );
+    };
 
     return (
         <Sidebar collapsible="icon" variant="inset">

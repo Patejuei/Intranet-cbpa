@@ -20,6 +20,7 @@ export type ModuleDefinition = {
     href: string;
     pattern: RegExp;
     icon: any; // Lucide Icon
+    permission: string;
 };
 
 export const MODULES: ModuleDefinition[] = [
@@ -30,6 +31,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/batteries',
         pattern: /^\/batteries/,
         icon: Battery,
+        permission: 'batteries',
     },
     {
         key: 'equipment',
@@ -38,6 +40,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/equipment',
         pattern: /^\/equipment/,
         icon: Box,
+        permission: 'equipment',
     },
     {
         key: 'tickets',
@@ -46,6 +49,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/tickets',
         pattern: /^\/tickets/,
         icon: Ticket,
+        permission: 'tickets',
     },
     {
         key: 'deliveries',
@@ -54,6 +58,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/deliveries',
         pattern: /^\/deliveries/,
         icon: FileText,
+        permission: 'equipment',
     },
     {
         key: 'inventory',
@@ -62,6 +67,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/inventory',
         pattern: /^\/inventory/,
         icon: Package,
+        permission: 'equipment',
     },
     {
         key: 'reception',
@@ -70,6 +76,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/receptions',
         pattern: /^\/receptions/,
         icon: Clipboard,
+        permission: 'equipment',
     },
     {
         key: 'admin-users',
@@ -78,6 +85,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/admin/users',
         pattern: /^\/admin\/users/,
         icon: Users,
+        permission: 'admin',
     },
     {
         key: 'admin-firefighters',
@@ -86,6 +94,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/admin/firefighters',
         pattern: /^\/admin\/firefighters/,
         icon: HardHat,
+        permission: 'admin',
     },
     {
         key: 'vehicles-status',
@@ -94,6 +103,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/status',
         pattern: /^\/vehicles\/status/,
         icon: Truck,
+        permission: 'vehicles',
     },
     {
         key: 'vehicles-logs',
@@ -102,6 +112,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/logs',
         pattern: /^\/vehicles\/logs/,
         icon: Clipboard,
+        permission: 'vehicles',
     },
     {
         key: 'vehicles-incidents',
@@ -110,6 +121,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/incidents',
         pattern: /^\/vehicles\/incidents/,
         icon: AlertTriangle,
+        permission: 'vehicles',
     },
     {
         key: 'vehicles-workshop',
@@ -118,6 +130,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/workshop',
         pattern: /^\/vehicles\/workshop/,
         icon: Wrench,
+        permission: 'vehicles',
     },
     {
         key: 'vehicles-inventory',
@@ -126,5 +139,6 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/inventory',
         pattern: /^\/vehicles\/inventory/,
         icon: List,
+        permission: 'vehicles',
     },
 ];
