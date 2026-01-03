@@ -67,6 +67,11 @@ class DeliveryCertificateController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
+        // Enforce company for non-privileged users
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->company !== 'Comandancia') {
+            $validated['company'] = $user->company;
+        }
+
         DB::transaction(function () use ($validated, $request) {
             // Calculate correlative
             $lastCorrelative = DeliveryCertificate::where('company', $validated['company'])->max('correlative');

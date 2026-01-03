@@ -15,18 +15,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { Firefighter, Material } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
+import { Firefighter, Material, SharedData } from '@/types';
+import { Head, Link, useForm, usePage } from '@inertiajs/react'; // Added usePageimport { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ReceptionCreate({
@@ -36,11 +28,19 @@ export default function ReceptionCreate({
     firefighters: Firefighter[];
     materials: Material[];
 }) {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user;
+
     const { data, setData, post, processing, errors } = useForm({
         firefighter_id: '',
         date: new Date().toISOString().split('T')[0],
         observations: '',
-        company: 'Segunda Compañía',
+        company:
+            user.company === 'Comandancia' ||
+            user.role === 'admin' ||
+            user.role === 'capitan'
+                ? 'Segunda Compañía'
+                : user.company,
         items: [{ material_id: '', quantity: 1 }],
     });
 
@@ -185,48 +185,10 @@ export default function ReceptionCreate({
 
                         <div className="grid gap-2">
                             <Label htmlFor="company">Compañía</Label>
-                            <Select
+                            <CompanyField
                                 value={data.company}
-                                onValueChange={(value) =>
-                                    setData('company', value)
-                                }
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione Compañía" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Primera Compañía">
-                                        Primera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Segunda Compañía">
-                                        Segunda Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Tercera Compañía">
-                                        Tercera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Cuarta Compañía">
-                                        Cuarta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Quinta Compañía">
-                                        Quinta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Séptima Compañía">
-                                        Séptima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Octava Compañía">
-                                        Octava Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Novena Compañía">
-                                        Novena Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Décima Compañía">
-                                        Décima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Comandancia">
-                                        Comandancia
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
+                                onChange={(val) => setData('company', val)}
+                            />
                         </div>
                     </div>
 
@@ -352,5 +314,60 @@ function MaterialRow({
                 <Trash className="size-4" />
             </Button>
         </div>
+    );
+}
+
+function CompanyField({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (val: string) => void;
+}) {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user;
+
+    // Allow selection if Admin, Capitan, or Comandancia
+    const canSelect =
+        user.role === 'admin' ||
+        user.role === 'capitan' ||
+        user.company === 'Comandancia';
+
+    if (!canSelect) {
+        return (
+            <Input
+                value={value}
+                disabled
+                className="bg-muted text-muted-foreground opacity-100" // Make it readable
+            />
+        );
+    }
+
+    return (
+        <Select value={value} onValueChange={onChange}>
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccione Compañía" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Primera Compañía">
+                    Primera Compañía
+                </SelectItem>
+                <SelectItem value="Segunda Compañía">
+                    Segunda Compañía
+                </SelectItem>
+                <SelectItem value="Tercera Compañía">
+                    Tercera Compañía
+                </SelectItem>
+                <SelectItem value="Cuarta Compañía">Cuarta Compañía</SelectItem>
+                <SelectItem value="Quinta Compañía">Quinta Compañía</SelectItem>
+                <SelectItem value="Séptima Compañía">
+                    Séptima Compañía
+                </SelectItem>
+                <SelectItem value="Octava Compañía">Octava Compañía</SelectItem>
+                <SelectItem value="Novena Compañía">Novena Compañía</SelectItem>
+                <SelectItem value="Décima Compañía">Décima Compañía</SelectItem>
+                <SelectItem value="Comandancia">Comandancia</SelectItem>
+            </SelectContent>
+        </Select>
     );
 }

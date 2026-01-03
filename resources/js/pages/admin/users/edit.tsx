@@ -109,6 +109,19 @@ export default function UserEdit({
             newPermissions.push(`${moduleId}.view`, `${moduleId}.edit`);
         }
 
+        // Auto-assign dependencies
+        const equipmentDeps = ['inventory', 'deliveries', 'reception'];
+        if (equipmentDeps.includes(moduleId) && value !== 'none') {
+            const hasEquipment = newPermissions.some((p) =>
+                p.startsWith('equipment.'),
+            );
+
+            if (!hasEquipment) {
+                // Default to 'view' for equipment if not present
+                newPermissions.push('equipment.view');
+            }
+        }
+
         setData('permissions', newPermissions);
     };
 

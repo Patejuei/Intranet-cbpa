@@ -96,6 +96,30 @@ export default function UserCreate({
             newPermissions.push(`${moduleId}.view`, `${moduleId}.edit`);
         }
 
+        // Auto-assign dependencies
+        const equipmentDeps = ['inventory', 'deliveries', 'reception'];
+        if (
+            equipmentDeps.includes(moduleId) &&
+            value !== 'none' &&
+            !newPermissions.some(
+                (p) => p === 'equipment.view' || p === 'equipment.edit',
+            )
+        ) {
+            // Check if equipment is already there (it might be if user selected it manually)
+            // But we just filtered moduleId so we are safe for current module.
+            // We need to check if 'equipment' is in newPermissions.
+            // filter above only removed `moduleId`.
+            // So we check if equipment permissions exist.
+            const hasEquipment = newPermissions.some((p) =>
+                p.startsWith('equipment.'),
+            );
+
+            if (!hasEquipment) {
+                // Default to 'view' for equipment if not present
+                newPermissions.push('equipment.view');
+            }
+        }
+
         setData('permissions', newPermissions);
     };
 
