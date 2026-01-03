@@ -1,3 +1,4 @@
+import { MaterialSelector } from '@/components/MaterialSelector';
 import { Button } from '@/components/ui/button';
 import {
     Command,
@@ -310,68 +311,22 @@ function MaterialRow({
     removeItem: (index: number) => void;
     isSingle: boolean;
 }) {
-    const [openMaterial, setOpenMaterial] = useState(false);
-
     return (
         <div className="flex items-end gap-4 border-b pb-4 last:border-0 last:pb-0">
             <div className="flex flex-1 flex-col gap-2">
                 <Label>Material</Label>
-                <Popover open={openMaterial} onOpenChange={setOpenMaterial}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openMaterial}
-                            className="w-full justify-between"
-                        >
-                            {item.material_id
-                                ? materials.find(
-                                      (m) =>
-                                          m.id.toString() === item.material_id,
-                                  )?.product_name
-                                : 'Seleccione material...'}
-                            <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                            <CommandInput placeholder="Buscar material..." />
-                            <CommandList>
-                                <CommandEmpty>
-                                    No se encontró material.
-                                </CommandEmpty>
-                                <CommandGroup>
-                                    {materials.map((m) => (
-                                        <CommandItem
-                                            key={m.id}
-                                            value={m.product_name}
-                                            onSelect={() => {
-                                                updateItem(
-                                                    index,
-                                                    'material_id',
-                                                    m.id.toString(),
-                                                );
-                                                setOpenMaterial(false);
-                                            }}
-                                        >
-                                            {m.product_name} ({m.stock_quantity}{' '}
-                                            disp.)
-                                            <Check
-                                                className={cn(
-                                                    'ml-auto',
-                                                    item.material_id ===
-                                                        m.id.toString()
-                                                        ? 'opacity-100'
-                                                        : 'opacity-0',
-                                                )}
-                                            />
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <MaterialSelector
+                    materials={materials}
+                    value={
+                        item.material_id
+                            ? parseInt(item.material_id)
+                            : undefined
+                    }
+                    onChange={(val) =>
+                        updateItem(index, 'material_id', val.toString())
+                    }
+                    placeholder="Seleccione material (Nombre, Cód, o S/N)..."
+                />
             </div>
             <div className="grid w-32 gap-2">
                 <Label>Cantidad</Label>

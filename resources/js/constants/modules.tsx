@@ -64,6 +64,14 @@ export const MODULES: ModuleDefinition[] = [
         icon: Package,
     },
     {
+        key: 'reception',
+        title: 'Actas de Recepción',
+        description: 'Devolución de materiales',
+        href: '/receptions',
+        pattern: /^\/receptions/,
+        icon: Clipboard,
+    },
+    {
         key: 'admin-users',
         title: 'Gestión Usuarios',
         description: 'Administración del sistema',

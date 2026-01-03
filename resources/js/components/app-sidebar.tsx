@@ -129,6 +129,19 @@ export function AppSidebar({ user }: { user: any }) {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         )}
+                        {hasPermission('reception') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Actas de Recepción"
+                                >
+                                    <Link href="/receptions">
+                                        <ClipboardList />
+                                        <span>Actas de Recepción</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                     </SidebarMenu>
                 </SidebarGroup>
 

@@ -15,6 +15,7 @@ class Material extends Model
         'brand',
         'model',
         'code',
+        'serial_number',
         'stock_quantity',
         'company',
         'category',
@@ -23,5 +24,10 @@ class Material extends Model
     public function logs()
     {
         return $this->hasMany(EquipmentLog::class);
+    }
+
+    public function history()
+    {
+        return $this->hasMany(MaterialHistory::class)->orderBy('created_at', 'desc');
     }
 }

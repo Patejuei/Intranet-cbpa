@@ -28,6 +28,7 @@ const modules = [
     { id: 'batteries', label: 'Baterías' },
     { id: 'equipment', label: 'Material Menor' },
     { id: 'deliveries', label: 'Actas de Entrega' },
+    { id: 'reception', label: 'Actas de Recepción' },
     { id: 'firefighters', label: 'Bomberos' },
     { id: 'vehicles', label: 'Material Mayor (General)' },
     { id: 'vehicles.incidents', label: 'M. Mayor - Incidencias' },

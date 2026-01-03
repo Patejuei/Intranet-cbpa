@@ -41,7 +41,8 @@ class MaterialController extends Controller
 
         return Inertia::render('inventory/show', [
             'material' => $inventory,
-            'logs' => $inventory->logs()->with('user')->latest()->get()
+            'logs' => $inventory->logs()->with('user')->latest()->get(),
+            'history' => $inventory->history()->with('user')->get(),
         ]);
     }
 
@@ -57,6 +58,7 @@ class MaterialController extends Controller
             'brand' => 'nullable|string',
             'model' => 'nullable|string',
             'code' => 'nullable|string|unique:materials,code,' . $inventory->id,
+            'serial_number' => 'nullable|string',
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
@@ -68,7 +70,48 @@ class MaterialController extends Controller
             $validated['document_path'] = $path;
         }
 
-        $inventory->update($validated);
+        // Constraint: If Serial Number exists, Stock max is 1.
+        if (!empty($validated['serial_number']) && $validated['stock_quantity'] > 1) {
+            return redirect()->back()->withErrors(['stock_quantity' => 'Items with Serial Number must have a stock of 1 (Unique Asset).']);
+        }
+
+        $oldStock = $inventory->stock_quantity;
+        $inventory->fill($validated);
+
+        $changes = $inventory->getDirty();
+        $inventory->save();
+
+        if (array_key_exists('stock_quantity', $changes)) {
+            $newStock = $inventory->stock_quantity;
+            $diff = $newStock - $oldStock;
+
+            if ($diff !== 0) {
+                \App\Models\MaterialHistory::create([
+                    'material_id' => $inventory->id,
+                    'user_id' => $user->id,
+                    'type' => $diff > 0 ? 'ADD' : 'REMOVE',
+                    'quantity_change' => $diff,
+                    'current_balance' => $newStock,
+                    'reference_type' => null, // Manual edit
+                    'reference_id' => null,
+                    'description' => 'Ajuste Manual de Inventario',
+                ]);
+            }
+        } elseif (!empty($changes)) {
+            // Log other changes? Maybe type 'EDIT'
+            // For now, only stock changes are crucial for "history" table based on requirement.
+            // But let's add a generic EDIT record if desired.
+            \App\Models\MaterialHistory::create([
+                'material_id' => $inventory->id,
+                'user_id' => $user->id,
+                'type' => 'EDIT',
+                'quantity_change' => 0,
+                'current_balance' => $inventory->stock_quantity,
+                'reference_type' => null,
+                'reference_id' => null,
+                'description' => 'Edición de detalles: ' . implode(', ', array_keys($changes)),
+            ]);
+        }
 
         return redirect()->back();
     }
@@ -85,6 +128,7 @@ class MaterialController extends Controller
             'brand' => 'nullable|string',
             'model' => 'nullable|string',
             'code' => 'nullable|string|unique:materials',
+            'serial_number' => 'nullable|string',
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
@@ -96,8 +140,35 @@ class MaterialController extends Controller
             $validated['document_path'] = $path;
         }
 
+        // Constraint: If Serial Number exists, Stock max is 1.
+        if (!empty($validated['serial_number']) && $validated['stock_quantity'] > 1) {
+            return redirect()->back()->withErrors(['stock_quantity' => 'Items with Serial Number must have a stock of 1 (Unique Asset).']);
+        }
+
         Material::create($validated);
 
         return redirect()->back();
+    }
+
+    public function search(Request $request)
+    {
+        $code = $request->query('code');
+        if (!$code) {
+            return response()->json(null);
+        }
+
+        $user = request()->user();
+
+        // Find match by code or serial_number
+        $material = Material::where(function ($q) use ($code) {
+            $q->where('code', $code)
+                ->orWhere('serial_number', $code);
+        });
+
+        $this->applyCompanyScope($material, $request);
+
+        $material = $material->first();
+
+        return response()->json($material);
     }
 }

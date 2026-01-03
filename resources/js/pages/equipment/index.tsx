@@ -1,5 +1,7 @@
+import { MaterialSelector } from '@/components/MaterialSelector';
 import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
+import { Material } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import {
     ArrowDownCircle,
@@ -28,6 +30,7 @@ interface PageProps {
         data: Log[];
         links: any[];
     };
+    materials: Material[];
 }
 
 const CATEGORIES = [
@@ -43,7 +46,7 @@ const CATEGORIES = [
     { value: 'HAZ', label: 'Materiales Peligrosos (HAZ)' },
 ];
 
-export default function EquipmentIndex({ logs }: PageProps) {
+export default function EquipmentIndex({ logs, materials }: PageProps) {
     const [actionType, setActionType] = useState<'ALTA' | 'BAJA'>('ALTA');
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -132,6 +135,86 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                 )}
                             </div>
 
+                            {/* Smart Search Logic */}
+                            {(actionType === 'ALTA' ||
+                                actionType === 'BAJA') && (
+                                <div className="space-y-4 rounded-lg bg-muted/50 p-4">
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium">
+                                            {actionType === 'ALTA'
+                                                ? 'Buscador Inteligente (Autocompletar Alta)'
+                                                : 'Buscador Inteligente (Seleccionar Baja)'}
+                                        </label>
+                                        <MaterialSelector
+                                            materials={materials}
+                                            value={undefined} // Controlled logic via direct form update
+                                            onChange={(id: number) => {
+                                                const m = materials.find(
+                                                    (mat) => mat.id === id,
+                                                );
+                                                if (m) {
+                                                    setData((prev) => ({
+                                                        ...prev,
+                                                        item_name:
+                                                            m.product_name,
+                                                        brand: m.brand || '',
+                                                        model: m.model || '',
+                                                        category:
+                                                            m.category ||
+                                                            prev.category,
+                                                        serial_number:
+                                                            m.serial_number ||
+                                                            '',
+                                                        inventory_number:
+                                                            m.code ||
+                                                            m.serial_number ||
+                                                            '',
+                                                    }));
+                                                }
+                                            }}
+                                            placeholder="Buscar por Nombre, Código o S/N..."
+                                        />
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {actionType === 'ALTA'
+                                                ? 'Busque un material existente para sumar stock automáticamente.'
+                                                : 'Busque el material que desea dar de baja.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Manual Inventory Number (Visible for Alta for custom codes, or display for Baja) */}
+                                    <div
+                                        className={
+                                            actionType === 'BAJA'
+                                                ? 'opacity-50'
+                                                : ''
+                                        }
+                                    >
+                                        <label className="mb-1 block text-sm font-medium">
+                                            {actionType === 'ALTA'
+                                                ? 'N° Inventario (Si es Material Nuevo)'
+                                                : 'N° Inventario Seleccionado'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={data.inventory_number}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'inventory_number',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            placeholder={
+                                                actionType === 'ALTA'
+                                                    ? 'Ej: EPP-2026-001 (Opcional)'
+                                                    : 'Se rellena automáticamente...'
+                                            }
+                                            readOnly={actionType === 'BAJA'}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
@@ -144,7 +227,7 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                             setData('brand', e.target.value)
                                         }
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                        placeholder="Ej: Rosenbauer"
+                                        placeholder="Ej: Protek"
                                     />
                                 </div>
                                 <div>
@@ -158,7 +241,7 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                             setData('model', e.target.value)
                                         }
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                        placeholder="Ej: Hercul-X"
+                                        placeholder="Ej: 366"
                                     />
                                 </div>
                             </div>
@@ -207,8 +290,13 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                         setData('serial_number', e.target.value)
                                     }
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                    placeholder="Opcional - S/N del fabricante"
+                                    placeholder="Ingrese S/N si aplica (Limita stock a 1 en Alta)"
                                 />
+                                {errors.serial_number && (
+                                    <p className="mt-1 text-xs text-destructive">
+                                        {errors.serial_number}
+                                    </p>
+                                )}
                             </div>
 
                             <div>

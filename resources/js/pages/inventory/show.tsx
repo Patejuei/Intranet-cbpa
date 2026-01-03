@@ -7,10 +7,22 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Box, Download, FileText, History } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, Box, Edit, FileText, History } from 'lucide-react';
+import { useState } from 'react';
 
 interface Log {
     id: number;
@@ -25,12 +37,50 @@ interface Log {
     document_path?: string;
 }
 
+interface MaterialHistory {
+    id: number;
+    type: string; // 'INITIAL', 'ADD', 'REMOVE', 'DELIVERY', 'RECEPTION', 'MAINTENANCE', 'EDIT'
+    quantity_change: number;
+    current_balance: number;
+    description: string;
+    reference_type: string;
+    reference_id: number;
+    created_at: string;
+    user: { name: string };
+}
+
 interface PageProps {
     material: Material;
     logs: Log[];
+    history: MaterialHistory[];
 }
 
-export default function InventoryShow({ material, logs }: PageProps) {
+export default function InventoryShow({ material, logs, history }: PageProps) {
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    const {
+        data: editData,
+        setData: setEditData,
+        put,
+        processing,
+        errors,
+    } = useForm({
+        product_name: material.product_name,
+        brand: material.brand || '',
+        model: material.model || '',
+        category: material.category || '',
+        code: material.code || '',
+        stock_quantity: material.stock_quantity,
+        company: material.company,
+    });
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        put(`/inventory/${material.id}`, {
+            onSuccess: () => setIsEditOpen(false),
+        });
+    };
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -45,20 +95,152 @@ export default function InventoryShow({ material, logs }: PageProps) {
             <Head title={`Detalle: ${material.product_name}`} />
 
             <div className="flex flex-col gap-6 p-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/inventory">
-                            <ArrowLeft className="size-5" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            {material.product_name}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Detalles e Historial de Movimientos
-                        </p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/inventory">
+                                <ArrowLeft className="size-5" />
+                            </Link>
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight">
+                                {material.product_name}
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Detalles e Historial de Movimientos
+                            </p>
+                        </div>
                     </div>
+                    {/* Botón Editar */}
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="gap-2">
+                                <Edit className="size-4" /> Editar
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Editar Material</DialogTitle>
+                                <DialogDescription>
+                                    Modificar detalles del material o ajustar
+                                    stock manualmente.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form
+                                onSubmit={handleEditSubmit}
+                                className="space-y-4 py-4"
+                            >
+                                <div>
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input
+                                        id="name"
+                                        value={editData.product_name}
+                                        onChange={(e) =>
+                                            setEditData(
+                                                'product_name',
+                                                e.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {errors.product_name && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            {errors.product_name}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="brand">Marca</Label>
+                                        <Input
+                                            id="brand"
+                                            value={editData.brand}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    'brand',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="model">Modelo</Label>
+                                        <Input
+                                            id="model"
+                                            value={editData.model}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    'model',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="category">
+                                            Categoría
+                                        </Label>
+                                        <Input
+                                            id="category"
+                                            value={editData.category}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    'category',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="code">Código/N°</Label>
+                                        <Input
+                                            id="code"
+                                            value={editData.code}
+                                            onChange={(e) =>
+                                                setEditData(
+                                                    'code',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label htmlFor="stock">Stock Actual</Label>
+                                    <Input
+                                        id="stock"
+                                        type="number"
+                                        value={editData.stock_quantity}
+                                        onChange={(e) =>
+                                            setEditData(
+                                                'stock_quantity',
+                                                parseInt(e.target.value),
+                                            )
+                                        }
+                                        required
+                                    />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Ajustar el stock aquí registrará un
+                                        movimiento de edición.
+                                    </p>
+                                </div>
+                                <DialogFooter>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={() => setIsEditOpen(false)}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button type="submit" disabled={processing}>
+                                        Guardar Cambios
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
@@ -151,16 +333,16 @@ export default function InventoryShow({ material, logs }: PageProps) {
                         </CardContent>
                     </Card>
 
-                    {/* History Card */}
+                    {/* Unified History Card */}
                     <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <History className="size-5 text-primary" />
-                                Historial Específico
+                                Historial de Movimientos Unificado
                             </CardTitle>
                             <CardDescription>
-                                Movimientos registrados para este item
-                                (Altas/Bajas)
+                                Registro completo de Entregas, Recepciones y
+                                Ajustes
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -176,81 +358,130 @@ export default function InventoryShow({ material, logs }: PageProps) {
                                                     Tipo
                                                 </th>
                                                 <th className="p-3 font-medium">
-                                                    N° Inventario
+                                                    Cambio
                                                 </th>
                                                 <th className="p-3 font-medium">
-                                                    S/N Fabricante
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Detalle / Razón
+                                                    Descripción
                                                 </th>
                                                 <th className="p-3 font-medium">
                                                     Usuario
                                                 </th>
                                                 <th className="p-3 font-medium">
-                                                    Doc
+                                                    Ref
                                                 </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
-                                            {logs.length > 0 ? (
-                                                logs.map((log) => (
+                                            {history.length > 0 ? (
+                                                history.map((record) => (
                                                     <tr
-                                                        key={log.id}
+                                                        key={record.id}
                                                         className="hover:bg-muted/50"
                                                     >
                                                         <td className="p-3">
                                                             {new Date(
-                                                                log.created_at,
-                                                            ).toLocaleDateString()}
+                                                                record.created_at,
+                                                            ).toLocaleString()}
                                                         </td>
                                                         <td className="p-3">
                                                             <Badge
-                                                                variant="secondary"
+                                                                variant={
+                                                                    record.type ===
+                                                                    'DELIVERY'
+                                                                        ? 'outline'
+                                                                        : record.type ===
+                                                                            'RECEPTION'
+                                                                          ? 'outline'
+                                                                          : record.type ===
+                                                                              'ADD'
+                                                                            ? 'secondary'
+                                                                            : record.type ===
+                                                                                'REMOVE'
+                                                                              ? 'destructive'
+                                                                              : 'default'
+                                                                }
                                                                 className={
-                                                                    log.type ===
-                                                                    'ALTA'
-                                                                        ? 'bg-green-100 text-green-600'
-                                                                        : 'bg-red-100 text-red-600'
+                                                                    record.type ===
+                                                                    'DELIVERY'
+                                                                        ? 'bg-blue-50 text-blue-700'
+                                                                        : record.type ===
+                                                                            'RECEPTION'
+                                                                          ? 'bg-green-50 text-green-700'
+                                                                          : record.type ===
+                                                                              'ADD'
+                                                                            ? 'bg-green-100 text-green-700'
+                                                                            : record.type ===
+                                                                                'REMOVE'
+                                                                              ? 'bg-red-100 text-red-700'
+                                                                              : ''
                                                                 }
                                                             >
-                                                                {log.type}
+                                                                {record.type}
                                                             </Badge>
                                                         </td>
-                                                        <td className="p-3 font-mono text-xs">
-                                                            {log.inventory_number ||
-                                                                '-'}
-                                                        </td>
-                                                        <td className="p-3 font-mono text-xs">
-                                                            {log.serial_number ||
-                                                                '-'}
+                                                        <td className="p-3 font-medium">
+                                                            <span
+                                                                className={
+                                                                    record.quantity_change >
+                                                                    0
+                                                                        ? 'text-green-600'
+                                                                        : 'text-red-600'
+                                                                }
+                                                            >
+                                                                {record.quantity_change >
+                                                                0
+                                                                    ? '+'
+                                                                    : ''}
+                                                                {
+                                                                    record.quantity_change
+                                                                }
+                                                            </span>
                                                         </td>
                                                         <td
                                                             className="max-w-[200px] truncate p-3"
-                                                            title={log.reason}
+                                                            title={
+                                                                record.description
+                                                            }
                                                         >
-                                                            {log.reason || '-'}
+                                                            {record.description}
                                                         </td>
                                                         <td className="p-3 text-muted-foreground">
-                                                            {log.user.name}
+                                                            {record.user
+                                                                ?.name || '-'}
                                                         </td>
                                                         <td className="p-3">
-                                                            {log.document_path && (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-6 w-6"
-                                                                    asChild
+                                                            {record.reference_type?.includes(
+                                                                'DeliveryCertificate',
+                                                            ) && (
+                                                                <Link
+                                                                    href={`/deliveries/${record.reference_id}`}
+                                                                    className="text-blue-500 hover:underline"
                                                                 >
-                                                                    <a
-                                                                        href={`/storage/${log.document_path}`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        title="Ver Documento"
-                                                                    >
-                                                                        <Download className="size-3" />
-                                                                    </a>
-                                                                </Button>
+                                                                    Acta #
+                                                                    {
+                                                                        record.reference_id
+                                                                    }
+                                                                </Link>
+                                                            )}
+                                                            {record.reference_type?.includes(
+                                                                'ReceptionCertificate',
+                                                            ) && (
+                                                                <Link
+                                                                    href={`/receptions/${record.reference_id}`}
+                                                                    className="text-blue-500 hover:underline"
+                                                                >
+                                                                    Acta #
+                                                                    {
+                                                                        record.reference_id
+                                                                    }
+                                                                </Link>
+                                                            )}
+                                                            {record.reference_type?.includes(
+                                                                'EquipmentLog',
+                                                            ) && (
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    Manual
+                                                                </span>
                                                             )}
                                                         </td>
                                                     </tr>
@@ -258,12 +489,11 @@ export default function InventoryShow({ material, logs }: PageProps) {
                                             ) : (
                                                 <tr>
                                                     <td
-                                                        colSpan={7}
+                                                        colSpan={6}
                                                         className="p-8 text-center text-muted-foreground"
                                                     >
-                                                        No hay movimientos
-                                                        registrados vinculados a
-                                                        este material.
+                                                        No hay historial
+                                                        unificado disponible.
                                                     </td>
                                                 </tr>
                                             )}

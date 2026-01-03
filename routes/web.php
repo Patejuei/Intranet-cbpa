@@ -102,9 +102,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Inventory & Deliveries (Protected by equipment permission for now, or just auth?)
     // Assuming users with 'equipment' permission can manage inventory and deliveries
     Route::middleware('module:equipment')->group(function () {
+        Route::get('inventory/search', [\App\Http\Controllers\MaterialController::class, 'search'])->name('inventory.search');
         Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show']);
         Route::resource('deliveries', \App\Http\Controllers\DeliveryCertificateController::class);
         Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
+        Route::resource('receptions', \App\Http\Controllers\ReceptionCertificateController::class);
+        Route::get('receptions/{reception}/pdf', [\App\Http\Controllers\ReceptionCertificateController::class, 'downloadPdf'])->name('receptions.pdf');
     });
 });
 

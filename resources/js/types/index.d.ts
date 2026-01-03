@@ -61,6 +61,7 @@ export interface Material {
     brand: string | null;
     model: string | null;
     code: string | null;
+    serial_number?: string | null;
     stock_quantity: number;
     company: string;
     category: string | null;
@@ -104,4 +105,27 @@ export interface VehicleIssue {
     status: string;
     vehicle: Vehicle;
     created_at: string;
+}
+
+export interface ReceptionItem {
+    id: number;
+    material_id: number;
+    quantity: number;
+    material?: Material;
+}
+
+export interface ReceptionCertificate {
+    id: number;
+    firefighter_id: number;
+    user_id: number;
+    date: string;
+    observations: string | null;
+    company: string;
+    correlative: number;
+    firefighter?: Firefighter;
+    user?: User;
+    reception_items?: ReceptionItem[]; // Note: relationship is often 'items' in Model but checks what Controller returns
+    items?: ReceptionItem[]; // Controller returns 'items'
+    created_at: string;
+    updated_at: string;
 }

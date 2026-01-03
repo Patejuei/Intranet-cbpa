@@ -91,6 +91,18 @@ class DeliveryCertificateController extends Controller
                 // Decrement stock
                 $material = Material::findOrFail($item['material_id']);
                 $material->decrement('stock_quantity', $item['quantity']);
+
+                // Create Material History
+                \App\Models\MaterialHistory::create([
+                    'material_id' => $material->id,
+                    'user_id' => $request->user()->id,
+                    'type' => 'DELIVERY',
+                    'quantity_change' => -$item['quantity'],
+                    'current_balance' => $material->stock_quantity, // Decremented value
+                    'reference_type' => DeliveryCertificate::class,
+                    'reference_id' => $certificate->id,
+                    'description' => 'Entrega Acta #' . $certificate->id,
+                ]);
             }
         });
 
