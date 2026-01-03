@@ -38,7 +38,7 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         vehicle_id: '',
         entry_date: new Date().toISOString().split('T')[0],
         tentative_exit_date: '',
-        workshop_name: '',
+        workshop_name: 'Nemesio Vicuña 275, Puente Alto',
         description: '',
         tasks: [] as string[],
         issue_ids: [] as number[],
@@ -127,13 +127,8 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                         <Label>Taller / Lugar</Label>
                                         <Input
                                             value={data.workshop_name}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'workshop_name',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="Ej: Taller Central, Mecánico JS"
+                                            readOnly
+                                            className="bg-muted text-muted-foreground"
                                         />
                                         {errors.workshop_name && (
                                             <p className="text-sm text-destructive">

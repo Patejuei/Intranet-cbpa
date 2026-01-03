@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
 import { Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -188,9 +189,7 @@ export default function TicketIndex({ tickets }: PageProps) {
                                                 {ticket.user.name}
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
-                                                {new Date(
-                                                    ticket.created_at,
-                                                ).toLocaleDateString()}
+                                                {formatDate(ticket.created_at)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link

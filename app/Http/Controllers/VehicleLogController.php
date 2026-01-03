@@ -61,7 +61,7 @@ class VehicleLogController extends Controller
             'fuel_liters' => 'nullable|numeric',
             'fuel_coupon' => 'nullable|string',
             'observations' => 'nullable|string',
-            'receipt' => 'nullable|file|image|max:2048', // 2MB max
+            'receipt' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:5120', // 5MB max
         ]);
 
         $receiptPath = null;

@@ -1,5 +1,6 @@
 import { MODULES, ModuleDefinition } from '@/constants/modules';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Battery, Clock } from 'lucide-react';
@@ -103,9 +104,7 @@ export default function Dashboard({
                                             </p>
                                         </div>
                                         <div className="font-mono text-xs text-muted-foreground">
-                                            {new Date(
-                                                ticket.created_at,
-                                            ).toLocaleDateString()}
+                                            {formatDate(ticket.created_at)}
                                         </div>
                                     </div>
                                 </Link>
@@ -222,9 +221,9 @@ export default function Dashboard({
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
                                                     Reportado:{' '}
-                                                    {new Date(
+                                                    {formatDate(
                                                         incident.created_at,
-                                                    ).toLocaleDateString()}
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-700">
@@ -288,9 +287,9 @@ export default function Dashboard({
                                             {maintenance?.entry_date && (
                                                 <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
                                                     Ingreso:{' '}
-                                                    {new Date(
+                                                    {formatDate(
                                                         maintenance.entry_date,
-                                                    ).toLocaleDateString()}
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -336,9 +335,9 @@ export default function Dashboard({
                                         return (
                                             <tr key={battery.id}>
                                                 <td className="py-3">
-                                                    {new Date(
+                                                    {formatDate(
                                                         battery.next_change_date,
-                                                    ).toLocaleDateString()}
+                                                    )}
                                                 </td>
                                                 <td className="py-3">
                                                     <span

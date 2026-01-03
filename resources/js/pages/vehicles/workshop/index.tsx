@@ -18,6 +18,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, Link, router, usePage } from '@inertiajs/react'; // Add router
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -204,10 +205,14 @@ export default function VehicleWorkshop() {
                                                 {m.workshop_name}
                                             </TableCell>
                                             <TableCell>
-                                                {m.entry_date}
+                                                {formatDate(m.entry_date)}
                                             </TableCell>
                                             <TableCell>
-                                                {m.tentative_exit_date || '-'}
+                                                {m.tentative_exit_date
+                                                    ? formatDate(
+                                                          m.tentative_exit_date,
+                                                      )
+                                                    : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

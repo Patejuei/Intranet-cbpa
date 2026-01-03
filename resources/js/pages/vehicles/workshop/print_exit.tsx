@@ -1,4 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/utils';
 import { Head } from '@inertiajs/react';
+import { Printer } from 'lucide-react';
 
 interface Task {
     id: number;
@@ -11,6 +14,8 @@ interface Issue {
     id: number;
     description: string;
     status: string;
+    date?: string;
+    severity?: string;
 }
 
 interface Maintenance {
@@ -36,198 +41,189 @@ export default function MaintenanceExitPrint({
 }: {
     maintenance: Maintenance;
 }) {
-    const totalCost = maintenance.tasks.reduce(
-        (sum, t) => sum + (Number(t.cost) || 0),
-        0,
-    );
-
-    // Trigger print dialog on load
-    if (typeof window !== 'undefined') {
-        setTimeout(() => {
-            window.print();
-        }, 500);
-    }
-
     return (
-        <div className="bg-white p-8 text-black print:p-0">
-            <Head title={`Orden Salida #${maintenance.id}`} />
+        <div className="min-h-screen bg-white p-8 text-black">
+            <Head title={`Orden de Salida #${maintenance.id}`} />
 
-            <div className="mb-8 flex items-center justify-between border-b pb-4">
-                <div className="flex items-center gap-4">
-                    <img
-                        src="/images/logo_cbpa.png"
-                        alt="Logo CBPA"
-                        className="h-16 w-16 object-contain"
-                    />
-                    <div>
-                        <h1 className="text-xl font-bold uppercase">
-                            Cuerpo de Bomberos de Puente Alto
-                        </h1>
-                        <h2 className="text-sm text-gray-600">
-                            Comandancia - Departamento de Material Mayor
-                        </h2>
+            {/* Print Button - Hidden on Print */}
+            <div className="mb-8 flex justify-end print:hidden">
+                <Button onClick={() => window.print()}>
+                    <Printer className="mr-2 size-4" /> Imprimir Documento
+                </Button>
+            </div>
+
+            {/* Document Content */}
+            <div className="mx-auto max-w-4xl space-y-8 border-2 border-slate-900 p-8 print:border-none print:p-0">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6">
+                    <div className="flex items-center gap-4">
+                        <img
+                            src="/images/cbpa_logo.jpg"
+                            alt="Logo CBPA"
+                            className="h-16 w-16 object-contain"
+                        />
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-wider uppercase">
+                                Cuerpo de Bomberos Puente Alto
+                            </h1>
+                            <h2 className="text-lg font-semibold text-slate-700 uppercase">
+                                Depto. Material Mayor
+                            </h2>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <h3 className="text-xl font-bold">ORDEN DE SALIDA</h3>
+                        <p className="font-mono text-lg">
+                            #{String(maintenance.id).padStart(6, '0')}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                            {formatDate(new Date().toISOString())}
+                        </p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <h3 className="text-2xl font-bold">ORDEN DE SALIDA</h3>
-                    <p className="text-lg text-gray-500">#{maintenance.id}</p>
-                </div>
-            </div>
 
-            <div className="mb-6 grid grid-cols-2 gap-x-8 gap-y-4">
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Vehículo
-                    </span>
-                    <span className="text-lg font-medium">
-                        {maintenance.vehicle.name} ({maintenance.vehicle.plate})
-                    </span>
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Unidad / Carro
+                        </span>
+                        <p className="text-lg font-semibold uppercase">
+                            {maintenance.vehicle.name}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Compañía
+                        </span>
+                        <p className="text-lg font-semibold uppercase">
+                            {maintenance.vehicle.company}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Patente
+                        </span>
+                        <p className="text-lg font-semibold uppercase">
+                            {maintenance.vehicle.plate || 'N/A'}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Taller Responsable
+                        </span>
+                        <p className="text-lg font-semibold uppercase">
+                            {maintenance.workshop_name}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Fecha Ingreso
+                        </span>
+                        <p className="text-lg font-semibold">
+                            {formatDate(maintenance.entry_date)}
+                        </p>
+                    </div>
+                    <div>
+                        <span className="block text-xs font-bold text-slate-500 uppercase">
+                            Fecha Salida
+                        </span>
+                        <p className="text-lg font-semibold">
+                            {maintenance.exit_date
+                                ? formatDate(maintenance.exit_date)
+                                : 'Pendiente'}
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Compañía
-                    </span>
-                    <span className="text-lg font-medium">
-                        {maintenance.vehicle.company}
-                    </span>
-                </div>
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Modelo
-                    </span>
-                    <span className="text-base">
-                        {maintenance.vehicle.make} {maintenance.vehicle.model}
-                    </span>
-                </div>
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Taller Responsable
-                    </span>
-                    <span className="text-base">
-                        {maintenance.workshop_name}
-                    </span>
-                </div>
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Fecha Ingreso
-                    </span>
-                    <span className="text-base">{maintenance.entry_date}</span>
-                </div>
-                <div>
-                    <span className="block text-xs font-bold text-gray-500 uppercase">
-                        Fecha Salida / Término
-                    </span>
-                    <span className="rounded bg-gray-100 px-2 py-1 text-base font-bold">
-                        {maintenance.exit_date || 'Pendiente'}
-                    </span>
-                </div>
-            </div>
 
-            <div className="mb-6">
-                <h4 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold text-gray-700 uppercase">
-                    Resumen de Trabajos Realizados
-                </h4>
+                {/* Issues List - Resolved */}
+                {maintenance.issues.some((i) => i.status === 'Resolved') && (
+                    <div>
+                        <div className="mb-2 border-b border-slate-300 pb-1">
+                            <span className="text-sm font-bold text-slate-900 uppercase">
+                                Incidencias Resueltas
+                            </span>
+                        </div>
+                        <ul className="list-inside list-disc space-y-1 text-sm">
+                            {maintenance.issues
+                                .filter((i) => i.status === 'Resolved')
+                                .map((issue) => (
+                                    <li key={issue.id}>
+                                        {issue.description}{' '}
+                                        <span className="text-xs font-bold text-green-600 uppercase">
+                                            (Resuelto)
+                                        </span>
+                                    </li>
+                                ))}
+                        </ul>
+                    </div>
+                )}
 
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b">
-                            <th className="py-2 text-left">Descripción</th>
-                            <th className="w-24 py-2 text-center">Estado</th>
-                            <th className="w-32 py-2 text-right">
-                                Costo (CLP)
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {maintenance.tasks.map((task) => (
-                            <tr
-                                key={task.id}
-                                className="border-b border-gray-100"
-                            >
-                                <td className="py-2">{task.description}</td>
-                                <td className="py-2 text-center">
-                                    {task.is_completed
-                                        ? 'Realizado'
-                                        : 'Pendiente/No Realizado'}
-                                </td>
-                                <td className="py-2 text-right">
-                                    {task.cost
-                                        ? `$${Number(task.cost).toLocaleString('es-CL')}`
-                                        : '-'}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                    <tfoot>
-                        <tr className="border-t-2 border-black text-lg font-bold">
-                            <td colSpan={2} className="py-3 text-right">
-                                COSTO TOTAL:
-                            </td>
-                            <td className="py-3 text-right">
-                                ${totalCost.toLocaleString('es-CL')}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                {/* Tasks List - Completed */}
+                {maintenance.tasks.length > 0 && (
+                    <div>
+                        <div className="mb-2 border-b border-slate-300 pb-1">
+                            <span className="text-sm font-bold text-slate-900 uppercase">
+                                Trabajos Realizados
+                            </span>
+                        </div>
+                        <ul className="list-inside list-disc space-y-1 text-sm">
+                            {maintenance.tasks.map((task) => (
+                                <li key={task.id}>
+                                    {task.description}{' '}
+                                    <span
+                                        className={`text-xs font-bold uppercase ${
+                                            task.is_completed
+                                                ? 'text-green-600'
+                                                : 'text-slate-400'
+                                        }`}
+                                    >
+                                        (
+                                        {task.is_completed
+                                            ? 'Realizado'
+                                            : 'No Realizado'}
+                                        )
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
 
-            <div className="mb-6">
-                <h4 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold text-gray-700 uppercase">
-                    Incidencias Resueltas
-                </h4>
-                <ul className="list-disc pl-5 text-sm">
-                    {maintenance.issues
-                        .filter((i) => i.status === 'Resolved')
-                        .map((issue) => (
-                            <li key={issue.id} className="mb-1">
-                                {issue.description}{' '}
-                                <span className="font-bold text-green-600">
-                                    (Resuelto)
-                                </span>
-                            </li>
-                        ))}
-                    {maintenance.issues
-                        .filter((i) => i.status !== 'Resolved')
-                        .map((issue) => (
-                            <li key={issue.id} className="mb-1 text-gray-400">
-                                {issue.description} (Pendiente)
-                            </li>
-                        ))}
-                    {maintenance.issues.length === 0 && (
-                        <li className="text-gray-500 italic">
-                            No se vincularon incidencias específicas.
-                        </li>
-                    )}
-                </ul>
-            </div>
-
-            <div className="mb-6 border p-4 text-xs text-gray-600">
-                <span className="font-bold">Observaciones Finales:</span>
-                <p className="mt-1">
-                    {maintenance.description || 'Sin observaciones.'}
-                </p>
-            </div>
-
-            <div className="mt-12 flex justify-between gap-8 pt-8">
-                <div className="flex-1 border-t border-black pt-2 text-center text-sm">
-                    <p className="font-bold">Firma Mecánico Jefe</p>
-                    <p className="text-xs text-gray-500">
-                        Aceptación de Trabajos
+                {/* Description / Works */}
+                <div className="min-h-[200px] rounded border border-slate-300 p-4">
+                    <span className="mb-2 block text-sm font-bold text-slate-700 uppercase">
+                        Observaciones Finales
+                    </span>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {maintenance.description || 'Sin observaciones.'}
                     </p>
                 </div>
-                <div className="flex-1 border-t border-black pt-2 text-center text-sm">
-                    <p className="font-bold">Firma Maquinista / Receptor</p>
-                    <p className="text-xs text-gray-500">
-                        Conformidad de Entrega
-                    </p>
-                </div>
-            </div>
 
-            <div className="mt-8 text-center text-[10px] text-gray-400">
-                Departamento de Material Mayor - Cuerpo de Bomberos de Puente
-                Alto
-                <br />
-                Generado el {new Date().toLocaleDateString('es-CL')}
+                {/* Signatures */}
+                <div className="mt-12 grid grid-cols-2 gap-16 pt-12">
+                    <div className="border-t border-slate-900 pt-2 text-center">
+                        <p className="text-sm font-bold uppercase">
+                            Firma Mecánico Jefe
+                        </p>
+                        <p className="text-xs text-slate-500">
+                            (Aceptación de Trabajos)
+                        </p>
+                    </div>
+                    <div className="border-t border-slate-900 pt-2 text-center">
+                        <p className="text-sm font-bold uppercase">
+                            Firma Maquinista / Receptor
+                        </p>
+                        <p className="text-xs text-slate-500">
+                            (Conformidad de Entrega)
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-auto border-t text-center text-xs text-slate-400">
+                    <p>Generado automáticmente por Intranet CBPA</p>
+                </div>
             </div>
         </div>
     );

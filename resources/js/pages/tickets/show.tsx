@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Paperclip, Send, User } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -181,7 +182,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                                 {ticket.user.name}
                             </span>{' '}
                             ({ticket.company}) el{' '}
-                            {new Date(ticket.created_at).toLocaleDateString()}
+                            {formatDate(ticket.created_at)}
                         </p>
                     </div>
 

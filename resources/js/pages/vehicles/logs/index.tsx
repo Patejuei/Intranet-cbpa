@@ -20,6 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 
@@ -407,7 +408,7 @@ export default function VehicleLogs({
                                                     className="border-b hover:bg-muted/50"
                                                 >
                                                     <td className="p-4">
-                                                        {log.date}
+                                                        {formatDate(log.date)}
                                                     </td>
                                                     <td className="p-4 font-medium">
                                                         {log.vehicle.name}

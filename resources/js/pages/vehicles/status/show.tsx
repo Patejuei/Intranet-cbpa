@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -250,12 +251,10 @@ export default function VehicleShow({
                                     <div className="mt-2 flex gap-2 text-xs text-red-700">
                                         <Calendar className="h-3 w-3" />{' '}
                                         {activeIssue.date
-                                            ? new Date(
-                                                  activeIssue.date,
-                                              ).toLocaleDateString()
-                                            : new Date(
+                                            ? formatDate(activeIssue.date)
+                                            : formatDate(
                                                   activeIssue.created_at,
-                                              ).toLocaleDateString()}
+                                              )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -291,9 +290,9 @@ export default function VehicleShow({
                                             <div className="mt-1 flex gap-2 text-xs text-yellow-700">
                                                 <Calendar className="h-3 w-3" />{' '}
                                                 Ingreso:{' '}
-                                                {new Date(
+                                                {formatDate(
                                                     activeMaintenance.entry_date,
-                                                ).toLocaleDateString()}
+                                                )}
                                             </div>
                                         </div>
 
@@ -426,9 +425,7 @@ export default function VehicleShow({
                                                 className="border-b transition-colors hover:bg-muted/20"
                                             >
                                                 <td className="p-2 py-3">
-                                                    {new Date(
-                                                        m.entry_date,
-                                                    ).toLocaleDateString()}
+                                                    {formatDate(m.entry_date)}
                                                 </td>
                                                 <td className="p-2 py-3">
                                                     {m.workshop_name}

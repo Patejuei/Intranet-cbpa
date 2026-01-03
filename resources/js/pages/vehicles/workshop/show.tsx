@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
+import { formatDate } from '@/lib/utils';
 import { Head, useForm } from '@inertiajs/react';
 import {
     Calendar,
@@ -266,7 +267,7 @@ export default function WorkshopShow({
                                     <Label>Fecha de Ingreso</Label>
                                     <div className="flex items-center gap-2 rounded border bg-muted/50 p-2 text-sm">
                                         <Calendar className="h-4 w-4" />
-                                        {maintenance.entry_date}
+                                        {formatDate(maintenance.entry_date)}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -333,7 +334,7 @@ export default function WorkshopShow({
                                                 </p>
                                                 <div className="mt-1 flex items-center justify-between">
                                                     <span className="text-xs text-muted-foreground">
-                                                        {issue.date}
+                                                        {formatDate(issue.date)}
                                                     </span>
                                                     <Badge
                                                         variant={

@@ -151,7 +151,7 @@ class VehicleMaintenanceController extends Controller
 
     public function print(\App\Models\VehicleMaintenance $maintenance)
     {
-        $maintenance->load(['vehicle', 'issues']);
+        $maintenance->load(['vehicle', 'issues', 'tasks']);
         return Inertia::render('vehicles/workshop/print', [
             'maintenance' => $maintenance
         ]);

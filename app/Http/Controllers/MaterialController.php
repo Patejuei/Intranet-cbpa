@@ -73,7 +73,7 @@ class MaterialController extends Controller
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
-            'document_path' => 'nullable|file|max:10240',
+            'document_path' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
         ]);
 
         if ($request->hasFile('document_path')) {
@@ -143,7 +143,7 @@ class MaterialController extends Controller
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
-            'document_path' => 'nullable|file|max:10240', // Max 10MB
+            'document_path' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240', // Max 10MB
         ]);
 
         if ($request->hasFile('document_path')) {

@@ -45,7 +45,7 @@ class TicketController extends Controller
             'subject' => 'required|string|max:255',
             'priority' => 'required|in:BAJA,MEDIA,ALTA',
             'message' => 'required|string',
-            'image' => 'nullable|image|max:10240',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
         ]);
 
         $ticket = Ticket::create([
@@ -108,7 +108,7 @@ class TicketController extends Controller
 
         $validated = $request->validate([
             'message' => 'required|string',
-            'image' => 'nullable|image|max:10240',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
         ]);
 
         $imagePath = null;

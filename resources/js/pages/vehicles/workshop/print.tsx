@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/utils';
 import { Head } from '@inertiajs/react';
-import { Printer, Shield } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 interface Issue {
     id: number;
@@ -21,6 +22,7 @@ interface Maintenance {
         company: string;
         plate: string;
     };
+    tasks: { description: string }[];
     issues: Issue[];
 }
 
@@ -45,7 +47,11 @@ export default function WorkshopPrint({
                 {/* Header */}
                 <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6">
                     <div className="flex items-center gap-4">
-                        <Shield className="size-16 text-slate-900" />
+                        <img
+                            src="/images/cbpa_logo.jpg"
+                            alt="Logo CBPA"
+                            className="h-16 w-16 object-contain"
+                        />
                         <div>
                             <h1 className="text-2xl font-bold tracking-wider uppercase">
                                 Cuerpo de Bomberos Puente Alto
@@ -61,7 +67,7 @@ export default function WorkshopPrint({
                             #{String(maintenance.id).padStart(6, '0')}
                         </p>
                         <p className="text-sm text-slate-600">
-                            {new Date().toLocaleDateString()}
+                            {formatDate(new Date().toISOString())}
                         </p>
                     </div>
                 </div>
@@ -105,7 +111,7 @@ export default function WorkshopPrint({
                             Fecha Ingreso
                         </span>
                         <p className="text-lg font-semibold">
-                            {maintenance.entry_date}
+                            {formatDate(maintenance.entry_date)}
                         </p>
                     </div>
                     <div>
@@ -113,7 +119,9 @@ export default function WorkshopPrint({
                             Fecha Tentativa Salida
                         </span>
                         <p className="text-lg font-semibold">
-                            {maintenance.tentative_exit_date || '--/--/----'}
+                            {maintenance.tentative_exit_date
+                                ? formatDate(maintenance.tentative_exit_date)
+                                : '--/--/----'}
                         </p>
                     </div>
                 </div>
@@ -123,17 +131,33 @@ export default function WorkshopPrint({
                     <div>
                         <div className="mb-2 border-b border-slate-300 pb-1">
                             <span className="text-sm font-bold text-slate-900 uppercase">
-                                Incidencias Reportadas (Asociadas)
+                                Incidencias a Reparar
                             </span>
                         </div>
                         <ul className="list-inside list-disc space-y-1 text-sm">
                             {maintenance.issues.map((issue) => (
                                 <li key={issue.id}>
                                     <span className="font-semibold">
-                                        {issue.date}:
+                                        {formatDate(issue.date)}:
                                     </span>{' '}
                                     {issue.description} ({issue.severity})
                                 </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Tasks List */}
+                {maintenance.tasks && maintenance.tasks.length > 0 && (
+                    <div>
+                        <div className="mb-2 border-b border-slate-300 pb-1">
+                            <span className="text-sm font-bold text-slate-900 uppercase">
+                                Trabajos a Realizar
+                            </span>
+                        </div>
+                        <ul className="list-inside list-disc space-y-1 text-sm">
+                            {maintenance.tasks.map((task, idx) => (
+                                <li key={idx}>{task.description}</li>
                             ))}
                         </ul>
                     </div>
