@@ -27,7 +27,25 @@ class MaterialController extends Controller
         ]);
     }
 
-    public function update(Request $request, Material $material)
+    public function show(Material $inventory)
+    {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('inventory.view', $user->permissions ?? [])) {
+            abort(403);
+        }
+
+        // Ensure user can view this company's material
+        if ($user->role !== 'admin' && $user->company !== $inventory->company) {
+            abort(403);
+        }
+
+        return Inertia::render('inventory/show', [
+            'material' => $inventory,
+            'logs' => $inventory->logs()->with('user')->latest()->get()
+        ]);
+    }
+
+    public function update(Request $request, Material $inventory)
     {
         $user = request()->user();
         if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('inventory.edit', $user->permissions ?? [])) {
@@ -38,7 +56,7 @@ class MaterialController extends Controller
             'product_name' => 'required|string',
             'brand' => 'nullable|string',
             'model' => 'nullable|string',
-            'code' => 'nullable|string|unique:materials,code,' . $material->id,
+            'code' => 'nullable|string|unique:materials,code,' . $inventory->id,
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
@@ -50,7 +68,7 @@ class MaterialController extends Controller
             $validated['document_path'] = $path;
         }
 
-        $material->update($validated);
+        $inventory->update($validated);
 
         return redirect()->back();
     }

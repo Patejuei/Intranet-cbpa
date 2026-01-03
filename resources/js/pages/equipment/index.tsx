@@ -14,6 +14,8 @@ interface Log {
     id: number;
     item_name: string;
     serial_number: string;
+    inventory_number: string;
+    category: string;
     type: string;
     reason: string;
     status: string;
@@ -28,6 +30,19 @@ interface PageProps {
     };
 }
 
+const CATEGORIES = [
+    { value: 'EPP', label: 'Equipos de Protección Personal (EPP)' },
+    { value: 'EXT', label: 'Material de Extinción (EXT)' },
+    { value: 'RES', label: 'Herramientas de Rescate (RES)' },
+    { value: 'MED', label: 'Material Médico (MED)' },
+    { value: 'TEL', label: 'Telecomunicaciones (TEL)' },
+    { value: 'EFO', label: 'Entrada Forzada (EFO)' },
+    { value: 'ESC', label: 'Escalas (ESC)' },
+    { value: 'VEN', label: 'Ventilación (VEN)' },
+    { value: 'REL', label: 'Riesgos Eléctricos (REL)' },
+    { value: 'HAZ', label: 'Materiales Peligrosos (HAZ)' },
+];
+
 export default function EquipmentIndex({ logs }: PageProps) {
     const [actionType, setActionType] = useState<'ALTA' | 'BAJA'>('ALTA');
 
@@ -36,9 +51,11 @@ export default function EquipmentIndex({ logs }: PageProps) {
         brand: '',
         model: '',
         serial_number: '',
-        type: 'ALTA', // Will be updated by effect or click
+        inventory_number: '', // Not used in form, but part of Log
+        category: '',
+        type: 'ALTA',
         reason: '',
-        status: 'PENDIENTE',
+        status: '', // Removed default PENDIENTE
         document: null as File | null,
     });
 
@@ -146,9 +163,42 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                 </div>
                             </div>
 
+                            {actionType === 'ALTA' && (
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
+                                        Categoría
+                                    </label>
+                                    <select
+                                        value={data.category}
+                                        onChange={(e) =>
+                                            setData('category', e.target.value)
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        required
+                                    >
+                                        <option value="">
+                                            Seleccione Categoría
+                                        </option>
+                                        {CATEGORIES.map((cat) => (
+                                            <option
+                                                key={cat.value}
+                                                value={cat.value}
+                                            >
+                                                {cat.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.category && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.category}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div>
                                 <label className="mb-1 block text-sm font-medium">
-                                    Número de Serie / Inventario
+                                    Número de Serie (Fabricante)
                                 </label>
                                 <input
                                     type="text"
@@ -157,7 +207,7 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                         setData('serial_number', e.target.value)
                                     }
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                                    placeholder="Opcional"
+                                    placeholder="Opcional - S/N del fabricante"
                                 />
                             </div>
 
@@ -232,9 +282,18 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                             className="rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
                                         >
                                             <div className="mb-1 flex items-start justify-between">
-                                                <span className="font-semibold">
-                                                    {log.item_name}
-                                                </span>
+                                                <div>
+                                                    <span className="block font-semibold">
+                                                        {log.item_name}
+                                                    </span>
+                                                    {log.inventory_number && (
+                                                        <span className="rounded border bg-background px-1.5 py-0.5 font-mono text-xs">
+                                                            {
+                                                                log.inventory_number
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span
                                                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                                         log.type === 'ALTA'
@@ -251,7 +310,7 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                                         S/N: {log.serial_number}
                                                     </span>
                                                 )}
-                                                Recorded by {log.user.name}
+                                                Por: {log.user.name}
                                             </p>
                                             {log.reason && (
                                                 <p className="border-l-2 border-primary/30 pl-2 text-sm italic">
@@ -263,9 +322,6 @@ export default function EquipmentIndex({ logs }: PageProps) {
                                                     {new Date(
                                                         log.created_at,
                                                     ).toLocaleString()}
-                                                </span>
-                                                <span className="text-xs font-medium text-muted-foreground uppercase">
-                                                    {log.status}
                                                 </span>
                                             </div>
                                         </div>

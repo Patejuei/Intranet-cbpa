@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Search } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Eye, FileText, Pencil, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
@@ -145,7 +145,7 @@ export default function InventoryIndex({ materials }: PageProps) {
                             <thead className="bg-muted/50 text-muted-foreground">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">
-                                        Código
+                                        Cód / N° Inv
                                     </th>
                                     <th className="px-4 py-3 font-medium">
                                         Producto
@@ -174,7 +174,7 @@ export default function InventoryIndex({ materials }: PageProps) {
                                             key={material.id}
                                             className="hover:bg-muted/30"
                                         >
-                                            <td className="px-4 py-3 text-muted-foreground">
+                                            <td className="px-4 py-3 font-mono text-muted-foreground">
                                                 {material.code || '-'}
                                             </td>
                                             <td className="px-4 py-3 font-medium">
@@ -204,15 +204,40 @@ export default function InventoryIndex({ materials }: PageProps) {
                                                 {material.company}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() =>
-                                                        openEdit(material)
-                                                    }
-                                                >
-                                                    <Pencil className="size-4" />
-                                                </Button>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        asChild
+                                                        title="Ver Detalle"
+                                                    >
+                                                        <Link
+                                                            href={`/inventory/${material.id}`}
+                                                        >
+                                                            <Eye className="size-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    {material.document_path && (
+                                                        <a
+                                                            href={`/storage/${material.document_path}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                            title="Ver Documento"
+                                                        >
+                                                            <FileText className="size-4" />
+                                                        </a>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            openEdit(material)
+                                                        }
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

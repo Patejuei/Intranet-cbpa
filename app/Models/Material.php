@@ -20,4 +20,8 @@ class Material extends Model
         'category',
         'document_path',
     ];
+    public function logs()
+    {
+        return $this->hasMany(EquipmentLog::class);
+    }
 }
