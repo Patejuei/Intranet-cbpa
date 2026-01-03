@@ -22,8 +22,19 @@ class MaterialController extends Controller
         $query = Material::query();
         $this->applyCompanyScope($query, request());
 
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%")
+                    ->orWhere('model', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
         return Inertia::render('inventory/index', [
-            'materials' => $query->orderBy('product_name')->paginate(10)
+            'materials' => $query->orderBy('product_name')->paginate(10),
+            'filters' => request()->only(['search']) // Pass filters back to view to maintain state if needed
         ]);
     }
 

@@ -17,9 +17,9 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Eye, FileText, Pencil, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
@@ -29,10 +29,13 @@ interface PageProps {
         data: Material[];
         links: any[];
     };
+    filters?: {
+        search?: string;
+    };
 }
 
-export default function InventoryIndex({ materials }: PageProps) {
-    const [searchTerm, setSearchTerm] = useState('');
+export default function InventoryIndex({ materials, filters }: PageProps) {
+    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [isOpen, setIsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
@@ -85,21 +88,27 @@ export default function InventoryIndex({ materials }: PageProps) {
         }
     };
 
-    // Since we have server-side pagination, search should ideally be server-side too.
-    // However, if we keep client-side search, it only searches the current page.
-    // For now, I'll keep the client-side filter for the current page as requested simply "pagination".
-    // Ideally user wants search to work across pages, but that requires controller changes for search query.
-    // Given the prompt "En todos los listados... agrega paginación", usually implies simple paginate().
-    // I will filter the `materials.data` which is the current page.
+    // Server-side search implementation with debounce
+    useEffect(() => {
+        // Only trigger search if it differs from current prop (avoid initial double fetch if needed, though Inertia handles replace well)
+        // or just debounce everything.
+        const timeoutId = setTimeout(() => {
+            router.get(
+                '/inventory',
+                { search: searchTerm },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
+            );
+        }, 300);
 
-    const filteredMaterials = materials.data.filter(
-        (m) =>
-            m.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (m.code &&
-                m.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (m.brand &&
-                m.brand.toLowerCase().includes(searchTerm.toLowerCase())),
-    );
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    // Use materials directly as they are now filtered on the server
+    const displayMaterials = materials.data;
 
     return (
         <AppLayout
@@ -168,8 +177,8 @@ export default function InventoryIndex({ materials }: PageProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {filteredMaterials.length > 0 ? (
-                                    filteredMaterials.map((material) => (
+                                {displayMaterials.length > 0 ? (
+                                    displayMaterials.map((material) => (
                                         <tr
                                             key={material.id}
                                             className="hover:bg-muted/30"

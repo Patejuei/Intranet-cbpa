@@ -21,8 +21,34 @@ interface Vehicle {
     plate: string;
     status: 'Operative' | 'Workshop' | 'Out of Service';
     company: string;
-    issues?: any[];
-    maintenances?: any[];
+    issues?: {
+        id: number;
+        description: string;
+        status: string;
+        date: string;
+        created_at: string;
+        severity: string;
+    }[];
+    maintenances?: {
+        id: number;
+        workshop_name: string;
+        entry_date: string;
+        exit_date: string | null;
+        description: string;
+        cost: number;
+        status: string;
+        tasks?: {
+            id: number;
+            description: string;
+            is_completed: boolean;
+            cost: number;
+        }[];
+        issues?: {
+            id: number;
+            description: string;
+            status: string;
+        }[];
+    }[];
 }
 
 interface PageProps {
@@ -244,24 +270,104 @@ export default function VehicleShow({
                                     <CardHeader className="pb-2">
                                         <CardTitle className="flex items-center gap-2 text-yellow-800">
                                             <Wrench className="h-5 w-5" />
-                                            En Taller
+                                            En Taller (
+                                            {activeMaintenance.status ===
+                                            'Scheduled'
+                                                ? 'Agendado'
+                                                : 'En Proceso'}
+                                            )
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="space-y-2">
-                                        <p className="text-sm font-medium text-yellow-900">
-                                            Taller:{' '}
-                                            {activeMaintenance.workshop_name}
-                                        </p>
-                                        <p className="text-sm text-yellow-800">
-                                            {activeMaintenance.description}
-                                        </p>
-                                        <div className="mt-2 flex gap-2 text-xs text-yellow-700">
-                                            <Calendar className="h-3 w-3" />{' '}
-                                            Ingreso:{' '}
-                                            {new Date(
-                                                activeMaintenance.entry_date,
-                                            ).toLocaleDateString()}
+                                    <CardContent className="space-y-4">
+                                        <div>
+                                            <p className="text-sm font-semibold text-yellow-900">
+                                                {
+                                                    activeMaintenance.workshop_name
+                                                }
+                                            </p>
+                                            <p className="text-sm text-yellow-800">
+                                                {activeMaintenance.description}
+                                            </p>
+                                            <div className="mt-1 flex gap-2 text-xs text-yellow-700">
+                                                <Calendar className="h-3 w-3" />{' '}
+                                                Ingreso:{' '}
+                                                {new Date(
+                                                    activeMaintenance.entry_date,
+                                                ).toLocaleDateString()}
+                                            </div>
                                         </div>
+
+                                        {/* Tasks List */}
+                                        {activeMaintenance.tasks &&
+                                            activeMaintenance.tasks.length >
+                                                0 && (
+                                                <div className="rounded-md bg-white/50 p-3">
+                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-yellow-900 uppercase">
+                                                        Tareas
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {activeMaintenance.tasks.map(
+                                                            (task) => (
+                                                                <div
+                                                                    key={
+                                                                        task.id
+                                                                    }
+                                                                    className="flex items-start gap-2 text-sm"
+                                                                >
+                                                                    {task.is_completed ? (
+                                                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600" />
+                                                                    ) : (
+                                                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-slate-300" />
+                                                                    )}
+                                                                    <span
+                                                                        className={
+                                                                            task.is_completed
+                                                                                ? 'text-slate-700 line-through opacity-70'
+                                                                                : 'font-medium text-slate-800'
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            task.description
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* Incidents Linked (Solved/Pending in this context) */}
+                                        {activeMaintenance.issues &&
+                                            activeMaintenance.issues.length >
+                                                0 && (
+                                                <div className="rounded-md bg-white/50 p-3">
+                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-yellow-900 uppercase">
+                                                        Incidencias Asociadas
+                                                    </h4>
+                                                    <ul className="list-disc pl-4 text-sm text-slate-700">
+                                                        {activeMaintenance.issues.map(
+                                                            (issue) => (
+                                                                <li
+                                                                    key={
+                                                                        issue.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        issue.description
+                                                                    }
+                                                                    {issue.status ===
+                                                                        'Resolved' && (
+                                                                        <span className="ml-2 text-xs font-bold text-green-600">
+                                                                            (Solucionado)
+                                                                        </span>
+                                                                    )}
+                                                                </li>
+                                                            ),
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            )}
                                     </CardContent>
                                 </Card>
                             ) : (
@@ -274,14 +380,90 @@ export default function VehicleShow({
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-sm text-yellow-800">
-                                            No hay información de orden de
-                                            trabajo activa.
+                                            No hay información detallada de la
+                                            orden de trabajo.
                                         </p>
                                     </CardContent>
                                 </Card>
                             ))}
                     </div>
                 </div>
+
+                {/* Maintenance History */}
+                {vehicle.maintenances && vehicle.maintenances.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Historial de Órdenes de Trabajo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="border-b bg-muted/50">
+                                        <tr>
+                                            <th className="p-2 py-3 font-medium">
+                                                Fecha Ingreso
+                                            </th>
+                                            <th className="p-2 py-3 font-medium">
+                                                Taller
+                                            </th>
+                                            <th className="p-2 py-3 font-medium">
+                                                Trabajo
+                                            </th>
+                                            <th className="p-2 py-3 font-medium">
+                                                Estado
+                                            </th>
+                                            <th className="p-2 py-3 text-right font-medium">
+                                                Costo
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {vehicle.maintenances.map((m) => (
+                                            <tr
+                                                key={m.id}
+                                                className="border-b transition-colors hover:bg-muted/20"
+                                            >
+                                                <td className="p-2 py-3">
+                                                    {new Date(
+                                                        m.entry_date,
+                                                    ).toLocaleDateString()}
+                                                </td>
+                                                <td className="p-2 py-3">
+                                                    {m.workshop_name}
+                                                </td>
+                                                <td className="p-2 py-3">
+                                                    {m.description}
+                                                </td>
+                                                <td className="p-2 py-3">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={
+                                                            [
+                                                                'Finalizado',
+                                                                'Entregado',
+                                                            ].includes(m.status)
+                                                                ? 'border-green-200 bg-green-50 text-green-700'
+                                                                : 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                                                        }
+                                                    >
+                                                        {m.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-2 py-3 text-right">
+                                                    {m.cost > 0
+                                                        ? `$${m.cost.toLocaleString('es-CL')}`
+                                                        : '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </AppLayout>
     );

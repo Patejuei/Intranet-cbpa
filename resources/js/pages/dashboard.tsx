@@ -36,12 +36,14 @@ export default function Dashboard({
     respondedTickets = [],
     vehiclesStopped = [],
     pendingIncidents = [],
+    vehiclesInWorkshop = [],
 }: {
     upcomingBatteries?: UpcomingBattery[];
     pendingTickets?: Ticket[];
     respondedTickets?: Ticket[];
     vehiclesStopped?: any[]; // Typed loosely here or import from index.d.ts
     pendingIncidents?: any[];
+    vehiclesInWorkshop?: any[];
 }) {
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
 
@@ -235,6 +237,69 @@ export default function Dashboard({
                         </div>
                     )}
                 </div>
+
+                {/* Specific Workshop Widget with Order Details */}
+                {vehiclesInWorkshop.length > 0 && (
+                    <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-6 shadow-sm">
+                        <div className="mb-4">
+                            <h2 className="flex items-center gap-2 text-xl font-bold">
+                                <span className="flex size-3 rounded-full bg-yellow-600" />
+                                Unidades en Taller
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Vehículos con orden de trabajo activa.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            {vehiclesInWorkshop.map((vehicle) => {
+                                const maintenance = vehicle.maintenances?.[0];
+                                return (
+                                    <Link
+                                        key={vehicle.id}
+                                        href={`/vehicles/status/${vehicle.id}`}
+                                        className="block"
+                                    >
+                                        <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold">
+                                                        {vehicle.name}
+                                                    </p>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ({vehicle.company})
+                                                    </span>
+                                                </div>
+                                                {maintenance ? (
+                                                    <p className="text-xs font-medium text-yellow-700">
+                                                        {
+                                                            maintenance.workshop_name
+                                                        }{' '}
+                                                        -{' '}
+                                                        {
+                                                            maintenance.description
+                                                        }
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Sin detalles de orden.
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {maintenance?.entry_date && (
+                                                <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
+                                                    Ingreso:{' '}
+                                                    {new Date(
+                                                        maintenance.entry_date,
+                                                    ).toLocaleDateString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {upcomingBatteries.length > 0 && (
                     <div className="rounded-xl border bg-card p-6 shadow-sm">

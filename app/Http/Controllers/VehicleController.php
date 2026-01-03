@@ -83,7 +83,7 @@ class VehicleController extends Controller
             $q->latest();
         }, 'maintenances' => function ($q) {
             $q->latest();
-        }, 'maintenances.tasks'])->findOrFail($id);
+        }, 'maintenances.tasks', 'maintenances.issues'])->findOrFail($id);
 
         $totalMaintenanceCost = $vehicle->maintenances->sum(function ($maintenance) {
             return $maintenance->tasks->sum('cost');

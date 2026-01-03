@@ -46,6 +46,7 @@ class EquipmentLogController extends Controller
             'reason' => 'nullable|string',
             'document' => 'nullable|file|max:10240', // 10MB limit
             'category' => 'nullable|string', // e.g. 'EPP', 'EXT'
+            'quantity' => 'required|integer|min:1',
         ]);
 
         $documentPath = null;
@@ -53,12 +54,18 @@ class EquipmentLogController extends Controller
             $documentPath = $request->file('document')->store('equipment_docs', 'public');
         }
 
+        $quantity = $validated['quantity'];
         $inventoryNumber = null;
         $manualInventoryNumber = $request->input('inventory_number'); // From "Smart Alta" or "Smart Baja"
         $material = null;
 
         // Logic for ALTA
         if ($validated['type'] === 'ALTA') {
+
+            // Constraint: If Serial Number is provided, Quantity MUST be 1
+            if (!empty($validated['serial_number']) && $quantity > 1) {
+                return redirect()->back()->withErrors(['quantity' => 'Materiales con número de serie deben registrarse de a uno (unique).']);
+            }
 
             // Check if Smart Alta (Existing Manual Number) provided
             if (!empty($manualInventoryNumber)) {
@@ -69,7 +76,14 @@ class EquipmentLogController extends Controller
 
                 if ($existingMaterial) {
                     $material = $existingMaterial;
-                    $material->increment('stock_quantity');
+
+                    // Specific check for S/N constraint on existing material
+                    if (!empty($material->serial_number) && $material->stock_quantity >= 1) {
+                        // Cannot add more stock to a S/N item
+                        return redirect()->back()->withErrors(['serial_number' => 'Este material con serie ya existe y no puede tener stock > 1.']);
+                    }
+
+                    $material->increment('stock_quantity', $quantity);
                     $inventoryNumber = $manualInventoryNumber;
 
                     // Update Serial Number if provided and not set
@@ -105,7 +119,11 @@ class EquipmentLogController extends Controller
 
                 if ($material && !$inventoryNumber) {
                     // Grouping logic (Consumables, no inventory number)
-                    $material->increment('stock_quantity');
+                    if (!empty($material->serial_number) && $material->stock_quantity >= 1) {
+                        // Cannot add more stock to a S/N item
+                        return redirect()->back()->withErrors(['item_name' => 'Este material con serie ya existe y no puede tener stock > 1.']);
+                    }
+                    $material->increment('stock_quantity', $quantity);
                     // Update details only if empty
                     if (empty($material->brand) && !empty($validated['brand'])) $material->brand = $validated['brand'];
                     if (empty($material->model) && !empty($validated['model'])) $material->model = $validated['model'];
@@ -120,42 +138,12 @@ class EquipmentLogController extends Controller
                         'product_name' => $validated['item_name'],
                         'brand' => $validated['brand'],
                         'model' => $validated['model'],
-                        'stock_quantity' => 1,
+                        'stock_quantity' => $quantity,
                         'company' => $user->company,
                         'category' => $validated['category'],
                         'code' => $inventoryNumber, // Null if consumable
                         'serial_number' => $validated['serial_number'],
                     ]);
-                }
-            }
-
-            // Constraint: If Serial Number exists, Stock max is 1. (Check AFTER incrementing)
-            if (!empty($material->serial_number) && $material->stock_quantity > 1) {
-                // Revert increment logic if this was an existing Unique Asset with S/N
-                // Actually, if it's Unique Asset with S/N, it shouldn't be incremented. It should be unique.
-                // But user might be trying to add same S/N again? Or user might simply be adding stock to a pile.
-                // Constraint: "Si el item de inventario posee número de serie del fabricante, limita el stock puede entre 0 y 1"
-                // So if stock > 1 AND has serial number, we should technically error or warn.
-                // But since we already saved... we can force it back to 1? NO, that deletes data.
-                // The correct flow for S/N items is: CREATE NEW Material row for each S/N item? Or unique constraint?
-                // Given the current 'Material' schema implies 'stock_quantity' aggregator...
-                // If S/N is present, it implies UNIQUE item.
-                // So if user adds ALTA for existing S/N item, it's either duplicate or error.
-                // Let's assumet if it has S/N, we should NOT increment existing, but create NEW row?
-                // But 'code' (Inv Number) is unique in DB...
-                // If user scans same Inv Code, writes S/N...
-                // Let's enforce the rule: If S/N exists, stock cannot exceed 1.
-                if ($material->wasRecentlyCreated && $material->stock_quantity > 1) {
-                    // Should not happen for new items initiated with 1.
-                } elseif (!$material->wasRecentlyCreated && $material->stock_quantity > 1) {
-                    // We just incremented it. Check previous state.
-                    // If it WAS 0 or 1, and now is 2...
-                    // For now, let's just create the history and let the user deal with the "Stock > 1" anomaly or
-                    // assume they aren't scanning S/N items into the same bin.
-                    // BUT USER SAID: "limita el stock posible entre 0 y 1"
-                    // So we must prevent the increment IF it has S/N.
-                    $material->decrement('stock_quantity'); // Revert
-                    return redirect()->back()->withErrors(['serial_number' => 'Este material tiene N° serie y no puede tener stock > 1.']);
                 }
             }
 
@@ -165,7 +153,7 @@ class EquipmentLogController extends Controller
                     'material_id' => $material->id,
                     'user_id' => $user->id,
                     'type' => 'ADD', // ALTA
-                    'quantity_change' => 1,
+                    'quantity_change' => $quantity,
                     'current_balance' => $material->stock_quantity,
                     'reference_type' => EquipmentLog::class,
                     'reference_id' => null,
@@ -192,8 +180,8 @@ class EquipmentLogController extends Controller
             }
 
             if ($material) {
-                if ($material->stock_quantity > 0) {
-                    $material->decrement('stock_quantity');
+                if ($material->stock_quantity >= $quantity) {
+                    $material->decrement('stock_quantity', $quantity);
                     $inventoryNumber = $material->code;
 
                     // Create History Record
@@ -201,14 +189,14 @@ class EquipmentLogController extends Controller
                         'material_id' => $material->id,
                         'user_id' => $user->id,
                         'type' => 'REMOVE', // BAJA
-                        'quantity_change' => -1,
+                        'quantity_change' => -$quantity, // Negative
                         'current_balance' => $material->stock_quantity,
                         'reference_type' => EquipmentLog::class,
                         'reference_id' => null,
                         'description' => 'Baja Manual: ' . $validated['reason'],
                     ]);
                 } else {
-                    return redirect()->back()->withErrors(['item_name' => 'El material no tiene stock suficiente para dar de baja.']);
+                    return redirect()->back()->withErrors(['quantity' => 'No hay suficiente stock para dar de baja esa cantidad.']);
                 }
             } else {
                 return redirect()->back()->withErrors(['item_name' => 'No se encontró el material para dar de baja.']);
@@ -223,6 +211,7 @@ class EquipmentLogController extends Controller
             'inventory_number' => $inventoryNumber,
             'category' => $validated['category'] ?? ($material ? $material->category : null),
             'type' => $validated['type'],
+            'quantity' => $quantity, // Log quantity
             'reason' => $validated['reason'],
             'document_path' => $documentPath,
             'material_id' => $material ? $material->id : null,

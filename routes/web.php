@@ -60,12 +60,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $vehiclesStopped = $vehicleQuery->get();
         $pendingIncidents = $incidentQuery->take(5)->get();
 
+        // Workshop Vehicles Logic (Vehicles in Workshop state, get active Maintenance)
+        $workshopQuery = \App\Models\Vehicle::query()
+            ->where('status', 'Workshop')
+            ->with(['maintenances' => function ($q) {
+                $q->where('status', '!=', 'Completed')->latest();
+            }]);
+
+        if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+            $workshopQuery->where('company', $user->company);
+        }
+
+        $vehiclesInWorkshop = $workshopQuery->get();
+
         return Inertia::render('dashboard', [
             'upcomingBatteries' => $upcomingBatteries,
             'pendingTickets' => $pendingTickets,
             'respondedTickets' => $respondedTickets,
             'vehiclesStopped' => $vehiclesStopped,
             'pendingIncidents' => $pendingIncidents,
+            'vehiclesInWorkshop' => $vehiclesInWorkshop,
         ]);
     })->name('dashboard');
 

@@ -57,6 +57,7 @@ export default function EquipmentIndex({ logs, materials }: PageProps) {
         inventory_number: '', // Not used in form, but part of Log
         category: '',
         type: 'ALTA',
+        quantity: 1,
         reason: '',
         status: '', // Removed default PENDIENTE
         document: null as File | null,
@@ -191,7 +192,7 @@ export default function EquipmentIndex({ logs, materials }: PageProps) {
                                     >
                                         <label className="mb-1 block text-sm font-medium">
                                             {actionType === 'ALTA'
-                                                ? 'N° Inventario (Si es Material Nuevo)'
+                                                ? 'N° Inventario Personalizado (Opcional)'
                                                 : 'N° Inventario Seleccionado'}
                                         </label>
                                         <input
@@ -206,10 +207,10 @@ export default function EquipmentIndex({ logs, materials }: PageProps) {
                                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             placeholder={
                                                 actionType === 'ALTA'
-                                                    ? 'Ej: EPP-2026-001 (Opcional)'
+                                                    ? 'Dejar vacío para generación automática (ej: EPP-XXXX)'
                                                     : 'Se rellena automáticamente...'
                                             }
-                                            readOnly={actionType === 'BAJA'}
+                                            readOnly={true}
                                         />
                                     </div>
                                 </div>
@@ -249,7 +250,8 @@ export default function EquipmentIndex({ logs, materials }: PageProps) {
                             {actionType === 'ALTA' && (
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
-                                        Categoría
+                                        Categoría (Necesaria para Auto-Generar
+                                        Código)
                                     </label>
                                     <select
                                         value={data.category}
@@ -278,6 +280,30 @@ export default function EquipmentIndex({ logs, materials }: PageProps) {
                                     )}
                                 </div>
                             )}
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium">
+                                    Cantidad
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={data.quantity}
+                                    onChange={(e) =>
+                                        setData(
+                                            'quantity',
+                                            parseInt(e.target.value) || 1,
+                                        )
+                                    }
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    required
+                                />
+                                {errors.quantity && (
+                                    <p className="mt-1 text-xs text-destructive">
+                                        {errors.quantity}
+                                    </p>
+                                )}
+                            </div>
 
                             <div>
                                 <label className="mb-1 block text-sm font-medium">
