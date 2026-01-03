@@ -77,16 +77,21 @@ class VehicleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(\App\Models\Vehicle $vehicle)
+    public function show($id)
     {
-        $vehicle->load(['issues' => function ($q) {
-            $q->latest(); // Filter resolved? Maybe show all but differentiate.
+        $vehicle = \App\Models\Vehicle::with(['issues' => function ($q) {
+            $q->latest();
         }, 'maintenances' => function ($q) {
             $q->latest();
-        }]);
+        }, 'maintenances.tasks'])->findOrFail($id);
+
+        $totalMaintenanceCost = $vehicle->maintenances->sum(function ($maintenance) {
+            return $maintenance->tasks->sum('cost');
+        });
 
         return Inertia::render('vehicles/status/show', [
-            'vehicle' => $vehicle
+            'vehicle' => $vehicle,
+            'totalMaintenanceCost' => $totalMaintenanceCost
         ]);
     }
 

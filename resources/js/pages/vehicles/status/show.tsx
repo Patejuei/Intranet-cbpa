@@ -2,12 +2,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
     Calendar,
     CheckCircle2,
+    DollarSign,
     Wrench,
 } from 'lucide-react';
 
@@ -24,7 +25,25 @@ interface Vehicle {
     maintenances?: any[];
 }
 
-export default function VehicleShow({ vehicle }: { vehicle: Vehicle }) {
+interface PageProps {
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            role: string;
+            company: string;
+        };
+    };
+}
+
+export default function VehicleShow({
+    vehicle,
+    totalMaintenanceCost,
+}: {
+    vehicle: Vehicle;
+    totalMaintenanceCost?: number;
+}) {
+    const allProps = usePage<PageProps>().props;
     const activeIssue = vehicle.issues?.[0];
     const activeMaintenance = vehicle.maintenances?.[0];
 
@@ -74,6 +93,16 @@ export default function VehicleShow({ vehicle }: { vehicle: Vehicle }) {
                     </div>
                 </div>
 
+                {/* DEBUG: Show raw vehicle data if name is missing or for verification */}
+                <details className="mb-4 rounded border p-2">
+                    <summary className="cursor-pointer text-xs font-bold text-muted-foreground">
+                        Debug Info (Haga clic para expandir)
+                    </summary>
+                    <pre className="mt-2 overflow-auto rounded bg-slate-950 p-4 text-xs text-white">
+                        {JSON.stringify(vehicle, null, 2)}
+                    </pre>
+                </details>
+
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Main Info */}
                     <Card className="md:col-span-2">
@@ -115,6 +144,30 @@ export default function VehicleShow({ vehicle }: { vehicle: Vehicle }) {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Total Cost for Command */}
+                            {allProps.auth?.user &&
+                                (allProps.auth.user.company === 'Comandancia' ||
+                                    allProps.auth.user.role === 'admin') && (
+                                    <div className="mt-4 rounded-md bg-blue-50 p-4">
+                                        <div className="mb-1 flex items-center gap-2 text-blue-800">
+                                            <DollarSign className="h-5 w-5" />
+                                            <span className="font-bold">
+                                                Inversión Total en Mantenimiento
+                                            </span>
+                                        </div>
+                                        <p className="text-2xl font-bold text-blue-900">
+                                            $
+                                            {(
+                                                totalMaintenanceCost || 0
+                                            ).toLocaleString('es-CL')}
+                                        </p>
+                                        <p className="mt-1 text-xs text-blue-700">
+                                            Suma histórica de todas los trabajos
+                                            realizados.
+                                        </p>
+                                    </div>
+                                )}
                         </CardContent>
                     </Card>
 
@@ -166,32 +219,51 @@ export default function VehicleShow({ vehicle }: { vehicle: Vehicle }) {
                             </Card>
                         )}
 
-                        {vehicle.status === 'Workshop' && activeMaintenance && (
-                            <Card className="border-yellow-200 bg-yellow-50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                        <Wrench className="h-5 w-5" />
-                                        En Taller
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className="text-sm font-medium text-yellow-900">
-                                        Taller:{' '}
-                                        {activeMaintenance.workshop_name}
-                                    </p>
-                                    <p className="text-sm text-yellow-800">
-                                        {activeMaintenance.description}
-                                    </p>
-                                    <div className="mt-2 flex gap-2 text-xs text-yellow-700">
-                                        <Calendar className="h-3 w-3" />{' '}
-                                        Ingreso:{' '}
-                                        {new Date(
-                                            activeMaintenance.entry_date,
-                                        ).toLocaleDateString()}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
+                        {(vehicle.status === 'Workshop' ||
+                            (vehicle.status === 'Out of Service' &&
+                                !activeIssue &&
+                                activeMaintenance)) &&
+                            (activeMaintenance ? (
+                                <Card className="border-yellow-200 bg-yellow-50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2 text-yellow-800">
+                                            <Wrench className="h-5 w-5" />
+                                            En Taller
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <p className="text-sm font-medium text-yellow-900">
+                                            Taller:{' '}
+                                            {activeMaintenance.workshop_name}
+                                        </p>
+                                        <p className="text-sm text-yellow-800">
+                                            {activeMaintenance.description}
+                                        </p>
+                                        <div className="mt-2 flex gap-2 text-xs text-yellow-700">
+                                            <Calendar className="h-3 w-3" />{' '}
+                                            Ingreso:{' '}
+                                            {new Date(
+                                                activeMaintenance.entry_date,
+                                            ).toLocaleDateString()}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <Card className="border-yellow-200 bg-yellow-50">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2 text-yellow-800">
+                                            <Wrench className="h-5 w-5" />
+                                            En Taller
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-yellow-800">
+                                            No hay información de orden de
+                                            trabajo activa.
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            ))}
                     </div>
                 </div>
             </div>

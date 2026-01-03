@@ -29,7 +29,14 @@ class AdminUserController extends Controller
         if (request()->user()->role !== 'admin' && request()->user()->role !== 'capitan') {
             abort(403);
         }
-        return \Inertia\Inertia::render('admin/users/create');
+        $vehicles = \App\Models\Vehicle::query();
+        if (request()->user()->role === 'capitan') {
+            $vehicles->where('company', request()->user()->company);
+        }
+
+        return \Inertia\Inertia::render('admin/users/create', [
+            'availableVehicles' => $vehicles->get()
+        ]);
     }
 
     public function store(Request $request)
@@ -43,8 +50,10 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic',
             'permissions' => 'nullable|array',
+            'driver_vehicles' => 'nullable|array',
+            'driver_vehicles.*' => 'exists:vehicles,id',
             'password' => 'required|string|min:8',
         ]);
 
@@ -59,7 +68,7 @@ class AdminUserController extends Controller
             }
         }
 
-        \App\Models\User::create([
+        $createdUser = \App\Models\User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'company' => $validated['company'],
@@ -67,6 +76,10 @@ class AdminUserController extends Controller
             'permissions' => $validated['permissions'] ?? [],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
+
+        if (isset($validated['driver_vehicles'])) {
+            $createdUser->driverVehicles()->sync($validated['driver_vehicles']);
+        }
 
         return redirect()->route('users.index');
     }
@@ -81,8 +94,16 @@ class AdminUserController extends Controller
             abort(403);
         }
 
+        $vehicles = \App\Models\Vehicle::query();
+        if ($currentUser->role === 'capitan') {
+            $vehicles->where('company', $currentUser->company);
+        }
+
+        $user->load('driverVehicles');
+
         return \Inertia\Inertia::render('admin/users/edit', [
-            'user' => $user
+            'user' => $user,
+            'availableVehicles' => $vehicles->get()
         ]);
     }
 
@@ -101,8 +122,10 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic',
             'permissions' => 'nullable|array',
+            'driver_vehicles' => 'nullable|array',
+            'driver_vehicles.*' => 'exists:vehicles,id',
             'password' => 'nullable|string|min:8',
         ]);
 
@@ -130,6 +153,10 @@ class AdminUserController extends Controller
         }
 
         $user->update($userData);
+
+        if (isset($validated['driver_vehicles'])) {
+            $user->driverVehicles()->sync($validated['driver_vehicles']);
+        }
 
         return redirect()->route('users.index');
         // Based on previous code: route('users.index') was used in store. I will stick to that or check routes.

@@ -1,3 +1,5 @@
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     Select,
     SelectContent,
@@ -7,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Shield } from 'lucide-react';
+import { Shield, Truck } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 const modules = [
@@ -49,7 +51,11 @@ const roles = [
     { value: 'comandancia', label: 'Comandancia' },
 ];
 
-export default function UserCreate() {
+export default function UserCreate({
+    availableVehicles,
+}: {
+    availableVehicles?: any[];
+}) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -57,7 +63,20 @@ export default function UserCreate() {
         company: '',
         role: 'user',
         permissions: [] as string[],
+        driver_vehicles: [] as number[],
     });
+
+    const handleVehicleToggle = (id: number) => {
+        const current = data.driver_vehicles;
+        if (current.includes(id)) {
+            setData(
+                'driver_vehicles',
+                current.filter((v) => v !== id),
+            );
+        } else {
+            setData('driver_vehicles', [...current, id]);
+        }
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -336,11 +355,57 @@ export default function UserCreate() {
                                 )}
                         </div>
 
+                        {/* Vehículos Permitidos */}
+                        {availableVehicles && availableVehicles.length > 0 && (
+                            <div className="rounded-lg border p-4">
+                                <h3 className="mb-4 flex items-center gap-2 font-medium">
+                                    <Truck className="size-4" /> Vehículos
+                                    Permitidos (Maquinistas)
+                                </h3>
+                                <p className="mb-4 text-sm text-muted-foreground">
+                                    Seleccione los vehículos que este usuario
+                                    está autorizado a conducir y registrar en
+                                    bitácora.
+                                </p>
+                                <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                        {availableVehicles.map((vehicle) => (
+                                            <div
+                                                className="flex items-center space-x-2"
+                                                key={vehicle.id}
+                                            >
+                                                <Checkbox
+                                                    id={`v-${vehicle.id}`}
+                                                    checked={data.driver_vehicles.includes(
+                                                        vehicle.id,
+                                                    )}
+                                                    onCheckedChange={() =>
+                                                        handleVehicleToggle(
+                                                            vehicle.id,
+                                                        )
+                                                    }
+                                                />
+                                                <label
+                                                    htmlFor={`v-${vehicle.id}`}
+                                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                >
+                                                    {vehicle.name}{' '}
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ({vehicle.company})
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                            </div>
+                        )}
+
                         <div className="flex justify-end pt-4">
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground text-white transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none disabled:opacity-50"
+                                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none disabled:opacity-50"
                             >
                                 Registrar Usuario
                             </button>

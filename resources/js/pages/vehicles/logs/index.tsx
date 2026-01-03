@@ -16,8 +16,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
@@ -54,6 +54,7 @@ export default function VehicleLogs({
         date: format(new Date(), 'yyyy-MM-dd'),
         fuel_liters: '',
         fuel_coupon: '',
+        has_fuel: false,
         receipt: null as File | null,
         observations: '',
     });
@@ -239,8 +240,22 @@ export default function VehicleLogs({
                                         )}
                                     </div>
 
-                                    {data.activity_type ===
-                                        'CargaCombustible' && (
+                                    <div className="space-y-4 rounded-lg border p-4">
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                id="fuel-mode"
+                                                checked={data.has_fuel}
+                                                onCheckedChange={(checked) =>
+                                                    setData('has_fuel', checked)
+                                                }
+                                            />
+                                            <Label htmlFor="fuel-mode">
+                                                ¿Fue a Cargar Combustible?
+                                            </Label>
+                                        </div>
+                                    </div>
+
+                                    {data.has_fuel && (
                                         <div className="space-y-4 rounded-lg border p-4">
                                             <h3 className="font-semibold">
                                                 Detalle de Carga
@@ -296,21 +311,6 @@ export default function VehicleLogs({
                                                                 : null,
                                                         )
                                                     }
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="observations">
-                                                    Observaciones
-                                                </Label>
-                                                <Textarea
-                                                    value={data.observations}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'observations',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Detalles adicionales..."
                                                 />
                                             </div>
                                         </div>

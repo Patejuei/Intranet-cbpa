@@ -25,9 +25,16 @@ class VehicleLogController extends Controller
 
         return Inertia::render('vehicles/logs/index', [
             'logs' => $logQuery->paginate(15),
-            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user) {
-                $q->where('company', $user->company);
-            })->orderBy('name')->get(['id', 'name']),
+            'vehicles' => \App\Models\Vehicle::query()
+                ->when($user->role !== 'admin' && $user->role !== 'mechanic', function ($q) use ($user) {
+                    $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+                    if ($driverIds->isNotEmpty()) {
+                        $q->whereIn('id', $driverIds);
+                    } else {
+                        $q->where('company', $user->company);
+                    }
+                })
+                ->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

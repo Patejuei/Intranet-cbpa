@@ -81,6 +81,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('status', VehicleController::class)->names('vehicles.status'); // Main vehicle CRUD/Status
         Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
         Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
+        Route::get('workshop/{maintenance}/print', [VehicleMaintenanceController::class, 'print'])->name('vehicles.workshop.print');
+        Route::get('workshop/{maintenance}/print-exit', [VehicleMaintenanceController::class, 'printExit'])->name('vehicles.workshop.print_exit');
         Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
         Route::resource('inventory', VehicleInventoryController::class)->names('vehicles.inventory');
     });

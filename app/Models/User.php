@@ -53,4 +53,9 @@ class User extends Authenticatable
             'permissions' => 'array',
         ];
     }
+
+    public function driverVehicles()
+    {
+        return $this->belongsToMany(Vehicle::class, 'driver_vehicle');
+    }
 }

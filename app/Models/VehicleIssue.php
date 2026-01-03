@@ -14,6 +14,7 @@ class VehicleIssue extends Model
         'is_stopped',
         'status',
         'date',
+        'vehicle_maintenance_id',
     ];
 
     public function vehicle()
@@ -24,5 +25,10 @@ class VehicleIssue extends Model
     public function reporter()
     {
         return $this->belongsTo(User::class, 'reporter_id');
+    }
+
+    public function maintenance()
+    {
+        return $this->belongsTo(VehicleMaintenance::class, 'vehicle_maintenance_id');
     }
 }
