@@ -16,9 +16,6 @@ export default function AppLogo({ className }: AppLogoProps) {
             </div>
             <div className="ml-2 grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-bold">Intranet CBPA</span>
-                <span className="truncate text-xs text-muted-foreground">
-                    Admin. Material Menor
-                </span>
             </div>
         </>
     );

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
@@ -333,6 +334,27 @@ export default function VehicleLogs({
                                         {errors.destination && (
                                             <p className="text-sm text-destructive">
                                                 {errors.destination}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="observations">
+                                            Observaciones (Opcional)
+                                        </Label>
+                                        <Textarea
+                                            value={data.observations}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'observations',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Detalle cualquier novedad o incidencia..."
+                                        />
+                                        {errors.observations && (
+                                            <p className="text-sm text-destructive">
+                                                {errors.observations}
                                             </p>
                                         )}
                                     </div>

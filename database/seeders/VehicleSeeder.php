@@ -13,23 +13,22 @@ class VehicleSeeder extends Seeder
     public function run(): void
     {
         $companies = [
-            'Primera Compañía' => ['B-1', 'R-1', 'BX-1'],
-            'Segunda Compañía' => ['B-2', 'RX-2', 'Z-2'],
-            'Tercera Compañía' => ['B-3', 'PT-3', 'BX-3'],
-            'Cuarta Compañía' => ['B-4', 'R-4', 'M-4'],
-            'Quinta Compañía' => ['B-5', 'BX-5', 'Z-5'],
-            'Sexta Compañía' => ['B-6', 'RX-6', 'UT-6'],
-            'Séptima Compañía' => ['B-7', 'R-7', 'Z-7'],
-            'Octava Compañía' => ['B-8', 'BX-8', 'J-8'],
-            'Novena Compañía' => ['B-9', 'R-9', 'Z-9'],
-            'Décima Compañía' => ['B-10', 'Q-10', 'Z-10'], // Added Decima
-            'Comandancia' => ['K-1', 'K-2', 'K-3', 'H-1', 'X-1', 'LT-1'],
+            'Primera Compañía' => ['B-1', 'RB-1'],
+            'Segunda Compañía' => ['B-2', 'R-2', 'BX-2'],
+            'Tercera Compañía' => ['B-3', 'Q-3', 'MX-3'],
+            'Cuarta Compañía' => ['BH-4', 'UT-4'],
+            'Quinta Compañía' => ['B-5', 'RB-5', 'BT-5'],
+            'Séptima Compañía' => ['B-7', 'Q-7', 'MX-7'],
+            'Octava Compañía' => ['B-8', 'BX-8', 'Z-8'],
+            'Novena Compañía' => ['RB-9', 'M-9', 'UT-9'],
+            'Décima Compañía' => ['B-10', 'Z-10', 'BX-10'],
+            'Comandancia' => ['K-1', 'K-2', 'K-3', 'UT-0', 'X-1', 'S-1'],
         ];
 
         foreach ($companies as $companyName => $units) {
             foreach ($units as $unitName) {
                 // Determine make/model roughly based on unit type for variety
-                $isTanker = str_contains($unitName, 'Z');
+                $isTanker = str_contains($unitName, 'Z') || str_contains($unitName, 'BT');
                 $isRescue = str_contains($unitName, 'R');
                 $isLadder = str_contains($unitName, 'M') || str_contains($unitName, 'Q');
 

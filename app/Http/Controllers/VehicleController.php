@@ -100,7 +100,12 @@ class VehicleController extends Controller
      */
     public function create()
     {
-        //
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403, 'No tiene permisos para agregar vehículos.');
+        }
+
+        return Inertia::render('vehicles/create');
     }
 
     /**
@@ -108,7 +113,26 @@ class VehicleController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403, 'No tiene permisos para agregar vehículos.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'plate' => 'required|string|max:255|unique:vehicles',
+            'make' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+            'company' => 'required|string|max:255',
+        ]);
+
+        $vehicle = \App\Models\Vehicle::create([
+            ...$validated,
+            'status' => 'Operative',
+        ]);
+
+        return redirect()->route('vehicles.status.index')->with('success', 'Vehículo creado correctamente.');
     }
 
 
@@ -117,7 +141,16 @@ class VehicleController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403, 'No tiene permisos para editar vehículos.');
+        }
+
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+
+        return Inertia::render('vehicles/edit', [
+            'vehicle' => $vehicle
+        ]);
     }
 
     /**
@@ -125,7 +158,25 @@ class VehicleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403, 'No tiene permisos para editar vehículos.');
+        }
+
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'plate' => 'required|string|max:255|unique:vehicles,plate,' . $vehicle->id,
+            'make' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
+            'company' => 'required|string|max:255',
+        ]);
+
+        $vehicle->update($validated);
+
+        return redirect()->route('vehicles.status.show', $vehicle->id)->with('success', 'Vehículo actualizado correctamente.');
     }
 
     /**
@@ -133,6 +184,14 @@ class VehicleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403, 'No tiene permisos para eliminar vehículos.');
+        }
+
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+        $vehicle->delete();
+
+        return redirect()->route('vehicles.status.index')->with('success', 'Vehículo eliminado correctamente.');
     }
 }

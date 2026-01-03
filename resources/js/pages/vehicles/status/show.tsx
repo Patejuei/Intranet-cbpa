@@ -34,6 +34,7 @@ interface PageProps {
             company: string;
         };
     };
+    [key: string]: any;
 }
 
 export default function VehicleShow({
@@ -70,38 +71,53 @@ export default function VehicleShow({
             <Head title={`Detalle ${vehicle.name}`} />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/vehicles/status">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Link>
-                    </Button>
-                    <div>
-                        <h1 className="flex items-center gap-3 text-2xl font-bold">
-                            {vehicle.name}
-                            <Badge className={getStatusColor(vehicle.status)}>
-                                {vehicle.status === 'Operative'
-                                    ? 'En Servicio'
-                                    : vehicle.status === 'Workshop'
-                                      ? 'En Taller'
-                                      : 'Fuera de Servicio'}
-                            </Badge>
-                        </h1>
-                        <p className="text-muted-foreground">
-                            {vehicle.company} - {vehicle.make} {vehicle.model}
-                        </p>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/vehicles/status">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                        <div>
+                            <h1 className="flex items-center gap-3 text-2xl font-bold">
+                                {vehicle.name}
+                                <Badge
+                                    className={getStatusColor(vehicle.status)}
+                                >
+                                    {vehicle.status === 'Operative'
+                                        ? 'En Servicio'
+                                        : vehicle.status === 'Workshop'
+                                          ? 'En Taller'
+                                          : 'Fuera de Servicio'}
+                                </Badge>
+                            </h1>
+                            <p className="text-muted-foreground">
+                                {vehicle.company} - {vehicle.make}{' '}
+                                {vehicle.model}
+                            </p>
+                        </div>
                     </div>
+                    {allProps.auth?.user &&
+                        (allProps.auth.user.role === 'admin' ||
+                            allProps.auth.user.role === 'capitan') && (
+                            <Button asChild>
+                                <Link href={`/vehicles/${vehicle.id}/edit`}>
+                                    <Wrench className="mr-2 h-4 w-4" />
+                                    Editar Unidad
+                                </Link>
+                            </Button>
+                        )}
                 </div>
 
                 {/* DEBUG: Show raw vehicle data if name is missing or for verification */}
-                <details className="mb-4 rounded border p-2">
+                {/* <details className="mb-4 rounded border p-2">
                     <summary className="cursor-pointer text-xs font-bold text-muted-foreground">
                         Debug Info (Haga clic para expandir)
                     </summary>
                     <pre className="mt-2 overflow-auto rounded bg-slate-950 p-4 text-xs text-white">
                         {JSON.stringify(vehicle, null, 2)}
                     </pre>
-                </details>
+                </details> */}
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Main Info */}

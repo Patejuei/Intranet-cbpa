@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Wrench } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -32,6 +32,11 @@ interface PageProps {
     vehicles?: Vehicle[];
     isComandancia: boolean;
     userCompany?: string;
+    auth: {
+        user: {
+            role: string;
+        };
+    };
 }
 
 export default function VehicleStatus({
@@ -39,6 +44,7 @@ export default function VehicleStatus({
     vehicles,
     isComandancia,
     userCompany,
+    auth,
 }: PageProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -114,15 +120,26 @@ export default function VehicleStatus({
         >
             <Head title="Estado de Carros" />
             <div className="flex flex-col gap-6 p-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">
-                        Estado de la Flota
-                    </h1>
-                    <p className="text-muted-foreground">
-                        {isComandancia
-                            ? 'Vista General de todas las compañías.'
-                            : `Vehículos de ${userCompany}`}
-                    </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">
+                            Estado de la Flota
+                        </h1>
+                        <p className="text-muted-foreground">
+                            {isComandancia
+                                ? 'Vista General de todas las compañías.'
+                                : `Vehículos de ${userCompany}`}
+                        </p>
+                    </div>
+                    {(auth.user.role === 'admin' ||
+                        auth.user.role === 'capitan') && (
+                        <Button asChild>
+                            <Link href="/vehicles/create">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nuevo Vehículo
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 {isComandancia && groupedVehicles ? (
