@@ -3,6 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\VehicleLogController;
+use App\Http\Controllers\VehicleIssueController;
+use App\Http\Controllers\VehicleMaintenanceController;
+use App\Http\Controllers\VehicleInventoryController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -54,6 +59,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
     Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
     Route::patch('tickets/{ticket}/priority', [TicketController::class, 'updatePriority'])->name('tickets.updatePriority');
+
+    // Material Mayor Routes
+    Route::middleware('module:vehicles')->prefix('vehicles')->group(function () {
+        Route::get('/dashboard', [VehicleController::class, 'dashboard'])->name('vehicles.dashboard');
+        Route::resource('status', VehicleController::class)->names('vehicles.status'); // Main vehicle CRUD/Status
+        Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
+        Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
+        Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
+        Route::resource('inventory', VehicleInventoryController::class)->names('vehicles.inventory');
+    });
 
     // Admin Routes
     Route::middleware('module:admin')->group(function () {
