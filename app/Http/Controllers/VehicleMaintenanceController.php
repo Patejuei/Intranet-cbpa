@@ -18,6 +18,13 @@ class VehicleMaintenanceController extends Controller
         $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues'])
             ->orderBy('entry_date', 'desc');
 
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->role !== 'comandancia') {
+            $query->whereHas('vehicle', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
         if ($status) {
             if ($status === 'active') {
                 $query->whereNull('exit_date');
@@ -97,6 +104,13 @@ class VehicleMaintenanceController extends Controller
             'issue_ids.*' => 'exists:vehicle_issues,id',
             'tasks' => 'nullable|array',
             'tasks.*' => 'string',
+            // New Fields
+            'responsible_person' => 'required|string',
+            'mileage_in' => 'required|integer',
+            'traction' => 'required|string', // 4x2, 4x4
+            'fuel_type' => 'required|string',
+            'transmission' => 'required|string',
+            'entry_checklist' => 'nullable|array',
         ]);
 
         $maintenance = \App\Models\VehicleMaintenance::create([
@@ -106,6 +120,12 @@ class VehicleMaintenanceController extends Controller
             'workshop_name' => $validated['workshop_name'],
             'description' => $validated['description'] ?? '',
             'status' => 'En Taller',
+            'responsible_person' => $validated['responsible_person'],
+            'mileage_in' => $validated['mileage_in'],
+            'traction' => $validated['traction'],
+            'fuel_type' => $validated['fuel_type'],
+            'transmission' => $validated['transmission'],
+            'entry_checklist' => $validated['entry_checklist'] ?? null,
         ]);
 
         if (!empty($validated['issue_ids'])) {

@@ -14,7 +14,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Calendar,
     CheckCircle2,
@@ -58,6 +58,12 @@ interface Maintenance {
     entry_date: string;
     tentative_exit_date: string | null;
     status: string;
+    responsible_person?: string;
+    mileage_in?: number;
+    traction?: string;
+    fuel_type?: string;
+    transmission?: string;
+    entry_checklist?: Record<string, string>;
     issues: Issue[];
     tasks: Task[];
 }
@@ -141,6 +147,9 @@ export default function WorkshopShow({
     );
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
+    const { auth } = usePage<any>().props;
+    const isReadOnly = auth.user.role === 'maquinista';
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -194,15 +203,25 @@ export default function WorkshopShow({
                                 rel="noopener noreferrer"
                             >
                                 <Printer className="mr-2 h-4 w-4" />
-                                Imprimir Orden
+                                <span className="hidden sm:inline">
+                                    Imprimir Orden
+                                </span>
+                                <span className="sm:hidden">Imprimir</span>
                             </a>
                         </Button>
-                        <Button onClick={handleSubmit} disabled={processing}>
-                            <Save className="mr-2 h-4 w-4" />
-                            Guardar Cambios
-                        </Button>
 
-                        {maintenance.status !== 'Finalizado' &&
+                        {!isReadOnly && (
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={processing}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                Guardar Cambios
+                            </Button>
+                        )}
+
+                        {!isReadOnly &&
+                            maintenance.status !== 'Finalizado' &&
                             maintenance.status !== 'Entregado' && (
                                 <Button
                                     variant="destructive"
@@ -212,13 +231,11 @@ export default function WorkshopShow({
                                                 '¿Está seguro de finalizar el trabajo? Esto resolverá las incidencias marcadas y generará el documento de salida.',
                                             )
                                         ) {
-                                            put(
+                                            router.put(
                                                 `/vehicles/workshop/${maintenance.id}`,
                                                 {
-                                                    data: {
-                                                        ...data,
-                                                        status: 'Finalizado',
-                                                    },
+                                                    ...data,
+                                                    status: 'Finalizado',
                                                 },
                                             );
                                         }
@@ -247,6 +264,7 @@ export default function WorkshopShow({
                                         onValueChange={(val) =>
                                             setData('status', val)
                                         }
+                                        disabled={isReadOnly}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -281,8 +299,10 @@ export default function WorkshopShow({
                                                 e.target.value,
                                             )
                                         }
+                                        disabled={isReadOnly}
                                     />
                                 </div>
+                                {/* ... (Separator and Workshop Name remain same) ... */}
                                 <Separator />
                                 <div className="space-y-2">
                                     <Label>Taller / Proveedor</Label>
@@ -292,7 +312,7 @@ export default function WorkshopShow({
                                 </div>
                             </CardContent>
                         </Card>
-
+                        // ... (Detalles del Ingreso Card remains same) ...
                         {/* Linked Incidents */}
                         <Card>
                             <CardHeader>
@@ -320,6 +340,7 @@ export default function WorkshopShow({
                                                     )
                                                 }
                                                 disabled={
+                                                    isReadOnly ||
                                                     issue.status === 'Resolved'
                                                 }
                                                 onCheckedChange={() =>
@@ -395,14 +416,16 @@ export default function WorkshopShow({
                                         <Label className="text-base font-semibold">
                                             Tareas Específicas
                                         </Label>
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            onClick={addTask}
-                                            type="button"
-                                        >
-                                            + Agregar Tarea
-                                        </Button>
+                                        {!isReadOnly && (
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={addTask}
+                                                type="button"
+                                            >
+                                                + Agregar Tarea
+                                            </Button>
+                                        )}
                                     </div>
 
                                     {data.tasks.length === 0 && (
@@ -422,6 +445,7 @@ export default function WorkshopShow({
                                                 onCheckedChange={() =>
                                                     toggleTaskCompletion(index)
                                                 }
+                                                disabled={isReadOnly}
                                                 className="mt-1 md:mt-0"
                                             />
                                             <div className="w-full flex-1 space-y-2 md:flex md:gap-4 md:space-y-0">
@@ -434,6 +458,7 @@ export default function WorkshopShow({
                                                         )
                                                     }
                                                     placeholder="Descripción de la tarea"
+                                                    disabled={isReadOnly}
                                                     className={
                                                         task.is_completed
                                                             ? 'text-muted-foreground line-through'
@@ -454,20 +479,23 @@ export default function WorkshopShow({
                                                             )
                                                         }
                                                         placeholder="Costo"
+                                                        disabled={isReadOnly}
                                                     />
                                                 </div>
                                             </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive hover:bg-destructive/10"
-                                                onClick={() =>
-                                                    removeTask(index)
-                                                }
-                                                type="button"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            {!isReadOnly && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/10"
+                                                    onClick={() =>
+                                                        removeTask(index)
+                                                    }
+                                                    type="button"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

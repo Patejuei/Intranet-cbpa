@@ -15,6 +15,19 @@ class VehicleMaintenance extends Model
         'cost',
         'status',
         'tentative_exit_date',
+        'responsible_person',
+        'mileage_in',
+        'traction',
+        'fuel_type',
+        'transmission',
+        'entry_checklist',
+    ];
+
+    protected $casts = [
+        'entry_checklist' => 'array',
+        'entry_date' => 'date',
+        'exit_date' => 'date',
+        'tentative_exit_date' => 'date',
     ];
 
     public function vehicle()
