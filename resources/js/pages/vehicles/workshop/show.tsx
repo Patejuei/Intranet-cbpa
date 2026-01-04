@@ -216,7 +216,12 @@ export default function WorkshopShow({
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
     const { auth } = usePage<any>().props;
-    const isReadOnly = auth.user.role === 'maquinista';
+    const canEdit =
+        auth.user.role === 'admin' ||
+        auth.user.role === 'mechanic' ||
+        (auth.user.permissions &&
+            auth.user.permissions.includes('vehicles.workshop.edit'));
+    const isReadOnly = !canEdit;
 
     return (
         <AppLayout

@@ -12,8 +12,8 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Plus, Settings } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -39,6 +39,8 @@ interface Props {
 }
 
 export default function IndexChecklist({ checklists }: Props) {
+    const { auth } = usePage<any>().props;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Historial Checklists" />
@@ -52,13 +54,24 @@ export default function IndexChecklist({ checklists }: Props) {
                             Registro de revisiones preventivas.
                         </p>
                     </div>
-                    {/* @ts-ignore */}
-                    <Link href="/vehicles/checklists/create">
-                        <Button>
-                            <Plus className="mr-2 size-4" />
-                            Nuevo Checklist
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                        {(auth.user.role === 'admin' ||
+                            auth.user.role === 'capitan') && (
+                            <Link href="/vehicles/checklist-items">
+                                <Button variant="outline">
+                                    <Settings className="mr-2 size-4" />
+                                    Configurar
+                                </Button>
+                            </Link>
+                        )}
+                        {/* @ts-ignore */}
+                        <Link href="/vehicles/checklists/create">
+                            <Button>
+                                <Plus className="mr-2 size-4" />
+                                Nuevo Checklist
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <Card>

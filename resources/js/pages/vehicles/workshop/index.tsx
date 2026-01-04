@@ -125,11 +125,15 @@ export default function VehicleWorkshop() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button asChild>
-                            <Link href="/vehicles/workshop/create">
-                                <Plus className="mr-2 size-4" /> Nuevo Ingreso
-                            </Link>
-                        </Button>
+                        {/* @ts-ignore */}
+                        {usePage().props.auth.user.role !== 'capitan' && (
+                            <Button asChild>
+                                <Link href="/vehicles/workshop/create">
+                                    <Plus className="mr-2 size-4" /> Nuevo
+                                    Ingreso
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
 

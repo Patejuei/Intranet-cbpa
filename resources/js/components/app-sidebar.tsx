@@ -225,7 +225,6 @@ export function AppSidebar({ user }: { user: any }) {
                                 </SidebarMenuItem>
                             )}
                             {(user.role === 'admin' ||
-                                user.role === 'capitan' ||
                                 user.role === 'cuartelero' ||
                                 user.role === 'mechanic') && (
                                 <SidebarMenuItem>

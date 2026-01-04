@@ -9,7 +9,9 @@ import {
     ArrowLeft,
     Calendar,
     CheckCircle2,
+    ClipboardList,
     DollarSign,
+    FileText,
     Wrench,
 } from 'lucide-react';
 
@@ -22,6 +24,9 @@ interface Vehicle {
     plate: string;
     status: 'Operative' | 'Workshop' | 'Out of Service';
     company: string;
+    technical_review_expires_at?: string;
+    circulation_permit_expires_at?: string;
+    insurance_expires_at?: string;
     issues?: {
         id: number;
         description: string;
@@ -88,6 +93,36 @@ export default function VehicleShow({
         }
     };
 
+    const checkExpiration = (dateStr?: string) => {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffTime = date.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return { status: 'expired', days: diffDays };
+        if (diffDays <= 30) return { status: 'warning', days: diffDays };
+        return { status: 'ok', days: diffDays };
+    };
+
+    const documents = [
+        {
+            label: 'Revisión Técnica',
+            date: vehicle.technical_review_expires_at,
+            check: checkExpiration(vehicle.technical_review_expires_at),
+        },
+        {
+            label: 'Permiso de Circulación',
+            date: vehicle.circulation_permit_expires_at,
+            check: checkExpiration(vehicle.circulation_permit_expires_at),
+        },
+        {
+            label: 'Seguro Obligatorio',
+            date: vehicle.insurance_expires_at,
+            check: checkExpiration(vehicle.insurance_expires_at),
+        },
+    ];
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -98,7 +133,7 @@ export default function VehicleShow({
             <Head title={`Detalle ${vehicle.name}`} />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="icon" asChild>
                             <Link href="/vehicles/status">
@@ -124,27 +159,90 @@ export default function VehicleShow({
                             </p>
                         </div>
                     </div>
-                    {allProps.auth?.user &&
-                        (allProps.auth.user.role === 'admin' ||
-                            allProps.auth.user.role === 'capitan') && (
-                            <Button asChild>
-                                <Link href={`/vehicles/${vehicle.id}/edit`}>
-                                    <Wrench className="mr-2 h-4 w-4" />
-                                    Editar Unidad
-                                </Link>
-                            </Button>
-                        )}
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={`/vehicles/logs?vehicle_id=${vehicle.id}`}
+                            >
+                                <ClipboardList className="mr-2 h-4 w-4" />
+                                Ver Bitácora
+                            </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={`/vehicles/checklists?vehicle_id=${vehicle.id}`}
+                            >
+                                <FileText className="mr-2 h-4 w-4" />
+                                Ver Checklists
+                            </Link>
+                        </Button>
+                        {allProps.auth?.user &&
+                            (allProps.auth.user.role === 'admin' ||
+                                allProps.auth.user.role === 'capitan') && (
+                                <Button asChild>
+                                    <Link href={`/vehicles/${vehicle.id}/edit`}>
+                                        <Wrench className="mr-2 h-4 w-4" />
+                                        Editar Unidad
+                                    </Link>
+                                </Button>
+                            )}
+                    </div>
                 </div>
 
-                {/* DEBUG: Show raw vehicle data if name is missing or for verification */}
-                {/* <details className="mb-4 rounded border p-2">
-                    <summary className="cursor-pointer text-xs font-bold text-muted-foreground">
-                        Debug Info (Haga clic para expandir)
-                    </summary>
-                    <pre className="mt-2 overflow-auto rounded bg-slate-950 p-4 text-xs text-white">
-                        {JSON.stringify(vehicle, null, 2)}
-                    </pre>
-                </details> */}
+                {/* Document Alerts */}
+                {documents.some(
+                    (d) =>
+                        d.check?.status === 'expired' ||
+                        d.check?.status === 'warning',
+                ) && (
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {documents.map((doc, idx) => {
+                            if (!doc.check || doc.check.status === 'ok')
+                                return null;
+                            return (
+                                <Card
+                                    key={idx}
+                                    className={`border-l-4 ${doc.check.status === 'expired' ? 'border-l-red-500 bg-red-50' : 'border-l-yellow-500 bg-yellow-50'}`}
+                                >
+                                    <CardContent className="pt-4">
+                                        <div className="flex items-start gap-3">
+                                            <AlertCircle
+                                                className={`h-5 w-5 ${doc.check.status === 'expired' ? 'text-red-600' : 'text-yellow-600'}`}
+                                            />
+                                            <div>
+                                                <p
+                                                    className={`font-semibold ${doc.check.status === 'expired' ? 'text-red-700' : 'text-yellow-700'}`}
+                                                >
+                                                    {doc.label}{' '}
+                                                    {doc.check.status ===
+                                                    'expired'
+                                                        ? 'Vencido'
+                                                        : 'Por Vencer'}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Vence:{' '}
+                                                    {formatDate(doc.date!)}{' '}
+                                                    <span className="font-medium">
+                                                        (
+                                                        {Math.abs(
+                                                            doc.check.days,
+                                                        )}{' '}
+                                                        días{' '}
+                                                        {doc.check.status ===
+                                                        'expired'
+                                                            ? 'atrasado'
+                                                            : 'restantes'}
+                                                        )
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Main Info */}
@@ -186,6 +284,23 @@ export default function VehicleShow({
                                         {vehicle.model}
                                     </p>
                                 </div>
+                            </div>
+
+                            <hr className="my-4" />
+                            <h3 className="mb-2 font-medium">Documentación</h3>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                {documents.map((doc, idx) => (
+                                    <div key={idx}>
+                                        <label className="text-xs font-medium text-muted-foreground">
+                                            {doc.label}
+                                        </label>
+                                        <p className="text-sm font-semibold">
+                                            {doc.date
+                                                ? formatDate(doc.date)
+                                                : 'No registrado'}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
 
                             {/* Total Cost for Command */}

@@ -12,6 +12,10 @@ class VehicleInventoryController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403, 'Acceso denegado.');
+        }
+
         $query = \App\Models\WorkshopInventory::query();
 
         if ($request->has('search')) {
@@ -37,6 +41,9 @@ class VehicleInventoryController extends Controller
      */
     public function create()
     {
+        if (request()->user()->role === 'capitan') {
+            abort(403);
+        }
         $vehicles = \App\Models\Vehicle::orderBy('name')->get(['id', 'name', 'plate', 'model']);
         return Inertia::render('vehicles/inventory/create', [
             'vehicles' => $vehicles
@@ -48,6 +55,9 @@ class VehicleInventoryController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'nullable|string|unique:workshop_inventory,sku',
@@ -78,6 +88,9 @@ class VehicleInventoryController extends Controller
      */
     public function edit(string $id)
     {
+        if (request()->user()->role === 'capitan') {
+            abort(403);
+        }
         $item = \App\Models\WorkshopInventory::findOrFail($id);
         $vehicles = \App\Models\Vehicle::orderBy('name')->get(['id', 'name', 'plate', 'model']);
 
@@ -92,6 +105,9 @@ class VehicleInventoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         $item = \App\Models\WorkshopInventory::findOrFail($id);
 
         $validated = $request->validate([
@@ -116,6 +132,9 @@ class VehicleInventoryController extends Controller
      */
     public function destroy(string $id)
     {
+        if (request()->user()->role === 'capitan') {
+            abort(403);
+        }
         $item = \App\Models\WorkshopInventory::findOrFail($id);
 
         // Check if used? 

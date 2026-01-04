@@ -68,6 +68,9 @@ class VehicleMaintenanceController extends Controller
 
     public function create()
     {
+        if (request()->user()->role === 'capitan') {
+            abort(403);
+        }
         $user = request()->user();
 
         $vehicles = \App\Models\Vehicle::query()
@@ -94,6 +97,9 @@ class VehicleMaintenanceController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'entry_date' => 'required|date',
@@ -151,6 +157,9 @@ class VehicleMaintenanceController extends Controller
 
     public function finalize(Request $request, \App\Models\VehicleMaintenance $maintenance)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         if ($maintenance->status === 'Finalizado' || $maintenance->status === 'Entregado') {
             return back()->with('error', 'El mantenimiento ya está finalizado.');
         }
@@ -169,6 +178,9 @@ class VehicleMaintenanceController extends Controller
 
     public function addInventoryItem(Request $request, \App\Models\VehicleMaintenance $maintenance)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         $validated = $request->validate([
             'inventory_item_id' => 'required|exists:workshop_inventory,id',
             'quantity' => 'required|integer|min:1',
@@ -202,6 +214,9 @@ class VehicleMaintenanceController extends Controller
 
     public function removeInventoryItem(Request $request, \App\Models\VehicleMaintenance $maintenance, $itemId)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         // Find the pivot record
         $pivot = \Illuminate\Support\Facades\DB::table('vehicle_maintenance_items')
             ->where('maintenance_id', $maintenance->id)
@@ -275,6 +290,9 @@ class VehicleMaintenanceController extends Controller
      */
     public function update(Request $request, \App\Models\VehicleMaintenance $workshop)
     {
+        if ($request->user()->role === 'capitan') {
+            abort(403);
+        }
         $validated = $request->validate([
             'status' => 'required|string',
             'tentative_exit_date' => 'nullable|date',

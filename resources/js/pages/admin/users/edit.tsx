@@ -8,7 +8,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react'; // Added usePage
 import { Shield, Truck } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
@@ -90,15 +90,41 @@ const companies = [
     'Comandancia',
 ];
 
-const roles = [
-    { value: 'user', label: 'Usuario Estándar' },
-    { value: 'admin', label: 'Administrador del Sistema' },
-    { value: 'capitan', label: 'Capitán' },
-    { value: 'teniente', label: 'Teniente' },
-    { value: 'maquinista', label: 'Maquinista' },
-    { value: 'ayudante', label: 'Ayudante' },
-    { value: 'comandancia', label: 'Comandancia' },
-];
+// Helper to filter options based on current user role
+const getFilteredRoles = (currentUserRole: string) => {
+    const allRoles = [
+        { value: 'user', label: 'Usuario Estándar' },
+        { value: 'admin', label: 'Administrador del Sistema' },
+        { value: 'capitan', label: 'Capitán' },
+        { value: 'teniente', label: 'Teniente' },
+        { value: 'maquinista', label: 'Maquinista' },
+        { value: 'ayudante', label: 'Ayudante' },
+        { value: 'comandancia', label: 'Comandancia' },
+        { value: 'cuartelero', label: 'Cuartelero' },
+        { value: 'mechanic', label: 'Taller Mecánico' },
+    ];
+
+    if (currentUserRole === 'capitan') {
+        const allowed = ['user', 'teniente', 'maquinista', 'ayudante'];
+        return allRoles.filter((r) => allowed.includes(r.value));
+    }
+
+    return allRoles;
+};
+
+const getFilteredModules = (currentUserRole: string) => {
+    if (currentUserRole === 'capitan') {
+        const restricted = [
+            'vehicles.inventory',
+            'vehicles.workshop',
+            'firefighters',
+            'vehicles', // General Mayor
+            'equipment', // General Menor
+        ];
+        return modules.filter((m) => !restricted.includes(m.id));
+    }
+    return modules;
+};
 
 export default function UserEdit({
     user,
@@ -107,6 +133,9 @@ export default function UserEdit({
     user: User;
     availableVehicles?: any[];
 }) {
+    const authUser = usePage().props.auth.user as any;
+    const currentUserRole = authUser?.role || 'user';
+
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
@@ -117,6 +146,9 @@ export default function UserEdit({
         driver_vehicles:
             user.driver_vehicles?.map((v) => v.id) ?? ([] as number[]),
     });
+
+    const filteredRoles = getFilteredRoles(currentUserRole);
+    const filteredModules = getFilteredModules(currentUserRole);
 
     const handleVehicleToggle = (id: number) => {
         const current = data.driver_vehicles;
@@ -275,6 +307,7 @@ export default function UserEdit({
                                         onValueChange={(value) =>
                                             setData('company', value)
                                         }
+                                        disabled={currentUserRole === 'capitan'} // Disable for Captains
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Seleccione una Compañía" />
@@ -316,33 +349,14 @@ export default function UserEdit({
                                         <SelectValue placeholder="Seleccione un Rol" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="user">
-                                            Usuario (Por Defecto)
-                                        </SelectItem>
-                                        <SelectItem value="admin">
-                                            Administrador
-                                        </SelectItem>
-                                        <SelectItem value="capitan">
-                                            Capitán
-                                        </SelectItem>
-                                        <SelectItem value="teniente">
-                                            Teniente
-                                        </SelectItem>
-                                        <SelectItem value="maquinista">
-                                            Maquinista
-                                        </SelectItem>
-                                        <SelectItem value="ayudante">
-                                            Ayudante
-                                        </SelectItem>
-                                        <SelectItem value="cuartelero">
-                                            Cuartelero
-                                        </SelectItem>
-                                        <SelectItem value="mechanic">
-                                            Taller Mecánico
-                                        </SelectItem>
-                                        <SelectItem value="comandancia">
-                                            Comandancia
-                                        </SelectItem>
+                                        {filteredRoles.map((role) => (
+                                            <SelectItem
+                                                key={role.value}
+                                                value={role.value}
+                                            >
+                                                {role.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -356,128 +370,136 @@ export default function UserEdit({
                                         </label>
                                         <div className="space-y-6">
                                             {moduleCategories.map(
-                                                (category) => (
-                                                    <div
-                                                        key={category}
-                                                        className="rounded-md border p-3"
-                                                    >
-                                                        <h4 className="mb-2 text-sm font-semibold text-foreground">
-                                                            {category}
-                                                        </h4>
-                                                        <table className="w-full text-sm">
-                                                            <tbody className="divide-y">
-                                                                {modules
-                                                                    .filter(
-                                                                        (m) =>
-                                                                            m.category ===
-                                                                            category,
-                                                                    )
-                                                                    .map(
-                                                                        (
-                                                                            module,
-                                                                        ) => (
-                                                                            <tr
-                                                                                key={
-                                                                                    module.id
-                                                                                }
-                                                                            >
-                                                                                <td className="w-1/3 py-2.5 font-medium">
-                                                                                    {
-                                                                                        module.label
+                                                (category) =>
+                                                    // Only show category if it has modules allowed
+                                                    filteredModules.some(
+                                                        (m) =>
+                                                            m.category ===
+                                                            category,
+                                                    ) && (
+                                                        <div
+                                                            key={category}
+                                                            className="rounded-md border p-3"
+                                                        >
+                                                            <h4 className="mb-2 text-sm font-semibold text-foreground">
+                                                                {category}
+                                                            </h4>
+                                                            <table className="w-full text-sm">
+                                                                <tbody className="divide-y">
+                                                                    {filteredModules
+                                                                        .filter(
+                                                                            (
+                                                                                m,
+                                                                            ) =>
+                                                                                m.category ===
+                                                                                category,
+                                                                        )
+                                                                        .map(
+                                                                            (
+                                                                                module,
+                                                                            ) => (
+                                                                                <tr
+                                                                                    key={
+                                                                                        module.id
                                                                                     }
-                                                                                </td>
-                                                                                <td className="py-2">
-                                                                                    <div className="flex gap-1 rounded-md bg-muted/50 p-1">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                handlePermissionChange(
-                                                                                                    module.id,
-                                                                                                    'none',
-                                                                                                )
-                                                                                            }
-                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                'none'
-                                                                                                    ? 'bg-background shadow-sm'
-                                                                                                    : 'text-muted-foreground hover:bg-background/50'
-                                                                                            }`}
-                                                                                        >
-                                                                                            Ninguno
-                                                                                        </button>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                handlePermissionChange(
-                                                                                                    module.id,
-                                                                                                    'view',
-                                                                                                )
-                                                                                            }
-                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                'view'
-                                                                                                    ? 'bg-blue-100 text-blue-700 shadow-sm'
-                                                                                                    : 'text-muted-foreground hover:bg-background/50'
-                                                                                            }`}
-                                                                                        >
-                                                                                            Ver
-                                                                                        </button>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                handlePermissionChange(
-                                                                                                    module.id,
-                                                                                                    'edit',
-                                                                                                )
-                                                                                            }
-                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                'edit'
-                                                                                                    ? 'bg-green-100 text-green-700 shadow-sm'
-                                                                                                    : 'text-muted-foreground hover:bg-background/50'
-                                                                                            }`}
-                                                                                        >
-                                                                                            Editar
-                                                                                        </button>
-                                                                                        {(module.id ===
-                                                                                            'vehicles' ||
-                                                                                            module.id ===
-                                                                                                'equipment') && (
+                                                                                >
+                                                                                    <td className="w-1/3 py-2.5 font-medium">
+                                                                                        {
+                                                                                            module.label
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td className="py-2">
+                                                                                        <div className="flex gap-1 rounded-md bg-muted/50 p-1">
                                                                                             <button
                                                                                                 type="button"
                                                                                                 onClick={() =>
                                                                                                     handlePermissionChange(
                                                                                                         module.id,
-                                                                                                        'full',
+                                                                                                        'none',
                                                                                                     )
                                                                                                 }
                                                                                                 className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
                                                                                                     getPermissionValue(
                                                                                                         module.id,
                                                                                                     ) ===
-                                                                                                    'full'
-                                                                                                        ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                                    'none'
+                                                                                                        ? 'bg-background shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
                                                                                                 }`}
                                                                                             >
-                                                                                                Total
+                                                                                                Ninguno
                                                                                             </button>
-                                                                                        )}
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ),
-                                                                    )}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                ),
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    handlePermissionChange(
+                                                                                                        module.id,
+                                                                                                        'view',
+                                                                                                    )
+                                                                                                }
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'view'
+                                                                                                        ? 'bg-blue-100 text-blue-700 shadow-sm'
+                                                                                                        : 'text-muted-foreground hover:bg-background/50'
+                                                                                                }`}
+                                                                                            >
+                                                                                                Ver
+                                                                                            </button>
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    handlePermissionChange(
+                                                                                                        module.id,
+                                                                                                        'edit',
+                                                                                                    )
+                                                                                                }
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'edit'
+                                                                                                        ? 'bg-green-100 text-green-700 shadow-sm'
+                                                                                                        : 'text-muted-foreground hover:bg-background/50'
+                                                                                                }`}
+                                                                                            >
+                                                                                                Editar
+                                                                                            </button>
+                                                                                            {(module.id ===
+                                                                                                'vehicles' ||
+                                                                                                module.id ===
+                                                                                                    'equipment') && (
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() =>
+                                                                                                        handlePermissionChange(
+                                                                                                            module.id,
+                                                                                                            'full',
+                                                                                                        )
+                                                                                                    }
+                                                                                                    className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                        getPermissionValue(
+                                                                                                            module.id,
+                                                                                                        ) ===
+                                                                                                        'full'
+                                                                                                            ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                                            : 'text-muted-foreground hover:bg-background/50'
+                                                                                                    }`}
+                                                                                                >
+                                                                                                    Total
+                                                                                                </button>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ),
+                                                                        )}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    ),
                                             )}
                                         </div>
                                         <p className="mt-2 text-xs text-muted-foreground">

@@ -58,14 +58,51 @@ class AdminUserController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
+        $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante'];
+        $restrictedPermissions = [
+            'vehicles.workshop',
+            'vehicles.inventory', // Mayor modules
+            'inventory',
+            'deliveries',
+            'reception', // Menor modules
+            'admin',
+            'firefighters' // Admin modules/logic
+        ];
+
         if ($user->role === 'capitan') {
-            // Force company to be captain's company
-            if ($validated['company'] !== $user->company) {
-                abort(403, 'No puedes crear usuarios para otra compañía.');
+            // Force company to match captain's company regardless of input
+            $validated['company'] = $user->company;
+
+            // Restrict roles
+            if (!in_array($validated['role'], $allowedRoles)) {
+                abort(403, 'Rol no permitido para su nivel de acceso.');
             }
-            // Prevent creating admins or captains? Maybe allow creating subordinates.
-            if (in_array($validated['role'], ['admin', 'capitan'])) {
-                abort(403, 'No tienes permisos para crear este rol.');
+
+            // Filter permissions
+            $cleanPermissions = [];
+            if (isset($validated['permissions'])) {
+                foreach ($validated['permissions'] as $perm) {
+                    // Check if permission starts with restricted prefixes
+                    $isRestricted = false;
+
+                    // Block specific full permissions explicitly if needed
+                    if ($perm === 'vehicles.full' || $perm === 'equipment.full') {
+                        $isRestricted = true;
+                    }
+
+                    // Block module groups
+                    foreach ($restrictedPermissions as $restricted) {
+                        if (str_starts_with($perm, $restricted)) {
+                            $isRestricted = true;
+                            break;
+                        }
+                    }
+
+                    if (!$isRestricted) {
+                        $cleanPermissions[] = $perm;
+                    }
+                }
+                $validated['permissions'] = $cleanPermissions;
             }
         }
 
@@ -131,14 +168,44 @@ class AdminUserController extends Controller
         ]);
 
         if ($currentUser->role === 'capitan') {
-            if ($validated['company'] !== $currentUser->company) {
-                abort(403, 'No puedes mover usuarios a otra compañía.');
+            // Force company
+            $validated['company'] = $currentUser->company;
+
+            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante'];
+            if (!in_array($validated['role'], $allowedRoles)) {
+                abort(403, 'Rol no permitido para su nivel de acceso.');
             }
-            if (in_array($validated['role'], ['admin'])) {
-                abort(403, 'No puedes asignar el rol de admin.');
+
+            // Re-filter permissions (copy logic from store or reuse)
+            $restrictedPermissions = [
+                'vehicles.workshop',
+                'vehicles.inventory',
+                'inventory',
+                'deliveries',
+                'reception',
+                'admin',
+                'firefighters'
+            ];
+
+            $cleanPermissions = [];
+            if (isset($validated['permissions'])) {
+                foreach ($validated['permissions'] as $perm) {
+                    $isRestricted = false;
+                    if ($perm === 'vehicles.full' || $perm === 'equipment.full') {
+                        $isRestricted = true;
+                    }
+                    foreach ($restrictedPermissions as $restricted) {
+                        if (str_starts_with($perm, $restricted)) {
+                            $isRestricted = true;
+                            break;
+                        }
+                    }
+                    if (!$isRestricted) {
+                        $cleanPermissions[] = $perm;
+                    }
+                }
+                $validated['permissions'] = $cleanPermissions;
             }
-            // Helper logic: Prevent Captain from demoting themselves or changing own role if critical?
-            // Assuming Captain is editing OTHER users mostly.
         }
 
         $userData = [

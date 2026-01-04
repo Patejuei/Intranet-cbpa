@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             FirefighterSeeder::class,
             VehicleSeeder::class,
+            ChecklistItemSeeder::class,
         ]);
     }
 }
