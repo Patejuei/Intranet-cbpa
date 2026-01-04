@@ -13,6 +13,7 @@ class VehicleChecklist extends Model
         'vehicle_id',
         'user_id',
         'status',
+        'general_observations',
         'captain_id',
         'captain_reviewed_at',
         'machinist_id',

@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { AlertCircle, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -40,6 +40,7 @@ interface Checklist {
     machinist?: { name: string };
     machinist_reviewed_at?: string;
     details: ChecklistDetail[];
+    general_observations: string | null;
 }
 
 interface Props {
@@ -97,6 +98,14 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Checklist #${checklist.id}`} />
             <div className="flex flex-1 flex-col gap-8 p-4">
+                <Link
+                    href="/vehicles/checklists"
+                    className="flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="size-4" />
+                    Volver a la lista
+                </Link>
+
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -200,6 +209,17 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                     <Badge variant="outline">Pendiente</Badge>
                                 )}
                             </div>
+
+                            {checklist.general_observations && (
+                                <div className="rounded-lg border bg-muted/50 p-4">
+                                    <h3 className="mb-2 font-medium">
+                                        Observaciones Generales
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {checklist.general_observations}
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

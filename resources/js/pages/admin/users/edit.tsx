@@ -23,19 +23,57 @@ interface User {
 }
 
 const modules = [
-    { id: 'inventory', label: 'Inventario' },
-    { id: 'tickets', label: 'Ticketera' },
-    { id: 'batteries', label: 'Baterías' },
-    { id: 'equipment', label: 'Material Menor' },
-    { id: 'deliveries', label: 'Actas de Entrega' },
-    { id: 'reception', label: 'Actas de Recepción' },
-    { id: 'firefighters', label: 'Bomberos' },
-    { id: 'vehicles', label: 'Material Mayor (General)' },
-    { id: 'vehicles.incidents', label: 'M. Mayor - Incidencias' },
-    { id: 'vehicles.logs', label: 'M. Mayor - Bitácora' },
-    { id: 'vehicles.workshop', label: 'M. Mayor - Taller' },
-    { id: 'vehicles.inventory', label: 'M. Mayor - Inventario' },
+    // Material Menor
+    { id: 'inventory', label: 'Inventario', category: 'Material Menor' },
+    { id: 'tickets', label: 'Ticketera', category: 'Material Menor' },
+    { id: 'batteries', label: 'Baterías', category: 'Material Menor' },
+    {
+        id: 'equipment',
+        label: 'Material Menor (General)',
+        category: 'Material Menor',
+    },
+    { id: 'deliveries', label: 'Actas de Entrega', category: 'Material Menor' },
+    {
+        id: 'reception',
+        label: 'Actas de Recepción',
+        category: 'Material Menor',
+    },
+    // Material Mayor
+    {
+        id: 'vehicles',
+        label: 'Material Mayor (General)',
+        category: 'Material Mayor',
+    },
+    {
+        id: 'vehicles.incidents',
+        label: 'M. Mayor - Incidencias',
+        category: 'Material Mayor',
+    },
+    {
+        id: 'vehicles.checklist',
+        label: 'M. Mayor - Checklist',
+        category: 'Material Mayor',
+    },
+    {
+        id: 'vehicles.logs',
+        label: 'M. Mayor - Bitácora',
+        category: 'Material Mayor',
+    },
+    {
+        id: 'vehicles.workshop',
+        label: 'M. Mayor - Taller',
+        category: 'Material Mayor',
+    },
+    {
+        id: 'vehicles.inventory',
+        label: 'M. Mayor - Inventario',
+        category: 'Material Mayor',
+    },
+    // Administración
+    { id: 'firefighters', label: 'Bomberos', category: 'Administración' },
 ];
+
+const moduleCategories = ['Material Menor', 'Material Mayor', 'Administración'];
 
 const companies = [
     'Primera Compañía',
@@ -287,129 +325,160 @@ export default function UserEdit({
                                         <SelectItem value="capitan">
                                             Capitán
                                         </SelectItem>
+                                        <SelectItem value="teniente">
+                                            Teniente
+                                        </SelectItem>
+                                        <SelectItem value="maquinista">
+                                            Maquinista
+                                        </SelectItem>
+                                        <SelectItem value="ayudante">
+                                            Ayudante
+                                        </SelectItem>
                                         <SelectItem value="cuartelero">
                                             Cuartelero
                                         </SelectItem>
                                         <SelectItem value="mechanic">
                                             Taller Mecánico
                                         </SelectItem>
+                                        <SelectItem value="comandancia">
+                                            Comandancia
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             {data.role !== 'admin' &&
-                                data.role !== 'capitan' && (
+                                data.role !== 'capitan' &&
+                                data.role !== 'maquinista' && ( // Admin/Capitan/Maquinista have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo
                                         </label>
-                                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                            <table className="w-full text-sm">
-                                                <thead>
-                                                    <tr className="text-left text-muted-foreground">
-                                                        <th className="pb-2 font-medium">
-                                                            Módulo
-                                                        </th>
-                                                        <th className="pb-2 font-medium">
-                                                            Nivel de Acceso
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y">
-                                                    {modules.map((module) => (
-                                                        <tr key={module.id}>
-                                                            <td className="py-2.5 font-medium">
-                                                                {module.label}
-                                                            </td>
-                                                            <td className="py-2">
-                                                                <div className="flex gap-1 rounded-md bg-muted/50 p-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handlePermissionChange(
-                                                                                module.id,
-                                                                                'none',
-                                                                            )
-                                                                        }
-                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                            getPermissionValue(
-                                                                                module.id,
-                                                                            ) ===
-                                                                            'none'
-                                                                                ? 'bg-background shadow-sm'
-                                                                                : 'text-muted-foreground hover:bg-background/50'
-                                                                        }`}
-                                                                    >
-                                                                        Ninguno
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handlePermissionChange(
-                                                                                module.id,
-                                                                                'view',
-                                                                            )
-                                                                        }
-                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                            getPermissionValue(
-                                                                                module.id,
-                                                                            ) ===
-                                                                            'view'
-                                                                                ? 'bg-blue-100 text-blue-700 shadow-sm'
-                                                                                : 'text-muted-foreground hover:bg-background/50'
-                                                                        }`}
-                                                                    >
-                                                                        Ver
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handlePermissionChange(
-                                                                                module.id,
-                                                                                'edit',
-                                                                            )
-                                                                        }
-                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                            getPermissionValue(
-                                                                                module.id,
-                                                                            ) ===
-                                                                            'edit'
-                                                                                ? 'bg-green-100 text-green-700 shadow-sm'
-                                                                                : 'text-muted-foreground hover:bg-background/50'
-                                                                        }`}
-                                                                    >
-                                                                        Editar
-                                                                    </button>
-                                                                    {(module.id ===
-                                                                        'vehicles' ||
-                                                                        module.id ===
-                                                                            'equipment') && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handlePermissionChange(
-                                                                                    module.id,
-                                                                                    'full',
-                                                                                )
-                                                                            }
-                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                getPermissionValue(
-                                                                                    module.id,
-                                                                                ) ===
-                                                                                'full'
-                                                                                    ? 'bg-purple-100 text-purple-700 shadow-sm'
-                                                                                    : 'text-muted-foreground hover:bg-background/50'
-                                                                            }`}
-                                                                        >
-                                                                            Total
-                                                                        </button>
+                                        <div className="space-y-6">
+                                            {moduleCategories.map(
+                                                (category) => (
+                                                    <div
+                                                        key={category}
+                                                        className="rounded-md border p-3"
+                                                    >
+                                                        <h4 className="mb-2 text-sm font-semibold text-foreground">
+                                                            {category}
+                                                        </h4>
+                                                        <table className="w-full text-sm">
+                                                            <tbody className="divide-y">
+                                                                {modules
+                                                                    .filter(
+                                                                        (m) =>
+                                                                            m.category ===
+                                                                            category,
+                                                                    )
+                                                                    .map(
+                                                                        (
+                                                                            module,
+                                                                        ) => (
+                                                                            <tr
+                                                                                key={
+                                                                                    module.id
+                                                                                }
+                                                                            >
+                                                                                <td className="w-1/3 py-2.5 font-medium">
+                                                                                    {
+                                                                                        module.label
+                                                                                    }
+                                                                                </td>
+                                                                                <td className="py-2">
+                                                                                    <div className="flex gap-1 rounded-md bg-muted/50 p-1">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                handlePermissionChange(
+                                                                                                    module.id,
+                                                                                                    'none',
+                                                                                                )
+                                                                                            }
+                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                'none'
+                                                                                                    ? 'bg-background shadow-sm'
+                                                                                                    : 'text-muted-foreground hover:bg-background/50'
+                                                                                            }`}
+                                                                                        >
+                                                                                            Ninguno
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                handlePermissionChange(
+                                                                                                    module.id,
+                                                                                                    'view',
+                                                                                                )
+                                                                                            }
+                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                'view'
+                                                                                                    ? 'bg-blue-100 text-blue-700 shadow-sm'
+                                                                                                    : 'text-muted-foreground hover:bg-background/50'
+                                                                                            }`}
+                                                                                        >
+                                                                                            Ver
+                                                                                        </button>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                handlePermissionChange(
+                                                                                                    module.id,
+                                                                                                    'edit',
+                                                                                                )
+                                                                                            }
+                                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                'edit'
+                                                                                                    ? 'bg-green-100 text-green-700 shadow-sm'
+                                                                                                    : 'text-muted-foreground hover:bg-background/50'
+                                                                                            }`}
+                                                                                        >
+                                                                                            Editar
+                                                                                        </button>
+                                                                                        {(module.id ===
+                                                                                            'vehicles' ||
+                                                                                            module.id ===
+                                                                                                'equipment') && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    handlePermissionChange(
+                                                                                                        module.id,
+                                                                                                        'full',
+                                                                                                    )
+                                                                                                }
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'full'
+                                                                                                        ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                                        : 'text-muted-foreground hover:bg-background/50'
+                                                                                                }`}
+                                                                                            >
+                                                                                                Total
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
                                                                     )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
                                         <p className="mt-2 text-xs text-muted-foreground">
                                             'Editar' incluye permisos de 'Ver'.

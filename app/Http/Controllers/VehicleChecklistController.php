@@ -10,9 +10,25 @@ class VehicleChecklistController extends Controller
 {
     public function create()
     {
+        $user = request()->user();
+        $query = \App\Models\Vehicle::where('status', '!=', 'Decommissioned');
+
+        if ($user->role === 'capitan') {
+            $query->where('company', $user->company);
+        } elseif ($user->role !== 'admin') {
+            // Restrict to vehicles the user is allowed to drive
+            $query->whereIn('id', $user->driverVehicles()->pluck('vehicles.id'));
+        }
+
+        $vehicles = $query->get();
+
+        $items = \App\Models\ChecklistItem::where('is_active', true)
+            ->get()
+            ->groupBy('category');
+
         return \Inertia\Inertia::render('vehicles/checklist/create', [
-            'vehicles' => \App\Models\Vehicle::where('status', '!=', 'Decommissioned')->get(),
-            'items' => \App\Models\ChecklistItem::where('is_active', true)->get()->groupBy('category'),
+            'vehicles' => $vehicles,
+            'items' => $items,
         ]);
     }
 
@@ -24,12 +40,14 @@ class VehicleChecklistController extends Controller
             'details.*.item_id' => 'required|exists:checklist_items,id',
             'details.*.status' => 'required|in:ok,urgent,next_maint',
             'details.*.notes' => 'nullable|string',
+            'general_observations' => 'nullable|string',
         ]);
 
         $checklist = \App\Models\VehicleChecklist::create([
             'vehicle_id' => $validated['vehicle_id'],
             'user_id' => $request->user()->id,
             'status' => 'Pending',
+            'general_observations' => $validated['general_observations'] ?? null,
         ]);
 
         foreach ($validated['details'] as $detail) {
@@ -46,9 +64,10 @@ class VehicleChecklistController extends Controller
     public function show(\App\Models\VehicleChecklist $checklist)
     {
         $checklist->load(['vehicle', 'user', 'details.item', 'captain', 'machinist']);
+        $auth_user = request()->user();
         return \Inertia\Inertia::render('vehicles/checklist/show', [
             'checklist' => $checklist,
-            'canReview' => $this->canReview(request()->user(), $checklist),
+            'canReview' => $this->userCanReview($auth_user, $checklist),
         ]);
     }
 
@@ -66,7 +85,7 @@ class VehicleChecklistController extends Controller
         $user = $request->user();
         // Check roles
         $isCaptain = ($user->role === 'capitan' || $user->role === 'admin'); // Assuming Admin can sign as Captain
-        $isMachinist = ($user->role === 'machinist' || $user->role === 'mechanic'); // Allow mechanic too? user requested machinist.
+        $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic'); // Allow mechanic too? user requested machinist.
 
         if (!$isCaptain && !$isMachinist) {
             return back()->with('error', 'No autorizado.');
@@ -97,11 +116,11 @@ class VehicleChecklistController extends Controller
         return back()->with('success', 'Checklist visado.');
     }
 
-    private function canReview($user, $checklist)
+    private function userCanReview($user, $checklist)
     {
         if (!$user) return false;
         $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
-        $isMachinist = ($user->role === 'machinist' || $user->role === 'mechanic');
+        $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
 
         if ($checklist->status === 'Completed') return false;
 

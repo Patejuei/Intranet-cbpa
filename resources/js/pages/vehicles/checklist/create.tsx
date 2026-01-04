@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
@@ -51,6 +52,7 @@ interface ChecklistForm {
         status: 'ok' | 'urgent' | 'next_maint';
         notes: string;
     }[];
+    general_observations: string;
 }
 
 export default function CreateChecklist({ vehicles, items }: Props) {
@@ -65,6 +67,7 @@ export default function CreateChecklist({ vehicles, items }: Props) {
                 status: 'ok',
                 notes: '',
             })),
+            general_observations: '',
         });
 
     const updateDetail = (
@@ -243,6 +246,20 @@ export default function CreateChecklist({ vehicles, items }: Props) {
                             </CardContent>
                         </Card>
                     ))}
+
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <Label htmlFor="general_observations">
+                            Observaciones Generales
+                        </Label>
+                        <Textarea
+                            id="general_observations"
+                            value={data.general_observations}
+                            onChange={(e) =>
+                                setData('general_observations', e.target.value)
+                            }
+                            placeholder="Comentarios generales sobre el estado del vehículo..."
+                        />
+                    </div>
 
                     <div className="flex justify-end gap-4 pb-8">
                         <Button

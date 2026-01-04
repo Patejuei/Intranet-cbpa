@@ -43,7 +43,36 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? tap($request->user(), function ($user) {
+                    if ($user->role === 'maquinista') {
+                        $defaults = [
+                            // General Vehicles (Edit)
+                            'vehicles',
+                            'vehicles.view',
+                            'vehicles.edit',
+                            // Incidents (Edit)
+                            'vehicles.incidents',
+                            'vehicles.incidents.view',
+                            'vehicles.incidents.edit',
+                            // Checklist (Edit)
+                            'vehicles.checklist',
+                            'vehicles.checklist.view',
+                            'vehicles.checklist.edit',
+                            // Logs/Bitacora (Edit)
+                            'vehicles.logs',
+                            'vehicles.logs.view',
+                            'vehicles.logs.edit',
+                            // Inventory (Edit)
+                            'vehicles.inventory',
+                            'vehicles.inventory.view',
+                            'vehicles.inventory.edit',
+                            // Workshop (View Only)
+                            'vehicles.workshop',
+                            'vehicles.workshop.view',
+                        ];
+                        $user->permissions = array_values(array_unique(array_merge($user->permissions ?? [], $defaults)));
+                    }
+                }) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
