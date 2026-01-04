@@ -35,6 +35,44 @@ export function AppSidebar({ user }: { user: any }) {
         if (!user) return false;
         if (user.role === 'admin' || user.role === 'capitan') return true;
 
+        if (user.role === 'inspector') {
+            const dept = (user.department || '').trim();
+            if (dept === 'Material Mayor') {
+                const allowed = [
+                    'vehicles.status',
+                    'vehicles.incidents',
+                    'vehicles.inventory',
+                    'vehicles.logs',
+                    'vehicles.workshop',
+                    'vehicles.checklist',
+                    'vehicles',
+                ];
+                if (
+                    allowed.some(
+                        (m) => m === module || m.startsWith(module + '.'),
+                    )
+                )
+                    return true;
+                if (allowed.includes(module)) return true;
+            } else if (dept === 'Material Menor') {
+                const allowed = [
+                    'inventory',
+                    'tickets',
+                    'batteries',
+                    'deliveries',
+                    'reception',
+                    'equipment',
+                ];
+                if (
+                    allowed.some(
+                        (m) => m === module || m.startsWith(module + '.'),
+                    )
+                )
+                    return true;
+                if (allowed.includes(module)) return true;
+            }
+        }
+
         const permissions = (user.permissions as string[]) || [];
         return (
             permissions.includes(module) ||

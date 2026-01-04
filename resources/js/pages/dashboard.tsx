@@ -80,6 +80,45 @@ export default function Dashboard({
             return true;
         }
 
+        // Inspector Role Logic
+        if (user.role === 'inspector') {
+            const dept = (user.department || '').trim();
+            const moduleKey = module.permission;
+
+            if (dept === 'Material Mayor') {
+                const allowed = [
+                    'vehicles.status',
+                    'vehicles.incidents',
+                    'vehicles.inventory',
+                    'vehicles.logs',
+                    'vehicles.workshop',
+                    'vehicles.checklist',
+                    'vehicles',
+                ];
+                if (
+                    allowed.some(
+                        (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
+                    )
+                )
+                    return true;
+            } else if (dept === 'Material Menor') {
+                const allowed = [
+                    'inventory',
+                    'tickets',
+                    'batteries',
+                    'deliveries',
+                    'reception',
+                    'equipment',
+                ];
+                if (
+                    allowed.some(
+                        (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
+                    )
+                )
+                    return true;
+            }
+        }
+
         // Check explicit permissions
         const permissions = user.permissions || [];
         const moduleKey = module.permission;

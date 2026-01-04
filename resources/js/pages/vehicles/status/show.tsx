@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -88,6 +89,7 @@ export default function VehicleShow({
     totalMaintenanceCost?: number;
 }) {
     const allProps = usePage<PageProps>().props;
+    const { canEdit } = usePermissions();
     const activeIssue = vehicle.issues?.[0];
     const activeMaintenance = vehicle.maintenances?.[0];
 
@@ -210,6 +212,7 @@ export default function VehicleShow({
                                 Ver Checklists
                             </Link>
                         </Button>
+                        {/* Edit Button (Admin/Captain only) */}
                         {allProps.auth?.user &&
                             (allProps.auth.user.role === 'admin' ||
                                 allProps.auth.user.role === 'capitan') && (
@@ -220,120 +223,113 @@ export default function VehicleShow({
                                     </Link>
                                 </Button>
                             )}
-                        {allProps.auth?.user &&
-                            (allProps.auth.user.role === 'admin' ||
-                                allProps.auth.user.role === 'capitan' ||
-                                ((allProps.auth.user as any).permissions &&
-                                    (
-                                        allProps.auth.user as any
-                                    ).permissions.includes(
-                                        'vehicles.edit',
-                                    ))) && (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="secondary">
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            Actualizar Vencimientos
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>
-                                                Actualizar Documentación
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Modifique las fechas de
-                                                vencimiento de los documentos
-                                                del vehículo.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <form onSubmit={submitDocuments}>
-                                            <div className="grid gap-4 py-4">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="technical_review">
-                                                        Revisión Técnica
-                                                    </Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={
-                                                            docData.technical_review_expires_at
+
+                        {/* Documents Update Button (Permission Based) */}
+                        {canEdit('vehicles.status') && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="secondary">
+                                        <Calendar className="mr-2 h-4 w-4" />
+                                        Actualizar Vencimientos
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>
+                                            Actualizar Documentación
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Modifique las fechas de vencimiento
+                                            de los documentos del vehículo.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={submitDocuments}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="technical_review">
+                                                    Revisión Técnica
+                                                </Label>
+                                                <Input
+                                                    type="date"
+                                                    value={
+                                                        docData.technical_review_expires_at
+                                                    }
+                                                    onChange={(e) =>
+                                                        setDocData(
+                                                            'technical_review_expires_at',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {docErrors.technical_review_expires_at && (
+                                                    <span className="text-sm text-destructive">
+                                                        {
+                                                            docErrors.technical_review_expires_at
                                                         }
-                                                        onChange={(e) =>
-                                                            setDocData(
-                                                                'technical_review_expires_at',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {docErrors.technical_review_expires_at && (
-                                                        <span className="text-sm text-destructive">
-                                                            {
-                                                                docErrors.technical_review_expires_at
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="circulation_permit">
-                                                        Permiso de Circulación
-                                                    </Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={
-                                                            docData.circulation_permit_expires_at
-                                                        }
-                                                        onChange={(e) =>
-                                                            setDocData(
-                                                                'circulation_permit_expires_at',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {docErrors.circulation_permit_expires_at && (
-                                                        <span className="text-sm text-destructive">
-                                                            {
-                                                                docErrors.circulation_permit_expires_at
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="insurance">
-                                                        Seguro Obligatorio
-                                                    </Label>
-                                                    <Input
-                                                        type="date"
-                                                        value={
-                                                            docData.insurance_expires_at
-                                                        }
-                                                        onChange={(e) =>
-                                                            setDocData(
-                                                                'insurance_expires_at',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {docErrors.insurance_expires_at && (
-                                                        <span className="text-sm text-destructive">
-                                                            {
-                                                                docErrors.insurance_expires_at
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                    </span>
+                                                )}
                                             </div>
-                                            <DialogFooter>
-                                                <Button
-                                                    type="submit"
-                                                    disabled={processingDocs}
-                                                >
-                                                    Guardar Cambios
-                                                </Button>
-                                            </DialogFooter>
-                                        </form>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="circulation_permit">
+                                                    Permiso de Circulación
+                                                </Label>
+                                                <Input
+                                                    type="date"
+                                                    value={
+                                                        docData.circulation_permit_expires_at
+                                                    }
+                                                    onChange={(e) =>
+                                                        setDocData(
+                                                            'circulation_permit_expires_at',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {docErrors.circulation_permit_expires_at && (
+                                                    <span className="text-sm text-destructive">
+                                                        {
+                                                            docErrors.circulation_permit_expires_at
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="insurance">
+                                                    Seguro Obligatorio
+                                                </Label>
+                                                <Input
+                                                    type="date"
+                                                    value={
+                                                        docData.insurance_expires_at
+                                                    }
+                                                    onChange={(e) =>
+                                                        setDocData(
+                                                            'insurance_expires_at',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {docErrors.insurance_expires_at && (
+                                                    <span className="text-sm text-destructive">
+                                                        {
+                                                            docErrors.insurance_expires_at
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button
+                                                type="submit"
+                                                disabled={processingDocs}
+                                            >
+                                                Guardar Cambios
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        )}
                     </div>
                 </div>
 

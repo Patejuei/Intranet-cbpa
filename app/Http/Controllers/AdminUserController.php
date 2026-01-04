@@ -112,7 +112,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'company' => $validated['company'],
             'role' => $validated['role'],
-            'department' => $validated['department'] ?? null,
+            'department' => isset($validated['department']) ? trim($validated['department']) : null,
             'permissions' => $validated['permissions'] ?? [],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
@@ -216,7 +216,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'company' => $validated['company'],
             'role' => $validated['role'],
-            'department' => $validated['department'] ?? null,
+            'department' => isset($validated['department']) ? trim($validated['department']) : null,
             'permissions' => $validated['permissions'] ?? [],
         ];
 

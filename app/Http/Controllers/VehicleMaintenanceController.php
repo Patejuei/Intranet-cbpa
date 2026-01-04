@@ -19,7 +19,7 @@ class VehicleMaintenanceController extends Controller
             ->orderBy('entry_date', 'desc');
 
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'comandancia') {
+        if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
             $query->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
