@@ -153,6 +153,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('workshop/{maintenance}/print-exit', [VehicleMaintenanceController::class, 'printExit'])->name('vehicles.workshop.print_exit');
         Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
         Route::resource('inventory', VehicleInventoryController::class)->names('vehicles.inventory');
+
+        // Checklist Routes
+        Route::post('checklists/{checklist}/review', [App\Http\Controllers\VehicleChecklistController::class, 'review'])->name('vehicles.checklists.review');
+        Route::resource('checklists', App\Http\Controllers\VehicleChecklistController::class)->names('vehicles.checklists');
+
+        Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
     });
 
     // Admin Routes

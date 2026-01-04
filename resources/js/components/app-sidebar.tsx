@@ -18,6 +18,7 @@ import {
     Battery,
     BookOpen,
     Box,
+    ClipboardCheck,
     ClipboardList,
     FileText,
     LayoutGrid,
@@ -27,7 +28,7 @@ import {
     Truck,
     Users,
     Wrench,
-} from 'lucide-react'; // Added icons
+} from 'lucide-react';
 
 export function AppSidebar({ user }: { user: any }) {
     const hasPermission = (module: string) => {
@@ -194,6 +195,17 @@ export function AppSidebar({ user }: { user: any }) {
                                     <Link href="/vehicles/incidents">
                                         <AlertTriangle />
                                         <span>Incidencias</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Checklist Preventivo"
+                                >
+                                    <Link href="/vehicles/checklists">
+                                        <ClipboardCheck />
+                                        <span>Checklist Preventivo</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

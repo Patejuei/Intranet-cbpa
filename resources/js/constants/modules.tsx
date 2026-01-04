@@ -3,6 +3,7 @@ import {
     Battery,
     Box,
     Clipboard,
+    ClipboardCheck,
     FileText,
     HardHat,
     List,
@@ -139,6 +140,15 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/inventory',
         pattern: /^\/vehicles\/inventory/,
         icon: List,
+        permission: 'vehicles',
+    },
+    {
+        key: 'vehicles-checklist',
+        title: 'Checklist Preventivo',
+        description: 'Revisiones periódicas',
+        href: '/vehicles/checklists',
+        pattern: /^\/vehicles\/checklists/,
+        icon: ClipboardCheck,
         permission: 'vehicles',
     },
 ];
