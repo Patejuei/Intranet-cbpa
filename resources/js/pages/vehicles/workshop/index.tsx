@@ -17,9 +17,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, Link, router, usePage } from '@inertiajs/react'; // Add router
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -58,6 +59,7 @@ interface PageProps {
 
 export default function VehicleWorkshop() {
     const { maintenances, filters } = usePage<PageProps>().props;
+    const { canCreate } = usePermissions(); // Use hook
     const [search, setSearch] = useState(filters.search || '');
     const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -125,8 +127,7 @@ export default function VehicleWorkshop() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* @ts-ignore */}
-                        {usePage().props.auth.user.role !== 'capitan' && (
+                        {canCreate('vehicles.workshop') && (
                             <Button asChild>
                                 <Link href="/vehicles/workshop/create">
                                     <Plus className="mr-2 size-4" /> Nuevo

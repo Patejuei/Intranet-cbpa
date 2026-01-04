@@ -34,6 +34,31 @@ export function usePermissions() {
             if (mechanicModules.includes(module)) return true;
         }
 
+        if (user.role === 'inspector') {
+            if (user.department === 'Material Mayor') {
+                const allowed = [
+                    'vehicles.status',
+                    'vehicles.incidents',
+                    'vehicles.inventory',
+                    'vehicles.logs',
+                    'vehicles.workshop',
+                    'vehicles.checklist',
+                    'vehicles',
+                ];
+                if (allowed.includes(module)) return true;
+            } else if (user.department === 'Material Menor') {
+                const allowed = [
+                    'inventory',
+                    'tickets',
+                    'batteries',
+                    'deliveries',
+                    'reception',
+                    'equipment',
+                ];
+                if (allowed.includes(module)) return true;
+            }
+        }
+
         const permissions = (user.permissions as string[]) || [];
         // Check for exact match or .view/.edit/.full
         return (

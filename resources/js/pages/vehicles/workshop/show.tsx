@@ -12,6 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -216,11 +217,8 @@ export default function WorkshopShow({
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
     const { auth } = usePage<any>().props;
-    const canEdit =
-        auth.user.role === 'admin' ||
-        auth.user.role === 'mechanic' ||
-        (auth.user.permissions &&
-            auth.user.permissions.includes('vehicles.workshop.edit'));
+    const { canEdit: canEditPermission } = usePermissions();
+    const canEdit = canEditPermission('vehicles.workshop');
     const isReadOnly = !canEdit;
 
     return (
