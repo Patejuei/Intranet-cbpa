@@ -44,4 +44,11 @@ class VehicleMaintenance extends Model
     {
         return $this->hasMany(VehicleMaintenanceTask::class);
     }
+
+    public function items()
+    {
+        return $this->belongsToMany(WorkshopInventory::class, 'vehicle_maintenance_items', 'maintenance_id', 'inventory_item_id')
+            ->withPivot('quantity', 'unit_cost', 'total_cost')
+            ->withTimestamps();
+    }
 }

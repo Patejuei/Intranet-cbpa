@@ -149,6 +149,78 @@ class VehicleMaintenanceController extends Controller
         return redirect()->route('vehicles.workshop.index')->with('success', 'Ingreso a taller registrado.');
     }
 
+    public function finalize(Request $request, \App\Models\VehicleMaintenance $maintenance)
+    {
+        if ($maintenance->status === 'Finalizado' || $maintenance->status === 'Entregado') {
+            return back()->with('error', 'El mantenimiento ya está finalizado.');
+        }
+
+        $maintenance->update([
+            'status' => 'Finalizado',
+            'exit_date' => now(),
+        ]);
+
+        // Resolve issues
+        $maintenance->issues()->update(['status' => 'Resolved']);
+        $maintenance->tasks()->update(['is_completed' => true]);
+
+        return back()->with('success', 'Mantenimiento finalizado correctamente.');
+    }
+
+    public function addInventoryItem(Request $request, \App\Models\VehicleMaintenance $maintenance)
+    {
+        $validated = $request->validate([
+            'inventory_item_id' => 'required|exists:workshop_inventory,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $item = \App\Models\WorkshopInventory::findOrFail($validated['inventory_item_id']);
+
+        if ($item->stock < $validated['quantity']) {
+            return back()->withErrors(['quantity' => 'Stock insuficiente. Disponible: ' . $item->stock]);
+        }
+
+        // Calculate cost
+        $unitCost = $item->unit_cost;
+        $totalCost = $unitCost * $validated['quantity'];
+
+        // Decrement stock
+        $item->decrement('stock', $validated['quantity']);
+
+        // Attach to maintenance
+        $maintenance->items()->attach($item->id, [
+            'quantity' => $validated['quantity'],
+            'unit_cost' => $unitCost,
+            'total_cost' => $totalCost,
+        ]);
+
+        // Update maintenance total cost (optional, if stored on maintenance table)
+        // $maintenance->increment('cost', $totalCost); // If cost column tracks parts + labor
+
+        return back()->with('success', 'Ítem agregado correctamente.');
+    }
+
+    public function removeInventoryItem(Request $request, \App\Models\VehicleMaintenance $maintenance, $itemId)
+    {
+        // Find the pivot record
+        $pivot = \Illuminate\Support\Facades\DB::table('vehicle_maintenance_items')
+            ->where('maintenance_id', $maintenance->id)
+            ->where('inventory_item_id', $itemId)
+            ->first();
+
+        if (!$pivot) {
+            return back()->with('error', 'Ítem no encontrado en esta orden.');
+        }
+
+        // Restore stock
+        \App\Models\WorkshopInventory::where('id', $itemId)->increment('stock', $pivot->quantity);
+
+        // Detach
+        $maintenance->items()->detach($itemId);
+
+        return back()->with('success', 'Ítem eliminado y stock restaurado.');
+    }
+
     /**
      * Display the specified resource.
      */

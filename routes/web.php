@@ -7,7 +7,6 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLogController;
 use App\Http\Controllers\VehicleIssueController;
 use App\Http\Controllers\VehicleMaintenanceController;
-use App\Http\Controllers\VehicleInventoryController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -151,8 +150,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
         Route::get('workshop/{maintenance}/print', [VehicleMaintenanceController::class, 'print'])->name('vehicles.workshop.print');
         Route::get('workshop/{maintenance}/print-exit', [VehicleMaintenanceController::class, 'printExit'])->name('vehicles.workshop.print_exit');
+        Route::post('workshop/{maintenance}/items', [VehicleMaintenanceController::class, 'addInventoryItem'])->name('vehicles.workshop.add_item');
+        Route::delete('workshop/{maintenance}/items/{item}', [VehicleMaintenanceController::class, 'removeInventoryItem'])->name('vehicles.workshop.remove_item');
         Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
-        Route::resource('inventory', VehicleInventoryController::class)->names('vehicles.inventory');
+        Route::resource('inventory', \App\Http\Controllers\WorkshopInventoryController::class)->names('vehicles.inventory');
 
         // Checklist Routes
         Route::post('checklists/{checklist}/review', [App\Http\Controllers\VehicleChecklistController::class, 'review'])->name('vehicles.checklists.review');
