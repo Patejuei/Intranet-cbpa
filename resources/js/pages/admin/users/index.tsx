@@ -112,16 +112,19 @@ export default function UserIndex({ users }: PageProps) {
                                                         Acceso Total
                                                     </span>
                                                 ) : (
-                                                    user.permissions?.map(
-                                                        (perm) => (
-                                                            <span
-                                                                key={perm}
-                                                                className="rounded border bg-background px-1.5 py-0.5 text-xs text-muted-foreground"
-                                                            >
-                                                                {perm}
-                                                            </span>
-                                                        ),
+                                                    (Array.isArray(
+                                                        user.permissions,
                                                     )
+                                                        ? user.permissions
+                                                        : []
+                                                    ).map((perm) => (
+                                                        <span
+                                                            key={perm}
+                                                            className="rounded border bg-background px-1.5 py-0.5 text-xs text-muted-foreground"
+                                                        >
+                                                            {perm}
+                                                        </span>
+                                                    ))
                                                 )}
                                             </div>
                                         </td>
