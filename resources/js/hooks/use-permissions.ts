@@ -35,7 +35,14 @@ export function usePermissions() {
         }
 
         if (user.role === 'inspector') {
-            if (user.department === 'Material Mayor') {
+            const dept = (user.department || '').trim();
+            console.log('hasPermission check:', {
+                module,
+                dept,
+                role: user.role,
+            });
+
+            if (dept === 'Material Mayor') {
                 const allowed = [
                     'vehicles.status',
                     'vehicles.incidents',
@@ -45,8 +52,14 @@ export function usePermissions() {
                     'vehicles.checklist',
                     'vehicles',
                 ];
+                if (
+                    allowed.some(
+                        (m) => m === module || m.startsWith(module + '.'),
+                    )
+                )
+                    return true;
                 if (allowed.includes(module)) return true;
-            } else if (user.department === 'Material Menor') {
+            } else if (dept === 'Material Menor') {
                 const allowed = [
                     'inventory',
                     'tickets',
@@ -55,6 +68,12 @@ export function usePermissions() {
                     'reception',
                     'equipment',
                 ];
+                if (
+                    allowed.some(
+                        (m) => m === module || m.startsWith(module + '.'),
+                    )
+                )
+                    return true;
                 if (allowed.includes(module)) return true;
             }
         }
@@ -74,14 +93,14 @@ export function usePermissions() {
         if (user.role === 'admin' || user.role === 'capitan') return true;
 
         if (user.role === 'inspector') {
-            if (user.department === 'Material Mayor') {
+            const dept = (user.department || '').trim();
+
+            if (dept === 'Material Mayor') {
                 const editModules = [
                     'vehicles.status',
                     'vehicles.incidents',
                     'vehicles.inventory',
-                    'vehicles.logs', // Added logs as per requested "permisos de lectura" implies view, but let's check strict requirement.
-                    // Requirement: "Edicion en Modulos de Estado de Carros, Incidencias y Bodega (Inventory)"
-                    // "Lectura en Taller Mecanico, Checklist y Bitacora (Logs)"
+                    'vehicles.logs',
                 ];
 
                 // Strict Edit Check
@@ -100,7 +119,7 @@ export function usePermissions() {
                     'vehicles.logs',
                 ];
                 if (readOnlyList.includes(module)) return false;
-            } else if (user.department === 'Material Menor') {
+            } else if (dept === 'Material Menor') {
                 // "Edicion en todos los modulos de Material Menor"
                 const materialMenorModules = [
                     'inventory',

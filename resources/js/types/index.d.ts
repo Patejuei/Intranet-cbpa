@@ -41,6 +41,7 @@ export interface User {
     updated_at: string;
     role?: string;
     company?: string;
+    department?: string;
     permissions?: string[];
     [key: string]: unknown;
 }
