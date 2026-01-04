@@ -40,6 +40,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     role?: string;
+    company?: string;
     permissions?: string[];
     [key: string]: unknown;
 }

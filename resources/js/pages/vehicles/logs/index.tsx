@@ -7,7 +7,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -41,6 +40,8 @@ interface Log {
     date: string;
 }
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 export default function VehicleLogs({
     logs,
     vehicles,
@@ -50,6 +51,8 @@ export default function VehicleLogs({
     vehicles: Vehicle[];
     filters: { vehicle_id?: string };
 }) {
+    const { canCreate } = usePermissions();
+
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
         start_km: '',
@@ -97,291 +100,320 @@ export default function VehicleLogs({
                     </p>
                 </div>
 
-                <Tabs defaultValue="register" className="w-full">
+                <Tabs
+                    defaultValue={
+                        canCreate('vehicles.logs') ? 'register' : 'history'
+                    }
+                    className="w-full"
+                >
                     <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-                        <TabsTrigger value="register">
-                            Registrar Movimiento
-                        </TabsTrigger>
+                        {canCreate('vehicles.logs') && (
+                            <TabsTrigger value="register">
+                                Registrar Movimiento
+                            </TabsTrigger>
+                        )}
                         <TabsTrigger value="history">Ver Bitácoras</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="register">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Nueva Entrada de Bitácora</CardTitle>
-                                <CardDescription>
-                                    Registre la salida o movimiento de una
-                                    unidad.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form
-                                    onSubmit={submit}
-                                    className="max-w-2xl space-y-4"
-                                >
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="vehicle">
-                                                Vehículo
-                                            </Label>
-                                            <Select
-                                                onValueChange={(val) =>
-                                                    setData('vehicle_id', val)
-                                                }
-                                                value={data.vehicle_id}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccione unidad" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {vehicles.map((v) => (
-                                                        <SelectItem
-                                                            key={v.id}
-                                                            value={v.id.toString()}
-                                                        >
-                                                            {v.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.vehicle_id && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.vehicle_id}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="date">Fecha</Label>
-                                            <DatePicker
-                                                date={data.date}
-                                                setDate={(d) =>
-                                                    setData(
-                                                        'date',
-                                                        d
-                                                            ? format(
-                                                                  d,
-                                                                  'yyyy-MM-dd',
-                                                              )
-                                                            : '',
-                                                    )
-                                                }
-                                            />
-                                            {errors.date && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.date}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="start_km">
-                                                Kilometraje Inicio
-                                            </Label>
-                                            <Input
-                                                type="number"
-                                                value={data.start_km}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'start_km',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {errors.start_km && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.start_km}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="end_km">
-                                                Kilometraje Fin (Opcional)
-                                            </Label>
-                                            <Input
-                                                type="number"
-                                                value={data.end_km}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'end_km',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {errors.end_km && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.end_km}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="activity">
-                                            Tipo de Actividad
-                                        </Label>
-                                        <Select
-                                            onValueChange={(val) =>
-                                                setData('activity_type', val)
-                                            }
-                                            value={data.activity_type}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione tipo" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Emergencia">
-                                                    Emergencia (10-0)
-                                                </SelectItem>
-                                                <SelectItem value="Academia">
-                                                    Academia / Ejercicio
-                                                </SelectItem>
-                                                <SelectItem value="Tramite">
-                                                    Trámite Administrativo
-                                                </SelectItem>
-                                                <SelectItem value="Taller">
-                                                    Traslado a Taller
-                                                </SelectItem>
-                                                <SelectItem value="CargaCombustible">
-                                                    Carga de Combustible
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.activity_type && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.activity_type}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-4 rounded-lg border p-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Switch
-                                                id="fuel-mode"
-                                                checked={data.has_fuel}
-                                                onCheckedChange={(checked) =>
-                                                    setData('has_fuel', checked)
-                                                }
-                                            />
-                                            <Label htmlFor="fuel-mode">
-                                                ¿Fue a Cargar Combustible?
-                                            </Label>
-                                        </div>
-                                    </div>
-
-                                    {data.has_fuel && (
-                                        <div className="space-y-4 rounded-lg border p-4">
-                                            <h3 className="font-semibold">
-                                                Detalle de Carga
-                                            </h3>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="fuel_liters">
-                                                        Litros Cargados
-                                                    </Label>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={data.fuel_liters}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'fuel_liters',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="0.0"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="fuel_coupon">
-                                                        Nº Cupón / Vale
-                                                    </Label>
-                                                    <Input
-                                                        value={data.fuel_coupon}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'fuel_coupon',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="Nº Documento"
-                                                    />
-                                                </div>
-                                            </div>
+                    {canCreate('vehicles.logs') && (
+                        <TabsContent value="register">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>
+                                        Nueva Entrada de Bitácora
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Registre la salida o movimiento de una
+                                        unidad.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form
+                                        onSubmit={submit}
+                                        className="max-w-2xl space-y-4"
+                                    >
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div className="space-y-2">
-                                                <Label htmlFor="receipt">
-                                                    Fotografía Boleta/Vale
+                                                <Label htmlFor="vehicle">
+                                                    Vehículo
+                                                </Label>
+                                                <Select
+                                                    onValueChange={(val) =>
+                                                        setData(
+                                                            'vehicle_id',
+                                                            val,
+                                                        )
+                                                    }
+                                                    value={data.vehicle_id}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Seleccione unidad" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {vehicles.map((v) => (
+                                                            <SelectItem
+                                                                key={v.id}
+                                                                value={v.id.toString()}
+                                                            >
+                                                                {v.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors.vehicle_id && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.vehicle_id}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="date">
+                                                    Fecha
                                                 </Label>
                                                 <Input
-                                                    id="receipt"
-                                                    type="file"
-                                                    accept="image/*"
+                                                    type="date"
+                                                    value={data.date}
                                                     onChange={(e) =>
                                                         setData(
-                                                            'receipt',
-                                                            e.target.files
-                                                                ? e.target
-                                                                      .files[0]
-                                                                : null,
+                                                            'date',
+                                                            e.target.value,
                                                         )
                                                     }
                                                 />
+                                                {errors.date && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.date}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
-                                    )}
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="destination">
-                                            Destino / Detalle
-                                        </Label>
-                                        <Input
-                                            value={data.destination}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'destination',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="Dirección o lugar de destino"
-                                        />
-                                        {errors.destination && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.destination}
-                                            </p>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="start_km">
+                                                    Kilometraje Inicio
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    value={data.start_km}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'start_km',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {errors.start_km && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.start_km}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="end_km">
+                                                    Kilometraje Fin (Opcional)
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    value={data.end_km}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'end_km',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {errors.end_km && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.end_km}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="activity">
+                                                Tipo de Actividad
+                                            </Label>
+                                            <Select
+                                                onValueChange={(val) =>
+                                                    setData(
+                                                        'activity_type',
+                                                        val,
+                                                    )
+                                                }
+                                                value={data.activity_type}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione tipo" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Emergencia">
+                                                        Emergencia (10-0)
+                                                    </SelectItem>
+                                                    <SelectItem value="Academia">
+                                                        Academia / Ejercicio
+                                                    </SelectItem>
+                                                    <SelectItem value="Tramite">
+                                                        Trámite Administrativo
+                                                    </SelectItem>
+                                                    <SelectItem value="Taller">
+                                                        Traslado a Taller
+                                                    </SelectItem>
+                                                    <SelectItem value="CargaCombustible">
+                                                        Carga de Combustible
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.activity_type && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.activity_type}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-4 rounded-lg border p-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Switch
+                                                    id="fuel-mode"
+                                                    checked={data.has_fuel}
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        setData(
+                                                            'has_fuel',
+                                                            checked,
+                                                        )
+                                                    }
+                                                />
+                                                <Label htmlFor="fuel-mode">
+                                                    ¿Fue a Cargar Combustible?
+                                                </Label>
+                                            </div>
+                                        </div>
+
+                                        {data.has_fuel && (
+                                            <div className="space-y-4 rounded-lg border p-4">
+                                                <h3 className="font-semibold">
+                                                    Detalle de Carga
+                                                </h3>
+                                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="fuel_liters">
+                                                            Litros Cargados
+                                                        </Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={
+                                                                data.fuel_liters
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'fuel_liters',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="0.0"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="fuel_coupon">
+                                                            Nº Cupón / Vale
+                                                        </Label>
+                                                        <Input
+                                                            value={
+                                                                data.fuel_coupon
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'fuel_coupon',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            placeholder="Nº Documento"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="receipt">
+                                                        Fotografía Boleta/Vale
+                                                    </Label>
+                                                    <Input
+                                                        id="receipt"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'receipt',
+                                                                e.target.files
+                                                                    ? e.target
+                                                                          .files[0]
+                                                                    : null,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
                                         )}
-                                    </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="observations">
-                                            Observaciones (Opcional)
-                                        </Label>
-                                        <Textarea
-                                            value={data.observations}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'observations',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="Detalle cualquier novedad o incidencia..."
-                                        />
-                                        {errors.observations && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.observations}
-                                            </p>
-                                        )}
-                                    </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="destination">
+                                                Destino / Detalle
+                                            </Label>
+                                            <Input
+                                                value={data.destination}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'destination',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Dirección o lugar de destino"
+                                            />
+                                            {errors.destination && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.destination}
+                                                </p>
+                                            )}
+                                        </div>
 
-                                    <Button type="submit" disabled={processing}>
-                                        Registrar Movimiento
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="observations">
+                                                Observaciones (Opcional)
+                                            </Label>
+                                            <Textarea
+                                                value={data.observations}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'observations',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Detalle cualquier novedad o incidencia..."
+                                            />
+                                            {errors.observations && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.observations}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            Registrar Movimiento
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
 
                     <TabsContent value="history">
                         <Card>

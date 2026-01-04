@@ -8,6 +8,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react'; // Added usePage
 import { Shield, Truck } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -18,6 +19,7 @@ interface User {
     email: string;
     company: string;
     role: string;
+    department?: string;
     permissions: string[] | null;
     driver_vehicles?: { id: number }[];
 }
@@ -27,11 +29,6 @@ const modules = [
     { id: 'inventory', label: 'Inventario', category: 'Material Menor' },
     { id: 'tickets', label: 'Ticketera', category: 'Material Menor' },
     { id: 'batteries', label: 'Baterías', category: 'Material Menor' },
-    {
-        id: 'equipment',
-        label: 'Material Menor (General)',
-        category: 'Material Menor',
-    },
     { id: 'deliveries', label: 'Actas de Entrega', category: 'Material Menor' },
     {
         id: 'reception',
@@ -40,8 +37,8 @@ const modules = [
     },
     // Material Mayor
     {
-        id: 'vehicles',
-        label: 'Material Mayor (General)',
+        id: 'vehicles.status',
+        label: 'M. Mayor - Estado de Carros',
         category: 'Material Mayor',
     },
     {
@@ -102,6 +99,7 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'comandancia', label: 'Comandancia' },
         { value: 'cuartelero', label: 'Cuartelero' },
         { value: 'mechanic', label: 'Taller Mecánico' },
+        { value: 'inspector', label: 'Inspector General' },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -133,7 +131,8 @@ export default function UserEdit({
     user: User;
     availableVehicles?: any[];
 }) {
-    const authUser = usePage().props.auth.user as any;
+    const { props } = usePage<SharedData>();
+    const authUser = props.auth.user;
     const currentUserRole = authUser?.role || 'user';
 
     const { data, setData, put, processing, errors } = useForm({
@@ -142,6 +141,7 @@ export default function UserEdit({
         password: '',
         company: user.company,
         role: user.role,
+        department: user.department || '',
         permissions: user.permissions ?? ([] as string[]),
         driver_vehicles:
             user.driver_vehicles?.map((v) => v.id) ?? ([] as number[]),
@@ -361,9 +361,36 @@ export default function UserEdit({
                                 </Select>
                             </div>
 
+                            {data.role === 'inspector' && (
+                                <div className="mb-6">
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Departamento
+                                    </label>
+                                    <Select
+                                        value={data.department}
+                                        onValueChange={(value) =>
+                                            setData('department', value)
+                                        }
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Seleccione Departamento" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Material Mayor">
+                                                Material Mayor
+                                            </SelectItem>
+                                            <SelectItem value="Material Menor">
+                                                Material Menor
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
                             {data.role !== 'admin' &&
                                 data.role !== 'capitan' &&
-                                data.role !== 'maquinista' && ( // Admin/Capitan/Maquinista have implicit permissions
+                                data.role !== 'maquinista' &&
+                                data.role !== 'inspector' && ( // Admin/Capitan/Maquinista/Inspector have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo

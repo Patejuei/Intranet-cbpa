@@ -31,7 +31,7 @@ function Calendar({
                 nav_button_previous: 'absolute left-1',
                 nav_button_next: 'absolute right-1',
                 table: 'w-full border-collapse space-y-1',
-                head_row: 'flex',
+                head_row: 'flex w-full',
                 head_cell:
                     'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
                 row: 'flex w-full mt-2',
@@ -51,12 +51,21 @@ function Calendar({
                 ...classNames,
             }}
             components={{
-                IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-                IconRight: ({ ...props }) => (
-                    <ChevronRight className="h-4 w-4" />
-                ),
+                Chevron: ({ orientation }) => {
+                    const Icon =
+                        orientation === 'left' ? ChevronLeft : ChevronRight;
+                    return <Icon className="h-4 w-4" />;
+                },
             }}
             locale={es}
+            weekStartsOn={1}
+            formatters={{
+                formatWeekdayName: (date) => {
+                    return date.toLocaleDateString('es-ES', {
+                        weekday: 'narrow',
+                    });
+                },
+            }}
             {...props}
         />
     );

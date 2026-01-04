@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
@@ -11,11 +10,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { format } from 'date-fns';
 import {
     AlertCircle,
     ArrowLeft,
@@ -254,19 +253,15 @@ export default function VehicleShow({
                                                     <Label htmlFor="technical_review">
                                                         Revisión Técnica
                                                     </Label>
-                                                    <DatePicker
-                                                        date={
+                                                    <Input
+                                                        type="date"
+                                                        value={
                                                             docData.technical_review_expires_at
                                                         }
-                                                        setDate={(d) =>
+                                                        onChange={(e) =>
                                                             setDocData(
                                                                 'technical_review_expires_at',
-                                                                d
-                                                                    ? format(
-                                                                          d,
-                                                                          'yyyy-MM-dd',
-                                                                      )
-                                                                    : '',
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />
@@ -282,19 +277,15 @@ export default function VehicleShow({
                                                     <Label htmlFor="circulation_permit">
                                                         Permiso de Circulación
                                                     </Label>
-                                                    <DatePicker
-                                                        date={
+                                                    <Input
+                                                        type="date"
+                                                        value={
                                                             docData.circulation_permit_expires_at
                                                         }
-                                                        setDate={(d) =>
+                                                        onChange={(e) =>
                                                             setDocData(
                                                                 'circulation_permit_expires_at',
-                                                                d
-                                                                    ? format(
-                                                                          d,
-                                                                          'yyyy-MM-dd',
-                                                                      )
-                                                                    : '',
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />
@@ -310,19 +301,15 @@ export default function VehicleShow({
                                                     <Label htmlFor="insurance">
                                                         Seguro Obligatorio
                                                     </Label>
-                                                    <DatePicker
-                                                        date={
+                                                    <Input
+                                                        type="date"
+                                                        value={
                                                             docData.insurance_expires_at
                                                         }
-                                                        setDate={(d) =>
+                                                        onChange={(e) =>
                                                             setDocData(
                                                                 'insurance_expires_at',
-                                                                d
-                                                                    ? format(
-                                                                          d,
-                                                                          'yyyy-MM-dd',
-                                                                      )
-                                                                    : '',
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />

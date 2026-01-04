@@ -1,8 +1,6 @@
 import Pagination from '@/components/Pagination';
-import { DatePicker } from '@/components/ui/date-picker';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { format } from 'date-fns';
 import { Activity, Battery, Calendar, ClipboardList, Save } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -27,8 +25,11 @@ interface PageProps {
     };
 }
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 export default function BatteryIndex({ logs }: PageProps) {
     const [activeTab, setActiveTab] = useState<'log' | 'new'>('log');
+    const { canCreate } = usePermissions();
 
     const { data, setData, post, processing, reset, errors } = useForm({
         change_date: new Date().toISOString().split('T')[0],
@@ -72,17 +73,19 @@ export default function BatteryIndex({ logs }: PageProps) {
                             <ClipboardList className="size-4" />
                             Bitácora
                         </button>
-                        <button
-                            onClick={() => setActiveTab('new')}
-                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                                activeTab === 'new'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
-                            }`}
-                        >
-                            <Battery className="size-4" />
-                            Nuevo Registro
-                        </button>
+                        {canCreate('batteries') && (
+                            <button
+                                onClick={() => setActiveTab('new')}
+                                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                                    activeTab === 'new'
+                                        ? 'bg-background text-foreground shadow-sm'
+                                        : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+                                }`}
+                            >
+                                <Battery className="size-4" />
+                                Nuevo Registro
+                            </button>
+                        )}
                     </div>
 
                     <CompanyFilter />
@@ -103,16 +106,16 @@ export default function BatteryIndex({ logs }: PageProps) {
                                     <label className="mb-1 block text-sm font-medium">
                                         Fecha de Cambio
                                     </label>
-                                    <DatePicker
-                                        date={data.change_date}
-                                        setDate={(d) =>
+                                    <input
+                                        type="date"
+                                        value={data.change_date}
+                                        onChange={(e) =>
                                             setData(
                                                 'change_date',
-                                                d
-                                                    ? format(d, 'yyyy-MM-dd')
-                                                    : '',
+                                                e.target.value,
                                             )
                                         }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                     />
                                     {errors.change_date && (
                                         <p className="mt-1 text-xs text-destructive">

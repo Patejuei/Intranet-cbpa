@@ -8,7 +8,6 @@ import {
     CommandItem,
     CommandList,
 } from '@/components/ui/command';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -27,32 +26,44 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react'; // Added usePage
-import { format } from 'date-fns';
 import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
 import { useState } from 'react';
+
+interface DeliveryFormData {
+    firefighter_id: string;
+    date: string;
+    observations: string;
+    company: string;
+    items: { material_id: string; quantity: number }[];
+}
 
 export default function DeliveryCreate({
     firefighters,
     materials,
+    auth, // destructure auth from props if passed, but better use usePage for consistency
 }: {
     firefighters: Firefighter[];
     materials: Material[];
+    auth?: any; // Just in case
 }) {
-    const { auth } = usePage<SharedData>().props;
-    const user = auth.user;
+    // Explicitly type usePage return
+    const { props } = usePage<SharedData>();
+    const { auth: pageAuth } = props;
+    const user = pageAuth.user;
 
-    const { data, setData, post, processing, errors } = useForm({
-        firefighter_id: '',
-        date: new Date().toISOString().split('T')[0],
-        observations: '',
-        company:
-            user.company === 'Comandancia' ||
-            user.role === 'admin' ||
-            user.role === 'capitan'
-                ? 'Segunda Compañía'
-                : user.company,
-        items: [{ material_id: '', quantity: 1 }],
-    });
+    const { data, setData, post, processing, errors } =
+        useForm<DeliveryFormData>({
+            firefighter_id: '',
+            date: new Date().toISOString().split('T')[0],
+            observations: '',
+            company:
+                user.company === 'Comandancia' ||
+                user.role === 'admin' ||
+                user.role === 'capitan'
+                    ? 'Segunda Compañía'
+                    : user.company || '', // Fallback to empty string if undefined
+            items: [{ material_id: '', quantity: 1 }],
+        });
 
     const [openFirefighter, setOpenFirefighter] = useState(false);
 
@@ -175,14 +186,14 @@ export default function DeliveryCreate({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="date">Fecha</Label>
-                                <DatePicker
-                                    date={data.date}
-                                    setDate={(d) =>
-                                        setData(
-                                            'date',
-                                            d ? format(d, 'yyyy-MM-dd') : '',
-                                        )
+                                <Input
+                                    type="date"
+                                    id="date"
+                                    value={data.date}
+                                    onChange={(e) =>
+                                        setData('date', e.target.value)
                                     }
+                                    required
                                 />
                                 {errors.date && (
                                     <p className="text-sm text-red-500">

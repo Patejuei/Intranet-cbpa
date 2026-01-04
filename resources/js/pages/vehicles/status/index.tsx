@@ -39,6 +39,8 @@ interface PageProps {
     };
 }
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 export default function VehicleStatus({
     groupedVehicles,
     vehicles,
@@ -46,6 +48,7 @@ export default function VehicleStatus({
     userCompany,
     auth,
 }: PageProps) {
+    const { canCreate } = usePermissions();
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Operative':
@@ -131,8 +134,7 @@ export default function VehicleStatus({
                                 : `Vehículos de ${userCompany}`}
                         </p>
                     </div>
-                    {(auth.user.role === 'admin' ||
-                        auth.user.role === 'capitan') && (
+                    {canCreate('vehicles.status') && (
                         <Button asChild>
                             <Link href="/vehicles/create">
                                 <Plus className="mr-2 h-4 w-4" />

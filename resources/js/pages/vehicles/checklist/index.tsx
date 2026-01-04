@@ -47,12 +47,15 @@ interface Props {
     filters: { vehicle_id?: string };
 }
 
+import { usePermissions } from '@/hooks/use-permissions';
+
 export default function IndexChecklist({
     checklists,
     vehicles,
     filters,
 }: Props) {
     const { auth } = usePage<any>().props;
+    const { canCreate } = usePermissions();
 
     const handleFilterChange = (val: string) => {
         router.get(
@@ -109,12 +112,14 @@ export default function IndexChecklist({
                             </Link>
                         )}
                         {/* @ts-ignore */}
-                        <Link href="/vehicles/checklists/create">
-                            <Button>
-                                <Plus className="mr-2 size-4" />
-                                Nuevo Checklist
-                            </Button>
-                        </Link>
+                        {canCreate('vehicles.checklist') && (
+                            <Link href="/vehicles/checklists/create">
+                                <Button>
+                                    <Plus className="mr-2 size-4" />
+                                    Nuevo Checklist
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 

@@ -18,9 +18,16 @@ class VehicleLogController extends Controller
 
         // If not admin/comandancia, filter logs by user's company
         if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
-            $logQuery->whereHas('vehicle', function ($q) use ($user) {
-                $q->where('company', $user->company);
-            });
+            // But if user has 'vehicles.logs' or 'vehicles.logs.view' permission, maybe they should see everything?
+            // The requirement says: "el usuario de Comandancia pueda ver los registros de todos los vehículos."
+            // Also Mechanic is typically focused on Maintenance, but if they have Read Only logs they might need to see all?
+            // Let's stick to the specific request: Comandancia users see all.
+            // If user is mechanic, they usually see all because they fix all cars.
+            if ($user->role !== 'mechanic') {
+                $logQuery->whereHas('vehicle', function ($q) use ($user) {
+                    $q->where('company', $user->company);
+                });
+            }
         }
 
         // Vehicle Filter
@@ -31,7 +38,7 @@ class VehicleLogController extends Controller
         return Inertia::render('vehicles/logs/index', [
             'logs' => $logQuery->paginate(15)->appends(request()->all()),
             'vehicles' => \App\Models\Vehicle::query()
-                ->when($user->role !== 'admin' && $user->role !== 'mechanic', function ($q) use ($user) {
+                ->when($user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
                     $driverIds = $user->driverVehicles()->pluck('vehicles.id');
                     if ($driverIds->isNotEmpty()) {
                         $q->whereIn('id', $driverIds);

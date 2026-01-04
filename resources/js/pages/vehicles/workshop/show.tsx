@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -16,7 +15,6 @@ import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { format } from 'date-fns';
 import {
     Calendar,
     CheckCircle2,
@@ -369,14 +367,13 @@ export default function WorkshopShow({
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Fecha Tentativa Salida</Label>
-                                    <DatePicker
-                                        date={data.tentative_exit_date}
-                                        setDate={(d) =>
+                                    <Input
+                                        type="date"
+                                        value={data.tentative_exit_date}
+                                        onChange={(e) =>
                                             setData(
                                                 'tentative_exit_date',
-                                                d
-                                                    ? format(d, 'yyyy-MM-dd')
-                                                    : '',
+                                                e.target.value,
                                             )
                                         }
                                         disabled={isReadOnly}

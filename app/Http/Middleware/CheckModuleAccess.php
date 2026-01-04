@@ -31,6 +31,42 @@ class CheckModuleAccess
             return $next($request);
         }
 
+        // Inspector Role Logic
+        if ($user->role === 'inspector') {
+            if ($user->department === 'Material Mayor') {
+                $materialMayorAccess = [
+                    'vehicles', // General access to vehicles group
+                    'vehicles.status',
+                    'vehicles.incidents',
+                    'vehicles.inventory',
+                    'vehicles.workshop',
+                    'vehicles.checklist',
+                    'vehicles.logs',
+                ];
+
+                // Allow if module is in the list.
+                // Note: This middleware mainly checks "Can Access", strict edit/view is handled in frontend or separate middleware if needed.
+                // However, the prompt implies "Read Only" for some. 
+                // Since this middleware is "CheckModuleAccess", simple existence in list is enough to ENTER the route.
+                // Controller/Frontend will handle ReadOnly state.
+                if (in_array($module, $materialMayorAccess)) {
+                    return $next($request);
+                }
+            } elseif ($user->department === 'Material Menor') {
+                $materialMenorAccess = [
+                    'inventory',
+                    'tickets',
+                    'batteries',
+                    'deliveries',
+                    'reception',
+                    'equipment', // Group name if used
+                ];
+                if (in_array($module, $materialMenorAccess)) {
+                    return $next($request);
+                }
+            }
+        }
+
         // Check specific permission
         $permissions = $user->permissions ?? [];
 

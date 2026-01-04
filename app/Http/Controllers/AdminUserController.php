@@ -50,7 +50,8 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector',
+            'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string', // Validate contents
             'driver_vehicles' => 'nullable|array',
@@ -111,6 +112,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'company' => $validated['company'],
             'role' => $validated['role'],
+            'department' => $validated['department'] ?? null,
             'permissions' => $validated['permissions'] ?? [],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
@@ -160,7 +162,8 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector',
+            'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
@@ -213,6 +216,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'company' => $validated['company'],
             'role' => $validated['role'],
+            'department' => $validated['department'] ?? null,
             'permissions' => $validated['permissions'] ?? [],
         ];
 
