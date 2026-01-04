@@ -15,10 +15,13 @@ import { Send, Ticket } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 export default function TicketCreate() {
+    // Helper to get query params
+    const searchParams = new URLSearchParams(window.location.search);
+
     const { data, setData, post, processing, errors } = useForm({
-        subject: '',
+        subject: searchParams.get('subject') || '',
         priority: 'MEDIA',
-        message: '',
+        message: searchParams.get('message') || '',
         image: null as File | null,
     });
 

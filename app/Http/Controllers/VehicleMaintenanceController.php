@@ -228,9 +228,21 @@ class VehicleMaintenanceController extends Controller
     {
         $workshop->load(['vehicle', 'issues', 'tasks', 'items']);
 
+        // Filter inventory items compatible with this vehicle or generic (empty compatibility)
+        $vehicleId = $workshop->vehicle_id;
+        $inventoryItems = \App\Models\WorkshopInventory::query()
+            ->where(function ($query) use ($vehicleId) {
+                // Compatible if 'compatibility' is null, empty array, or contains vehicleId
+                $query->whereNull('compatibility')
+                    ->orWhere('compatibility', '[]') // Empty JSON array
+                    ->orWhereJsonContains('compatibility', $vehicleId);
+            })
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('vehicles/workshop/show', [
             'maintenance' => $workshop,
-            'inventoryItems' => \App\Models\WorkshopInventory::orderBy('name')->get()
+            'inventoryItems' => $inventoryItems
         ]);
     }
 

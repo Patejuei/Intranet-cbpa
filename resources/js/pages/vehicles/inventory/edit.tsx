@@ -6,6 +6,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,6 +24,13 @@ import { FormEventHandler } from 'react';
 
 declare var route: any;
 
+interface Vehicle {
+    id: number;
+    name: string;
+    plate: string;
+    model: string;
+}
+
 interface Props {
     item: {
         id: number;
@@ -33,12 +41,13 @@ interface Props {
         min_stock: number;
         unit_cost: number;
         location: string;
-        compatibility: string;
+        compatibility: number[]; // Array of IDs
         description: string;
     };
+    vehicles?: Vehicle[];
 }
 
-export default function InventoryEdit({ item }: Props) {
+export default function InventoryEdit({ item, vehicles = [] }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: item.name,
         sku: item.sku || '',
@@ -47,7 +56,7 @@ export default function InventoryEdit({ item }: Props) {
         min_stock: item.min_stock,
         unit_cost: item.unit_cost,
         location: item.location || '',
-        compatibility: item.compatibility || '',
+        compatibility: item.compatibility || [],
         description: item.description || '',
     });
 
@@ -232,20 +241,91 @@ export default function InventoryEdit({ item }: Props) {
                             </div>
 
                             {/* Compatibility */}
-                            <div className="space-y-2">
-                                <Label>Compatibilidad</Label>
-                                <Textarea
-                                    value={data.compatibility}
-                                    onChange={(e) =>
-                                        setData('compatibility', e.target.value)
-                                    }
-                                    className="resize-none"
-                                />
+                            <div className="space-y-4">
+                                <Label>Compatibilidad (Vehículos)</Label>
+                                <div className="grid max-h-60 grid-cols-1 gap-2 overflow-y-auto rounded-md border p-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="all-vehicles"
+                                            checked={
+                                                data.compatibility.length ===
+                                                vehicles.length
+                                            }
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setData(
+                                                        'compatibility',
+                                                        vehicles.map(
+                                                            (v) => v.id,
+                                                        ),
+                                                    );
+                                                } else {
+                                                    setData(
+                                                        'compatibility',
+                                                        [],
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                        <Label
+                                            htmlFor="all-vehicles"
+                                            className="font-normal"
+                                        >
+                                            Todos los Vehículos
+                                        </Label>
+                                    </div>
+                                    {vehicles.map((vehicle) => (
+                                        <div
+                                            key={vehicle.id}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                id={`vehicle-${vehicle.id}`}
+                                                checked={(
+                                                    data.compatibility as number[]
+                                                ).includes(vehicle.id)}
+                                                onCheckedChange={(checked) => {
+                                                    const current = [
+                                                        ...(data.compatibility as number[]),
+                                                    ];
+                                                    if (checked) {
+                                                        setData(
+                                                            'compatibility',
+                                                            [
+                                                                ...current,
+                                                                vehicle.id,
+                                                            ],
+                                                        );
+                                                    } else {
+                                                        setData(
+                                                            'compatibility',
+                                                            current.filter(
+                                                                (id) =>
+                                                                    id !==
+                                                                    vehicle.id,
+                                                            ),
+                                                        );
+                                                    }
+                                                }}
+                                            />
+                                            <Label
+                                                htmlFor={`vehicle-${vehicle.id}`}
+                                                className="cursor-pointer font-normal"
+                                            >
+                                                {vehicle.name} ({vehicle.plate})
+                                            </Label>
+                                        </div>
+                                    ))}
+                                </div>
                                 {errors.compatibility && (
                                     <p className="text-sm text-red-500">
                                         {errors.compatibility}
                                     </p>
                                 )}
+                                <p className="text-xs text-muted-foreground">
+                                    Seleccione los vehículos compatibles con
+                                    este repuesto.
+                                </p>
                             </div>
 
                             {/* Description */}

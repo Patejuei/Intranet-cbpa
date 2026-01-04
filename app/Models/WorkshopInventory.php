@@ -24,5 +24,6 @@ class WorkshopInventory extends Model
     'stock' => 'integer',
     'min_stock' => 'integer',
     'unit_cost' => 'integer',
+    'compatibility' => 'array',
   ];
 }

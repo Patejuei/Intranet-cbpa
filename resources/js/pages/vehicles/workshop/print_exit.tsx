@@ -94,7 +94,7 @@ export default function MaintenanceExitPrint({
             <style>{`
                 @media print {
                     @page {
-                        size: letter;
+                        size: 21.6cm 33cm;
                         margin: 0.5cm;
                     }
                     body {
@@ -115,7 +115,7 @@ export default function MaintenanceExitPrint({
                 </div>
 
                 {/* PAGE 1: Vehicle Data & Entry Summary */}
-                <div className="mx-auto flex h-[26cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:h-auto print:border-none print:p-0 print:shadow-none">
+                <div className="mx-auto flex h-[31cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:h-auto print:border-none print:p-0 print:shadow-none">
                     <div className="space-y-6">
                         <PrintHeader />
 
@@ -216,7 +216,7 @@ export default function MaintenanceExitPrint({
                 </div>
 
                 {/* PAGE 2: Completed Works & Signatures */}
-                <div className="page-break mx-auto mt-8 flex h-[26cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:mt-0 print:h-auto print:border-none print:p-0 print:shadow-none">
+                <div className="page-break mx-auto mt-8 flex h-[31cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:mt-0 print:h-auto print:border-none print:p-0 print:shadow-none">
                     <div className="space-y-6">
                         <PrintHeader />
 
