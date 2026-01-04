@@ -1,0 +1,19 @@
+Headers found: [
+  'COMPAÑIA',
+  'TIPO',
+  'NOMENCLATURA',
+  'MARCA',
+  'MODELO',
+  'AÑO',
+  'PPU',
+  'VENCIMIENTO REVISION TECNICA',
+  'VENCIMIENTO PERMISO CIRCULACION',
+  'VENCIMIENTO SEGURO'
+]
+First row: [
+  'PRIMERA',     'BOMBA',
+  'B1',          'E-ONE',
+  'CYCLON DCAB', '1999',
+  'GGYW68',      ' ',
+  '30-09-2025',  '30-09-2025'
+]

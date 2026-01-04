@@ -15,6 +15,21 @@ class VehicleIssue extends Model
         'status',
         'date',
         'vehicle_maintenance_id',
+        'reviewed_at',
+        'reviewed_by',
+        'sent_to_hq',
+        'sent_to_workshop',
+        'workshop_read_at',
+        'hq_read_at'
+    ];
+
+    protected $casts = [
+        'reviewed_at' => 'datetime',
+        'workshop_read_at' => 'datetime',
+        'hq_read_at' => 'datetime',
+        'sent_to_hq' => 'boolean',
+        'sent_to_workshop' => 'boolean',
+        'is_stopped' => 'boolean',
     ];
 
     public function vehicle()
@@ -25,6 +40,11 @@ class VehicleIssue extends Model
     public function reporter()
     {
         return $this->belongsTo(User::class, 'reporter_id');
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function maintenance()

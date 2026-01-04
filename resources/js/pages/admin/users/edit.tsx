@@ -98,7 +98,7 @@ export default function UserEdit({
     };
 
     const handlePermissionChange = (moduleId: string, value: string) => {
-        // value: 'none', 'view', 'edit'
+        // value: 'none', 'view', 'edit', 'full'
         let newPermissions = data.permissions.filter(
             (p) => !p.startsWith(`${moduleId}.`),
         );
@@ -107,6 +107,12 @@ export default function UserEdit({
             newPermissions.push(`${moduleId}.view`);
         } else if (value === 'edit') {
             newPermissions.push(`${moduleId}.view`, `${moduleId}.edit`);
+        } else if (value === 'full') {
+            newPermissions.push(
+                `${moduleId}.view`,
+                `${moduleId}.edit`,
+                `${moduleId}.full`,
+            );
         }
 
         // Auto-assign dependencies
@@ -126,8 +132,11 @@ export default function UserEdit({
     };
 
     const getPermissionValue = (moduleId: string) => {
+        const hasFull = data.permissions.includes(`${moduleId}.full`);
         const hasEdit = data.permissions.includes(`${moduleId}.edit`);
         const hasView = data.permissions.includes(`${moduleId}.view`);
+
+        if (hasFull) return 'full';
         if (hasEdit) return 'edit';
         if (hasView) return 'view';
         return 'none';
@@ -371,6 +380,30 @@ export default function UserEdit({
                                                                     >
                                                                         Editar
                                                                     </button>
+                                                                    {(module.id ===
+                                                                        'vehicles' ||
+                                                                        module.id ===
+                                                                            'equipment') && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handlePermissionChange(
+                                                                                    module.id,
+                                                                                    'full',
+                                                                                )
+                                                                            }
+                                                                            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                getPermissionValue(
+                                                                                    module.id,
+                                                                                ) ===
+                                                                                'full'
+                                                                                    ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                    : 'text-muted-foreground hover:bg-background/50'
+                                                                            }`}
+                                                                        >
+                                                                            Total
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </td>
                                                         </tr>

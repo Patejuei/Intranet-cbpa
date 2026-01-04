@@ -18,8 +18,17 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Eye, FileText, Pencil, Plus, Search } from 'lucide-react';
+import {
+    Download,
+    Eye,
+    FileText,
+    Pencil,
+    Plus,
+    Search,
+    Upload,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { read, utils } from 'xlsx';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
@@ -39,6 +48,10 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentId, setCurrentId] = useState<number | null>(null);
+
+    // Import State
+    const [importOpen, setImportOpen] = useState(false);
+    const [importing, setImporting] = useState(false);
 
     // Form handling
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -88,6 +101,61 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
         }
     };
 
+    const downloadTemplate = () => {
+        const ws = utils.json_to_sheet([
+            {
+                product_name: 'Ej: Guantes de trabajo',
+                brand: 'Ej: Steelpro',
+                model: 'Ej: Multiflex',
+                code: 'Ej: COD-123',
+                stock_quantity: 10,
+                company: 'Segunda Compañía',
+                category: 'EPP',
+            },
+        ]);
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, 'Plantilla');
+        // Trigger download
+        // Using writeFile from xlsx
+        import('xlsx').then((xlsx) => {
+            xlsx.writeFile(wb, 'plantilla_inventario.xlsx');
+        });
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setImporting(true);
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = read(data);
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = utils.sheet_to_json(worksheet);
+
+            // Send to backend
+            router.post(
+                '/inventory/import',
+                {
+                    materials: jsonData,
+                },
+                {
+                    onSuccess: () => {
+                        setImportOpen(false);
+                        setImporting(false);
+                        // Reset file input if needed
+                    },
+                    onError: () => {
+                        setImporting(false);
+                    },
+                },
+            );
+        } catch (error) {
+            console.error(error);
+            setImporting(false);
+        }
+    };
+
     // Server-side search implementation with debounce
     useEffect(() => {
         // Only trigger search if it differs from current prop (avoid initial double fetch if needed, though Inertia handles replace well)
@@ -129,10 +197,20 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                             Control de stock de materiales y equipos.
                         </p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2">
-                        <Plus className="size-4" />
-                        Agregar Material
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setImportOpen(true)}
+                            className="gap-2"
+                        >
+                            <Upload className="size-4" />
+                            Importar
+                        </Button>
+                        <Button onClick={openCreate} className="gap-2">
+                            <Plus className="size-4" />
+                            Agregar Material
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -445,6 +523,43 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Importar Inventario Masivo</DialogTitle>
+                        <DialogDescription>
+                            Descargue la plantilla, llénela con los datos y
+                            súbala para importar materiales.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex justify-center">
+                            <Button
+                                variant="outline"
+                                onClick={downloadTemplate}
+                                className="w-full gap-2"
+                            >
+                                <Download className="size-4" />
+                                Descargar Plantilla Excel
+                            </Button>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Subir Archivo (.xlsx, .csv)</Label>
+                            <Input
+                                type="file"
+                                accept=".xlsx, .xls, .csv"
+                                onChange={handleFileUpload}
+                                disabled={importing}
+                            />
+                            {importing && (
+                                <p className="text-sm text-muted-foreground">
+                                    Procesando...
+                                </p>
+                            )}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </AppLayout>

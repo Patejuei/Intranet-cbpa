@@ -21,9 +21,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { Plus } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface Vehicle {
@@ -41,6 +41,12 @@ interface Issue {
     status: string;
     date: string;
     created_at: string;
+    reviewed_at?: string;
+    reviewed_by?: number;
+    sent_to_hq: boolean;
+    sent_to_workshop: boolean;
+    workshop_read_at?: string;
+    hq_read_at?: string;
 }
 
 export default function VehicleIncidents({
@@ -50,12 +56,28 @@ export default function VehicleIncidents({
     issues: any;
     vehicles: Vehicle[];
 }) {
+    const { auth } = usePage().props as any;
     const [open, setOpen] = useState(false);
+
+    // Review Modal State
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+    const {
+        data: reviewData,
+        setData: setReviewData,
+        put: putReview,
+        processing: reviewProcessing,
+        reset: resetReview,
+    } = useForm({
+        is_stopped: false,
+        sent_to_hq: false,
+        sent_to_workshop: false,
+    });
+
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
         description: '',
         severity: 'Low',
-        is_stopped: false,
         date: format(new Date(), 'yyyy-MM-dd'),
     });
 
@@ -67,6 +89,39 @@ export default function VehicleIncidents({
                 reset();
             },
         });
+    };
+
+    const handleReviewSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedIssue) return;
+
+        putReview(`/vehicles/incidents/${selectedIssue.id}`, {
+            onSuccess: () => {
+                setReviewOpen(false);
+                resetReview();
+                setSelectedIssue(null);
+            },
+        });
+    };
+
+    const openReview = (issue: Issue) => {
+        setSelectedIssue(issue);
+        setReviewData({
+            is_stopped: issue.is_stopped,
+            sent_to_hq: issue.sent_to_hq,
+            sent_to_workshop: issue.sent_to_workshop,
+        });
+        setReviewOpen(true);
+    };
+
+    const markAsRead = (issue: Issue) => {
+        router.patch(
+            `/vehicles/incidents/${issue.id}/mark-read`,
+            {},
+            {
+                preserveScroll: true,
+            },
+        );
     };
 
     const getSeverityColor = (severity: string) => {
@@ -81,6 +136,15 @@ export default function VehicleIncidents({
                 return 'outline';
         }
     };
+
+    const isCaptain =
+        auth.user.role === 'capitan' ||
+        auth.user.role === 'admin' ||
+        auth.user.company === 'Comandancia';
+    const isWorkshop =
+        auth.user.role === 'mechanic' || auth.user.role === 'admin';
+    const isHQ =
+        auth.user.company === 'Comandancia' || auth.user.role === 'admin';
 
     return (
         <AppLayout
@@ -207,7 +271,7 @@ export default function VehicleIncidents({
                                                     e.target.value,
                                                 )
                                             }
-                                            placeholder="Detalle el problema..."
+                                            placeholder="Detalle el problema, observaciones, etc."
                                         />
                                         {errors.description && (
                                             <p className="text-sm text-destructive">
@@ -216,29 +280,94 @@ export default function VehicleIncidents({
                                         )}
                                     </div>
 
+                                    {/* is_stopped removed for generic input */}
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={processing}>
+                                        Reportar
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Review Modal for Captains */}
+                    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+                        <DialogContent className="sm:max-w-[500px]">
+                            <form onSubmit={handleReviewSubmit}>
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        Revisión de Incidencia
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        Determinar acciones a seguir para{' '}
+                                        {selectedIssue?.vehicle.name}
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
-                                            id="is_stopped"
-                                            checked={data.is_stopped}
+                                            id="review_is_stopped"
+                                            checked={reviewData.is_stopped}
                                             onCheckedChange={(checked) =>
-                                                setData(
+                                                setReviewData(
                                                     'is_stopped',
                                                     checked as boolean,
                                                 )
                                             }
                                         />
                                         <Label
-                                            htmlFor="is_stopped"
-                                            className="font-medium text-destructive"
+                                            htmlFor="review_is_stopped"
+                                            className="font-bold text-destructive"
                                         >
-                                            Material Detenido (Fuera de
-                                            Servicio)
+                                            Material Fuera de Servicio
                                         </Label>
+                                    </div>
+
+                                    <div className="space-y-2 border-t pt-4">
+                                        <h4 className="text-sm font-medium">
+                                            Notificaciones
+                                        </h4>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="sent_to_hq"
+                                                checked={reviewData.sent_to_hq}
+                                                onCheckedChange={(checked) =>
+                                                    setReviewData(
+                                                        'sent_to_hq',
+                                                        checked as boolean,
+                                                    )
+                                                }
+                                            />
+                                            <Label htmlFor="sent_to_hq">
+                                                Reportar a Comandancia
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="sent_to_workshop"
+                                                checked={
+                                                    reviewData.sent_to_workshop
+                                                }
+                                                onCheckedChange={(checked) =>
+                                                    setReviewData(
+                                                        'sent_to_workshop',
+                                                        checked as boolean,
+                                                    )
+                                                }
+                                            />
+                                            <Label htmlFor="sent_to_workshop">
+                                                Reportar a Taller Mecánico
+                                            </Label>
+                                        </div>
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button type="submit" disabled={processing}>
-                                        Reportar
+                                    <Button
+                                        type="submit"
+                                        disabled={reviewProcessing}
+                                    >
+                                        Guardar Revisión
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -269,6 +398,9 @@ export default function VehicleIncidents({
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                                         Reportado Por
                                     </th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        Acciones
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
@@ -298,26 +430,120 @@ export default function VehicleIncidents({
                                             {issue.description}
                                         </td>
                                         <td className="p-4 align-middle">
-                                            {issue.is_stopped && (
-                                                <Badge
-                                                    variant="destructive"
-                                                    className="mr-2"
-                                                >
-                                                    Detenido
-                                                </Badge>
-                                            )}
-                                            {issue.status}
+                                            <div className="flex flex-col gap-1">
+                                                {issue.is_stopped && (
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="w-fit"
+                                                    >
+                                                        Detenido
+                                                    </Badge>
+                                                )}
+                                                {!issue.reviewed_at && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-yellow-500 text-yellow-600"
+                                                    >
+                                                        Pendiente Revisión
+                                                    </Badge>
+                                                )}
+                                                {issue.reviewed_at && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-blue-500 text-blue-600"
+                                                    >
+                                                        Revisado
+                                                    </Badge>
+                                                )}
+                                                {issue.sent_to_hq && (
+                                                    <Badge
+                                                        variant={
+                                                            issue.hq_read_at
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                        }
+                                                        className="w-fit text-xs"
+                                                    >
+                                                        {issue.hq_read_at
+                                                            ? 'Visto Comandancia'
+                                                            : 'Enviado Comandancia'}
+                                                    </Badge>
+                                                )}
+                                                {issue.sent_to_workshop && (
+                                                    <Badge
+                                                        variant={
+                                                            issue.workshop_read_at
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                        }
+                                                        className="w-fit text-xs"
+                                                    >
+                                                        {issue.workshop_read_at
+                                                            ? 'Visto Taller'
+                                                            : 'Enviado Taller'}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="p-4 align-middle">
                                             {issue.reporter?.name ||
                                                 'Desconocido'}
+                                        </td>
+                                        <td className="p-4 align-middle">
+                                            <div className="flex gap-2">
+                                                {isCaptain && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            openReview(issue)
+                                                        }
+                                                    >
+                                                        Revisar
+                                                    </Button>
+                                                )}
+                                                {isWorkshop &&
+                                                    issue.sent_to_workshop &&
+                                                    !issue.workshop_read_at && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                markAsRead(
+                                                                    issue,
+                                                                )
+                                                            }
+                                                            title="Marcar como Visto"
+                                                        >
+                                                            <Eye className="mr-1 size-4" />{' '}
+                                                            Taller
+                                                        </Button>
+                                                    )}
+                                                {isHQ &&
+                                                    issue.sent_to_hq &&
+                                                    !issue.hq_read_at && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                markAsRead(
+                                                                    issue,
+                                                                )
+                                                            }
+                                                            title="Marcar como Visto"
+                                                        >
+                                                            <Eye className="mr-1 size-4" />{' '}
+                                                            HQ
+                                                        </Button>
+                                                    )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {issues.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="p-4 text-center text-muted-foreground"
                                         >
                                             No hay incidencias registradas.

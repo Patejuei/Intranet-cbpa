@@ -17,7 +17,7 @@ class AdminUserSeeder extends Seeder
         if (!$exists) {
             \Illuminate\Support\Facades\DB::table('users')->insert([
                 'name' => 'Administrador',
-                'email' => 'admin@cbpa.cl',
+                'email' => 'admin@test.cl',
                 'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role' => 'admin',
                 'permissions' => json_encode(['batteries', 'equipment', 'tickets', 'admin']),

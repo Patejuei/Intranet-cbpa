@@ -125,6 +125,10 @@ class VehicleController extends Controller
             'model' => 'required|string|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'company' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'technical_review_expires_at' => 'nullable|date',
+            'circulation_permit_expires_at' => 'nullable|date',
+            'insurance_expires_at' => 'nullable|date',
         ]);
 
         $vehicle = \App\Models\Vehicle::create([
@@ -172,6 +176,10 @@ class VehicleController extends Controller
             'model' => 'required|string|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
             'company' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'technical_review_expires_at' => 'nullable|date',
+            'circulation_permit_expires_at' => 'nullable|date',
+            'insurance_expires_at' => 'nullable|date',
         ]);
 
         $vehicle->update($validated);

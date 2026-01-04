@@ -14,6 +14,16 @@ class Vehicle extends Model
         'plate',
         'status',
         'company',
+        'type',
+        'technical_review_expires_at',
+        'circulation_permit_expires_at',
+        'insurance_expires_at',
+    ];
+
+    protected $casts = [
+        'technical_review_expires_at' => 'date',
+        'circulation_permit_expires_at' => 'date',
+        'insurance_expires_at' => 'date',
     ];
 
     public function logs()

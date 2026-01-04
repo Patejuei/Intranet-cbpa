@@ -46,7 +46,6 @@ class VehicleIssueController extends Controller
             'vehicle_id' => 'required|exists:vehicles,id',
             'description' => 'required|string',
             'severity' => 'required|in:Low,Medium,High,Critical',
-            'is_stopped' => 'boolean',
             'date' => 'required|date',
         ]);
 
@@ -54,14 +53,19 @@ class VehicleIssueController extends Controller
             ...$validated,
             'reporter_id' => $request->user()->id,
             'status' => 'Open',
+            'is_stopped' => false, // Always false initially unless Captain creates it? 
+            // Requirement: "User or Cuartelero ... cannot select if material is out of service"
+            // Captain will review it.
+            // If Captain creates it, maybe they can set it? 
+            // For simplicity, let's say ALL go through review or Captain edits it immediately after.
+            // But if Captain creates it, it's auto-reviewed?
+            // Let's keep it simple: Create -> Open. Captain Review -> Reviewed.
         ]);
 
-        // If is_stopped is true, update vehicle status
-        if ($validated['is_stopped']) {
-            $issue->vehicle->update(['status' => 'Out of Service']);
-        }
+        // If Captain creates it, we could auto-approve, but let's stick to flow:
+        // Reported -> Notification to Captain. Captain reviews.
 
-        return redirect()->back()->with('success', 'Incidencia reportada correctamente.');
+        return redirect()->back()->with('success', 'Incidencia reportada. Pendiente de revisión por Capitán.');
     }
 
     /**
@@ -83,9 +87,67 @@ class VehicleIssueController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, \App\Models\VehicleIssue $incident) // Changed variable name to match route param if possible, or bind
     {
-        //
+        // This is for Captain Review
+        $user = $request->user();
+        if ($user->role !== 'capitan' && $user->role !== 'admin' && $user->company !== 'Comandancia') {
+            // Comandancia might also review? Requirement says "Capitán ... podrá revisar".
+            // Let's allow Admin/Captain.
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'is_stopped' => 'required|boolean',
+            'sent_to_hq' => 'boolean',
+            'sent_to_workshop' => 'boolean',
+        ]);
+
+        $incident->update([
+            'is_stopped' => $validated['is_stopped'],
+            'sent_to_hq' => $validated['sent_to_hq'] ?? false,
+            'sent_to_workshop' => $validated['sent_to_workshop'] ?? false,
+            'reviewed_at' => now(),
+            'reviewed_by' => $user->id,
+        ]);
+
+        if ($validated['is_stopped']) {
+            $incident->vehicle->update(['status' => 'Out of Service']);
+        } else {
+            // If marked as NOT stopped, ensure vehicle is not Out of Service due to THIS incident?
+            // Logic is tricky if multiple incidents. But usually one stops it.
+            // If we mark it distinct, we might want to check if other active incidents stop it.
+            // For now, if Captain says NOT stopped, we might assume it's operational unless other flags exists.
+            // But simpler: If stopped -> Out of Service. If not stopped -> don't change or set to 'Active' (Available)?
+            // The prompt says "determinar si queda fuera de servicio ... o no".
+            // If "No", maybe we should set it back to Available if it was Out of Service? 
+            // Or just leave it.
+            // Let's leave it unless explicitly requested to restore.
+            // Actually, if it was running, it stays running.
+        }
+
+        return redirect()->back()->with('success', 'Incidencia revisada correctamente.');
+    }
+
+    public function markAsRead(Request $request, \App\Models\VehicleIssue $incident)
+    {
+        $user = $request->user();
+
+        // Workshop
+        if ($user->role === 'mechanic' || $user->role === 'admin') { // Assuming mechanic role or specific permission
+            // Or check if user is from Workshop?
+            // Prompt: "usuarios del Taller Mecánico"
+            // Role 'mechanic' exists in AdminUser options? Yes.
+            $incident->update(['workshop_read_at' => now()]);
+        }
+
+        // Comandancia (HQ)
+        if ($user->company === 'Comandancia' || $user->role === 'admin') {
+            // "Visto por Comandancia"
+            $incident->update(['hq_read_at' => now()]);
+        }
+
+        return redirect()->back();
     }
 
     /**

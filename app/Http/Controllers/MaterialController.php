@@ -182,4 +182,28 @@ class MaterialController extends Controller
 
         return response()->json($material);
     }
+
+    public function import(Request $request)
+    {
+        $validated = $request->validate([
+            'materials' => 'required|array',
+            'materials.*.product_name' => 'required|string',
+            'materials.*.stock_quantity' => 'required|numeric',
+            'materials.*.company' => 'required|string',
+        ]);
+
+        foreach ($validated['materials'] as $item) {
+            Material::create([
+                'product_name' => $item['product_name'],
+                'brand' => $item['brand'] ?? null,
+                'model' => $item['model'] ?? null,
+                'code' => $item['code'] ?? null,
+                'stock_quantity' => $item['stock_quantity'] ?? 0,
+                'company' => $item['company'],
+                'category' => $item['category'] ?? null,
+            ]);
+        }
+
+        return redirect()->back()->with('success', count($validated['materials']) . ' materiales importados correctamente.');
+    }
 }

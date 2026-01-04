@@ -52,6 +52,7 @@ class AdminUserController extends Controller
             'company' => 'required|string',
             'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic',
             'permissions' => 'nullable|array',
+            'permissions.*' => 'string', // Validate contents
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
             'password' => 'required|string|min:8',

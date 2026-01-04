@@ -22,6 +22,10 @@ export default function VehicleCreate() {
         year: '',
         company: 'Comandancia',
         status: 'Operative',
+        type: '',
+        technical_review_expires_at: '',
+        circulation_permit_expires_at: '',
+        insurance_expires_at: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -190,6 +194,106 @@ export default function VehicleCreate() {
                                             {errors.company}
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="type">
+                                        Tipo de Vehículo
+                                    </Label>
+                                    <Input
+                                        id="type"
+                                        value={data.type}
+                                        onChange={(e) =>
+                                            setData('type', e.target.value)
+                                        }
+                                        placeholder="ej. Bomba, Rescate, Aljibe"
+                                    />
+                                    {errors.type && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.type}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4">
+                                <h3 className="mb-4 text-lg font-semibold">
+                                    Documentación
+                                </h3>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="technical_review">
+                                            Revisión Técnica
+                                        </Label>
+                                        <Input
+                                            id="technical_review"
+                                            type="date"
+                                            value={
+                                                data.technical_review_expires_at
+                                            }
+                                            onChange={(e) =>
+                                                setData(
+                                                    'technical_review_expires_at',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.technical_review_expires_at && (
+                                            <p className="text-sm text-destructive">
+                                                {
+                                                    errors.technical_review_expires_at
+                                                }
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="circulation_permit">
+                                            Permiso de Circulación
+                                        </Label>
+                                        <Input
+                                            id="circulation_permit"
+                                            type="date"
+                                            value={
+                                                data.circulation_permit_expires_at
+                                            }
+                                            onChange={(e) =>
+                                                setData(
+                                                    'circulation_permit_expires_at',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.circulation_permit_expires_at && (
+                                            <p className="text-sm text-destructive">
+                                                {
+                                                    errors.circulation_permit_expires_at
+                                                }
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="insurance">
+                                            Seguro Obligatorio
+                                        </Label>
+                                        <Input
+                                            id="insurance"
+                                            type="date"
+                                            value={data.insurance_expires_at}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'insurance_expires_at',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.insurance_expires_at && (
+                                            <p className="text-sm text-destructive">
+                                                {errors.insurance_expires_at}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
