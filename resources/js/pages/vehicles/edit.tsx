@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogClose,
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { format } from 'date-fns';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Vehicle {
@@ -268,16 +270,19 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                         <Label htmlFor="technical_review">
                                             Revisión Técnica
                                         </Label>
-                                        <Input
-                                            id="technical_review"
-                                            type="date"
-                                            value={
+                                        <DatePicker
+                                            date={
                                                 data.technical_review_expires_at
                                             }
-                                            onChange={(e) =>
+                                            setDate={(d) =>
                                                 setData(
                                                     'technical_review_expires_at',
-                                                    e.target.value,
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
                                                 )
                                             }
                                         />
@@ -293,16 +298,19 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                         <Label htmlFor="circulation_permit">
                                             Permiso de Circulación
                                         </Label>
-                                        <Input
-                                            id="circulation_permit"
-                                            type="date"
-                                            value={
+                                        <DatePicker
+                                            date={
                                                 data.circulation_permit_expires_at
                                             }
-                                            onChange={(e) =>
+                                            setDate={(d) =>
                                                 setData(
                                                     'circulation_permit_expires_at',
-                                                    e.target.value,
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
                                                 )
                                             }
                                         />
@@ -318,14 +326,17 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                         <Label htmlFor="insurance">
                                             Seguro Obligatorio
                                         </Label>
-                                        <Input
-                                            id="insurance"
-                                            type="date"
-                                            value={data.insurance_expires_at}
-                                            onChange={(e) =>
+                                        <DatePicker
+                                            date={data.insurance_expires_at}
+                                            setDate={(d) =>
                                                 setData(
                                                     'insurance_expires_at',
-                                                    e.target.value,
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
                                                 )
                                             }
                                         />

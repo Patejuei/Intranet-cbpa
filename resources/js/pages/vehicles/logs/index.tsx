@@ -7,6 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -152,13 +153,17 @@ export default function VehicleLogs({
 
                                         <div className="space-y-2">
                                             <Label htmlFor="date">Fecha</Label>
-                                            <Input
-                                                type="date"
-                                                value={data.date}
-                                                onChange={(e) =>
+                                            <DatePicker
+                                                date={data.date}
+                                                setDate={(d) =>
                                                     setData(
                                                         'date',
-                                                        e.target.value,
+                                                        d
+                                                            ? format(
+                                                                  d,
+                                                                  'yyyy-MM-dd',
+                                                              )
+                                                            : '',
                                                     )
                                                 }
                                             />

@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
@@ -10,7 +11,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -248,12 +248,18 @@ export default function VehicleIncidents({
                                         <Label htmlFor="date">
                                             Fecha Detección
                                         </Label>
-                                        <Input
-                                            id="date"
-                                            type="date"
-                                            value={data.date}
-                                            onChange={(e) =>
-                                                setData('date', e.target.value)
+                                        <DatePicker
+                                            date={data.date}
+                                            setDate={(d) =>
+                                                setData(
+                                                    'date',
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
+                                                )
                                             }
                                         />
                                     </div>

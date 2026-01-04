@@ -174,7 +174,8 @@ export function AppSidebar({ user }: { user: any }) {
                             </SidebarMenuItem>
                             {(user.role === 'admin' ||
                                 user.role === 'capitan' ||
-                                user.role === 'mechanic') && (
+                                user.role === 'mechanic' ||
+                                hasPermission('vehicles.workshop')) && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
                                         asChild
@@ -211,7 +212,8 @@ export function AppSidebar({ user }: { user: any }) {
                             </SidebarMenuItem>
                             {(user.role === 'admin' ||
                                 user.role === 'capitan' ||
-                                user.role === 'cuartelero') && (
+                                user.role === 'cuartelero' ||
+                                hasPermission('vehicles.logs')) && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
                                         asChild
@@ -226,7 +228,8 @@ export function AppSidebar({ user }: { user: any }) {
                             )}
                             {(user.role === 'admin' ||
                                 user.role === 'cuartelero' ||
-                                user.role === 'mechanic') && (
+                                user.role === 'mechanic' ||
+                                hasPermission('vehicles.inventory')) && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton asChild tooltip="Bodega">
                                         <Link href="/vehicles/inventory">

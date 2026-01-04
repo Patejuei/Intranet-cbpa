@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,6 +14,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
+import { format } from 'date-fns';
 import { ClipboardCheck } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
@@ -245,13 +247,17 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label>Fecha de Ingreso</Label>
-                                        <Input
-                                            type="date"
-                                            value={data.entry_date}
-                                            onChange={(e) =>
+                                        <DatePicker
+                                            date={data.entry_date}
+                                            setDate={(d) =>
                                                 setData(
                                                     'entry_date',
-                                                    e.target.value,
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
                                                 )
                                             }
                                         />
@@ -265,13 +271,17 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                         <Label>
                                             Fecha Tentativa Salida (Opcional)
                                         </Label>
-                                        <Input
-                                            type="date"
-                                            value={data.tentative_exit_date}
-                                            onChange={(e) =>
+                                        <DatePicker
+                                            date={data.tentative_exit_date}
+                                            setDate={(d) =>
                                                 setData(
                                                     'tentative_exit_date',
-                                                    e.target.value,
+                                                    d
+                                                        ? format(
+                                                              d,
+                                                              'yyyy-MM-dd',
+                                                          )
+                                                        : '',
                                                 )
                                             }
                                         />

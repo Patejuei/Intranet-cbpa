@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
@@ -10,11 +11,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { format } from 'date-fns';
 import {
     AlertCircle,
     ArrowLeft,
@@ -253,16 +254,19 @@ export default function VehicleShow({
                                                     <Label htmlFor="technical_review">
                                                         Revisión Técnica
                                                     </Label>
-                                                    <Input
-                                                        id="technical_review"
-                                                        type="date"
-                                                        value={
+                                                    <DatePicker
+                                                        date={
                                                             docData.technical_review_expires_at
                                                         }
-                                                        onChange={(e) =>
+                                                        setDate={(d) =>
                                                             setDocData(
                                                                 'technical_review_expires_at',
-                                                                e.target.value,
+                                                                d
+                                                                    ? format(
+                                                                          d,
+                                                                          'yyyy-MM-dd',
+                                                                      )
+                                                                    : '',
                                                             )
                                                         }
                                                     />
@@ -278,16 +282,19 @@ export default function VehicleShow({
                                                     <Label htmlFor="circulation_permit">
                                                         Permiso de Circulación
                                                     </Label>
-                                                    <Input
-                                                        id="circulation_permit"
-                                                        type="date"
-                                                        value={
+                                                    <DatePicker
+                                                        date={
                                                             docData.circulation_permit_expires_at
                                                         }
-                                                        onChange={(e) =>
+                                                        setDate={(d) =>
                                                             setDocData(
                                                                 'circulation_permit_expires_at',
-                                                                e.target.value,
+                                                                d
+                                                                    ? format(
+                                                                          d,
+                                                                          'yyyy-MM-dd',
+                                                                      )
+                                                                    : '',
                                                             )
                                                         }
                                                     />
@@ -303,16 +310,19 @@ export default function VehicleShow({
                                                     <Label htmlFor="insurance">
                                                         Seguro Obligatorio
                                                     </Label>
-                                                    <Input
-                                                        id="insurance"
-                                                        type="date"
-                                                        value={
+                                                    <DatePicker
+                                                        date={
                                                             docData.insurance_expires_at
                                                         }
-                                                        onChange={(e) =>
+                                                        setDate={(d) =>
                                                             setDocData(
                                                                 'insurance_expires_at',
-                                                                e.target.value,
+                                                                d
+                                                                    ? format(
+                                                                          d,
+                                                                          'yyyy-MM-dd',
+                                                                      )
+                                                                    : '',
                                                             )
                                                         }
                                                     />

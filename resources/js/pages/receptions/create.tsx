@@ -8,6 +8,7 @@ import {
     CommandItem,
     CommandList,
 } from '@/components/ui/command';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -15,10 +16,19 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react'; // Added usePageimport { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { format } from 'date-fns';
+import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ReceptionCreate({
@@ -166,14 +176,14 @@ export default function ReceptionCreate({
 
                             <div className="grid gap-2">
                                 <Label htmlFor="date">Fecha</Label>
-                                <Input
-                                    id="date"
-                                    type="date"
-                                    value={data.date}
-                                    onChange={(e) =>
-                                        setData('date', e.target.value)
+                                <DatePicker
+                                    date={data.date}
+                                    setDate={(d) =>
+                                        setData(
+                                            'date',
+                                            d ? format(d, 'yyyy-MM-dd') : '',
+                                        )
                                     }
-                                    required
                                 />
                                 {errors.date && (
                                     <p className="text-sm text-red-500">
