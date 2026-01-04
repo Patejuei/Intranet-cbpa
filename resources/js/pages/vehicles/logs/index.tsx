@@ -21,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 
 interface Vehicle {
@@ -43,9 +43,11 @@ interface Log {
 export default function VehicleLogs({
     logs,
     vehicles,
+    filters,
 }: {
     logs: any;
     vehicles: Vehicle[];
+    filters: { vehicle_id?: string };
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
@@ -66,6 +68,14 @@ export default function VehicleLogs({
         post('/vehicles/logs', {
             onSuccess: () => reset(),
         });
+    };
+
+    const handleFilterChange = (val: string) => {
+        router.get(
+            '/vehicles/logs',
+            { vehicle_id: val === 'all' ? undefined : val },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
     };
 
     return (
@@ -370,8 +380,31 @@ export default function VehicleLogs({
 
                     <TabsContent value="history">
                         <Card>
-                            <CardHeader>
+                            <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Historial de Bitácoras</CardTitle>
+                                <div className="w-[250px]">
+                                    <Select
+                                        value={filters?.vehicle_id || 'all'}
+                                        onValueChange={handleFilterChange}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Filtrar por Vehículo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Todos los Vehículos
+                                            </SelectItem>
+                                            {vehicles.map((v) => (
+                                                <SelectItem
+                                                    key={v.id}
+                                                    value={v.id.toString()}
+                                                >
+                                                    {v.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-md border">

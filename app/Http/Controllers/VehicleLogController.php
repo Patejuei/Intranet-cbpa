@@ -23,8 +23,13 @@ class VehicleLogController extends Controller
             });
         }
 
+        // Vehicle Filter
+        if (request()->has('vehicle_id') && request()->vehicle_id) {
+            $logQuery->where('vehicle_id', request()->vehicle_id);
+        }
+
         return Inertia::render('vehicles/logs/index', [
-            'logs' => $logQuery->paginate(15),
+            'logs' => $logQuery->paginate(15)->appends(request()->all()),
             'vehicles' => \App\Models\Vehicle::query()
                 ->when($user->role !== 'admin' && $user->role !== 'mechanic', function ($q) use ($user) {
                     $driverIds = $user->driverVehicles()->pluck('vehicles.id');
@@ -35,6 +40,7 @@ class VehicleLogController extends Controller
                     }
                 })
                 ->orderBy('name')->get(['id', 'name']),
+            'filters' => request()->only(['vehicle_id']),
         ]);
     }
 

@@ -74,6 +74,39 @@ class VehicleController extends Controller
         }
     }
 
+    public function decommissioned()
+    {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403);
+        }
+
+        $query = \App\Models\Vehicle::onlyTrashed()->orderBy('deleted_at', 'desc');
+
+        if ($user->company && $user->company !== 'Comandancia' && $user->role !== 'admin') {
+            $query->where('company', $user->company);
+        }
+
+        $vehicles = $query->get();
+
+        return Inertia::render('vehicles/status/decommissioned', [
+            'vehicles' => $vehicles,
+        ]);
+    }
+
+    public function restore(string $id)
+    {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+            abort(403);
+        }
+
+        $vehicle = \App\Models\Vehicle::onlyTrashed()->findOrFail($id);
+        $vehicle->restore();
+
+        return redirect()->route('vehicles.status.index')->with('success', 'Vehículo restaurado correctamente.');
+    }
+
     /**
      * Display the specified resource.
      */
@@ -200,6 +233,26 @@ class VehicleController extends Controller
         $vehicle = \App\Models\Vehicle::findOrFail($id);
         $vehicle->delete();
 
-        return redirect()->route('vehicles.status.index')->with('success', 'Vehículo eliminado correctamente.');
+        return redirect()->route('vehicles.status.index')->with('success', 'Vehículo dado de baja correctamente.');
+    }
+
+    public function updateDocuments(Request $request, string $id)
+    {
+        $user = request()->user();
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('vehicles.edit', $user->permissions ?? [])) {
+            abort(403, 'No tiene permisos para actualizar documentos.');
+        }
+
+        $vehicle = \App\Models\Vehicle::findOrFail($id);
+
+        $validated = $request->validate([
+            'technical_review_expires_at' => 'nullable|date',
+            'circulation_permit_expires_at' => 'nullable|date',
+            'insurance_expires_at' => 'nullable|date',
+        ]);
+
+        $vehicle->update($validated);
+
+        return redirect()->back()->with('success', 'Fechas de vencimiento actualizadas.');
     }
 }

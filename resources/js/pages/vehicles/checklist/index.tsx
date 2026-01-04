@@ -2,6 +2,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Table,
     TableBody,
     TableCell,
@@ -12,7 +19,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, Settings } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,10 +43,24 @@ interface Checklist {
 
 interface Props {
     checklists: PaginationType<Checklist>;
+    vehicles: { id: number; name: string }[];
+    filters: { vehicle_id?: string };
 }
 
-export default function IndexChecklist({ checklists }: Props) {
+export default function IndexChecklist({
+    checklists,
+    vehicles,
+    filters,
+}: Props) {
     const { auth } = usePage<any>().props;
+
+    const handleFilterChange = (val: string) => {
+        router.get(
+            '/vehicles/checklists',
+            { vehicle_id: val === 'all' ? undefined : val },
+            { preserveState: true, replace: true },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -55,6 +76,29 @@ export default function IndexChecklist({ checklists }: Props) {
                         </p>
                     </div>
                     <div className="flex gap-2">
+                        <div className="w-[200px]">
+                            <Select
+                                value={filters.vehicle_id || 'all'}
+                                onValueChange={handleFilterChange}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filtrar por Vehículo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        Todos los Vehículos
+                                    </SelectItem>
+                                    {vehicles.map((v) => (
+                                        <SelectItem
+                                            key={v.id}
+                                            value={v.id.toString()}
+                                        >
+                                            {v.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {(auth.user.role === 'admin' ||
                             auth.user.role === 'capitan') && (
                             <Link href="/vehicles/checklist-items">

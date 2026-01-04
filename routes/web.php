@@ -144,6 +144,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
         Route::delete('{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
 
+        Route::get('decommissioned', [VehicleController::class, 'decommissioned'])->name('vehicles.decommissioned');
+        Route::patch('{vehicle}/restore', [VehicleController::class, 'restore'])->name('vehicles.restore')->withTrashed();
+        Route::patch('{vehicle}/documents', [VehicleController::class, 'updateDocuments'])->name('vehicles.update_documents');
+
         Route::resource('status', VehicleController::class)->names('vehicles.status'); // Main vehicle CRUD/Status
         Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
         Route::patch('incidents/{incident}/mark-read', [VehicleIssueController::class, 'markAsRead'])->name('vehicles.incidents.markRead');

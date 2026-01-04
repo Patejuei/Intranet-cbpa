@@ -1,9 +1,20 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -103,6 +114,29 @@ export default function VehicleShow({
         if (diffDays < 0) return { status: 'expired', days: diffDays };
         if (diffDays <= 30) return { status: 'warning', days: diffDays };
         return { status: 'ok', days: diffDays };
+        return { status: 'ok', days: diffDays };
+    };
+
+    const {
+        data: docData,
+        setData: setDocData,
+        patch: patchDocs,
+        processing: processingDocs,
+        errors: docErrors,
+    } = useForm({
+        technical_review_expires_at: vehicle.technical_review_expires_at || '',
+        circulation_permit_expires_at:
+            vehicle.circulation_permit_expires_at || '',
+        insurance_expires_at: vehicle.insurance_expires_at || '',
+    });
+
+    const submitDocuments = (e: React.FormEvent) => {
+        e.preventDefault();
+        patchDocs(`/vehicles/${vehicle.id}/documents`, {
+            onSuccess: () => {
+                // optional toast or close dialog logic if handled manually
+            },
+        });
     };
 
     const documents = [
@@ -185,6 +219,123 @@ export default function VehicleShow({
                                         Editar Unidad
                                     </Link>
                                 </Button>
+                            )}
+                        {allProps.auth?.user &&
+                            (allProps.auth.user.role === 'admin' ||
+                                allProps.auth.user.role === 'capitan' ||
+                                ((allProps.auth.user as any).permissions &&
+                                    (
+                                        allProps.auth.user as any
+                                    ).permissions.includes(
+                                        'vehicles.edit',
+                                    ))) && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="secondary">
+                                            <Calendar className="mr-2 h-4 w-4" />
+                                            Actualizar Vencimientos
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Actualizar Documentación
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Modifique las fechas de
+                                                vencimiento de los documentos
+                                                del vehículo.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={submitDocuments}>
+                                            <div className="grid gap-4 py-4">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="technical_review">
+                                                        Revisión Técnica
+                                                    </Label>
+                                                    <Input
+                                                        id="technical_review"
+                                                        type="date"
+                                                        value={
+                                                            docData.technical_review_expires_at
+                                                        }
+                                                        onChange={(e) =>
+                                                            setDocData(
+                                                                'technical_review_expires_at',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    {docErrors.technical_review_expires_at && (
+                                                        <span className="text-sm text-destructive">
+                                                            {
+                                                                docErrors.technical_review_expires_at
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="circulation_permit">
+                                                        Permiso de Circulación
+                                                    </Label>
+                                                    <Input
+                                                        id="circulation_permit"
+                                                        type="date"
+                                                        value={
+                                                            docData.circulation_permit_expires_at
+                                                        }
+                                                        onChange={(e) =>
+                                                            setDocData(
+                                                                'circulation_permit_expires_at',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    {docErrors.circulation_permit_expires_at && (
+                                                        <span className="text-sm text-destructive">
+                                                            {
+                                                                docErrors.circulation_permit_expires_at
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="insurance">
+                                                        Seguro Obligatorio
+                                                    </Label>
+                                                    <Input
+                                                        id="insurance"
+                                                        type="date"
+                                                        value={
+                                                            docData.insurance_expires_at
+                                                        }
+                                                        onChange={(e) =>
+                                                            setDocData(
+                                                                'insurance_expires_at',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                    {docErrors.insurance_expires_at && (
+                                                        <span className="text-sm text-destructive">
+                                                            {
+                                                                docErrors.insurance_expires_at
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <DialogFooter>
+                                                <Button
+                                                    type="submit"
+                                                    disabled={processingDocs}
+                                                >
+                                                    Guardar Cambios
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
                             )}
                     </div>
                 </div>

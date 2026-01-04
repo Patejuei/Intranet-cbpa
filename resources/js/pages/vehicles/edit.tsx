@@ -1,5 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -10,8 +20,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -51,6 +61,10 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         put(`/vehicles/${vehicle.id}`);
+    };
+
+    const confirmDecommission = () => {
+        router.delete(`/vehicles/${vehicle.id}`);
     };
 
     const companies = [
@@ -126,6 +140,8 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                             setData('plate', e.target.value)
                                         }
                                         required
+                                        disabled
+                                        className="bg-muted"
                                     />
                                     {errors.plate && (
                                         <p className="text-sm text-destructive">
@@ -145,6 +161,8 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                             setData('make', e.target.value)
                                         }
                                         required
+                                        disabled
+                                        className="bg-muted"
                                     />
                                     {errors.make && (
                                         <p className="text-sm text-destructive">
@@ -161,6 +179,8 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                             setData('model', e.target.value)
                                         }
                                         required
+                                        disabled
+                                        className="bg-muted"
                                     />
                                     {errors.model && (
                                         <p className="text-sm text-destructive">
@@ -181,6 +201,8 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                             setData('year', e.target.value)
                                         }
                                         required
+                                        disabled
+                                        className="bg-muted"
                                     />
                                     {errors.year && (
                                         <p className="text-sm text-destructive">
@@ -195,8 +217,9 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                         onValueChange={(val) =>
                                             setData('company', val)
                                         }
+                                        disabled
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="bg-muted">
                                             <SelectValue placeholder="Seleccione compañía" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -315,17 +338,62 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-4">
-                                <Button type="button" variant="outline" asChild>
-                                    <Link
-                                        href={`/vehicles/status/${vehicle.id}`}
+                            <div className="flex justify-between">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Dar de Baja
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                ¿Dar de baja este vehículo?
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Esta acción ocultará el vehículo
+                                                de las listas activas y lo
+                                                moverá a la lista de "Dados de
+                                                Baja". El historial se
+                                                mantendrá.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <DialogClose asChild>
+                                                <Button variant="outline">
+                                                    Cancelar
+                                                </Button>
+                                            </DialogClose>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={confirmDecommission}
+                                            >
+                                                Dar de Baja
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <div className="flex gap-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        asChild
                                     >
-                                        Cancelar
-                                    </Link>
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    Guardar Cambios
-                                </Button>
+                                        <Link
+                                            href={`/vehicles/status/${vehicle.id}`}
+                                        >
+                                            Cancelar
+                                        </Link>
+                                    </Button>
+                                    <Button type="submit" disabled={processing}>
+                                        Guardar Cambios
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                     </CardContent>

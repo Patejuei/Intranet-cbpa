@@ -71,12 +71,33 @@ class VehicleChecklistController extends Controller
         ]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $user = $request->user();
+        $query = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->latest();
+
+        // Filter by user permissions/company
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+            $query->whereHas('vehicle', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
+        // Vehicle Filter
+        if ($request->has('vehicle_id') && $request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Vehicles list for filter
+        $vehiclesQuery = \App\Models\Vehicle::query()->orderBy('name');
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+            $vehiclesQuery->where('company', $user->company);
+        }
+
         return \Inertia\Inertia::render('vehicles/checklist/index', [
-            'checklists' => \App\Models\VehicleChecklist::with(['vehicle', 'user'])
-                ->latest()
-                ->paginate(10),
+            'checklists' => $query->paginate(15)->appends($request->all()),
+            'vehicles' => $vehiclesQuery->get(['id', 'name']),
+            'filters' => $request->only(['vehicle_id']),
         ]);
     }
 
