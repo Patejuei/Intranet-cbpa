@@ -1,4 +1,11 @@
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -31,32 +38,36 @@ export default function InventoryCreate() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('vehicles.inventory.store'));
+        post('/vehicles/inventory');
     };
 
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { title: 'Bodega', href: route('vehicles.inventory.index') },
+                { title: 'Bodega', href: '/vehicles/inventory' },
                 { title: 'Nuevo Ítem', href: '#' },
             ]}
         >
             <Head title="Nuevo Ítem | Bodega Material Mayor" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
-                    <div className="mb-6 flex items-center gap-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href={route('vehicles.inventory.index')}>
-                                <ArrowLeft className="h-5 w-5" />
-                            </Link>
-                        </Button>
-                        <h2 className="text-xl leading-tight font-semibold text-gray-800">
-                            Nuevo Ítem de Bodega
-                        </h2>
-                    </div>
+            <div className="flex flex-1 flex-col gap-8 p-4">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/vehicles/inventory">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Link>
+                    </Button>
+                    <h1 className="text-2xl font-bold">Nuevo Ítem de Bodega</h1>
+                </div>
 
-                    <div className="rounded-lg bg-white p-6 shadow-sm">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Detalles del Ítem</CardTitle>
+                        <CardDescription>
+                            Ingrese la información del nuevo repuesto o insumo.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                         <form onSubmit={submit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 {/* Name */}
@@ -252,8 +263,8 @@ export default function InventoryCreate() {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </div>
         </AuthenticatedLayout>
     );

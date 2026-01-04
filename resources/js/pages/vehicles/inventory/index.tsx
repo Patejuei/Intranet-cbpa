@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -57,7 +58,7 @@ export default function InventoryIndex({ items, filters }: Props) {
 
             if (search !== currentSearch || category !== currentCategory) {
                 router.get(
-                    route('vehicles.inventory.index'),
+                    '/vehicles/inventory',
                     {
                         search: search,
                         category: category !== 'all' ? category : undefined,
@@ -77,7 +78,7 @@ export default function InventoryIndex({ items, filters }: Props) {
 
     const handleDelete = (id: number) => {
         if (confirm('¿Está seguro de eliminar este ítem?')) {
-            router.delete(route('vehicles.inventory.destroy', id));
+            router.delete(`/vehicles/inventory/${id}`);
         }
     };
 
@@ -93,172 +94,172 @@ export default function InventoryIndex({ items, filters }: Props) {
             breadcrumbs={[
                 { title: 'Material Mayor', href: '/vehicles/status' },
                 {
-                    title: 'Bodega Central',
-                    href: route('vehicles.inventory.index'),
+                    title: 'Bodega',
+                    href: '/vehicles/inventory',
                 },
             ]}
         >
             <Head title="Bodega Material Mayor" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="flex flex-col gap-4">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-xl leading-tight font-semibold text-gray-800">
-                                Bodega Material Mayor
-                            </h2>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-1 items-center gap-4">
-                                <div className="relative w-72">
-                                    <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Buscar por nombre o SKU..."
-                                        className="pl-8"
-                                        value={search}
-                                        onChange={(e) =>
-                                            setSearch(e.target.value)
-                                        }
-                                    />
-                                </div>
-                                <Select
-                                    value={category}
-                                    onValueChange={handleCategoryChange}
-                                >
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Categoría" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">
-                                            Todas
-                                        </SelectItem>
-                                        <SelectItem value="insumo">
-                                            Insumos
-                                        </SelectItem>
-                                        <SelectItem value="repuesto">
-                                            Repuestos
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button asChild>
-                                <Link href={route('vehicles.inventory.create')}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Ítem
-                                </Link>
-                            </Button>
-                        </div>
-
-                        <div className="rounded-md border bg-white shadow-sm">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>SKU</TableHead>
-                                        <TableHead>Nombre</TableHead>
-                                        <TableHead>Categoría</TableHead>
-                                        <TableHead className="text-right">
-                                            Stock
-                                        </TableHead>
-                                        <TableHead className="text-right">
-                                            Costo Unit.
-                                        </TableHead>
-                                        <TableHead>Ubicación</TableHead>
-                                        <TableHead className="text-right">
-                                            Acciones
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.data.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={7}
-                                                className="py-8 text-center text-muted-foreground"
-                                            >
-                                                No se encontraron ítems.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        items.data.map((item) => (
-                                            <TableRow key={item.id}>
-                                                <TableCell className="font-mono text-xs">
-                                                    {item.sku || '-'}
-                                                </TableCell>
-                                                <TableCell className="font-medium">
-                                                    {item.name}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span
-                                                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-                                                            item.category ===
-                                                            'insumo'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-orange-100 text-orange-800'
-                                                        }`}
-                                                    >
-                                                        {item.category ===
-                                                        'insumo'
-                                                            ? 'Insumo'
-                                                            : 'Repuesto'}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <span
-                                                        className={
-                                                            item.stock <=
-                                                            item.min_stock
-                                                                ? 'font-bold text-red-600'
-                                                                : 'text-green-600'
-                                                        }
-                                                    >
-                                                        {item.stock}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    {formatCurrency(
-                                                        item.unit_cost,
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {item.location || '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            asChild
-                                                        >
-                                                            <Link
-                                                                href={route(
-                                                                    'vehicles.inventory.edit',
-                                                                    item.id,
-                                                                )}
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Link>
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="text-red-500 hover:text-red-700"
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    item.id,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+            <div className="flex flex-1 flex-col gap-8 p-4">
+                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold">
+                            Bodega Material Mayor
+                        </h1>
+                        <p className="text-muted-foreground">
+                            Gestión de repuestos, insumos y control de stock.
+                        </p>
                     </div>
+                    <Button asChild>
+                        <Link href="/vehicles/inventory/create">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nuevo Ítem
+                        </Link>
+                    </Button>
+                </div>
+
+                <div className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm">
+                    <div className="relative flex-1">
+                        <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por nombre, SKU o ubicación..."
+                            className="pl-9"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <Select
+                        value={category}
+                        onValueChange={handleCategoryChange}
+                    >
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas</SelectItem>
+                            <SelectItem value="insumo">Insumos</SelectItem>
+                            <SelectItem value="repuesto">Repuestos</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow>
+                                <TableHead className="w-[100px]">SKU</TableHead>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead className="text-right">
+                                    Stock
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    Costo Unit.
+                                </TableHead>
+                                <TableHead>Ubicación</TableHead>
+                                <TableHead className="text-right">
+                                    Acciones
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {items.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={7}
+                                        className="h-24 text-center text-muted-foreground"
+                                    >
+                                        No se encontraron ítems en la bodega.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                items.data.map((item) => (
+                                    <TableRow
+                                        key={item.id}
+                                        className="transition-colors hover:bg-muted/50"
+                                    >
+                                        <TableCell className="font-mono text-xs font-medium text-muted-foreground">
+                                            {item.sku || 'N/A'}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {item.name}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant={
+                                                    item.category === 'insumo'
+                                                        ? 'secondary'
+                                                        : 'outline'
+                                                }
+                                                className={
+                                                    item.category === 'insumo'
+                                                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
+                                                        : 'border-orange-200 text-orange-700'
+                                                }
+                                            >
+                                                {item.category === 'insumo'
+                                                    ? 'Insumo'
+                                                    : 'Repuesto'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span
+                                                    className={
+                                                        item.stock <=
+                                                        item.min_stock
+                                                            ? 'font-bold text-red-600'
+                                                            : 'font-medium'
+                                                    }
+                                                >
+                                                    {item.stock}
+                                                </span>
+                                                {item.stock <=
+                                                    item.min_stock && (
+                                                    <span className="text-[10px] font-medium text-red-500">
+                                                        Bajo Stock
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right text-muted-foreground tabular-nums">
+                                            {formatCurrency(item.unit_cost)}
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {item.location || '-'}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                    className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                                                >
+                                                    <Link
+                                                        href={`/vehicles/inventory/${item.id}/edit`}
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                                                    onClick={() =>
+                                                        handleDelete(item.id)
+                                                    }
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
         </AuthenticatedLayout>

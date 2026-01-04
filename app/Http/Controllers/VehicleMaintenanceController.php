@@ -226,10 +226,11 @@ class VehicleMaintenanceController extends Controller
      */
     public function show(\App\Models\VehicleMaintenance $workshop)
     {
-        $workshop->load(['vehicle', 'issues', 'tasks']);
+        $workshop->load(['vehicle', 'issues', 'tasks', 'items']);
 
         return Inertia::render('vehicles/workshop/show', [
-            'maintenance' => $workshop
+            'maintenance' => $workshop,
+            'inventoryItems' => \App\Models\WorkshopInventory::orderBy('name')->get()
         ]);
     }
 
@@ -251,7 +252,7 @@ class VehicleMaintenanceController extends Controller
 
     public function printExit(\App\Models\VehicleMaintenance $maintenance)
     {
-        $maintenance->load(['vehicle', 'issues', 'tasks']);
+        $maintenance->load(['vehicle', 'issues', 'tasks', 'items']);
         return Inertia::render('vehicles/workshop/print_exit', [
             'maintenance' => $maintenance
         ]);

@@ -135,8 +135,8 @@ export const MODULES: ModuleDefinition[] = [
     },
     {
         key: 'vehicles-inventory',
-        title: 'Inventario de Unidades',
-        description: 'Equipamiento en carros',
+        title: 'Bodega',
+        description: 'Repuestos e Insumos',
         href: '/vehicles/inventory',
         pattern: /^\/vehicles\/inventory/,
         icon: List,

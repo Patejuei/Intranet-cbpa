@@ -178,7 +178,7 @@ export default function WorkshopShow({
 
         setIsAddingItem(true);
         router.post(
-            route('vehicles.maintenance.items.add', maintenance.id),
+            `/vehicles/maintenance/${maintenance.id}/items`,
             inventoryForm as any,
             {
                 onSuccess: () => {
@@ -194,10 +194,7 @@ export default function WorkshopShow({
     const handleRemoveInventoryItem = (itemId: number) => {
         if (confirm('¿Eliminar este ítem de la orden?')) {
             router.delete(
-                route('vehicles.maintenance.items.remove', {
-                    maintenance: maintenance.id,
-                    item: itemId,
-                }),
+                `/vehicles/maintenance/${maintenance.id}/items/${itemId}`,
                 { preserveScroll: true },
             );
         }

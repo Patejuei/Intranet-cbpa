@@ -229,13 +229,10 @@ export function AppSidebar({ user }: { user: any }) {
                                 user.role === 'cuartelero' ||
                                 user.role === 'mechanic') && (
                                 <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip="Inventario M. Mayor"
-                                    >
+                                    <SidebarMenuButton asChild tooltip="Bodega">
                                         <Link href="/vehicles/inventory">
                                             <ClipboardList />
-                                            <span>Inventario</span>
+                                            <span>Bodega</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>

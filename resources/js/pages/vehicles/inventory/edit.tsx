@@ -1,4 +1,11 @@
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -46,32 +53,38 @@ export default function InventoryEdit({ item }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('vehicles.inventory.update', item.id));
+        put(`/vehicles/inventory/${item.id}`);
     };
 
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { title: 'Bodega', href: route('vehicles.inventory.index') },
+                { title: 'Bodega', href: '/vehicles/inventory' },
                 { title: `Editar: ${item.name}`, href: '#' },
             ]}
         >
             <Head title={`Editar ${item.name} | Bodega`} />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
-                    <div className="mb-6 flex items-center gap-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href={route('vehicles.inventory.index')}>
-                                <ArrowLeft className="h-5 w-5" />
-                            </Link>
-                        </Button>
-                        <h2 className="text-xl leading-tight font-semibold text-gray-800">
-                            Editar Ítem: {item.name}
-                        </h2>
-                    </div>
+            <div className="flex flex-1 flex-col gap-8 p-4">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/vehicles/inventory">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Link>
+                    </Button>
+                    <h1 className="text-2xl font-bold">
+                        Editar Ítem: {item.name}
+                    </h1>
+                </div>
 
-                    <div className="rounded-lg bg-white p-6 shadow-sm">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Detalles del Ítem</CardTitle>
+                        <CardDescription>
+                            Modifique la información del repuesto o insumo.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                         <form onSubmit={submit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 {/* Name */}
@@ -259,8 +272,8 @@ export default function InventoryEdit({ item }: Props) {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </div>
         </AuthenticatedLayout>
     );
