@@ -134,7 +134,8 @@ class VehicleController extends Controller
     public function create()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
             abort(403, 'No tiene permisos para agregar vehículos.');
         }
 
@@ -147,7 +148,8 @@ class VehicleController extends Controller
     public function store(Request $request)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
             abort(403, 'No tiene permisos para agregar vehículos.');
         }
 
@@ -179,7 +181,8 @@ class VehicleController extends Controller
     public function edit(string $id)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
             abort(403, 'No tiene permisos para editar vehículos.');
         }
 
@@ -196,7 +199,8 @@ class VehicleController extends Controller
     public function update(Request $request, string $id)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
             abort(403, 'No tiene permisos para editar vehículos.');
         }
 
@@ -239,7 +243,8 @@ class VehicleController extends Controller
     public function updateDocuments(Request $request, string $id)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('vehicles.edit', $user->permissions ?? [])) {
+        $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector && !in_array('vehicles.edit', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para actualizar documentos.');
         }
 

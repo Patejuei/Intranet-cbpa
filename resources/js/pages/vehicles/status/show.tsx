@@ -212,10 +212,11 @@ export default function VehicleShow({
                                 Ver Checklists
                             </Link>
                         </Button>
-                        {/* Edit Button (Admin/Captain only) */}
+                        {/* Edit Button (Admin/Captain/Inspector with perms) */}
                         {allProps.auth?.user &&
                             (allProps.auth.user.role === 'admin' ||
-                                allProps.auth.user.role === 'capitan') && (
+                                allProps.auth.user.role === 'capitan' ||
+                                canEdit('vehicles.status')) && (
                                 <Button asChild>
                                     <Link href={`/vehicles/${vehicle.id}/edit`}>
                                         <Wrench className="mr-2 h-4 w-4" />
