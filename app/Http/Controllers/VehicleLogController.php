@@ -131,4 +131,78 @@ class VehicleLogController extends Controller
     {
         //
     }
+    /**
+     * Export logs to Excel (Native HTML Table).
+     */
+    public function export(Request $request)
+    {
+        $user = $request->user();
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest();
+
+        // Apply same filters as Index (Replicated logic)
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
+            if ($user->role !== 'mechanic') {
+                $logQuery->whereHas('vehicle', function ($q) use ($user) {
+                    $q->where('company', $user->company);
+                });
+            }
+        }
+
+        // Vehicle Filter
+        if ($request->has('vehicle_id') && $request->vehicle_id) {
+            $logQuery->where('vehicle_id', $request->vehicle_id);
+        }
+
+        $logs = $logQuery->get();
+
+        $filename = "bitacora_export_" . date('Y-m-d_H-i') . ".xls";
+
+        $headers = [
+            "Content-Type" => "application/vnd.ms-excel",
+            "Content-Disposition" => "attachment; filename=\"$filename\"",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $callback = function () use ($logs) {
+            $file = fopen('php://output', 'w');
+
+            // Start HTML
+            fputs($file, '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"></head><body>');
+            fputs($file, '<table border="1">');
+
+            // Header Row
+            fputs($file, '<tr style="background-color: #f0f0f0; font-weight: bold;">');
+            $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Destino', 'Obs'];
+            foreach ($columns as $col) {
+                fputs($file, "<th>{$col}</th>");
+            }
+            fputs($file, '</tr>');
+
+            // Data Rows
+            foreach ($logs as $log) {
+                fputs($file, '<tr>');
+                fputs($file, "<td>{$log->id}</td>");
+                fputs($file, "<td>" . ($log->vehicle ? $log->vehicle->name : 'N/A') . "</td>");
+                fputs($file, "<td>" . ($log->vehicle ? $log->vehicle->company : 'N/A') . "</td>");
+                fputs($file, "<td>" . ($log->driver ? $log->driver->full_name : 'N/A') . "</td>");
+                fputs($file, "<td>{$log->date}</td>");
+                fputs($file, "<td>{$log->departure_time}</td>");
+                fputs($file, "<td>{$log->arrival_time}</td>");
+                fputs($file, "<td>{$log->start_km}</td>");
+                fputs($file, "<td>{$log->end_km}</td>");
+                fputs($file, "<td>" . (($log->end_km && $log->start_km) ? $log->end_km - $log->start_km : 0) . "</td>");
+                fputs($file, "<td>{$log->activity_type}</td>");
+                fputs($file, "<td>{$log->destination}</td>");
+                fputs($file, "<td>{$log->observations}</td>");
+                fputs($file, '</tr>');
+            }
+
+            fputs($file, '</table></body></html>');
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

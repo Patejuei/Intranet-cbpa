@@ -74,10 +74,15 @@ export default function AssignedMaterialsShow({ firefighter }: Props) {
                             </p>
                         </div>
                     </div>
-                    <Button variant="outline" disabled>
-                        <Printer className="mr-2 size-4" /> Imprimir
-                        (Próximamente)
-                    </Button>
+                    <a
+                        href={`/assigned-materials/${firefighter.id}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Button variant="outline">
+                            <Printer className="mr-2 size-4" /> Imprimir
+                        </Button>
+                    </a>
                 </div>
 
                 <Card>

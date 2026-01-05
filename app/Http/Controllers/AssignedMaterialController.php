@@ -89,4 +89,27 @@ class AssignedMaterialController extends Controller
         ->get()
     );
   }
+
+  public function downloadPdf(Firefighter $firefighter)
+  {
+    // Authorization Check
+    $user = request()->user();
+    $hasAccess = $user->role === 'admin' ||
+      $user->role === 'capitan' ||
+      $user->role === 'comandante' ||
+      ($user->role === 'inspector' && $user->department === 'Material Menor') ||
+      in_array('assigned_materials', $user->permissions ?? []) ||
+      in_array('assigned_materials.view', $user->permissions ?? []);
+
+    if (!$hasAccess) {
+      abort(403, 'Acceso denegado a este módulo.');
+    }
+
+    $firefighter->load(['assignedMaterials.material', 'assignedMaterials' => function ($q) {
+      $q->where('quantity', '>', 0);
+    }]);
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.assigned-materials', ['firefighter' => $firefighter]);
+    return $pdf->download('prendas_' . str_replace(' ', '_', $firefighter->full_name) . '.pdf');
+  }
 }

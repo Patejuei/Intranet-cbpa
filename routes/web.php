@@ -21,6 +21,7 @@ use App\Http\Controllers\TicketController;
 Route::middleware(['auth', 'verified'])->group(function () {
     // Assigned Materials (Prendas a Cargo)
     Route::get('/assigned-materials', [App\Http\Controllers\AssignedMaterialController::class, 'index'])->name('assigned_materials.index');
+    Route::get('/assigned-materials/{firefighter}/pdf', [App\Http\Controllers\AssignedMaterialController::class, 'downloadPdf'])->name('assigned_materials.pdf');
     Route::get('/assigned-materials/{firefighter}', [App\Http\Controllers\AssignedMaterialController::class, 'show'])->name('assigned_materials.show');
     Route::get('/api/assigned-materials/{firefighter}', [App\Http\Controllers\AssignedMaterialController::class, 'getByFirefighter'])->name('assigned_materials.get_json');
 
