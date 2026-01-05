@@ -12,6 +12,8 @@ class VehicleLog extends Model
         'start_km',
         'end_km',
         'date',
+        'departure_time',
+        'arrival_time',
         'activity_type',
         'destination',
         'fuel_liters',

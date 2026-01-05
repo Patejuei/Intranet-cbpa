@@ -68,6 +68,7 @@ class VehicleInventoryController extends Controller
             'location' => 'nullable|string',
             'compatibility' => 'nullable|array', // Expecting array of vehicle IDs or strings
             'description' => 'nullable|string',
+            'unit_of_measure' => 'required|string',
         ]);
 
         \App\Models\WorkshopInventory::create($validated);
@@ -120,6 +121,7 @@ class VehicleInventoryController extends Controller
             'location' => 'nullable|string',
             'compatibility' => 'nullable|array',
             'description' => 'nullable|string',
+            'unit_of_measure' => 'required|string',
         ]);
 
         $item->update($validated);

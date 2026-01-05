@@ -19,6 +19,11 @@ use App\Http\Controllers\EquipmentLogController;
 use App\Http\Controllers\TicketController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Assigned Materials (Prendas a Cargo)
+    Route::get('/assigned-materials', [App\Http\Controllers\AssignedMaterialController::class, 'index'])->name('assigned_materials.index');
+    Route::get('/assigned-materials/{firefighter}', [App\Http\Controllers\AssignedMaterialController::class, 'show'])->name('assigned_materials.show');
+    Route::get('/api/assigned-materials/{firefighter}', [App\Http\Controllers\AssignedMaterialController::class, 'getByFirefighter'])->name('assigned_materials.get_json');
+
     Route::get('dashboard', function () {
         $user = request()->user();
         $query = \App\Models\BatteryLog::query()
@@ -49,7 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $vehicleQuery = \App\Models\Vehicle::query()->whereIn('status', ['Out of Service', 'Workshop']);
         $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
 
-        if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+        if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
+            // Inspector sees issues sent to HQ (Material Mayor)
+            $incidentQuery->where(function ($q) {
+                $q->where('sent_to_hq', true)
+                    ->whereNull('hq_read_at');
+            });
+        } elseif ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
             $vehicleQuery->where('company', $user->company);
             $incidentQuery->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
@@ -60,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $pendingIncidents = $incidentQuery->take(5)->get();
 
         // Workshop Vehicles Logic (Vehicles in Workshop state, get active Maintenance)
+
         $workshopQuery = \App\Models\Vehicle::query()
             ->where('status', 'Workshop')
             ->with(['maintenances' => function ($q) {
@@ -118,6 +130,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return count($v['alerts']) > 0;
         })->values();
 
+        // Petty Cash Notifications
+        $pendingPettyCash = [];
+        if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
+            $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_inspector')
+                ->with('user')
+                ->take(5)
+                ->get();
+        } elseif ($user->role === 'comandante' || $user->role === 'admin') {
+            $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_comandante')
+                ->with('user')
+                ->take(5)
+                ->get();
+        }
+
         return Inertia::render('dashboard', [
             'upcomingBatteries' => $upcomingBatteries,
             'pendingTickets' => $pendingTickets,
@@ -126,6 +152,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'pendingIncidents' => $pendingIncidents,
             'vehiclesInWorkshop' => $vehiclesInWorkshop,
             'expiringDocuments' => $expiringDocuments,
+            'pendingPettyCash' => $pendingPettyCash,
         ]);
     })->name('dashboard');
 
@@ -149,6 +176,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('{vehicle}/documents', [VehicleController::class, 'updateDocuments'])->name('vehicles.update_documents');
 
         Route::resource('status', VehicleController::class)->names('vehicles.status'); // Main vehicle CRUD/Status
+        Route::get('logs/export', [VehicleLogController::class, 'export'])->name('vehicles.logs.export');
         Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
         Route::patch('incidents/{incident}/mark-read', [VehicleIssueController::class, 'markAsRead'])->name('vehicles.incidents.markRead');
         Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
@@ -164,6 +192,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('checklists', App\Http\Controllers\VehicleChecklistController::class)->names('vehicles.checklists');
 
         Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
+
+        // Petty Cash Routes
+        Route::get('petty-cash/{petty_cash}/attachments/{attachment}', [App\Http\Controllers\PettyCashController::class, 'viewAttachment'])->name('vehicles.petty-cash.attachment');
+        Route::post('petty-cash/{petty_cash}/review', [App\Http\Controllers\PettyCashController::class, 'review'])->name('vehicles.petty-cash.review');
+        Route::resource('petty-cash', App\Http\Controllers\PettyCashController::class)->names('vehicles.petty-cash');
     });
 
     // Admin Routes

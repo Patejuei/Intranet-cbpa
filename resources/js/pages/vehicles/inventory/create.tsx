@@ -46,6 +46,7 @@ export default function InventoryCreate({
         location: '',
         compatibility: [] as number[],
         description: '',
+        unit_of_measure: 'unidades',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -141,6 +142,43 @@ export default function InventoryCreate({
                                     {errors.category && (
                                         <p className="text-sm text-red-500">
                                             {errors.category}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Unit of Measure */}
+                                <div className="space-y-2">
+                                    <Label>Unidad de Medida</Label>
+                                    <Select
+                                        value={data.unit_of_measure}
+                                        onValueChange={(val) =>
+                                            setData('unit_of_measure', val)
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione unidad" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="unidades">
+                                                Unidades
+                                            </SelectItem>
+                                            <SelectItem value="litros">
+                                                Litros
+                                            </SelectItem>
+                                            <SelectItem value="metros">
+                                                Metros
+                                            </SelectItem>
+                                            <SelectItem value="kilos">
+                                                Kilos
+                                            </SelectItem>
+                                            <SelectItem value="set">
+                                                Set / Juego
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.unit_of_measure && (
+                                        <p className="text-sm text-red-500">
+                                            {errors.unit_of_measure}
                                         </p>
                                     )}
                                 </div>

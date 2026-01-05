@@ -95,6 +95,21 @@ class ReceptionCertificateController extends Controller
           'quantity' => $item['quantity'],
         ]);
 
+        // Update Assigned Materials (Decrement)
+        $assigned = \App\Models\AssignedMaterial::where('firefighter_id', $validated['firefighter_id'])
+          ->where('material_id', $item['material_id'])
+          ->first();
+
+        if ($assigned) {
+          if ($assigned->quantity < $item['quantity']) {
+            throw new \Exception("El bombero no tiene suficiente cantidad asignada de este material. Asignado: {$assigned->quantity}, Retornando: {$item['quantity']}");
+          }
+          $assigned->decrement('quantity', $item['quantity']);
+        } else {
+          // Strict check
+          throw new \Exception("El bombero no tiene asignado este material.");
+        }
+
         // Increment stock
         $material = Material::findOrFail($item['material_id']);
         $material->increment('stock_quantity', $item['quantity']);

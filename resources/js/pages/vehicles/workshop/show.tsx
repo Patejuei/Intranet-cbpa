@@ -152,12 +152,6 @@ export default function WorkshopShow({
         setData('tasks', newTasks);
     };
 
-    const updateTaskCost = (index: number, val: string) => {
-        const newTasks = [...data.tasks];
-        newTasks[index].cost = val ? parseFloat(val) : null;
-        setData('tasks', newTasks);
-    };
-
     const updateTaskDescription = (index: number, val: string) => {
         const newTasks = [...data.tasks];
         newTasks[index].description = val;
@@ -195,7 +189,7 @@ export default function WorkshopShow({
 
         setIsAddingItem(true);
         router.post(
-            `/vehicles/maintenance/${maintenance.id}/items`,
+            `/vehicles/workshop/${maintenance.id}/items`,
             inventoryForm as any,
             {
                 onSuccess: () => {
@@ -211,24 +205,18 @@ export default function WorkshopShow({
     const handleRemoveInventoryItem = (itemId: number) => {
         if (confirm('¿Eliminar este ítem de la orden?')) {
             router.delete(
-                `/vehicles/maintenance/${maintenance.id}/items/${itemId}`,
+                `/vehicles/workshop/${maintenance.id}/items/${itemId}`,
                 { preserveScroll: true },
             );
         }
     };
 
     // Calculate totals
-    const totalTasksCost = data.tasks.reduce(
-        (sum, task) => sum + (task.cost || 0),
-        0,
-    );
     const totalPartsCost =
         maintenance.items?.reduce(
             (sum, item) => sum + (item.pivot.total_cost || 0),
             0,
         ) || 0;
-
-    const grandTotal = totalTasksCost + totalPartsCost;
 
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
@@ -780,9 +768,7 @@ export default function WorkshopShow({
 
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle>
-                                    Lista de Trabajos (Mano de Obra)
-                                </CardTitle>
+                                <CardTitle>Lista de Trabajos</CardTitle>
                                 <Badge variant="outline" className="text-base">
                                     Progreso: {completedTasks} /{' '}
                                     {data.tasks.length}
@@ -855,23 +841,6 @@ export default function WorkshopShow({
                                                             : ''
                                                     }
                                                 />
-                                                <div className="flex w-full items-center gap-2 md:w-32">
-                                                    <span className="text-sm font-semibold text-muted-foreground">
-                                                        $
-                                                    </span>
-                                                    <Input
-                                                        type="number"
-                                                        value={task.cost ?? ''}
-                                                        onChange={(e) =>
-                                                            updateTaskCost(
-                                                                index,
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        placeholder="Costo"
-                                                        disabled={isReadOnly}
-                                                    />
-                                                </div>
                                             </div>
                                             {!isReadOnly && (
                                                 <Button
@@ -895,17 +864,6 @@ export default function WorkshopShow({
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-end gap-4 text-muted-foreground">
                                         <span className="text-sm">
-                                            Total Mano de Obra:
-                                        </span>
-                                        <span className="font-semibold">
-                                            $
-                                            {totalTasksCost.toLocaleString(
-                                                'es-CL',
-                                            )}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-end gap-4 text-muted-foreground">
-                                        <span className="text-sm">
                                             Total Repuestos:
                                         </span>
                                         <span className="font-semibold">
@@ -913,15 +871,6 @@ export default function WorkshopShow({
                                             {totalPartsCost.toLocaleString(
                                                 'es-CL',
                                             )}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-end gap-4 border-t pt-2">
-                                        <span className="text-lg font-bold">
-                                            Costo Total Estimado:
-                                        </span>
-                                        <span className="text-2xl font-bold text-primary">
-                                            $
-                                            {grandTotal.toLocaleString('es-CL')}
                                         </span>
                                     </div>
                                 </div>

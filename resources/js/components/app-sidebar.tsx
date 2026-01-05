@@ -23,6 +23,7 @@ import {
     FileText,
     LayoutGrid,
     Package,
+    Receipt,
     Shield,
     Ticket,
     Truck,
@@ -71,6 +72,7 @@ export function AppSidebar({ user }: { user: any }) {
                 )
                     return true;
                 if (allowed.includes(module)) return true;
+                if (allowed.includes(module)) return true;
             } else if (dept === 'Material Menor') {
                 const allowed = [
                     'inventory',
@@ -79,6 +81,7 @@ export function AppSidebar({ user }: { user: any }) {
                     'deliveries',
                     'reception',
                     'equipment',
+                    'vehicles.petty-cash', // Added permission
                 ];
                 if (
                     allowed.some(
@@ -204,6 +207,34 @@ export function AppSidebar({ user }: { user: any }) {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         )}
+                        {hasPermission('assigned_materials') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip="Prendas a Cargo"
+                                >
+                                    <Link href="/assigned-materials">
+                                        <Users />
+                                        <span>Prendas a Cargo</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        {/* Material Menor Petty Cash */}
+                        {user.role === 'inspector' &&
+                            user.department === 'Material Menor' && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Caja Chica"
+                                    >
+                                        <Link href="/vehicles/petty-cash">
+                                            <Receipt />
+                                            <span>Caja Chica</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
                     </SidebarMenu>
                 </SidebarGroup>
 
@@ -296,6 +327,22 @@ export function AppSidebar({ user }: { user: any }) {
                                         <Link href="/vehicles/inventory">
                                             <ClipboardList />
                                             <span>Bodega</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+                            {(user.role === 'admin' ||
+                                user.role === 'comandante' ||
+                                user.role === 'mechanic' ||
+                                hasPermission('vehicles.petty-cash')) && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Rendición Caja Chica"
+                                    >
+                                        <Link href="/vehicles/petty-cash">
+                                            <Receipt />
+                                            <span>Caja Chica</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>

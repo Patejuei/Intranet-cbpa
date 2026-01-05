@@ -30,4 +30,9 @@ class Material extends Model
     {
         return $this->hasMany(MaterialHistory::class)->orderBy('created_at', 'desc');
     }
+
+    public function assignedMaterials()
+    {
+        return $this->hasMany(AssignedMaterial::class);
+    }
 }

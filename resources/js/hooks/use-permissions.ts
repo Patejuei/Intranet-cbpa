@@ -36,7 +36,9 @@ export function usePermissions() {
                 'vehicles.checklist',
                 'vehicles.logs',
                 'vehicles.logs',
+                'vehicles.logs',
                 'vehicles.inventory',
+                'vehicles.petty-cash',
             ];
             if (mechanicModules.includes(module)) return true;
         }
@@ -52,6 +54,8 @@ export function usePermissions() {
                     'vehicles.logs',
                     'vehicles.workshop',
                     'vehicles.checklist',
+                    'vehicles.checklist',
+                    'vehicles.petty-cash',
                     'vehicles',
                 ];
                 if (
@@ -69,6 +73,8 @@ export function usePermissions() {
                     'deliveries',
                     'reception',
                     'equipment',
+                    'assigned_materials',
+                    'vehicles.petty-cash', // Added permission
                 ];
                 if (
                     allowed.some(
@@ -118,6 +124,7 @@ export function usePermissions() {
                     'vehicles.inventory',
                     'vehicles.logs',
                     'vehicles.checklist', // ADDED
+                    'vehicles.petty-cash',
                 ];
                 if (editModules.includes(module)) return true;
 

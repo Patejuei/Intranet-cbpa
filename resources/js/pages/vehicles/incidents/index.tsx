@@ -365,7 +365,7 @@ export default function VehicleIncidents({
                                                 }
                                             />
                                             <Label htmlFor="sent_to_hq">
-                                                Reportar a Comandancia
+                                                Reportar a Material Mayor
                                             </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
@@ -513,8 +513,8 @@ export default function VehicleIncidents({
                                                                     className="w-fit text-xs"
                                                                 >
                                                                     {issue.hq_read_at
-                                                                        ? 'Visto Comandancia'
-                                                                        : 'Enviado Comandancia'}
+                                                                        ? 'Visto M. Mayor'
+                                                                        : 'Enviado M. Mayor'}
                                                                 </Badge>
                                                             )}
                                                             {issue.sent_to_workshop && (
@@ -569,7 +569,11 @@ export default function VehicleIncidents({
                                                             Taller
                                                         </Button>
                                                     )}
-                                                {isHQ &&
+                                                {/* Inspector / Material Mayor View Button */}
+                                                {auth.user.role ===
+                                                    'inspector' &&
+                                                    auth.user.department ===
+                                                        'Material Mayor' &&
                                                     issue.sent_to_hq &&
                                                     !issue.hq_read_at && (
                                                         <Button
@@ -583,9 +587,10 @@ export default function VehicleIncidents({
                                                             title="Marcar como Visto"
                                                         >
                                                             <Eye className="mr-1 size-4" />{' '}
-                                                            HQ
+                                                            Visto
                                                         </Button>
                                                     )}
+                                                {/* Comandancia View Button - kept for backward compatibility if needed, or removed if migrated completely */}
                                             </div>
                                         </td>
                                     </tr>

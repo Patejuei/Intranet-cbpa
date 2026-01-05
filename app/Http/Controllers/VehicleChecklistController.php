@@ -115,6 +115,23 @@ class VehicleChecklistController extends Controller
                 'status' => $detail['status'],
                 'notes' => $detail['notes'] ?? null,
             ]);
+
+            // Auto-create Incident if status is NOT 'ok'
+            if ($detail['status'] !== 'ok') {
+                $item = \App\Models\ChecklistItem::find($detail['item_id']);
+                $severity = 'Medium';
+                if ($detail['status'] === 'urgent') $severity = 'High';
+
+                \App\Models\VehicleIssue::create([
+                    'vehicle_id' => $checklist->vehicle_id,
+                    'reporter_id' => $checklist->user_id,
+                    'description' => "Falla reportada en Checklist: {$item->name}. Detalle: " . ($detail['notes'] ?? 'Sin observaciones'),
+                    'severity' => $severity,
+                    'status' => 'Open',
+                    'date' => now(),
+                    'is_stopped' => false, // Default to false, Captain decides
+                ]);
+            }
         }
 
         return redirect()->route('vehicles.checklists.show', $checklist)->with('success', 'Checklist creado correctamente.');

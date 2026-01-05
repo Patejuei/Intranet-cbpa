@@ -39,6 +39,8 @@ interface Log {
     activity_type: string;
     destination: string;
     date: string;
+    departure_time?: string;
+    arrival_time?: string;
 }
 
 import { usePermissions } from '@/hooks/use-permissions';
@@ -58,6 +60,8 @@ export default function VehicleLogs({
         vehicle_id: '',
         start_km: '',
         end_km: '',
+        departure_time: '',
+        arrival_time: '',
         activity_type: '',
         destination: '',
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -243,6 +247,40 @@ export default function VehicleLogs({
                                                         {errors.end_km}
                                                     </p>
                                                 )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="departure_time">
+                                                    Hora Salida
+                                                </Label>
+                                                <Input
+                                                    type="time"
+                                                    value={data.departure_time}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'departure_time',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="arrival_time">
+                                                    Hora Llegada
+                                                </Label>
+                                                <Input
+                                                    type="time"
+                                                    value={data.arrival_time}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'arrival_time',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
                                             </div>
                                         </div>
 
@@ -432,12 +470,12 @@ export default function VehicleLogs({
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Historial de Bitácoras</CardTitle>
-                                <div className="w-[250px]">
+                                <div className="flex w-[400px] items-center gap-2">
                                     <Select
                                         value={filters?.vehicle_id || 'all'}
                                         onValueChange={handleFilterChange}
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-[200px]">
                                             <SelectValue placeholder="Filtrar por Vehículo" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -454,6 +492,17 @@ export default function VehicleLogs({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const vehicleId =
+                                                filters.vehicle_id || 'all';
+                                            window.location.href = `/vehicles/logs/export?vehicle_id=${vehicleId}`;
+                                        }}
+                                    >
+                                        Exportar Excel
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -463,6 +512,9 @@ export default function VehicleLogs({
                                             <tr className="border-b">
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Fecha
+                                                </th>
+                                                <th className="h-12 px-4 text-left font-medium">
+                                                    Horas
                                                 </th>
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Unidad
@@ -493,6 +545,20 @@ export default function VehicleLogs({
                                                     <td className="p-4">
                                                         {formatDate(log.date)}
                                                     </td>
+                                                    <td className="p-4">
+                                                        <div className="flex flex-col text-xs">
+                                                            <span>
+                                                                S:{' '}
+                                                                {log.departure_time ||
+                                                                    '-'}
+                                                            </span>
+                                                            <span>
+                                                                L:{' '}
+                                                                {log.arrival_time ||
+                                                                    '-'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
                                                     <td className="p-4 font-medium">
                                                         {log.vehicle.name}
                                                     </td>
@@ -518,7 +584,7 @@ export default function VehicleLogs({
                                             {logs.data.length === 0 && (
                                                 <tr>
                                                     <td
-                                                        colSpan={7}
+                                                        colSpan={8}
                                                         className="p-4 text-center text-muted-foreground"
                                                     >
                                                         No hay registros.

@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Battery, Clock } from 'lucide-react';
+import { Battery, Clock, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -39,6 +39,7 @@ export default function Dashboard({
     pendingIncidents = [],
     vehiclesInWorkshop = [],
     expiringDocuments = [],
+    pendingPettyCash = [],
 }: {
     upcomingBatteries?: UpcomingBattery[];
     pendingTickets?: Ticket[];
@@ -56,6 +57,13 @@ export default function Dashboard({
             days: number;
             status: 'warning' | 'danger';
         }[];
+    }[];
+    pendingPettyCash?: {
+        id: number;
+        amount: number;
+        description: string;
+        created_at: string;
+        user: { name: string };
     }[];
 }) {
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
@@ -162,6 +170,56 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Material Menor - CBPA" />
             <div className="flex flex-1 flex-col gap-8 p-4">
+                {/* Petty Cash Pending (Inspector/Comandante) */}
+                {pendingPettyCash.length > 0 && (
+                    <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-6 shadow-sm">
+                        <div className="mb-4">
+                            <h2 className="flex items-center gap-2 text-xl font-bold">
+                                <Receipt className="size-5 text-blue-600" />
+                                Rendiciones de Caja Chica
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Solicitudes pendientes de visación o aprobación.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            {pendingPettyCash.map((item) => (
+                                <Link
+                                    key={item.id}
+                                    href={`/vehicles/petty-cash/${item.id}`}
+                                    className="block"
+                                >
+                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                        <div>
+                                            <p className="font-medium">
+                                                {item.user.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {item.description ||
+                                                    'Sin descripción'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-bold text-blue-700">
+                                                {new Intl.NumberFormat(
+                                                    'es-CL',
+                                                    {
+                                                        style: 'currency',
+                                                        currency: 'CLP',
+                                                    },
+                                                ).format(item.amount)}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {formatDate(item.created_at)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Tickets Pendientes (Comandancia) */}
                 {pendingTickets.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-6 shadow-sm">

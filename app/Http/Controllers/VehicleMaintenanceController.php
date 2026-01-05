@@ -199,18 +199,51 @@ class VehicleMaintenanceController extends Controller
         $unitCost = $item->unit_cost;
         $totalCost = $unitCost * $validated['quantity'];
 
-        // Decrement stock
+        // Check if item already exists in this maintenance
+        $existingPivot = $maintenance->items()->where('workshop_inventory.id', $item->id)->first();
+
+        if ($existingPivot) {
+            // Already exists, update quantity
+            $newQuantity = $existingPivot->pivot->quantity + $validated['quantity'];
+            $newTotalCost = $unitCost * $newQuantity;
+
+            // Decrement stock (we already decremented stock for the NEW amount above, but logic is tricky here)
+            // Wait, I decremented stock above by $validated['quantity'].
+            // So I just need to update pivot with OLD + NEW quantity.
+            // And update total cost.
+
+            // Pivot table has columns: inventory_item_id, vehicle_maintenance_id, quantity, unit_cost, total_cost.
+            // Accessing pivot via relationship: $existingPivot->pivot gives the pivot object.
+
+            // Using updateExistingPivot
+            $maintenance->items()->updateExistingPivot($item->id, [
+                'quantity' => $newQuantity,
+                'total_cost' => $unitCost * $newQuantity, // Recalculate based on unit cost history? Or current? 
+                // Requirement: "se sume al añadido anteriormente".
+                // If unit cost changed, standard practice is confusing. Assuming FIFO or Avg? 
+                // For simplicity, we keep the unit cost of the original entry OR update it. 
+                // Let's keep unit cost as is (from original entry) or use current?
+                // The prompt says "se sume al añadido anteriormente". 
+                // Ideally we just add quantities. 
+                // Let's stick to simple: update quantity, Recalculate total based on (Quantity * UnitCost).
+                // But which unit cost? The one in DB ($item->unit_cost). 
+            ]);
+
+            // Decrement stock was done above: $item->decrement('stock', $validated['quantity']);
+            // So stock is correct.
+            // Pivot quantity is correct (Old + New).
+
+        } else {
+            // Attach new
+            $maintenance->items()->attach($item->id, [
+                'quantity' => $validated['quantity'],
+                'unit_cost' => $unitCost,
+                'total_cost' => $totalCost,
+            ]);
+        }
+
+        // Decrement stock was done before this block
         $item->decrement('stock', $validated['quantity']);
-
-        // Attach to maintenance
-        $maintenance->items()->attach($item->id, [
-            'quantity' => $validated['quantity'],
-            'unit_cost' => $unitCost,
-            'total_cost' => $totalCost,
-        ]);
-
-        // Update maintenance total cost (optional, if stored on maintenance table)
-        // $maintenance->increment('cost', $totalCost); // If cost column tracks parts + labor
 
         return back()->with('success', 'Ítem agregado correctamente.');
     }

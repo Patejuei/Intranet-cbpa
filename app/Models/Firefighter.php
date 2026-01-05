@@ -23,4 +23,9 @@ class Firefighter extends Model
     {
         return $this->hasMany(DeliveryCertificate::class);
     }
+
+    public function assignedMaterials()
+    {
+        return $this->hasMany(AssignedMaterial::class);
+    }
 }

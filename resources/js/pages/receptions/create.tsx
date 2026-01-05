@@ -26,8 +26,9 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ReceptionCreate({
     firefighters,
@@ -53,6 +54,28 @@ export default function ReceptionCreate({
     });
 
     const [openFirefighter, setOpenFirefighter] = useState(false);
+    const [assignedMaterials, setAssignedMaterials] = useState<Material[]>([]);
+
+    useEffect(() => {
+        if (data.firefighter_id) {
+            axios
+                .get(`/api/assigned-materials/${data.firefighter_id}`)
+                .then((response) => {
+                    // Map assigned items to Material objects
+                    const materials = response.data.map((assigned: any) => ({
+                        ...assigned.material,
+                        assigned_quantity: assigned.quantity,
+                    }));
+                    setAssignedMaterials(materials);
+                })
+                .catch((error) => {
+                    console.error('Error fetching assigned materials', error);
+                    setAssignedMaterials([]);
+                });
+        } else {
+            setAssignedMaterials([]);
+        }
+    }, [data.firefighter_id]);
 
     const addItem = () => {
         setData('items', [...data.items, { material_id: '', quantity: 1 }]);
@@ -222,7 +245,11 @@ export default function ReceptionCreate({
                                     key={index}
                                     item={item}
                                     index={index}
-                                    materials={materials}
+                                    materials={
+                                        assignedMaterials.length > 0
+                                            ? assignedMaterials
+                                            : []
+                                    }
                                     updateItem={updateItem}
                                     removeItem={removeItem}
                                     isSingle={data.items.length === 1}
@@ -286,7 +313,12 @@ function MaterialRow({
     return (
         <div className="flex items-end gap-4 border-b pb-4 last:border-0 last:pb-0">
             <div className="flex flex-1 flex-col gap-2">
-                <Label>Material</Label>
+                <Label>
+                    Material{' '}
+                    {(materials as any)[0]?.assigned_quantity !== undefined
+                        ? '(Disponibles en el bombero)'
+                        : ''}
+                </Label>
                 <MaterialSelector
                     materials={materials}
                     value={

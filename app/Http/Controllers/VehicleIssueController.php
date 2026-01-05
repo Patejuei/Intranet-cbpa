@@ -154,9 +154,13 @@ class VehicleIssueController extends Controller
             $incident->update(['workshop_read_at' => now()]);
         }
 
-        // Comandancia (HQ)
-        if ($user->company === 'Comandancia' || $user->role === 'admin') {
-            // "Visto por Comandancia"
+        // Comandancia (HQ) OR Inspector Material Mayor
+        if (
+            $user->company === 'Comandancia' ||
+            $user->role === 'admin' ||
+            ($user->role === 'inspector' && $user->department === 'Material Mayor')
+        ) {
+            // "Visto por Material Mayor" (uses hq_read_at field)
             $incident->update(['hq_read_at' => now()]);
         }
 

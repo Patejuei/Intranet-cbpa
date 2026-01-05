@@ -87,11 +87,33 @@ class DeliveryCertificateController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
+                $material = Material::findOrFail($item['material_id']);
+
+                if ($material->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Stock insuficiente para el material: {$material->product_name}");
+                }
+
                 DeliveryItem::create([
                     'delivery_certificate_id' => $certificate->id,
                     'material_id' => $item['material_id'],
                     'quantity' => $item['quantity'],
                 ]);
+
+                // Update Assigned Materials (Prendas a Cargo)
+                // Check if exists
+                $assigned = \App\Models\AssignedMaterial::where('firefighter_id', $validated['firefighter_id'])
+                    ->where('material_id', $item['material_id'])
+                    ->first();
+
+                if ($assigned) {
+                    $assigned->increment('quantity', $item['quantity']);
+                } else {
+                    \App\Models\AssignedMaterial::create([
+                        'firefighter_id' => $validated['firefighter_id'],
+                        'material_id' => $item['material_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
 
                 // Decrement stock
                 $material = Material::findOrFail($item['material_id']);
