@@ -35,7 +35,7 @@ export function usePermissions() {
                 'vehicles.status',
                 'vehicles.checklist',
                 'vehicles.logs',
-                'inventory',
+                'vehicles.logs',
                 'vehicles.inventory',
             ];
             if (mechanicModules.includes(module)) return true;
@@ -147,7 +147,7 @@ export function usePermissions() {
             const fullAccessModules = [
                 'vehicles.workshop',
                 'vehicles.incidents',
-                'inventory',
+                'vehicles.incidents',
                 'vehicles.inventory',
             ];
             if (fullAccessModules.includes(module)) return true;

@@ -98,16 +98,21 @@ class VehicleIssueController extends Controller
     {
         // This is for Captain Review
         $user = $request->user();
-        if ($user->role !== 'capitan' && $user->role !== 'admin' && $user->company !== 'Comandancia') {
-            // Comandancia might also review? Requirement says "Capitán ... podrá revisar".
-            // Let's allow Admin/Captain.
+        if (
+            $user->role !== 'capitan' &&
+            $user->role !== 'comandante' &&
+            $user->role !== 'admin' &&
+            !($user->role === 'inspector' && $user->department === 'Material Mayor')
+        ) {
             abort(403);
         }
 
         $validated = $request->validate([
             'is_stopped' => 'required|boolean',
             'sent_to_hq' => 'boolean',
+            'sent_to_hq' => 'boolean',
             'sent_to_workshop' => 'boolean',
+            'status' => 'nullable|string',
         ]);
 
         $incident->update([
@@ -116,6 +121,7 @@ class VehicleIssueController extends Controller
             'sent_to_workshop' => $validated['sent_to_workshop'] ?? false,
             'reviewed_at' => now(),
             'reviewed_by' => $user->id,
+            'status' => $request->input('status', $incident->status), // Allow manual status update
         ]);
 
         if ($validated['is_stopped']) {

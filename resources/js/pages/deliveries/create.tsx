@@ -193,6 +193,9 @@ export default function DeliveryCreate({
                                     onChange={(e) =>
                                         setData('date', e.target.value)
                                     }
+                                    onClick={(e) =>
+                                        e.currentTarget.showPicker()
+                                    }
                                     required
                                 />
                                 {errors.date && (

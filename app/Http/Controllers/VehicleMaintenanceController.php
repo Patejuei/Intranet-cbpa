@@ -136,7 +136,10 @@ class VehicleMaintenanceController extends Controller
 
         if (!empty($validated['issue_ids'])) {
             \App\Models\VehicleIssue::whereIn('id', $validated['issue_ids'])
-                ->update(['vehicle_maintenance_id' => $maintenance->id]);
+                ->update([
+                    'vehicle_maintenance_id' => $maintenance->id,
+                    'status' => 'En Taller'
+                ]);
         }
 
         if (!empty($validated['tasks'])) {
@@ -358,6 +361,9 @@ class VehicleMaintenanceController extends Controller
         if ($validated['status'] === 'Entregado' || $validated['status'] === 'Finalizado') {
             $workshop->update(['exit_date' => now()]);
             $workshop->vehicle->update(['status' => 'Operative']);
+
+            // Auto-resolve all linked issues
+            $workshop->issues()->update(['status' => 'Resolved']);
         }
 
         return redirect()->back()->with('success', 'Orden de trabajo actualizada.');

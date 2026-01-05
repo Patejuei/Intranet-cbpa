@@ -72,6 +72,7 @@ export default function VehicleIncidents({
         is_stopped: false,
         sent_to_hq: false,
         sent_to_workshop: false,
+        status: '',
     });
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -110,6 +111,7 @@ export default function VehicleIncidents({
             is_stopped: issue.is_stopped,
             sent_to_hq: issue.sent_to_hq,
             sent_to_workshop: issue.sent_to_workshop,
+            status: issue.status,
         });
         setReviewOpen(true);
     };
@@ -137,10 +139,12 @@ export default function VehicleIncidents({
         }
     };
 
-    const isCaptain =
+    const canReview =
         auth.user.role === 'capitan' ||
+        auth.user.role === 'comandante' ||
         auth.user.role === 'admin' ||
-        auth.user.company === 'Comandancia';
+        (auth.user.role === 'inspector' &&
+            auth.user.department === 'Material Mayor');
     const isWorkshop =
         auth.user.role === 'mechanic' || auth.user.role === 'admin';
     const isHQ =
@@ -322,6 +326,28 @@ export default function VehicleIncidents({
                                             Material Fuera de Servicio
                                         </Label>
                                     </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="review_status"
+                                            checked={
+                                                reviewData.status === 'Resolved'
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                setReviewData(
+                                                    'status',
+                                                    checked
+                                                        ? 'Resolved'
+                                                        : 'Open',
+                                                )
+                                            }
+                                        />
+                                        <Label
+                                            htmlFor="review_status"
+                                            className="font-bold text-green-600"
+                                        >
+                                            Incidencia Resuelta
+                                        </Label>
+                                    </div>
 
                                     <div className="space-y-2 border-t pt-4">
                                         <h4 className="text-sm font-medium">
@@ -438,50 +464,75 @@ export default function VehicleIncidents({
                                                         Detenido
                                                     </Badge>
                                                 )}
-                                                {!issue.reviewed_at && (
+                                                {issue.status ===
+                                                    'Resolved' && (
                                                     <Badge
                                                         variant="outline"
-                                                        className="w-fit border-yellow-500 text-yellow-600"
+                                                        className="w-fit border-green-500 bg-green-50 text-green-700"
                                                     >
-                                                        Pendiente Revisión
+                                                        Resuelto
                                                     </Badge>
                                                 )}
-                                                {issue.reviewed_at && (
+                                                {issue.status ===
+                                                    'En Taller' && (
                                                     <Badge
-                                                        variant="outline"
-                                                        className="w-fit border-blue-500 text-blue-600"
+                                                        variant="secondary"
+                                                        className="w-fit bg-blue-100 text-blue-700 hover:bg-blue-100/80"
                                                     >
-                                                        Revisado
+                                                        En Taller
                                                     </Badge>
                                                 )}
-                                                {issue.sent_to_hq && (
-                                                    <Badge
-                                                        variant={
-                                                            issue.hq_read_at
-                                                                ? 'secondary'
-                                                                : 'outline'
-                                                        }
-                                                        className="w-fit text-xs"
-                                                    >
-                                                        {issue.hq_read_at
-                                                            ? 'Visto Comandancia'
-                                                            : 'Enviado Comandancia'}
-                                                    </Badge>
-                                                )}
-                                                {issue.sent_to_workshop && (
-                                                    <Badge
-                                                        variant={
-                                                            issue.workshop_read_at
-                                                                ? 'secondary'
-                                                                : 'outline'
-                                                        }
-                                                        className="w-fit text-xs"
-                                                    >
-                                                        {issue.workshop_read_at
-                                                            ? 'Visto Taller'
-                                                            : 'Enviado Taller'}
-                                                    </Badge>
-                                                )}
+                                                {issue.status !== 'Resolved' &&
+                                                    issue.status !==
+                                                        'En Taller' && (
+                                                        <>
+                                                            {!issue.reviewed_at && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="w-fit border-yellow-500 text-yellow-600"
+                                                                >
+                                                                    Pendiente
+                                                                    Revisión
+                                                                </Badge>
+                                                            )}
+                                                            {issue.reviewed_at && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="w-fit border-blue-500 text-blue-600"
+                                                                >
+                                                                    Revisado
+                                                                </Badge>
+                                                            )}
+                                                            {issue.sent_to_hq && (
+                                                                <Badge
+                                                                    variant={
+                                                                        issue.hq_read_at
+                                                                            ? 'secondary'
+                                                                            : 'outline'
+                                                                    }
+                                                                    className="w-fit text-xs"
+                                                                >
+                                                                    {issue.hq_read_at
+                                                                        ? 'Visto Comandancia'
+                                                                        : 'Enviado Comandancia'}
+                                                                </Badge>
+                                                            )}
+                                                            {issue.sent_to_workshop && (
+                                                                <Badge
+                                                                    variant={
+                                                                        issue.workshop_read_at
+                                                                            ? 'secondary'
+                                                                            : 'outline'
+                                                                    }
+                                                                    className="w-fit text-xs"
+                                                                >
+                                                                    {issue.workshop_read_at
+                                                                        ? 'Visto Taller'
+                                                                        : 'Enviado Taller'}
+                                                                </Badge>
+                                                            )}
+                                                        </>
+                                                    )}
                                             </div>
                                         </td>
                                         <td className="p-4 align-middle">
@@ -490,7 +541,7 @@ export default function VehicleIncidents({
                                         </td>
                                         <td className="p-4 align-middle">
                                             <div className="flex gap-2">
-                                                {isCaptain && (
+                                                {canReview && (
                                                     <Button
                                                         size="sm"
                                                         variant="outline"

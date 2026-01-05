@@ -47,7 +47,6 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.status',
                 'vehicles.checklist',
                 'vehicles.logs',
-                'inventory',
                 'vehicles.inventory',
             ];
             if (mechanicModules.includes(module)) return true;

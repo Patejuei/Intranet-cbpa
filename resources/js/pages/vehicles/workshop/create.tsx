@@ -254,6 +254,9 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                                     e.target.value,
                                                 )
                                             }
+                                            onClick={(e) =>
+                                                e.currentTarget.showPicker()
+                                            }
                                         />
                                         {errors.entry_date && (
                                             <p className="text-sm text-destructive">
@@ -273,6 +276,9 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                                     'tentative_exit_date',
                                                     e.target.value,
                                                 )
+                                            }
+                                            onClick={(e) =>
+                                                e.currentTarget.showPicker()
                                             }
                                         />
                                     </div>

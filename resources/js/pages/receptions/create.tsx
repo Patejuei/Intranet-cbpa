@@ -180,6 +180,9 @@ export default function ReceptionCreate({
                                     onChange={(e) =>
                                         setData('date', e.target.value)
                                     }
+                                    onClick={(e) =>
+                                        e.currentTarget.showPicker()
+                                    }
                                 />
                                 {errors.date && (
                                     <p className="text-sm text-red-500">
@@ -192,7 +195,7 @@ export default function ReceptionCreate({
                         <div className="grid gap-2">
                             <Label htmlFor="company">Compañía</Label>
                             <CompanyField
-                                value={data.company}
+                                value={data.company || ''}
                                 onChange={(val) => setData('company', val)}
                             />
                         </div>

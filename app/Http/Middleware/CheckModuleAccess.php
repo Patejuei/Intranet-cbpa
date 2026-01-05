@@ -40,7 +40,7 @@ class CheckModuleAccess
                 'vehicles.status',
                 'vehicles.checklist',
                 'vehicles.logs',
-                'inventory',
+                'vehicles.logs',
                 'vehicles.inventory',
             ];
             if (in_array($module, $mechanicModules)) {

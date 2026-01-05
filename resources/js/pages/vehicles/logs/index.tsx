@@ -190,6 +190,9 @@ export default function VehicleLogs({
                                                             e.target.value,
                                                         )
                                                     }
+                                                    onClick={(e) =>
+                                                        e.currentTarget.showPicker()
+                                                    }
                                                 />
                                                 {errors.date && (
                                                     <p className="text-sm text-destructive">

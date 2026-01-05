@@ -402,6 +402,9 @@ export default function WorkshopShow({
                                                 e.target.value,
                                             )
                                         }
+                                        onClick={(e) =>
+                                            e.currentTarget.showPicker()
+                                        }
                                         disabled={isReadOnly}
                                     />
                                 </div>
