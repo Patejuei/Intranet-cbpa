@@ -40,6 +40,19 @@ export function AppSidebar({ user }: { user: any }) {
         )
             return true;
 
+        if (user.role === 'mechanic') {
+            const mechanicModules = [
+                'vehicles.workshop',
+                'vehicles.incidents',
+                'vehicles.status',
+                'vehicles.checklist',
+                'vehicles.logs',
+                'inventory',
+                'vehicles.inventory',
+            ];
+            if (mechanicModules.includes(module)) return true;
+        }
+
         if (user.role === 'inspector') {
             const dept = (user.department || '').trim();
             if (dept === 'Material Mayor') {

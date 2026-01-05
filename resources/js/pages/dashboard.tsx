@@ -240,7 +240,7 @@ export default function Dashboard({
                 )}
 
                 {/* Material Mayor Widgets */}
-                <div className="grid gap-8 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                     {vehiclesStopped.length > 0 && (
                         <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-6 shadow-sm">
                             <div className="mb-4">
@@ -537,7 +537,7 @@ export default function Dashboard({
                                 Visitados Recientemente
                             </h2>
                         </div>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             {recent.map((module) => {
                                 const Icon = module.icon;
                                 return (
@@ -565,7 +565,7 @@ export default function Dashboard({
                     <h2 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
                         Todos los Módulos
                     </h2>
-                    <div className="grid gap-6 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                         {MODULES.filter((m) => !m.key.startsWith('admin-')).map(
                             (module) => {
                                 if (!hasPermission(module)) return null;

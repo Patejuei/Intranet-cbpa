@@ -32,6 +32,22 @@ class CheckModuleAccess
             return $next($request);
         }
 
+        // Mechanic Implicit Access (mirrors frontend use-permissions.ts)
+        if ($user->role === 'mechanic') {
+            $mechanicModules = [
+                'vehicles.workshop',
+                'vehicles.incidents',
+                'vehicles.status',
+                'vehicles.checklist',
+                'vehicles.logs',
+                'inventory',
+                'vehicles.inventory',
+            ];
+            if (in_array($module, $mechanicModules)) {
+                return $next($request);
+            }
+        }
+
         // Bodega (inventory) Restriction for Maquinista and Capitan
         if ($module === 'inventory' && in_array($user->role, ['maquinista', 'capitan'])) {
             abort(403, 'No tienes permiso para acceder a este módulo.');

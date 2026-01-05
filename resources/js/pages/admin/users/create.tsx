@@ -76,7 +76,7 @@ const modules = [
 
 const moduleCategories = ['Material Menor', 'Material Mayor', 'Administración'];
 
-    // Helper to filter options based on current user role
+// Helper to filter options based on current user role
 const getFilteredRoles = (currentUserRole: string) => {
     const allRoles = [
         { value: 'user', label: 'Usuario Estándar' },
@@ -86,7 +86,7 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
         { value: 'ayudante', label: 'Ayudante' },
-        { value: 'comandancia', label: 'Comandancia' },
+        { value: 'ayudante', label: 'Ayudante' },
         { value: 'cuartelero', label: 'Cuartelero' }, // Added missing ones from backend validation just in case
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
@@ -99,29 +99,6 @@ const getFilteredRoles = (currentUserRole: string) => {
 
     return allRoles;
 };
-
-// ... inside component ...
-
-    const handleRoleChange = (role: string) => {
-        setData((prev) => ({
-            ...prev,
-            role: role,
-            permissions: role !== 'user' && role !== 'teniente' && role !== 'ayudante' && role !== 'cuartelero' && role !== 'mechanic' ? [] : prev.permissions, // Clear permissions for privileged roles
-        }));
-    };
-
-// ... usage in Select ...
-                                    <Select
-                                        value={data.role}
-                                        onValueChange={handleRoleChange}
-                                    >
-
-// ... condition to hide permissions ...
-                            {data.role !== 'admin' &&
-                                data.role !== 'comandante' &&
-                                data.role !== 'capitan' &&
-                                data.role !== 'maquinista' &&
-                                data.role !== 'inspector' && ( // Admin/Comandante/Capitan/Maquinista/Inspector have implicit permissions
 
 const getFilteredModules = (currentUserRole: string) => {
     if (currentUserRole === 'capitan') {
@@ -391,7 +368,8 @@ export default function UserCreate({
                                                 value === 'comandante' ||
                                                 value === 'capitan' ||
                                                 value === 'maquinista' ||
-                                                value === 'inspector'
+                                                value === 'inspector' ||
+                                                value === 'mechanic'
                                                     ? []
                                                     : prev.permissions,
                                         }));

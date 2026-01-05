@@ -97,7 +97,7 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
         { value: 'ayudante', label: 'Ayudante' },
-        { value: 'comandancia', label: 'Comandancia' },
+        { value: 'ayudante', label: 'Ayudante' },
         { value: 'cuartelero', label: 'Cuartelero' },
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
@@ -375,7 +375,8 @@ export default function UserEdit({
                                                 value === 'comandante' ||
                                                 value === 'capitan' ||
                                                 value === 'maquinista' ||
-                                                value === 'inspector'
+                                                value === 'inspector' ||
+                                                value === 'mechanic'
                                                     ? []
                                                     : prev.permissions,
                                         }));
@@ -427,7 +428,8 @@ export default function UserEdit({
                                 data.role !== 'comandante' &&
                                 data.role !== 'capitan' &&
                                 data.role !== 'maquinista' &&
-                                data.role !== 'inspector' && ( // Admin/Comandante/Capitan/Maquinista/Inspector have implicit permissions
+                                data.role !== 'inspector' &&
+                                data.role !== 'mechanic' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo
