@@ -389,77 +389,86 @@ export default function Dashboard({
                 )}
 
                 {/* Documentos por Vencer */}
-                {expiringDocuments.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-red-600 bg-card p-6 shadow-sm">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 animate-pulse rounded-full bg-red-600" />
-                                Vencimiento de Documentación
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Vehículos con documentación próxima a vencer o
-                                vencida.
-                            </p>
-                        </div>
-                        <div className="space-y-3">
-                            {expiringDocuments
-                                .slice(0, showAllExpires ? undefined : 5)
-                                .map((vehicle) => (
-                                    <Link
-                                        key={vehicle.id}
-                                        href={`/vehicles/status/${vehicle.id}`}
-                                        className="block"
-                                    >
-                                        <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-bold">
-                                                    {vehicle.name}
-                                                </p>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {vehicle.company}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                {vehicle.alerts.map(
-                                                    (alert, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="flex items-center justify-between text-sm"
-                                                        >
-                                                            <span>
-                                                                {alert.label}
-                                                            </span>
-                                                            <span
-                                                                className={`font-medium ${alert.status === 'danger' ? 'text-red-600' : 'text-orange-600'}`}
-                                                            >
-                                                                {alert.date} (
-                                                                {alert.days}{' '}
-                                                                días)
-                                                            </span>
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                        </div>
-                        {expiringDocuments.length > 5 && (
-                            <div className="mt-4 text-center">
-                                <button
-                                    onClick={() =>
-                                        setShowAllExpires(!showAllExpires)
-                                    }
-                                    className="text-sm font-medium text-primary hover:underline"
-                                >
-                                    {showAllExpires
-                                        ? 'Ver menos'
-                                        : `Ver más (${expiringDocuments.length - 5} restantes)`}
-                                </button>
+                {/* Documentos por Vencer */}
+                {expiringDocuments.length > 0 &&
+                    (auth.user.role === 'capitan' ||
+                        auth.user.role === 'maquinista' ||
+                        auth.user.role === 'comandante' ||
+                        (auth.user.role === 'inspector' &&
+                            auth.user.department === 'Material Mayor')) && (
+                        <div className="rounded-xl border border-l-4 border-l-red-600 bg-card p-6 shadow-sm">
+                            <div className="mb-4">
+                                <h2 className="flex items-center gap-2 text-xl font-bold">
+                                    <span className="flex size-3 animate-pulse rounded-full bg-red-600" />
+                                    Vencimiento de Documentación
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Vehículos con documentación próxima a vencer
+                                    o vencida.
+                                </p>
                             </div>
-                        )}
-                    </div>
-                )}
+                            <div className="space-y-3">
+                                {expiringDocuments
+                                    .slice(0, showAllExpires ? undefined : 5)
+                                    .map((vehicle) => (
+                                        <Link
+                                            key={vehicle.id}
+                                            href={`/vehicles/status/${vehicle.id}`}
+                                            className="block"
+                                        >
+                                            <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="font-bold">
+                                                        {vehicle.name}
+                                                    </p>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {vehicle.company}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col gap-1">
+                                                    {vehicle.alerts.map(
+                                                        (alert, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                className="flex items-center justify-between text-sm"
+                                                            >
+                                                                <span>
+                                                                    {
+                                                                        alert.label
+                                                                    }
+                                                                </span>
+                                                                <span
+                                                                    className={`font-medium ${alert.status === 'danger' ? 'text-red-600' : 'text-orange-600'}`}
+                                                                >
+                                                                    {alert.date}{' '}
+                                                                    (
+                                                                    {alert.days}{' '}
+                                                                    días)
+                                                                </span>
+                                                            </div>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                            </div>
+                            {expiringDocuments.length > 5 && (
+                                <div className="mt-4 text-center">
+                                    <button
+                                        onClick={() =>
+                                            setShowAllExpires(!showAllExpires)
+                                        }
+                                        className="text-sm font-medium text-primary hover:underline"
+                                    >
+                                        {showAllExpires
+                                            ? 'Ver menos'
+                                            : `Ver más (${expiringDocuments.length - 5} restantes)`}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                 {upcomingBatteries.length > 0 && (
                     <div className="rounded-xl border bg-card p-6 shadow-sm">

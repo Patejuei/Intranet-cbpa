@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 interface Vehicle {
     id: number;
     name: string;
+    last_mileage?: number;
 }
 
 interface Log {
@@ -80,6 +81,18 @@ export default function VehicleLogs({
             { vehicle_id: val === 'all' ? undefined : val },
             { preserveState: true, preserveScroll: true, replace: true },
         );
+    };
+
+    const handleVehicleChange = (val: string) => {
+        setData('vehicle_id', val);
+        const selectedVehicle = vehicles.find((v) => v.id.toString() === val);
+        if (selectedVehicle && selectedVehicle.last_mileage) {
+            setData((prev) => ({
+                ...prev,
+                vehicle_id: val,
+                start_km: String(selectedVehicle.last_mileage),
+            }));
+        }
     };
 
     return (
@@ -138,11 +151,8 @@ export default function VehicleLogs({
                                                     Vehículo
                                                 </Label>
                                                 <Select
-                                                    onValueChange={(val) =>
-                                                        setData(
-                                                            'vehicle_id',
-                                                            val,
-                                                        )
+                                                    onValueChange={
+                                                        handleVehicleChange
                                                     }
                                                     value={data.vehicle_id}
                                                 >
@@ -444,8 +454,8 @@ export default function VehicleLogs({
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="rounded-md border">
-                                    <table className="w-full text-sm">
+                                <div className="overflow-x-auto rounded-md border">
+                                    <table className="w-full min-w-[800px] text-sm md:min-w-full">
                                         <thead className="bg-muted/50">
                                             <tr className="border-b">
                                                 <th className="h-12 px-4 text-left font-medium">

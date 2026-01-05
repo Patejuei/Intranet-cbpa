@@ -47,7 +47,13 @@ class VehicleLogController extends Controller
                         }
                     });
                 })
-                ->orderBy('name')->get(['id', 'name']),
+                ->addSelect([
+                    'last_mileage' => \App\Models\VehicleLog::select('end_km')
+                        ->whereColumn('vehicle_id', 'vehicles.id')
+                        ->latest('date')
+                        ->limit(1)
+                ])
+                ->orderBy('name')->get(['id', 'name', 'last_mileage']),
             'filters' => request()->only(['vehicle_id']),
         ]);
     }
