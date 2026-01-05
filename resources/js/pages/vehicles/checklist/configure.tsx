@@ -1,5 +1,12 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -8,206 +15,274 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/select'; // Added Select components
+import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react'; // Added router
 import { Plus, Trash2 } from 'lucide-react';
-import { FormEventHandler } from 'react';
 
-interface ChecklistItem {
-    id: number;
-    category: string;
-    name: string;
-}
-
-interface Props {
-    items: Record<string, ChecklistItem[]>;
-}
-
-const categories = [
-    'Luces LED y Sonorización',
-    'Cabina',
-    'Carrocería',
-    'Motor',
-    'Cuerpo de Bomba / Estanque',
-    'Material Menor (Inventario Rápido)',
-];
-
-export default function ConfigureChecklist({ items }: Props) {
-    const {
-        data,
-        setData,
-        post,
-        delete: destroy,
-        processing,
-        reset,
-        errors,
-    } = useForm({
+export default function ConfigureChecklist({
+    items,
+    canConfigureAll,
+    currentCompany,
+    companies, // Received from controller
+}: {
+    items: Record<string, any[]>;
+    canConfigureAll: boolean;
+    currentCompany: string;
+    companies: string[];
+}) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        short_name: '',
+        full_name: '',
         category: '',
-        name: '',
+        company: currentCompany, // Default to current view context
     });
 
-    const submit: FormEventHandler = (e) => {
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        // @ts-ignore
         post('/vehicles/checklist-items', {
-            onSuccess: () => reset('name'),
+            onSuccess: () => {
+                reset();
+                setData('company', currentCompany); // Keep company context
+            },
         });
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('¿Estás seguro de eliminar este ítem?')) {
-            // @ts-ignore
-            destroy(`/vehicles/checklist-items/${id}`);
+        if (confirm('¿Está seguro de eliminar este ítem?')) {
+            router.delete(`/vehicles/checklist-items/${id}`);
         }
+    };
+
+    const handleCompanyChange = (val: string) => {
+        router.get(
+            '/vehicles/checklist-items',
+            { company: val },
+            { preserveState: true },
+        );
     };
 
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Vehículos', href: '/vehicles/status' },
-                { title: 'Checklists', href: '/vehicles/checklists' },
+                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 {
-                    title: 'Configuración',
+                    title: 'Configurar Checklist',
                     href: '/vehicles/checklist-items',
                 },
             ]}
         >
             <Head title="Configurar Checklist" />
-
-            <div className="flex flex-1 flex-col gap-8 p-4">
+            <div className="flex h-full flex-col gap-6 p-4">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">
                             Configuración de Checklist
                         </h1>
                         <p className="text-muted-foreground">
-                            Administre las preguntas y categorías del checklist
-                            preventivo.
+                            Administre los ítems que aparecen en los checklists.
                         </p>
                     </div>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-[1fr_300px]">
-                    <div className="space-y-6">
-                        {Object.entries(items).map(
-                            ([category, categoryItems]) => (
-                                <Card key={category}>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-base font-semibold">
-                                            {category}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead>Item</TableHead>
-                                                    <TableHead className="w-[100px] text-right">
-                                                        Acciones
-                                                    </TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {categoryItems.map((item) => (
-                                                    <TableRow key={item.id}>
-                                                        <TableCell>
-                                                            {item.name}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    handleDelete(
-                                                                        item.id,
-                                                                    )
-                                                                }
-                                                                className="text-destructive hover:text-destructive/90"
-                                                            >
-                                                                <Trash2 className="size-4" />
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </CardContent>
-                                </Card>
-                            ),
-                        )}
-                    </div>
+                {canConfigureAll && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Seleccionar Compañía</CardTitle>
+                            <CardDescription>
+                                Está configurando los ítems para:{' '}
+                                <span className="font-bold">
+                                    {currentCompany}
+                                </span>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Select
+                                value={currentCompany}
+                                onValueChange={handleCompanyChange}
+                            >
+                                <SelectTrigger className="w-[280px]">
+                                    <SelectValue placeholder="Seleccione una compañía" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Comandancia">
+                                        Comandancia
+                                    </SelectItem>
+                                    {companies && companies.length > 0 ? (
+                                        companies.map((c) => (
+                                            <SelectItem key={c} value={c}>
+                                                {c}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <SelectItem value="Primera Compañía">
+                                                Primera Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Segunda Compañía">
+                                                Segunda Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Tercera Compañía">
+                                                Tercera Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Cuarta Compañía">
+                                                Cuarta Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Quinta Compañía">
+                                                Quinta Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Sexta Compañía">
+                                                Sexta Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Septima Compañía">
+                                                Septima Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Octava Compañía">
+                                                Octava Compañía
+                                            </SelectItem>
+                                            <SelectItem value="Novena Compañía">
+                                                Novena Compañía
+                                            </SelectItem>
+                                        </>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </CardContent>
+                    </Card>
+                )}
 
-                    <div>
-                        <Card className="sticky top-6">
-                            <CardHeader>
-                                <CardTitle>Nuevo Ítem</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={submit} className="space-y-4">
+                <div className="grid gap-6 md:grid-cols-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Nuevo Ítem para {currentCompany}
+                            </CardTitle>
+                            <CardDescription>
+                                Agregue un nuevo punto de revisión.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={submit} className="space-y-4">
+                                <input type="hidden" value={currentCompany} />
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="category">Categoría</Label>
+                                    <Input
+                                        id="category"
+                                        placeholder="Ej: Motor, Cabina, Luces..."
+                                        value={data.category}
+                                        onChange={(e) =>
+                                            setData('category', e.target.value)
+                                        }
+                                    />
+                                    {errors.category && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.category}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="short_name">
+                                        Nombre Corto
+                                    </Label>
+                                    <Input
+                                        id="short_name"
+                                        placeholder="Ej: Nivel de Aceite"
+                                        value={data.short_name}
+                                        onChange={(e) =>
+                                            setData(
+                                                'short_name',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                    {errors.short_name && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.short_name}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="full_name">
+                                        Descripción Completa
+                                    </Label>
+                                    <Input
+                                        id="full_name"
+                                        placeholder="Ej: Verificar nivel de aceite de motor y estado..."
+                                        value={data.full_name}
+                                        onChange={(e) =>
+                                            setData('full_name', e.target.value)
+                                        }
+                                    />
+                                    {errors.full_name && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.full_name}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button type="submit" disabled={processing}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Agregar Ítem
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Ítems Existentes ({currentCompany})
+                            </CardTitle>
+                            <CardDescription>
+                                Listado de puntos de control actuales.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="max-h-[600px] overflow-y-auto">
+                            {Object.entries(items).map(([category, list]) => (
+                                <div key={category} className="mb-6">
+                                    <h3 className="mb-2 text-lg font-semibold">
+                                        {category}
+                                    </h3>
                                     <div className="space-y-2">
-                                        <Label>Categoría</Label>
-                                        <Select
-                                            value={data.category}
-                                            onValueChange={(val) =>
-                                                setData('category', val)
-                                            }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {categories.map((cat) => (
-                                                    <SelectItem
-                                                        key={cat}
-                                                        value={cat}
-                                                    >
-                                                        {cat}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.category && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.category}
-                                            </p>
-                                        )}
+                                        {list.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50"
+                                            >
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {item.short_name}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {item.full_name}
+                                                    </p>
+                                                    {item.company === null && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="mt-1"
+                                                        >
+                                                            Global
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        handleDelete(item.id)
+                                                    }
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Nombre del Ítem</Label>
-                                        <Input
-                                            value={data.name}
-                                            onChange={(e) =>
-                                                setData('name', e.target.value)
-                                            }
-                                            placeholder="Ej: Nivel de Aceite"
-                                        />
-                                        {errors.name && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.name}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <Button
-                                        type="submit"
-                                        className="w-full"
-                                        disabled={processing}
-                                    >
-                                        <Plus className="mr-2 size-4" />
-                                        Agregar
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                    <Separator className="my-4" />
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AppLayout>

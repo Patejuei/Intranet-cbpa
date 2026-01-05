@@ -302,12 +302,21 @@ class VehicleMaintenanceController extends Controller
             'tasks.*.is_completed' => 'boolean',
             'tasks.*.cost' => 'nullable|numeric',
             'resolved_issue_ids' => 'nullable|array',
+            'withdrawal_responsible_name' => 'nullable|string',
+            'withdrawal_responsible_rut' => 'nullable|string',
         ]);
 
-        $workshop->update([
+        $updateData = [
             'status' => $validated['status'],
             'tentative_exit_date' => $validated['tentative_exit_date'],
-        ]);
+        ];
+
+        if ($validated['status'] === 'Entregado') {
+            $updateData['withdrawal_responsible_name'] = $validated['withdrawal_responsible_name'] ?? null;
+            $updateData['withdrawal_responsible_rut'] = $validated['withdrawal_responsible_rut'] ?? null;
+        }
+
+        $workshop->update($updateData);
 
         // Handle Tasks
         if (isset($validated['tasks'])) {

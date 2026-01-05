@@ -39,6 +39,10 @@ interface Checklist {
     captain_reviewed_at?: string;
     machinist?: { name: string };
     machinist_reviewed_at?: string;
+    commander?: { name: string };
+    commander_reviewed_at?: string;
+    inspector?: { name: string };
+    inspector_reviewed_at?: string;
     details: ChecklistDetail[];
     general_observations: string | null;
 }
@@ -169,46 +173,107 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                             <CardTitle>Estado de Revisión</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between rounded border p-2">
-                                <div>
-                                    <p className="font-bold">Capitán</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {checklist.captain
-                                            ? checklist.captain.name
-                                            : 'Pendiente'}
-                                    </p>
-                                </div>
-                                {checklist.captain_reviewed_at ? (
-                                    <div className="flex items-center gap-1 text-sm text-green-600">
-                                        <CheckCircle className="size-4" />
-                                        {formatDate(
-                                            checklist.captain_reviewed_at,
+                            {checklist.vehicle.company === 'Comandancia' ? (
+                                <>
+                                    <div className="flex items-center justify-between rounded border p-2">
+                                        <div>
+                                            <p className="font-bold">
+                                                Comandante
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {checklist.commander
+                                                    ? checklist.commander.name
+                                                    : 'Pendiente'}
+                                            </p>
+                                        </div>
+                                        {checklist.commander_reviewed_at ? (
+                                            <div className="flex items-center gap-1 text-sm text-green-600">
+                                                <CheckCircle className="size-4" />
+                                                {formatDate(
+                                                    checklist.commander_reviewed_at,
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Badge variant="outline">
+                                                Pendiente
+                                            </Badge>
                                         )}
                                     </div>
-                                ) : (
-                                    <Badge variant="outline">Pendiente</Badge>
-                                )}
-                            </div>
-                            <div className="flex items-center justify-between rounded border p-2">
-                                <div>
-                                    <p className="font-bold">Maquinista</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {checklist.machinist
-                                            ? checklist.machinist.name
-                                            : 'Pendiente'}
-                                    </p>
-                                </div>
-                                {checklist.machinist_reviewed_at ? (
-                                    <div className="flex items-center gap-1 text-sm text-green-600">
-                                        <CheckCircle className="size-4" />
-                                        {formatDate(
-                                            checklist.machinist_reviewed_at,
+                                    <div className="flex items-center justify-between rounded border p-2">
+                                        <div>
+                                            <p className="font-bold">
+                                                Inspector M.M.
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {checklist.inspector
+                                                    ? checklist.inspector.name
+                                                    : 'Pendiente'}
+                                            </p>
+                                        </div>
+                                        {checklist.inspector_reviewed_at ? (
+                                            <div className="flex items-center gap-1 text-sm text-green-600">
+                                                <CheckCircle className="size-4" />
+                                                {formatDate(
+                                                    checklist.inspector_reviewed_at,
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Badge variant="outline">
+                                                Pendiente
+                                            </Badge>
                                         )}
                                     </div>
-                                ) : (
-                                    <Badge variant="outline">Pendiente</Badge>
-                                )}
-                            </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between rounded border p-2">
+                                        <div>
+                                            <p className="font-bold">Capitán</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {checklist.captain
+                                                    ? checklist.captain.name
+                                                    : 'Pendiente'}
+                                            </p>
+                                        </div>
+                                        {checklist.captain_reviewed_at ? (
+                                            <div className="flex items-center gap-1 text-sm text-green-600">
+                                                <CheckCircle className="size-4" />
+                                                {formatDate(
+                                                    checklist.captain_reviewed_at,
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Badge variant="outline">
+                                                Pendiente
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between rounded border p-2">
+                                        <div>
+                                            <p className="font-bold">
+                                                Maquinista
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {checklist.machinist
+                                                    ? checklist.machinist.name
+                                                    : 'Pendiente'}
+                                            </p>
+                                        </div>
+                                        {checklist.machinist_reviewed_at ? (
+                                            <div className="flex items-center gap-1 text-sm text-green-600">
+                                                <CheckCircle className="size-4" />
+                                                {formatDate(
+                                                    checklist.machinist_reviewed_at,
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Badge variant="outline">
+                                                Pendiente
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </>
+                            )}
 
                             {checklist.general_observations && (
                                 <div className="rounded-lg border bg-muted/50 p-4">

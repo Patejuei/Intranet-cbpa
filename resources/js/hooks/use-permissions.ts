@@ -6,22 +6,29 @@ export function usePermissions() {
 
     const hasPermission = (module: string) => {
         if (!user) return false;
-        if (user.role === 'admin' || user.role === 'capitan') return true;
+
+        // Capitan: Revoke Bodega (inventory)
+        if (user.role === 'capitan') {
+            if (module === 'inventory') return false;
+            return true; // Default to true for everything else (legacy behavior)
+        }
+
+        if (user.role === 'admin' || user.role === 'comandante') return true;
 
         if (user.role === 'maquinista') {
-            // Maquinista implicit permissions
             const maquinistaModules = [
                 'vehicles.logs',
                 'vehicles.checklist',
                 'vehicles.status',
                 'vehicles.incidents',
-                'vehicles.inventory', // Maybe? Check middleware.
+                // 'vehicles.inventory', // REMOVED per user request (Bodega)
+                // 'inventory', // Bodega Global - Explicitly excluded
             ];
             if (maquinistaModules.includes(module)) return true;
         }
 
         if (user.role === 'mechanic') {
-            // Mechanic has access to these modules
+            // ... existing mechanic logic ...
             const mechanicModules = [
                 'vehicles.workshop',
                 'vehicles.incidents',
@@ -29,19 +36,14 @@ export function usePermissions() {
                 'vehicles.checklist',
                 'vehicles.logs',
                 'inventory',
-                'vehicles.inventory', // Just in case
+                'vehicles.inventory',
             ];
             if (mechanicModules.includes(module)) return true;
         }
 
         if (user.role === 'inspector') {
+            // ... existing inspector logic ...
             const dept = (user.department || '').trim();
-            console.log('hasPermission check:', {
-                module,
-                dept,
-                role: user.role,
-            });
-
             if (dept === 'Material Mayor') {
                 const allowed = [
                     'vehicles.status',
@@ -79,7 +81,6 @@ export function usePermissions() {
         }
 
         const permissions = (user.permissions as string[]) || [];
-        // Check for exact match or .view/.edit/.full
         return (
             permissions.includes(module) ||
             permissions.includes(`${module}.view`) ||
@@ -90,37 +91,39 @@ export function usePermissions() {
 
     const canEdit = (module: string) => {
         if (!user) return false;
-        if (user.role === 'admin' || user.role === 'capitan') return true;
+
+        // Capitan: Read-Only for Workshop
+        if (user.role === 'capitan') {
+            if (module === 'vehicles.workshop') return false;
+            return true;
+        }
+
+        if (user.role === 'admin' || user.role === 'comandante') return true;
+
+        if (user.role === 'maquinista') {
+            // Maquinista Edit permissions
+            const editModules = [
+                'vehicles.status', // ADDED per user request
+                'vehicles.checklist', // Usually they sign checklists
+            ];
+            if (editModules.includes(module)) return true;
+        }
 
         if (user.role === 'inspector') {
             const dept = (user.department || '').trim();
-
             if (dept === 'Material Mayor') {
                 const editModules = [
                     'vehicles.status',
                     'vehicles.incidents',
                     'vehicles.inventory',
                     'vehicles.logs',
+                    'vehicles.checklist', // ADDED
                 ];
+                if (editModules.includes(module)) return true;
 
-                // Strict Edit Check
-                const canEditList = [
-                    'vehicles.status',
-                    'vehicles.incidents',
-                    'vehicles.inventory',
-                ];
-
-                if (canEditList.includes(module)) return true;
-
-                // Read only for others in department
-                const readOnlyList = [
-                    'vehicles.workshop',
-                    'vehicles.checklist',
-                    'vehicles.logs',
-                ];
+                const readOnlyList = ['vehicles.workshop'];
                 if (readOnlyList.includes(module)) return false;
             } else if (dept === 'Material Menor') {
-                // "Edicion en todos los modulos de Material Menor"
                 const materialMenorModules = [
                     'inventory',
                     'tickets',
@@ -134,7 +137,6 @@ export function usePermissions() {
         }
 
         if (user.role === 'mechanic') {
-            // Read-only modules for mechanic
             const readOnlyModules = [
                 'vehicles.status',
                 'vehicles.checklist',
@@ -142,7 +144,6 @@ export function usePermissions() {
             ];
             if (readOnlyModules.includes(module)) return false;
 
-            // Full access modules for mechanic
             const fullAccessModules = [
                 'vehicles.workshop',
                 'vehicles.incidents',
@@ -165,7 +166,12 @@ export function usePermissions() {
 
     const canDelete = (module: string) => {
         if (!user) return false;
-        if (user.role === 'admin' || user.role === 'capitan') return true;
+        if (
+            user.role === 'admin' ||
+            user.role === 'capitan' ||
+            user.role === 'comandante'
+        )
+            return true;
 
         // Mechanic usually shouldn't delete unless specified?
         // Let's assume canDelete requires 'full' or specific logic.

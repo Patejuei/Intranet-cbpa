@@ -2,6 +2,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -68,6 +76,8 @@ interface Maintenance {
     fuel_type?: string;
     transmission?: string;
     entry_checklist?: Record<string, string>;
+    withdrawal_responsible_name?: string;
+    withdrawal_responsible_rut?: string;
     issues: Issue[];
     tasks: Task[];
     items: {
@@ -106,7 +116,13 @@ export default function WorkshopShow({
             cost: t.cost ? Number(t.cost) : null,
         })) as Task[],
         resolved_issue_ids: [] as number[],
+        withdrawal_responsible_name:
+            maintenance.withdrawal_responsible_name || '',
+        withdrawal_responsible_rut:
+            maintenance.withdrawal_responsible_rut || '',
     });
+
+    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
     const [inventoryForm, setInventoryForm] = useState({
         inventory_item_id: '',
@@ -336,9 +352,21 @@ export default function WorkshopShow({
                                     <Label>Estado Actual</Label>
                                     <Select
                                         value={data.status}
-                                        onValueChange={(val) =>
-                                            setData('status', val)
-                                        }
+                                        onValueChange={(val) => {
+                                            if (val === 'Entregado') {
+                                                setIsWithdrawalModalOpen(true);
+                                                // We don't set status yet, or we set it but don't save.
+                                                // Let's set it to trigger the UI, but the modal blocks the final save?
+                                                // Actually, "Guardar Cambios" is separate.
+                                                // If I set it here, the dropdown changes.
+                                                // Then the modal appears.
+                                                // If they cancel modal, I should revert status?
+                                                // For simplicity: Set it. If they cancel, they can change it back.
+                                                setData('status', val);
+                                            } else {
+                                                setData('status', val);
+                                            }
+                                        }}
                                         disabled={isReadOnly}
                                     >
                                         <SelectTrigger>
@@ -898,6 +926,66 @@ export default function WorkshopShow({
                         </Card>
                     </div>
                 </div>
+
+                <Dialog
+                    open={isWithdrawalModalOpen}
+                    onOpenChange={setIsWithdrawalModalOpen}
+                >
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                Confirmar Entrega de Unidad
+                            </DialogTitle>
+                            <DialogDescription>
+                                Para registrar la salida, por favor ingrese los
+                                datos de quien retira el vehículo.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Nombre Responsable Retiro</Label>
+                                <Input
+                                    value={data.withdrawal_responsible_name}
+                                    onChange={(e) =>
+                                        setData(
+                                            'withdrawal_responsible_name',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Ej: Tte. Juan Perez"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>RUT Responsable</Label>
+                                <Input
+                                    value={data.withdrawal_responsible_rut}
+                                    onChange={(e) =>
+                                        setData(
+                                            'withdrawal_responsible_rut',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="12.345.678-9"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsWithdrawalModalOpen(false)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setIsWithdrawalModalOpen(false);
+                                }}
+                            >
+                                Confirmar Datos
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

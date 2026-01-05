@@ -50,7 +50,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string', // Validate contents
@@ -162,7 +162,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'company' => 'required|string',
-            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector',
+            'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
             'driver_vehicles' => 'nullable|array',

@@ -40,11 +40,12 @@ class VehicleLogController extends Controller
             'vehicles' => \App\Models\Vehicle::query()
                 ->when($user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
                     $driverIds = $user->driverVehicles()->pluck('vehicles.id');
-                    if ($driverIds->isNotEmpty()) {
-                        $q->whereIn('id', $driverIds);
-                    } else {
-                        $q->where('company', $user->company);
-                    }
+                    $q->where(function ($query) use ($driverIds, $user) {
+                        $query->where('company', $user->company);
+                        if ($driverIds->isNotEmpty()) {
+                            $query->orWhereIn('id', $driverIds);
+                        }
+                    });
                 })
                 ->orderBy('name')->get(['id', 'name']),
             'filters' => request()->only(['vehicle_id']),

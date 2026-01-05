@@ -33,7 +33,12 @@ import {
 export function AppSidebar({ user }: { user: any }) {
     const hasPermission = (module: string) => {
         if (!user) return false;
-        if (user.role === 'admin' || user.role === 'capitan') return true;
+        if (
+            user.role === 'admin' ||
+            user.role === 'capitan' ||
+            user.role === 'comandante'
+        )
+            return true;
 
         if (user.role === 'inspector') {
             const dept = (user.department || '').trim();
@@ -193,6 +198,7 @@ export function AppSidebar({ user }: { user: any }) {
                 {/* Material Mayor Group (New) */}
                 {(user.role === 'admin' ||
                     user.role === 'capitan' ||
+                    user.role === 'comandante' ||
                     user.role === 'cuartelero' ||
                     user.role === 'mechanic' ||
                     hasPermission('vehicles')) && (
@@ -212,6 +218,7 @@ export function AppSidebar({ user }: { user: any }) {
                             </SidebarMenuItem>
                             {(user.role === 'admin' ||
                                 user.role === 'capitan' ||
+                                user.role === 'comandante' ||
                                 user.role === 'mechanic' ||
                                 hasPermission('vehicles.workshop')) && (
                                 <SidebarMenuItem>
@@ -250,6 +257,7 @@ export function AppSidebar({ user }: { user: any }) {
                             </SidebarMenuItem>
                             {(user.role === 'admin' ||
                                 user.role === 'capitan' ||
+                                user.role === 'comandante' ||
                                 user.role === 'cuartelero' ||
                                 hasPermission('vehicles.logs')) && (
                                 <SidebarMenuItem>
@@ -266,8 +274,11 @@ export function AppSidebar({ user }: { user: any }) {
                             )}
                             {(user.role === 'admin' ||
                                 user.role === 'cuartelero' ||
-                                user.role === 'mechanic' ||
-                                hasPermission('vehicles.inventory')) && (
+                                (user.role === 'mechanic' &&
+                                    hasPermission('vehicles.inventory')) ||
+                                (hasPermission('vehicles.inventory') &&
+                                    user.role !== 'maquinista' &&
+                                    user.role !== 'capitan')) && (
                                 <SidebarMenuItem>
                                     <SidebarMenuButton asChild tooltip="Bodega">
                                         <Link href="/vehicles/inventory">
@@ -282,7 +293,9 @@ export function AppSidebar({ user }: { user: any }) {
                 )}
 
                 {/* Administración Group */}
-                {(user.role === 'admin' || user.role === 'capitan') && (
+                {(user.role === 'admin' ||
+                    user.role === 'comandante' ||
+                    user.role === 'capitan') && (
                     <SidebarGroup>
                         <SidebarGroupLabel>Administración</SidebarGroupLabel>
                         <SidebarMenu>

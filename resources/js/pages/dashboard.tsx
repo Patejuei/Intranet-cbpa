@@ -67,8 +67,12 @@ export default function Dashboard({
         const user = auth.user;
         if (!user) return false;
 
-        // Admin and Capitan see everything
-        if (user.role === 'admin' || user.role === 'capitan') {
+        // Admin, Comandante and Capitan see everything
+        if (
+            user.role === 'admin' ||
+            user.role === 'capitan' ||
+            user.role === 'comandante'
+        ) {
             return true;
         }
 

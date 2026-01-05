@@ -13,16 +13,47 @@ class VehicleChecklistController extends Controller
         $user = request()->user();
         $query = \App\Models\Vehicle::where('status', '!=', 'Decommissioned');
 
-        if ($user->role === 'capitan') {
+        // Comandancia Logic for CREATE: Can only create for own company's vehicles?
+        // User said: "solo podrán registrar y configurar los checklist de los Vehículos asignados a Comandancia"
+        if ($user->company === 'Comandancia') {
+            $query->where('company', 'Comandancia');
+        } elseif ($user->role === 'capitan') {
             $query->where('company', $user->company);
         } elseif ($user->role !== 'admin') {
             // Restrict to vehicles the user is allowed to drive
-            $query->whereIn('id', $user->driverVehicles()->pluck('vehicles.id'));
+            // Requirement Logic:
+            // 1. "solo podrá realizar los checklist de sus carros habilitados que sean de su compañía"
+            // 2. "si no posee vehículos habilitados de su compañía, podrá realizar los vehículos de comandancia que tenga habilitados"
+
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+
+            // Filter assigned IDs by User Company
+            $companyAssignedIds = \App\Models\Vehicle::whereIn('id', $assignedIds)
+                ->where('company', $user->company)
+                ->pluck('id');
+
+            if ($companyAssignedIds->isNotEmpty()) {
+                // If they have assigned vehicles in their company, RESTRICT TO THESE ONLY.
+                $query->whereIn('id', $companyAssignedIds);
+            } else {
+                // If NO assigned vehicles in their company, allow Comandancia vehicles they are assigned to.
+                $comandanciaAssignedIds = \App\Models\Vehicle::whereIn('id', $assignedIds)
+                    ->where('company', 'Comandancia')
+                    ->pluck('id');
+
+                // If they have Comandancia assigned vehicles, show those. 
+                // If they have NEITHER, the result will be empty, which is correct (no access).
+                $query->whereIn('id', $comandanciaAssignedIds);
+            }
         }
 
         $vehicles = $query->get();
 
         $items = \App\Models\ChecklistItem::where('is_active', true)
+            ->where(function ($q) use ($user) {
+                $q->where('company', $user->company)
+                    ->orWhereNull('company');
+            })
             ->get()
             ->groupBy('category');
 
@@ -42,6 +73,34 @@ class VehicleChecklistController extends Controller
             'details.*.notes' => 'nullable|string',
             'general_observations' => 'nullable|string',
         ]);
+
+        $user = $request->user();
+        if ($user->company === 'Comandancia') {
+            $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+            if ($vehicle->company !== 'Comandancia') {
+                abort(403, 'Solo puede registrar checklists para vehículos de Comandancia.');
+            }
+        } elseif ($user->role !== 'admin' && $user->role !== 'capitan') {
+            // Re-validate against restricted logic
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+            $companyAssignedIds = \App\Models\Vehicle::whereIn('id', $assignedIds)
+                ->where('company', $user->company)
+                ->pluck('id');
+
+            $allowedIds = collect([]);
+            if ($companyAssignedIds->isNotEmpty()) {
+                $allowedIds = $companyAssignedIds;
+            } else {
+                $comandanciaAssignedIds = \App\Models\Vehicle::whereIn('id', $assignedIds)
+                    ->where('company', 'Comandancia')
+                    ->pluck('id');
+                $allowedIds = $comandanciaAssignedIds;
+            }
+
+            if (!$allowedIds->contains($validated['vehicle_id'])) {
+                abort(403, 'No tiene permiso para realizar checklist a este vehículo.');
+            }
+        }
 
         $checklist = \App\Models\VehicleChecklist::create([
             'vehicle_id' => $validated['vehicle_id'],
@@ -63,7 +122,7 @@ class VehicleChecklistController extends Controller
 
     public function show(\App\Models\VehicleChecklist $checklist)
     {
-        $checklist->load(['vehicle', 'user', 'details.item', 'captain', 'machinist']);
+        $checklist->load(['vehicle', 'user', 'details.item', 'captain', 'machinist', 'commander', 'inspector']);
         $auth_user = request()->user();
         return \Inertia\Inertia::render('vehicles/checklist/show', [
             'checklist' => $checklist,
@@ -77,11 +136,21 @@ class VehicleChecklistController extends Controller
         $query = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->latest();
 
         // Filter by user permissions/company
+        // Comandancia Logic: "podrán Visualizar todos los registros"
         if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
             $query->whereHas('vehicle', function ($q) use ($user) {
-                $q->where('company', $user->company);
+                // Same visibility logic as logs: Company OR Assigned
+                $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+                $q->where(function ($query) use ($driverIds, $user) {
+                    $query->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $driverIds);
+                    }
+                });
             });
         }
+
+        // Comandancia View All implied by NOT entering the if block above.
 
         // Vehicle Filter
         if ($request->has('vehicle_id') && $request->vehicle_id) {
@@ -91,7 +160,14 @@ class VehicleChecklistController extends Controller
         // Vehicles list for filter
         $vehiclesQuery = \App\Models\Vehicle::query()->orderBy('name');
         if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
-            $vehiclesQuery->where('company', $user->company);
+            // Apply same filter for the dropdown
+            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+            $vehiclesQuery->where(function ($query) use ($driverIds, $user) {
+                $query->where('company', $user->company);
+                if ($driverIds->isNotEmpty()) {
+                    $query->orWhereIn('id', $driverIds);
+                }
+            });
         }
 
         return \Inertia\Inertia::render('vehicles/checklist/index', [
@@ -104,50 +180,97 @@ class VehicleChecklistController extends Controller
     public function review(Request $request, \App\Models\VehicleChecklist $checklist)
     {
         $user = $request->user();
-        // Check roles
-        $isCaptain = ($user->role === 'capitan' || $user->role === 'admin'); // Assuming Admin can sign as Captain
-        $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic'); // Allow mechanic too? user requested machinist.
+        $checklist->load('vehicle'); // Ensure vehicle is loaded
 
-        if (!$isCaptain && !$isMachinist) {
-            return back()->with('error', 'No autorizado.');
-        }
+        // Logic for Comandancia Vehicles
+        if ($checklist->vehicle->company === 'Comandancia') {
+            $isCommander = ($user->role === 'comandante' || $user->role === 'admin');
+            // Inspector MM
+            $isInspector = ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') || $user->role === 'admin';
 
-        if ($isCaptain) {
-            $checklist->update([
-                'captain_id' => $user->id,
-                'captain_reviewed_at' => now(),
-            ]);
-        }
+            if (!$isCommander && !$isInspector) {
+                return back()->with('error', 'No autorizado. Se requiere rol de Comandante o Inspector de Material Mayor.');
+            }
 
-        if ($isMachinist) {
-            $checklist->update([
-                'machinist_id' => $user->id,
-                'machinist_reviewed_at' => now(),
-            ]);
-        }
+            if ($isCommander) {
+                $checklist->update([
+                    'commander_id' => $user->id,
+                    'commander_reviewed_at' => now(),
+                ]);
+            }
 
-        // Check if both signed
-        $checklist->refresh();
-        if ($checklist->captain_reviewed_at && $checklist->machinist_reviewed_at) {
-            $checklist->update(['status' => 'Completed']);
+            if ($isInspector) {
+                $checklist->update([
+                    'inspector_id' => $user->id,
+                    'inspector_reviewed_at' => now(),
+                ]);
+            }
+
+            // Check if both signed (Comandancia flow)
+            $checklist->refresh();
+            if ($checklist->commander_reviewed_at && $checklist->inspector_reviewed_at) {
+                $checklist->update(['status' => 'Completed']);
+            } else {
+                $checklist->update(['status' => 'Partially Reviewed']);
+            }
+
+            return back()->with('success', 'Checklist de Comandancia visado.');
         } else {
-            $checklist->update(['status' => 'Partially Reviewed']);
-        }
+            // Logic for Company Vehicles (Standard)
+            $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
+            $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
 
-        return back()->with('success', 'Checklist visado.');
+            if (!$isCaptain && !$isMachinist) {
+                return back()->with('error', 'No autorizado.');
+            }
+
+            if ($isCaptain) {
+                $checklist->update([
+                    'captain_id' => $user->id,
+                    'captain_reviewed_at' => now(),
+                ]);
+            }
+
+            if ($isMachinist) {
+                $checklist->update([
+                    'machinist_id' => $user->id,
+                    'machinist_reviewed_at' => now(),
+                ]);
+            }
+
+            // Check if both signed (Standard flow)
+            $checklist->refresh();
+            if ($checklist->captain_reviewed_at && $checklist->machinist_reviewed_at) {
+                $checklist->update(['status' => 'Completed']);
+            } else {
+                $checklist->update(['status' => 'Partially Reviewed']);
+            }
+
+            return back()->with('success', 'Checklist visado.');
+        }
     }
 
     private function userCanReview($user, $checklist)
     {
         if (!$user) return false;
-        $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
-        $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
-
         if ($checklist->status === 'Completed') return false;
 
-        if ($isCaptain && !$checklist->captain_reviewed_at) return true;
-        if ($isMachinist && !$checklist->machinist_reviewed_at) return true;
+        if ($checklist->vehicle->company === 'Comandancia') {
+            $isCommander = ($user->role === 'comandante' || $user->role === 'admin');
+            $isInspector = ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') || $user->role === 'admin';
 
-        return false;
+            if ($isCommander && !$checklist->commander_reviewed_at) return true;
+            if ($isInspector && !$checklist->inspector_reviewed_at) return true;
+
+            return false;
+        } else {
+            $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
+            $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
+
+            if ($isCaptain && !$checklist->captain_reviewed_at) return true;
+            if ($isMachinist && !$checklist->machinist_reviewed_at) return true;
+
+            return false;
+        }
     }
 }

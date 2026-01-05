@@ -48,6 +48,8 @@ interface Maintenance {
     traction?: string;
     fuel_type?: string;
     transmission?: string;
+    withdrawal_responsible_name?: string;
+    withdrawal_responsible_rut?: string;
     entry_checklist?: Record<string, string>;
     issues: Issue[];
     tasks: Task[];
@@ -185,6 +187,18 @@ export default function MaintenanceExitPrint({
                                 </span>
                                 <p className="text-sm font-semibold">
                                     {maintenance.responsible_person || 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-bold text-slate-500 uppercase">
+                                    Responsable Retiro
+                                </span>
+                                <p className="text-sm font-semibold uppercase">
+                                    {maintenance.withdrawal_responsible_name ||
+                                        'Pendiente'}{' '}
+                                    {maintenance.withdrawal_responsible_rut
+                                        ? `(${maintenance.withdrawal_responsible_rut})`
+                                        : ''}
                                 </p>
                             </div>
                         </div>

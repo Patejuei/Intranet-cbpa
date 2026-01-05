@@ -76,11 +76,12 @@ const modules = [
 
 const moduleCategories = ['Material Menor', 'Material Mayor', 'Administración'];
 
-// Helper to filter options based on current user role
+    // Helper to filter options based on current user role
 const getFilteredRoles = (currentUserRole: string) => {
     const allRoles = [
         { value: 'user', label: 'Usuario Estándar' },
         { value: 'admin', label: 'Administrador del Sistema' },
+        { value: 'comandante', label: 'Comandante' },
         { value: 'capitan', label: 'Capitán' },
         { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
@@ -98,6 +99,29 @@ const getFilteredRoles = (currentUserRole: string) => {
 
     return allRoles;
 };
+
+// ... inside component ...
+
+    const handleRoleChange = (role: string) => {
+        setData((prev) => ({
+            ...prev,
+            role: role,
+            permissions: role !== 'user' && role !== 'teniente' && role !== 'ayudante' && role !== 'cuartelero' && role !== 'mechanic' ? [] : prev.permissions, // Clear permissions for privileged roles
+        }));
+    };
+
+// ... usage in Select ...
+                                    <Select
+                                        value={data.role}
+                                        onValueChange={handleRoleChange}
+                                    >
+
+// ... condition to hide permissions ...
+                            {data.role !== 'admin' &&
+                                data.role !== 'comandante' &&
+                                data.role !== 'capitan' &&
+                                data.role !== 'maquinista' &&
+                                data.role !== 'inspector' && ( // Admin/Comandante/Capitan/Maquinista/Inspector have implicit permissions
 
 const getFilteredModules = (currentUserRole: string) => {
     if (currentUserRole === 'capitan') {
@@ -189,6 +213,32 @@ export default function UserCreate({
 
             if (!hasEquipment) {
                 newPermissions.push('equipment.view');
+            }
+        }
+
+        // Material Mayor Dependencies
+        const materialMayorModules = [
+            'vehicles.status',
+            'vehicles.incidents',
+            'vehicles.checklist',
+            'vehicles.logs',
+            'vehicles.workshop',
+            'vehicles.inventory',
+        ];
+
+        if (materialMayorModules.includes(moduleId) && value !== 'none') {
+            // If any MM module is granted, ensure 'vehicles.view' (General Access) is granted
+            // We must check specifically for the parent permission, not just any starting with "vehicles"
+            // because "vehicles.logs" starts with "vehicles" but does not grant access to the group middleware.
+            const hasParentAccess = newPermissions.some(
+                (p) =>
+                    p === 'vehicles.view' ||
+                    p === 'vehicles.edit' ||
+                    p === 'vehicles.full',
+            );
+
+            if (!hasParentAccess) {
+                newPermissions.push('vehicles.view');
             }
         }
 
@@ -332,9 +382,20 @@ export default function UserCreate({
                                 </label>
                                 <Select
                                     value={data.role}
-                                    onValueChange={(value) =>
-                                        setData('role', value)
-                                    }
+                                    onValueChange={(value) => {
+                                        setData((prev) => ({
+                                            ...prev,
+                                            role: value,
+                                            permissions:
+                                                value === 'admin' ||
+                                                value === 'comandante' ||
+                                                value === 'capitan' ||
+                                                value === 'maquinista' ||
+                                                value === 'inspector'
+                                                    ? []
+                                                    : prev.permissions,
+                                        }));
+                                    }}
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Seleccione un Rol" />
@@ -379,6 +440,7 @@ export default function UserCreate({
                             )}
 
                             {data.role !== 'admin' &&
+                                data.role !== 'comandante' &&
                                 data.role !== 'capitan' &&
                                 data.role !== 'maquinista' &&
                                 data.role !== 'inspector' && ( // Admin/Capitan/Maquinista/Inspector have implicit permissions

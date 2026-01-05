@@ -21,6 +21,8 @@ class VehicleMaintenance extends Model
         'fuel_type',
         'transmission',
         'entry_checklist',
+        'withdrawal_responsible_name',
+        'withdrawal_responsible_rut',
     ];
 
     protected $casts = [

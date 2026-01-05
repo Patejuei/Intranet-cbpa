@@ -24,7 +24,14 @@ class VehicleIssueController extends Controller
         return Inertia::render('vehicles/incidents/index', [
             'issues' => $query->paginate(10),
             'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user) {
-                $q->where('company', $user->company);
+                // Allow both Company vehicles AND Driver Assigned vehicles
+                $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+                $q->where(function ($query) use ($driverIds, $user) {
+                    $query->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $driverIds);
+                    }
+                });
             })->orderBy('name')->get(['id', 'name']),
         ]);
     }

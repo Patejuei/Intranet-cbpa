@@ -22,13 +22,19 @@ class CheckModuleAccess
         }
 
         // Admin and Capitan have access to everything
-        if ($user->role === 'admin' || $user->role === 'capitan') {
+        // Admin, Capitan, and Comandante have access to everything
+        if ($user->role === 'admin' || $user->role === 'capitan' || $user->role === 'comandante') {
             return $next($request);
         }
 
         // Roles with implicit module access
         if ($module === 'vehicles' && in_array($user->role, ['cuartelero', 'mechanic'])) {
             return $next($request);
+        }
+
+        // Bodega (inventory) Restriction for Maquinista and Capitan
+        if ($module === 'inventory' && in_array($user->role, ['maquinista', 'capitan'])) {
+            abort(403, 'No tienes permiso para acceder a este módulo.');
         }
 
         // Inspector Role Logic

@@ -18,11 +18,17 @@ class VehicleChecklist extends Model
         'captain_reviewed_at',
         'machinist_id',
         'machinist_reviewed_at',
+        'commander_id',
+        'commander_reviewed_at',
+        'inspector_id',
+        'inspector_reviewed_at',
     ];
 
     protected $casts = [
         'captain_reviewed_at' => 'datetime',
         'machinist_reviewed_at' => 'datetime',
+        'commander_reviewed_at' => 'datetime',
+        'inspector_reviewed_at' => 'datetime',
     ];
 
     public function vehicle()
@@ -43,6 +49,16 @@ class VehicleChecklist extends Model
     public function machinist()
     {
         return $this->belongsTo(User::class, 'machinist_id');
+    }
+
+    public function commander()
+    {
+        return $this->belongsTo(User::class, 'commander_id');
+    }
+
+    public function inspector()
+    {
+        return $this->belongsTo(User::class, 'inspector_id');
     }
 
     public function details()
