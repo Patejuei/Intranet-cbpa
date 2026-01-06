@@ -42,7 +42,6 @@ export default function DecommissionedVehicles({
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 { title: 'Estado de Carros', href: '/vehicles/status' },
                 { title: 'Dados de Baja', href: '/vehicles/decommissioned' },
             ]}

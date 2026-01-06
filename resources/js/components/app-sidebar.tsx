@@ -334,19 +334,20 @@ export function AppSidebar({ user }: { user: any }) {
                             {(user.role === 'admin' ||
                                 user.role === 'comandante' ||
                                 user.role === 'mechanic' ||
-                                hasPermission('vehicles.petty-cash')) && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip="Rendición Caja Chica"
-                                    >
-                                        <Link href="/vehicles/petty-cash">
-                                            <Receipt />
-                                            <span>Caja Chica</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            )}
+                                hasPermission('vehicles.petty-cash')) &&
+                                user.role !== 'capitan' && (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            tooltip="Rendición Caja Chica"
+                                        >
+                                            <Link href="/vehicles/petty-cash">
+                                                <Receipt />
+                                                <span>Caja Chica</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
                         </SidebarMenu>
                     </SidebarGroup>
                 )}

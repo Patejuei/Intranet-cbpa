@@ -325,7 +325,11 @@ export default function UserCreate({
                                         onValueChange={(value) =>
                                             setData('company', value)
                                         }
-                                        disabled={currentUserRole === 'capitan'} // Disable for Captains
+                                        disabled={
+                                            currentUserRole === 'capitan' ||
+                                            data.role === 'comandante' ||
+                                            data.role === 'inspector'
+                                        }
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Seleccione una Compañía" />
@@ -372,6 +376,11 @@ export default function UserCreate({
                                                 value === 'mechanic'
                                                     ? []
                                                     : prev.permissions,
+                                            company:
+                                                value === 'comandante' ||
+                                                value === 'inspector'
+                                                    ? 'Comandancia'
+                                                    : prev.company,
                                         }));
                                     }}
                                 >

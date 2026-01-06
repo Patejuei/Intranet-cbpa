@@ -569,11 +569,15 @@ export default function VehicleIncidents({
                                                             Taller
                                                         </Button>
                                                     )}
-                                                {/* Inspector / Material Mayor View Button */}
-                                                {auth.user.role ===
+                                                {/* Inspector / Material Mayor / Comandante View Button */}
+                                                {((auth.user.role ===
                                                     'inspector' &&
                                                     auth.user.department ===
-                                                        'Material Mayor' &&
+                                                        'Material Mayor') ||
+                                                    auth.user.role ===
+                                                        'comandante' ||
+                                                    auth.user.company ===
+                                                        'Comandancia') &&
                                                     issue.sent_to_hq &&
                                                     !issue.hq_read_at && (
                                                         <Button

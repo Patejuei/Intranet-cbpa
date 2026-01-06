@@ -302,7 +302,7 @@ export default function VehicleLogs({
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="Emergencia">
-                                                        Emergencia (10-0)
+                                                        Emergencia
                                                     </SelectItem>
                                                     <SelectItem value="Academia">
                                                         Academia / Ejercicio

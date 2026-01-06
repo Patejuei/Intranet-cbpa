@@ -16,7 +16,7 @@ class BatteryLogController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('batteries.view', $user->permissions ?? []) && !in_array('batteries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('batteries.view', $user->permissions ?? []) && !in_array('batteries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -32,7 +32,7 @@ class BatteryLogController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('batteries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('batteries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

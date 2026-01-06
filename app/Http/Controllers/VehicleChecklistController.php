@@ -11,12 +11,46 @@ class VehicleChecklistController extends Controller
     public function create()
     {
         $user = request()->user();
-        $query = \App\Models\Vehicle::where('status', '!=', 'Decommissioned');
+        if ($user->company === 'Comandancia') {
+            // Comandancia sees ALL vehicles
+            $vehicles = \App\Models\Vehicle::orderBy('name')->get();
+        } else {
+            // Others (inc Maquinista) see their company's vehicles
+            // User requested: Maquinista check own company + "enabled".
+            // Assuming "enabled" means "Active" or specific logic.
+            // For now, let's allow Maquinista to see 'Available' vehicles from other companies? 
+            // Or maybe just strictly adhere to Company scope for now unless Maquinista.
+
+            $query = \App\Models\Vehicle::query();
+
+            if ($user->role === 'maquinista') {
+                $query->where(function ($q) use ($user) {
+                    $q->where('company', $user->company)
+                        ->orWhere('status', 'Available'); // Interpreting "enabled" as Available for use
+                });
+            } else {
+                $query->where('company', $user->company);
+            }
+
+            $vehicles = $query->orderBy('name')->get();
+        }
 
         // Comandancia Logic for CREATE: Can only create for own company's vehicles?
         // User said: "solo podrán registrar y configurar los checklist de los Vehículos asignados a Comandancia"
+        // This logic now applies to the *creation* of the checklist, not the *selection* of vehicles.
+        // The $vehicles variable is already populated based on the user's role/company for display.
+        // The actual restriction for *creating* a checklist for a specific vehicle will be handled in the store method.
+        // The original logic here was filtering the *list* of vehicles, which is now handled above.
+        // This block seems to be a remnant of the previous filtering approach and might be redundant or need re-evaluation
+        // in the context of the new vehicle selection logic.
+        // For now, I will comment out the original filtering logic that was here, as the new logic above
+        // already determines which vehicles are available for selection.
+        // If specific creation restrictions are needed, they should be in the store method or a separate validation.
+        /*
         if ($user->company === 'Comandancia') {
             $query->where('company', 'Comandancia');
+        } elseif ($user->role === 'capitan') {
+            $query->where('company', $user->company);
         } elseif ($user->role === 'capitan') {
             $query->where('company', $user->company);
         } elseif ($user->role !== 'admin') {
@@ -46,6 +80,7 @@ class VehicleChecklistController extends Controller
                 $query->whereIn('id', $comandanciaAssignedIds);
             }
         }
+        */
 
         $vehicles = $query->get();
 

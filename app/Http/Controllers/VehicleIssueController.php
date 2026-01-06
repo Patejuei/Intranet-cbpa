@@ -158,6 +158,7 @@ class VehicleIssueController extends Controller
         if (
             $user->company === 'Comandancia' ||
             $user->role === 'admin' ||
+            $user->role === 'comandante' ||
             ($user->role === 'inspector' && $user->department === 'Material Mayor')
         ) {
             // "Visto por Material Mayor" (uses hq_read_at field)

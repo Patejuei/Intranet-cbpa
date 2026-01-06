@@ -19,7 +19,7 @@ class DeliveryCertificateController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -34,7 +34,7 @@ class DeliveryCertificateController extends Controller
     public function create()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('deliveries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -53,7 +53,7 @@ class DeliveryCertificateController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('deliveries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -119,6 +119,75 @@ class DeliveryCertificateController extends Controller
                 $material = Material::findOrFail($item['material_id']);
                 $material->decrement('stock_quantity', $item['quantity']);
 
+                // === COMANDANCIA TRANSFER LGOIC ===
+                // If the sender is Comandancia (which we know because of the material's company or user's company),
+                // and the receiver is a Company (not 'Baja' or something else, assuming 'company' field in certificate is the target),
+                // we should INCREASE the stock in the target company.
+                if ($certificate->company !== 'Comandancia') { // If target is NOT Comandancia (it's a delivery TO a company)
+                    // Check if this material comes from Comandancia (source)
+                    if ($material->company === 'Comandancia') {
+                        // Find or Create the material in the target company
+                        // We assume "Code" is the unique identifier for the same product across companies.
+                        // If no code, we might match by name? Code is safer.
+
+                        $targetMaterial = null;
+                        if ($material->code) {
+                            $targetMaterial = Material::where('company', $certificate->company)
+                                ->where('code', $material->code)
+                                ->first();
+                        } else {
+                            // Fallback to strict name match if no code (less reliable but needed if codes aren't used)
+                            $targetMaterial = Material::where('company', $certificate->company)
+                                ->where('product_name', $material->product_name)
+                                ->where('brand', $material->brand)
+                                ->where('model', $material->model)
+                                ->first();
+                        }
+
+                        if ($targetMaterial) {
+                            $targetMaterial->increment('stock_quantity', $item['quantity']);
+
+                            // History for Target
+                            \App\Models\MaterialHistory::create([
+                                'material_id' => $targetMaterial->id,
+                                'user_id' => $request->user()->id,
+                                'type' => 'ADD', // Received from Comandancia
+                                'quantity_change' => $item['quantity'],
+                                'current_balance' => $targetMaterial->stock_quantity,
+                                'reference_type' => DeliveryCertificate::class,
+                                'reference_id' => $certificate->id,
+                                'description' => 'Recepción por Transferencia desde Comandancia',
+                            ]);
+                        } else {
+                            // Create it if it doesn't exist
+                            $newMaterial = Material::create([
+                                'product_name' => $material->product_name,
+                                'brand' => $material->brand,
+                                'model' => $material->model,
+                                'code' => $material->code, // Keep same code
+                                'stock_quantity' => $item['quantity'],
+                                'company' => $certificate->company,
+                                'category' => $material->category,
+                                // 'serial_number' => $material->serial_number, // Unique items logic? If has serial, we might need to clear it from source?
+                                // For now assuming bulk items. If serial exists, we should probably transfer the record or handle uniqueness.
+                            ]);
+
+                            // History for New Material
+                            \App\Models\MaterialHistory::create([
+                                'material_id' => $newMaterial->id,
+                                'user_id' => $request->user()->id,
+                                'type' => 'ADD',
+                                'quantity_change' => $item['quantity'],
+                                'current_balance' => $item['quantity'],
+                                'reference_type' => DeliveryCertificate::class,
+                                'reference_id' => $certificate->id,
+                                'description' => 'Recepción por Transferencia desde Comandancia (Nuevo Item)',
+                            ]);
+                        }
+                    }
+                }
+                // === END TRANSFER LOGIC ===
+
                 // Create Material History
                 \App\Models\MaterialHistory::create([
                     'material_id' => $material->id,
@@ -139,7 +208,7 @@ class DeliveryCertificateController extends Controller
     public function show(DeliveryCertificate $delivery)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -152,7 +221,7 @@ class DeliveryCertificateController extends Controller
     public function downloadPdf(DeliveryCertificate $delivery)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('deliveries.view', $user->permissions ?? []) && !in_array('deliveries.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

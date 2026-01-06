@@ -119,7 +119,9 @@ class VehicleController extends Controller
         }, 'maintenances.tasks', 'maintenances.issues'])->findOrFail($id);
 
         $totalMaintenanceCost = $vehicle->maintenances->sum(function ($maintenance) {
-            return $maintenance->tasks->sum('cost');
+            $tasksCost = $maintenance->tasks->sum('cost');
+            $itemsCost = $maintenance->items->sum('pivot.total_cost');
+            return $tasksCost + $itemsCost;
         });
 
         return Inertia::render('vehicles/status/show', [
@@ -200,7 +202,7 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector && $user->company !== 'Comandancia') {
             abort(403, 'No tiene permisos para editar vehículos.');
         }
 

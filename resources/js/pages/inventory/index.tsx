@@ -18,16 +18,8 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import {
-    Download,
-    Eye,
-    FileText,
-    Pencil,
-    Plus,
-    Search,
-    Upload,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Download, Eye, FileText, Pencil, Search, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { read, utils } from 'xlsx';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
@@ -62,6 +54,7 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
         stock_quantity: 0,
         company: 'Segunda Compañía',
         category: '',
+        serial_number: '',
         document_path: null as File | null,
     });
 
@@ -80,7 +73,8 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
             code: material.code || '',
             stock_quantity: material.stock_quantity,
             company: material.company,
-            category: material.category || '',
+            category: material.category || 'Sin Categoría',
+            serial_number: material.serial_number || '',
             document_path: null, // Don't prepopulate file input
         });
         setIsEditing(true);
@@ -104,13 +98,12 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
     const downloadTemplate = () => {
         const ws = utils.json_to_sheet([
             {
-                product_name: 'Ej: Guantes de trabajo',
-                brand: 'Ej: Steelpro',
-                model: 'Ej: Multiflex',
-                code: 'Ej: COD-123',
-                stock_quantity: 10,
-                company: 'Segunda Compañía',
-                category: 'EPP',
+                'Nombre del producto': 'Ej: Guantes de trabajo',
+                Marca: 'Ej: Steelpro',
+                Modelo: 'Ej: Multiflex',
+                Cantidad: 10,
+                Compañía: 'Segunda Compañía',
+                'Serie de Fabricante': 'Ej: SN-998877',
             },
         ]);
         const wb = utils.book_new();
@@ -133,17 +126,30 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = utils.sheet_to_json(worksheet);
 
+            // Map Spanish headers to English keys
+            const mappedData = jsonData.map((row: any) => ({
+                product_name:
+                    row['Nombre del producto'] || row['product_name'] || '',
+                brand: row['Marca'] || row['brand'] || '',
+                model: row['Modelo'] || row['model'] || '',
+                stock_quantity: row['Cantidad'] || row['stock_quantity'] || 0,
+                company: row['Compañía'] || row['company'] || '',
+                serial_number:
+                    row['Serie de Fabricante'] || row['serial_number'] || '',
+                category: 'Sin Categoría',
+                code: null,
+            }));
+
             // Send to backend
             router.post(
                 '/inventory/import',
                 {
-                    materials: jsonData,
+                    materials: mappedData,
                 },
                 {
                     onSuccess: () => {
                         setImportOpen(false);
                         setImporting(false);
-                        // Reset file input if needed
                     },
                     onError: () => {
                         setImporting(false);
@@ -156,10 +162,15 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
         }
     };
 
+    const isFirstRun = useRef(true);
+
     // Server-side search implementation with debounce
     useEffect(() => {
-        // Only trigger search if it differs from current prop (avoid initial double fetch if needed, though Inertia handles replace well)
-        // or just debounce everything.
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+
         const timeoutId = setTimeout(() => {
             router.get(
                 '/inventory',
@@ -205,10 +216,6 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         >
                             <Upload className="size-4" />
                             Importar
-                        </Button>
-                        <Button onClick={openCreate} className="gap-2">
-                            <Plus className="size-4" />
-                            Agregar Material
                         </Button>
                     </div>
                 </div>
@@ -447,12 +454,14 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="code">Código Interno</Label>
+                                <Label htmlFor="serial_number">
+                                    N° de Serie de Fabricante
+                                </Label>
                                 <Input
-                                    id="code"
-                                    value={data.code}
+                                    id="serial_number"
+                                    value={data.serial_number || ''}
                                     onChange={(e) =>
-                                        setData('code', e.target.value)
+                                        setData('serial_number', e.target.value)
                                     }
                                 />
                             </div>
@@ -477,14 +486,51 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="category">Categoría</Label>
-                            <Input
-                                id="category"
+                            <Select
                                 value={data.category}
-                                onChange={(e) =>
-                                    setData('category', e.target.value)
+                                onValueChange={(value) =>
+                                    setData('category', value)
                                 }
-                                placeholder="Ej: EPP, Uniforme, Radio..."
-                            />
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione Categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Sin Categoría">
+                                        Sin Categoría
+                                    </SelectItem>
+                                    <SelectItem value="Equipos de Protección Personal">
+                                        Equipos de Protección Personal
+                                    </SelectItem>
+                                    <SelectItem value="Material de Extinción">
+                                        Material de Extinción
+                                    </SelectItem>
+                                    <SelectItem value="Herramientas de Rescate">
+                                        Herramientas de Rescate
+                                    </SelectItem>
+                                    <SelectItem value="Material Médico">
+                                        Material Médico
+                                    </SelectItem>
+                                    <SelectItem value="Telecomunicaciones">
+                                        Telecomunicaciones
+                                    </SelectItem>
+                                    <SelectItem value="Entrada Forzada">
+                                        Entrada Forzada
+                                    </SelectItem>
+                                    <SelectItem value="Escalas">
+                                        Escalas
+                                    </SelectItem>
+                                    <SelectItem value="Ventilación">
+                                        Ventilación
+                                    </SelectItem>
+                                    <SelectItem value="Riesgos Eléctricos">
+                                        Riesgos Eléctricos
+                                    </SelectItem>
+                                    <SelectItem value="Materiales Peligrosos">
+                                        Materiales Peligrosos
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="grid gap-2">

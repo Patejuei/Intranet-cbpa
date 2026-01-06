@@ -117,7 +117,6 @@ export default function VehicleStatus({
         <AppLayout
             breadcrumbs={[
                 { title: 'Panel Principal', href: '/dashboard' },
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 { title: 'Estado de Carros', href: '/vehicles/status' },
             ]}
         >

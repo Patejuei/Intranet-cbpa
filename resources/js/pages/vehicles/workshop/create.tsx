@@ -35,23 +35,6 @@ interface Vehicle {
 }
 
 export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
-    const { data, setData, post, processing, errors } = useForm({
-        vehicle_id: '',
-        entry_date: new Date().toISOString().split('T')[0],
-        tentative_exit_date: '',
-        workshop_name: 'Nemesio Vicuña 275, Puente Alto',
-        description: '',
-        tasks: [] as string[],
-        issue_ids: [] as number[],
-        // New Fields
-        responsible_person: '',
-        mileage_in: '',
-        traction: '4x2',
-        fuel_type: 'Diesel',
-        transmission: 'Manual',
-        entry_checklist: {} as Record<string, string>, // item -> status (functional, faulty, na)
-    });
-
     const checklistItems = [
         'Sistema de frenos (Incluye ABS)',
         'Sistema Eléctrico y luces de emergencia',
@@ -66,6 +49,26 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         'Alarma sonora y luces baliza',
         'Fugas de líquidos',
     ];
+
+    const { data, setData, post, processing, errors } = useForm({
+        vehicle_id: '',
+        entry_date: new Date().toISOString().split('T')[0],
+        tentative_exit_date: '',
+        workshop_name: 'Nemesio Vicuña 275, Puente Alto',
+        description: '',
+        tasks: [] as string[],
+        issue_ids: [] as number[],
+        // New Fields
+        responsible_person: '',
+        mileage_in: '',
+        traction: '4x2',
+        fuel_type: 'Diesel',
+        transmission: 'Manual',
+        entry_checklist: checklistItems.reduce(
+            (acc, item) => ({ ...acc, [item]: 'Funcional' }),
+            {} as Record<string, string>,
+        ),
+    });
 
     const handleChecklistChange = (item: string, status: string) => {
         const taskName = `Revisar: ${item}`;
@@ -335,128 +338,82 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                         <Label className="mb-2 block text-sm font-medium">
                                             Tracción
                                         </Label>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="traction"
-                                                    value="4x2"
-                                                    checked={
-                                                        data.traction === '4x2'
+                                        <div className="flex gap-1 rounded-md bg-muted/50 p-1">
+                                            {['4x2', '4x4'].map((opt) => (
+                                                <button
+                                                    key={opt}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setData('traction', opt)
                                                     }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'traction',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span className="text-sm">
-                                                    4x2
-                                                </span>
-                                            </label>
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="traction"
-                                                    value="4x4"
-                                                    checked={
-                                                        data.traction === '4x4'
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'traction',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span className="text-sm">
-                                                    4x4
-                                                </span>
-                                            </label>
+                                                    className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                                                        data.traction === opt
+                                                            ? 'bg-background text-foreground shadow-sm'
+                                                            : 'text-muted-foreground hover:bg-background/50'
+                                                    }`}
+                                                >
+                                                    {opt}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                     <div>
                                         <Label className="mb-2 block text-sm font-medium">
                                             Transmisión
                                         </Label>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="transmission"
-                                                    value="Manual"
-                                                    checked={
-                                                        data.transmission ===
-                                                        'Manual'
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'transmission',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span className="text-sm">
-                                                    Manual
-                                                </span>
-                                            </label>
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="transmission"
-                                                    value="Automática"
-                                                    checked={
-                                                        data.transmission ===
-                                                        'Automática'
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'transmission',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                <span className="text-sm">
-                                                    Automática
-                                                </span>
-                                            </label>
+                                        <div className="flex gap-1 rounded-md bg-muted/50 p-1">
+                                            {['Manual', 'Automática'].map(
+                                                (opt) => (
+                                                    <button
+                                                        key={opt}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setData(
+                                                                'transmission',
+                                                                opt,
+                                                            )
+                                                        }
+                                                        className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                                                            data.transmission ===
+                                                            opt
+                                                                ? 'bg-background text-foreground shadow-sm'
+                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                        }`}
+                                                    >
+                                                        {opt}
+                                                    </button>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                     <div>
                                         <Label className="mb-2 block text-sm font-medium">
                                             Combustible
                                         </Label>
-                                        <div className="flex flex-wrap gap-4">
+                                        <div className="flex flex-wrap gap-1 rounded-md bg-muted/50 p-1">
                                             {[
                                                 'Diesel',
                                                 'Gasolina',
                                                 'Eléctrico',
                                                 'Otro',
-                                            ].map((fuel) => (
-                                                <label
-                                                    key={fuel}
-                                                    className="flex items-center gap-2"
+                                            ].map((opt) => (
+                                                <button
+                                                    key={opt}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setData(
+                                                            'fuel_type',
+                                                            opt,
+                                                        )
+                                                    }
+                                                    className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                                                        data.fuel_type === opt
+                                                            ? 'bg-background text-foreground shadow-sm'
+                                                            : 'text-muted-foreground hover:bg-background/50'
+                                                    }`}
                                                 >
-                                                    <input
-                                                        type="radio"
-                                                        name="fuel_type"
-                                                        value={fuel}
-                                                        checked={
-                                                            data.fuel_type ===
-                                                            fuel
-                                                        }
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'fuel_type',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <span className="text-sm">
-                                                        {fuel}
-                                                    </span>
-                                                </label>
+                                                    {opt}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
@@ -468,93 +425,76 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                         <ClipboardCheck className="size-4" />{' '}
                                         Checklist de Ingreso
                                     </h3>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="border-b">
-                                                    <th className="px-2 py-2 text-left font-medium">
-                                                        Elemento
-                                                    </th>
-                                                    <th className="px-2 py-2 text-center font-medium">
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {checklistItems.map((item) => (
+                                            <div
+                                                key={item}
+                                                className="flex flex-col gap-1.5 rounded-md border p-3 hover:bg-muted/30"
+                                            >
+                                                <span className="text-sm font-medium">
+                                                    {item}
+                                                </span>
+                                                <div className="flex gap-1 rounded-md bg-muted/50 p-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleChecklistChange(
+                                                                item,
+                                                                'Funcional',
+                                                            )
+                                                        }
+                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                            data
+                                                                .entry_checklist[
+                                                                item
+                                                            ] === 'Funcional'
+                                                                ? 'bg-green-100 text-green-700 shadow-sm'
+                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                        }`}
+                                                    >
                                                         Funcional
-                                                    </th>
-                                                    <th className="px-2 py-2 text-center font-medium">
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleChecklistChange(
+                                                                item,
+                                                                'Fallas',
+                                                            )
+                                                        }
+                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                            data
+                                                                .entry_checklist[
+                                                                item
+                                                            ] === 'Fallas'
+                                                                ? 'bg-red-100 text-red-700 shadow-sm'
+                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                        }`}
+                                                    >
                                                         Fallas
-                                                    </th>
-                                                    <th className="px-2 py-2 text-center font-medium">
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleChecklistChange(
+                                                                item,
+                                                                'N/A',
+                                                            )
+                                                        }
+                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                            data
+                                                                .entry_checklist[
+                                                                item
+                                                            ] === 'N/A'
+                                                                ? 'bg-background text-foreground shadow-sm'
+                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                        }`}
+                                                    >
                                                         N/A
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y">
-                                                {checklistItems.map((item) => (
-                                                    <tr key={item}>
-                                                        <td className="px-2 py-2">
-                                                            {item}
-                                                        </td>
-                                                        <td className="px-2 py-2 text-center">
-                                                            <input
-                                                                type="radio"
-                                                                name={`chk_${item}`}
-                                                                value="Funcional"
-                                                                checked={
-                                                                    data
-                                                                        .entry_checklist[
-                                                                        item
-                                                                    ] ===
-                                                                    'Funcional'
-                                                                }
-                                                                onChange={() =>
-                                                                    handleChecklistChange(
-                                                                        item,
-                                                                        'Funcional',
-                                                                    )
-                                                                }
-                                                            />
-                                                        </td>
-                                                        <td className="px-2 py-2 text-center">
-                                                            <input
-                                                                type="radio"
-                                                                name={`chk_${item}`}
-                                                                value="Fallas"
-                                                                checked={
-                                                                    data
-                                                                        .entry_checklist[
-                                                                        item
-                                                                    ] ===
-                                                                    'Fallas'
-                                                                }
-                                                                onChange={() =>
-                                                                    handleChecklistChange(
-                                                                        item,
-                                                                        'Fallas',
-                                                                    )
-                                                                }
-                                                            />
-                                                        </td>
-                                                        <td className="px-2 py-2 text-center">
-                                                            <input
-                                                                type="radio"
-                                                                name={`chk_${item}`}
-                                                                value="N/A"
-                                                                checked={
-                                                                    data
-                                                                        .entry_checklist[
-                                                                        item
-                                                                    ] === 'N/A'
-                                                                }
-                                                                onChange={() =>
-                                                                    handleChecklistChange(
-                                                                        item,
-                                                                        'N/A',
-                                                                    )
-                                                                }
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 

@@ -50,7 +50,6 @@ export default function VehicleCreate() {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 { title: 'Estado de Carros', href: '/vehicles/status' },
                 { title: 'Nuevo Vehículo', href: '/vehicles/create' },
             ]}
