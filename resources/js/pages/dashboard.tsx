@@ -40,6 +40,7 @@ export default function Dashboard({
     vehiclesInWorkshop = [],
     expiringDocuments = [],
     pendingPettyCash = [],
+    criticalStockItems = [],
 }: {
     upcomingBatteries?: UpcomingBattery[];
     pendingTickets?: Ticket[];
@@ -65,6 +66,7 @@ export default function Dashboard({
         created_at: string;
         user: { name: string };
     }[];
+    criticalStockItems?: any[];
 }) {
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
     const [showAllExpires, setShowAllExpires] = useState(false);
@@ -170,6 +172,37 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Material Menor - CBPA" />
             <div className="flex flex-1 flex-col gap-8 p-4">
+                {/* Critical Stock Alert */}
+                {criticalStockItems && criticalStockItems.length > 0 && (
+                    <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-6 shadow-sm dark:bg-red-950/10">
+                        <div className="mb-4">
+                            <h2 className="flex items-center gap-2 text-xl font-bold text-red-700 dark:text-red-500">
+                                <span className="flex size-3 animate-pulse rounded-full bg-red-600 dark:bg-red-500" />
+                                Stock Crítico en Taller
+                            </h2>
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                                Los siguientes ítems tienen stock bajo o nulo.
+                            </p>
+                        </div>
+                        <div className="space-y-2">
+                            {criticalStockItems.map((item: any) => (
+                                <div
+                                    key={item.id}
+                                    className="flex items-center justify-between rounded-lg border border-red-200 bg-white p-3 dark:border-red-900/50 dark:bg-red-950/20"
+                                >
+                                    <span className="font-medium">
+                                        {item.name}
+                                    </span>
+                                    <span className="rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                                        Stock: {item.stock} / Min:{' '}
+                                        {item.min_stock}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Petty Cash Pending (Inspector/Comandante) */}
                 {pendingPettyCash.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-6 shadow-sm">

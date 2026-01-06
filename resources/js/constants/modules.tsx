@@ -36,7 +36,7 @@ export const MODULES: ModuleDefinition[] = [
     },
     {
         key: 'equipment',
-        title: 'Material Menor',
+        title: 'Alta / Baja de Material',
         description: 'Altas y bajas de equipamiento',
         href: '/equipment',
         pattern: /^\/equipment/,

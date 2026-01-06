@@ -27,7 +27,11 @@ export default function Pagination({ links }: PaginationProps) {
                             disabled={!link.url}
                         >
                             {link.url ? (
-                                <Link href={link.url}>
+                                <Link
+                                    href={link.url}
+                                    preserveScroll
+                                    preserveState
+                                >
                                     <ChevronLeft className="size-4" />
                                 </Link>
                             ) : (
@@ -47,7 +51,11 @@ export default function Pagination({ links }: PaginationProps) {
                             disabled={!link.url}
                         >
                             {link.url ? (
-                                <Link href={link.url}>
+                                <Link
+                                    href={link.url}
+                                    preserveScroll
+                                    preserveState
+                                >
                                     <ChevronRight className="size-4" />
                                 </Link>
                             ) : (
@@ -67,7 +75,7 @@ export default function Pagination({ links }: PaginationProps) {
                         className={!link.url ? 'pointer-events-none' : ''}
                     >
                         {link.url ? (
-                            <Link href={link.url} preserveScroll>
+                            <Link href={link.url} preserveScroll preserveState>
                                 <span
                                     dangerouslySetInnerHTML={{ __html: label }}
                                 />

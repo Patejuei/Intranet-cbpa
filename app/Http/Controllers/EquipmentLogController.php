@@ -12,7 +12,7 @@ class EquipmentLogController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('equipment.view', $user->permissions ?? []) && !in_array('equipment.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('equipment.view', $user->permissions ?? []) && !in_array('equipment.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -33,7 +33,7 @@ class EquipmentLogController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('equipment.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('equipment.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

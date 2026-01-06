@@ -66,10 +66,9 @@ export default function ConfigureChecklist({
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 {
                     title: 'Configurar Checklist',
-                    href: '/vehicles/checklist-items',
+                    href: '/vehicles/checklist/configure',
                 },
             ]}
         >
@@ -170,12 +169,19 @@ export default function ConfigureChecklist({
                                     <Label htmlFor="category">Categoría</Label>
                                     <Input
                                         id="category"
-                                        placeholder="Ej: Motor, Cabina, Luces..."
+                                        list="category-suggestions"
+                                        placeholder="Seleccione o escriba nueva..."
                                         value={data.category}
                                         onChange={(e) =>
                                             setData('category', e.target.value)
                                         }
+                                        autoComplete="off"
                                     />
+                                    <datalist id="category-suggestions">
+                                        {Object.keys(items).map((cat) => (
+                                            <option key={cat} value={cat} />
+                                        ))}
+                                    </datalist>
                                     {errors.category && (
                                         <p className="text-sm text-destructive">
                                             {errors.category}

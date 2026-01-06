@@ -9,7 +9,7 @@ class AdminUserController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante') {
             abort(403);
         }
 
@@ -26,7 +26,7 @@ class AdminUserController extends Controller
 
     public function create()
     {
-        if (request()->user()->role !== 'admin' && request()->user()->role !== 'capitan') {
+        if (request()->user()->role !== 'admin' && request()->user()->role !== 'capitan' && request()->user()->role !== 'comandante') {
             abort(403);
         }
         $vehicles = \App\Models\Vehicle::query();
@@ -42,7 +42,7 @@ class AdminUserController extends Controller
     public function store(Request $request)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante') {
             abort(403);
         }
 
@@ -105,6 +105,9 @@ class AdminUserController extends Controller
                 }
                 $validated['permissions'] = $cleanPermissions;
             }
+        } elseif ($validated['role'] === 'comandante' || $validated['role'] === 'inspector') {
+            // Force Comandancia company for high rank roles
+            $validated['company'] = 'Comandancia';
         }
 
         $createdUser = \App\Models\User::create([
@@ -127,7 +130,7 @@ class AdminUserController extends Controller
     public function edit(\App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan') {
+        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
             abort(403);
         }
         if ($currentUser->role === 'capitan' && $user->company !== $currentUser->company) {
@@ -150,7 +153,7 @@ class AdminUserController extends Controller
     public function update(Request $request, \App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan') {
+        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
             abort(403);
         }
 
@@ -209,6 +212,9 @@ class AdminUserController extends Controller
                 }
                 $validated['permissions'] = $cleanPermissions;
             }
+        } elseif ($validated['role'] === 'comandante' || $validated['role'] === 'inspector') {
+            // Force Comandancia company for high rank roles
+            $validated['company'] = 'Comandancia';
         }
 
         $userData = [
@@ -237,7 +243,7 @@ class AdminUserController extends Controller
     public function destroy(\App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan') {
+        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
             abort(403);
         }
         if ($currentUser->role === 'capitan' && $user->company !== $currentUser->company) {

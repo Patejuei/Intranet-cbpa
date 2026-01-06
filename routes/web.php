@@ -55,8 +55,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $vehicleQuery = \App\Models\Vehicle::query()->whereIn('status', ['Out of Service', 'Workshop']);
         $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
 
-        if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
-            // Inspector sees issues sent to HQ (Material Mayor)
+        if (
+            ($user->role === 'inspector' && $user->department === 'Material Mayor') ||
+            $user->role === 'comandante' ||
+            $user->role === 'admin' || // Optional: Admins usually see all, but if we want to test the flow
+            $user->company === 'Comandancia'
+        ) {
+            // Inspector/Commander sees issues sent to HQ (Material Mayor)
             $incidentQuery->where(function ($q) {
                 $q->where('sent_to_hq', true)
                     ->whereNull('hq_read_at');
@@ -145,6 +150,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->get();
         }
 
+        // Critical Stock Logic (Comandancia / Inspector MM / Admin)
+        $criticalStockItems = [];
+        if (
+            $user->role === 'admin' ||
+            $user->company === 'Comandancia' ||
+            ($user->role === 'inspector' && $user->department === 'Material Mayor')
+        ) {
+            $criticalStockItems = \App\Models\WorkshopInventory::whereColumn('stock', '<=', 'min_stock')->get();
+        }
+
         return Inertia::render('dashboard', [
             'upcomingBatteries' => $upcomingBatteries,
             'pendingTickets' => $pendingTickets,
@@ -154,6 +169,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'vehiclesInWorkshop' => $vehiclesInWorkshop,
             'expiringDocuments' => $expiringDocuments,
             'pendingPettyCash' => $pendingPettyCash,
+            'criticalStockItems' => $criticalStockItems,
         ]);
     })->name('dashboard');
 

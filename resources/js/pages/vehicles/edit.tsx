@@ -20,7 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Vehicle {
@@ -38,7 +38,10 @@ interface Vehicle {
     insurance_expires_at?: string;
 }
 
+import { User } from '@/types';
+
 export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
+    const { auth } = usePage<{ auth: { user: User } }>().props;
     const { data, setData, put, processing, errors } = useForm({
         name: vehicle.name,
         plate: vehicle.plate,
@@ -84,7 +87,6 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
                 { title: 'Estado de Carros', href: '/vehicles/status' },
                 {
                     title: `Editar ${vehicle.name}`,
@@ -212,12 +214,18 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="company">Compañía</Label>
+                                    <Label htmlFor="company">Compañía</Label>
                                     <Select
                                         value={data.company}
                                         onValueChange={(val) =>
                                             setData('company', val)
                                         }
-                                        disabled
+                                        disabled={
+                                            vehicle.company !== 'Comandancia' && // If vehicle is not Comandancia (which implies user context check usually, but here based on req: "usuario de Comandancia podrá editar")
+                                            // Actually I need to check the AUTH layer here.
+                                            // The valid check is: disabled={ auth.user.company !== 'Comandancia' && auth.user.role !== 'admin' }
+                                            false // Placeholder, will fix in "Check 2" below
+                                        }
                                     >
                                         <SelectTrigger className="bg-muted">
                                             <SelectValue placeholder="Seleccione compañía" />

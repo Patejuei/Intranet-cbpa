@@ -14,11 +14,11 @@ class FirefighterController extends Controller
         $query = Firefighter::query();
 
         // Access Control
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('firefighters.view', $user->permissions ?? []) && !in_array('firefighters.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('firefighters.view', $user->permissions ?? []) && !in_array('firefighters.edit', $user->permissions ?? [])) {
             abort(403, 'Unauthorized access to Firefighters module');
         }
 
-        if ($user->role !== 'admin' && $user->company) {
+        if ($user->role !== 'admin' && $user->role !== 'comandante' && $user->company) {
             $query->where('company', $user->company);
         }
 
@@ -42,7 +42,7 @@ class FirefighterController extends Controller
     public function store(Request $request)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('firefighters.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('firefighters.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -62,7 +62,7 @@ class FirefighterController extends Controller
     public function update(Request $request, Firefighter $firefighter)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('firefighters.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('firefighters.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -86,7 +86,7 @@ class FirefighterController extends Controller
     public function destroy(Firefighter $firefighter)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('firefighters.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('firefighters.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

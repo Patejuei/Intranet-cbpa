@@ -14,7 +14,7 @@ class TicketController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -37,7 +37,7 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('tickets.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -79,7 +79,7 @@ class TicketController extends Controller
     public function show(Ticket $ticket)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('tickets.view', $user->permissions ?? []) && !in_array('tickets.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -98,7 +98,7 @@ class TicketController extends Controller
     public function reply(Request $request, Ticket $ticket)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('tickets.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -134,7 +134,7 @@ class TicketController extends Controller
     public function updateStatus(Request $request, Ticket $ticket)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('tickets.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('tickets.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

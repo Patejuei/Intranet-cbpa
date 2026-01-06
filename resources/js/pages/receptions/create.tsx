@@ -25,7 +25,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -384,8 +384,24 @@ function CompanyField({
         );
     }
 
+    const handleValueChange = (val: string) => {
+        onChange(val);
+        // Reload materials for the selected company
+        // We use router.get to refresh props. preserving state ensures form data isn't lost (except what we explicitly change)
+        router.get(
+            '/receptions/create',
+            { company: val },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['materials'],
+                replace: true,
+            },
+        );
+    };
+
     return (
-        <Select value={value} onValueChange={onChange}>
+        <Select value={value} onValueChange={handleValueChange}>
             <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccione Compañía" />
             </SelectTrigger>
@@ -401,12 +417,14 @@ function CompanyField({
                 </SelectItem>
                 <SelectItem value="Cuarta Compañía">Cuarta Compañía</SelectItem>
                 <SelectItem value="Quinta Compañía">Quinta Compañía</SelectItem>
+                <SelectItem value="Sexta Compañía">Sexta Compañía</SelectItem>
                 <SelectItem value="Séptima Compañía">
                     Séptima Compañía
                 </SelectItem>
                 <SelectItem value="Octava Compañía">Octava Compañía</SelectItem>
                 <SelectItem value="Novena Compañía">Novena Compañía</SelectItem>
                 <SelectItem value="Décima Compañía">Décima Compañía</SelectItem>
+                <SelectItem value="Brigada Juvenil">Brigada Juvenil</SelectItem>
                 <SelectItem value="Comandancia">Comandancia</SelectItem>
             </SelectContent>
         </Select>

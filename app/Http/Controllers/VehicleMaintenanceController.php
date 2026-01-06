@@ -78,7 +78,9 @@ class VehicleMaintenanceController extends Controller
                 $q->where('company', $user->company);
             })
             ->with(['issues' => function ($q) {
-                $q->where('status', '!=', 'Resolved')->latest();
+                $q->where('status', '!=', 'Resolved')
+                    ->where('sent_to_workshop', true)
+                    ->latest();
             }, 'maintenances' => function ($q) {
                 $q->whereNull('exit_date')->latest();
             }])

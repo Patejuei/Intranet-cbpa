@@ -332,7 +332,11 @@ export default function UserEdit({
                                         onValueChange={(value) =>
                                             setData('company', value)
                                         }
-                                        disabled={currentUserRole === 'capitan'} // Disable for Captains
+                                        disabled={
+                                            currentUserRole === 'capitan' ||
+                                            data.role === 'comandante' ||
+                                            data.role === 'inspector'
+                                        }
                                     >
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Seleccione una Compañía" />
@@ -379,6 +383,11 @@ export default function UserEdit({
                                                 value === 'mechanic'
                                                     ? []
                                                     : prev.permissions,
+                                            company:
+                                                value === 'comandante' ||
+                                                value === 'inspector'
+                                                    ? 'Comandancia'
+                                                    : prev.company,
                                         }));
                                     }}
                                 >
