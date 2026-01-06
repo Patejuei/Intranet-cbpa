@@ -208,7 +208,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('checklists/{checklist}/review', [App\Http\Controllers\VehicleChecklistController::class, 'review'])->name('vehicles.checklists.review');
         Route::resource('checklists', App\Http\Controllers\VehicleChecklistController::class)->names('vehicles.checklists');
 
-        Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
+        // Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
 
         // Petty Cash Routes
         Route::get('petty-cash/{petty_cash}/attachments/{attachment}', [App\Http\Controllers\PettyCashController::class, 'viewAttachment'])->name('vehicles.petty-cash.attachment');

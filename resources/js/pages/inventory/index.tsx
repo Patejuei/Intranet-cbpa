@@ -1,3 +1,4 @@
+import MaterialForm from '@/components/inventory/MaterialForm';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -8,16 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Download, Eye, FileText, Pencil, Search, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { read, utils } from 'xlsx';
@@ -38,81 +32,49 @@ interface PageProps {
 export default function InventoryIndex({ materials, filters }: PageProps) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [isOpen, setIsOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentId, setCurrentId] = useState<number | null>(null);
+    const [currentMaterial, setCurrentMaterial] = useState<Material | null>(
+        null,
+    );
 
     // Import State
     const [importOpen, setImportOpen] = useState(false);
     const [importing, setImporting] = useState(false);
 
-    // Form handling
-    const { data, setData, post, put, processing, errors, reset } = useForm({
-        product_name: '',
-        brand: '',
-        model: '',
-        code: '',
-        stock_quantity: 0,
-        company: 'Segunda Compañía',
-        category: '',
-        serial_number: '',
-        document_path: null as File | null,
-    });
-
     const openCreate = () => {
-        reset();
-        setIsEditing(false);
-        setCurrentId(null);
+        setCurrentMaterial(null);
         setIsOpen(true);
     };
 
     const openEdit = (material: Material) => {
-        setData({
-            product_name: material.product_name,
-            brand: material.brand || '',
-            model: material.model || '',
-            code: material.code || '',
-            stock_quantity: material.stock_quantity,
-            company: material.company,
-            category: material.category || 'Sin Categoría',
-            serial_number: material.serial_number || '',
-            document_path: null, // Don't prepopulate file input
-        });
-        setIsEditing(true);
-        setCurrentId(material.id);
+        setCurrentMaterial(material);
         setIsOpen(true);
-    };
-
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isEditing && currentId) {
-            put(`/inventory/${currentId}`, {
-                onSuccess: () => setIsOpen(false),
-            });
-        } else {
-            post('/inventory', {
-                onSuccess: () => setIsOpen(false),
-            });
-        }
     };
 
     const downloadTemplate = () => {
         const ws = utils.json_to_sheet([
             {
-                'Nombre del producto': 'Ej: Guantes de trabajo',
-                Marca: 'Ej: Steelpro',
-                Modelo: 'Ej: Multiflex',
-                Cantidad: 10,
+                'Nombre del producto': 'Casco F1',
+                Cantidad: 5,
                 Compañía: 'Segunda Compañía',
-                'Serie de Fabricante': 'Ej: SN-998877',
+                Marca: 'MSA',
+                Modelo: 'Gallet',
+                'Serie de Fabricante': '123456',
             },
         ]);
         const wb = utils.book_new();
         utils.book_append_sheet(wb, ws, 'Plantilla');
-        // Trigger download
-        // Using writeFile from xlsx
-        import('xlsx').then((xlsx) => {
-            xlsx.writeFile(wb, 'plantilla_inventario.xlsx');
+        const excelBuffer = utils.write(wb, {
+            bookType: 'xlsx',
+            type: 'array',
         });
+        const blob = new Blob([excelBuffer], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'plantilla_inventario.xlsx';
+        a.click();
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -358,217 +320,22 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {isEditing
+                            {currentMaterial
                                 ? 'Editar Material'
                                 : 'Agregar Nuevo Material'}
                         </DialogTitle>
                         <DialogDescription>
-                            {isEditing
+                            {currentMaterial
                                 ? 'Modifique los detalles del material.'
                                 : 'Ingrese los detalles del nuevo material para inventario.'}
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submit} className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="company">Compañía</Label>
-                            <Select
-                                value={data.company}
-                                onValueChange={(value) =>
-                                    setData('company', value)
-                                }
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione Compañía" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Primera Compañía">
-                                        Primera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Segunda Compañía">
-                                        Segunda Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Tercera Compañía">
-                                        Tercera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Cuarta Compañía">
-                                        Cuarta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Quinta Compañía">
-                                        Quinta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Sexta Compañía">
-                                        Sexta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Séptima Compañía">
-                                        Séptima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Octava Compañía">
-                                        Octava Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Novena Compañía">
-                                        Novena Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Brigada Juvenil">
-                                        Brigada Juvenil
-                                    </SelectItem>
-                                    <SelectItem value="Comandancia">
-                                        Comandancia
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="product_name">
-                                Nombre del Producto
-                            </Label>
-                            <Input
-                                id="product_name"
-                                value={data.product_name}
-                                onChange={(e) =>
-                                    setData('product_name', e.target.value)
-                                }
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="brand">Marca</Label>
-                                <Input
-                                    id="brand"
-                                    value={data.brand}
-                                    onChange={(e) =>
-                                        setData('brand', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="model">Modelo</Label>
-                                <Input
-                                    id="model"
-                                    value={data.model}
-                                    onChange={(e) =>
-                                        setData('model', e.target.value)
-                                    }
-                                />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="serial_number">
-                                    N° de Serie de Fabricante
-                                </Label>
-                                <Input
-                                    id="serial_number"
-                                    value={data.serial_number || ''}
-                                    onChange={(e) =>
-                                        setData('serial_number', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="stock_quantity">
-                                    Cantidad Inicial
-                                </Label>
-                                <Input
-                                    id="stock_quantity"
-                                    type="number"
-                                    min="0"
-                                    value={data.stock_quantity}
-                                    onChange={(e) =>
-                                        setData(
-                                            'stock_quantity',
-                                            parseInt(e.target.value),
-                                        )
-                                    }
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="category">Categoría</Label>
-                            <Select
-                                value={data.category}
-                                onValueChange={(value) =>
-                                    setData('category', value)
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione Categoría" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Sin Categoría">
-                                        Sin Categoría
-                                    </SelectItem>
-                                    <SelectItem value="Equipos de Protección Personal">
-                                        Equipos de Protección Personal
-                                    </SelectItem>
-                                    <SelectItem value="Material de Extinción">
-                                        Material de Extinción
-                                    </SelectItem>
-                                    <SelectItem value="Herramientas de Rescate">
-                                        Herramientas de Rescate
-                                    </SelectItem>
-                                    <SelectItem value="Material Médico">
-                                        Material Médico
-                                    </SelectItem>
-                                    <SelectItem value="Telecomunicaciones">
-                                        Telecomunicaciones
-                                    </SelectItem>
-                                    <SelectItem value="Entrada Forzada">
-                                        Entrada Forzada
-                                    </SelectItem>
-                                    <SelectItem value="Escalas">
-                                        Escalas
-                                    </SelectItem>
-                                    <SelectItem value="Ventilación">
-                                        Ventilación
-                                    </SelectItem>
-                                    <SelectItem value="Riesgos Eléctricos">
-                                        Riesgos Eléctricos
-                                    </SelectItem>
-                                    <SelectItem value="Materiales Peligrosos">
-                                        Materiales Peligrosos
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="document_path">
-                                Documento de Alta (Opcional)
-                            </Label>
-                            <Input
-                                id="document_path"
-                                type="file"
-                                onChange={(e) =>
-                                    setData(
-                                        'document_path',
-                                        e.target.files
-                                            ? e.target.files[0]
-                                            : null,
-                                    )
-                                }
-                                className="cursor-pointer"
-                            />
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                Adjuntar factura, guía de despacho o acta de
-                                alta.
-                            </p>
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={processing}>
-                                {isEditing ? 'Actualizar' : 'Guardar'}
-                            </Button>
-                        </div>
-                    </form>
+                    <MaterialForm
+                        key={currentMaterial ? currentMaterial.id : 'create'}
+                        material={currentMaterial}
+                        onSuccess={() => setIsOpen(false)}
+                        onCancel={() => setIsOpen(false)}
+                    />
                 </DialogContent>
             </Dialog>
             <Dialog open={importOpen} onOpenChange={setImportOpen}>

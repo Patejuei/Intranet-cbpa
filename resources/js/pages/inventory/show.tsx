@@ -1,3 +1,4 @@
+import MaterialForm from '@/components/inventory/MaterialForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,16 +12,13 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Box, Edit, FileText, History } from 'lucide-react';
 import { useState } from 'react';
 
@@ -57,29 +55,6 @@ interface PageProps {
 
 export default function InventoryShow({ material, logs, history }: PageProps) {
     const [isEditOpen, setIsEditOpen] = useState(false);
-
-    const {
-        data: editData,
-        setData: setEditData,
-        put,
-        processing,
-        errors,
-    } = useForm({
-        product_name: material.product_name,
-        brand: material.brand || '',
-        model: material.model || '',
-        category: material.category || '',
-        code: material.code || '',
-        stock_quantity: material.stock_quantity,
-        company: material.company,
-    });
-
-    const handleEditSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        put(`/inventory/${material.id}`, {
-            onSuccess: () => setIsEditOpen(false),
-        });
-    };
 
     return (
         <AppLayout
@@ -126,119 +101,11 @@ export default function InventoryShow({ material, logs, history }: PageProps) {
                                     stock manualmente.
                                 </DialogDescription>
                             </DialogHeader>
-                            <form
-                                onSubmit={handleEditSubmit}
-                                className="space-y-4 py-4"
-                            >
-                                <div>
-                                    <Label htmlFor="name">Nombre</Label>
-                                    <Input
-                                        id="name"
-                                        value={editData.product_name}
-                                        onChange={(e) =>
-                                            setEditData(
-                                                'product_name',
-                                                e.target.value,
-                                            )
-                                        }
-                                        required
-                                    />
-                                    {errors.product_name && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {errors.product_name}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="brand">Marca</Label>
-                                        <Input
-                                            id="brand"
-                                            value={editData.brand}
-                                            onChange={(e) =>
-                                                setEditData(
-                                                    'brand',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="model">Modelo</Label>
-                                        <Input
-                                            id="model"
-                                            value={editData.model}
-                                            onChange={(e) =>
-                                                setEditData(
-                                                    'model',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="category">
-                                            Categoría
-                                        </Label>
-                                        <Input
-                                            id="category"
-                                            value={editData.category}
-                                            onChange={(e) =>
-                                                setEditData(
-                                                    'category',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="code">Código/N°</Label>
-                                        <Input
-                                            id="code"
-                                            value={editData.code}
-                                            onChange={(e) =>
-                                                setEditData(
-                                                    'code',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label htmlFor="stock">Stock Actual</Label>
-                                    <Input
-                                        id="stock"
-                                        type="number"
-                                        value={editData.stock_quantity}
-                                        onChange={(e) =>
-                                            setEditData(
-                                                'stock_quantity',
-                                                parseInt(e.target.value),
-                                            )
-                                        }
-                                        required
-                                    />
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Ajustar el stock aquí registrará un
-                                        movimiento de edición.
-                                    </p>
-                                </div>
-                                <DialogFooter>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        onClick={() => setIsEditOpen(false)}
-                                    >
-                                        Cancelar
-                                    </Button>
-                                    <Button type="submit" disabled={processing}>
-                                        Guardar Cambios
-                                    </Button>
-                                </DialogFooter>
-                            </form>
+                            <MaterialForm
+                                material={material}
+                                onSuccess={() => setIsEditOpen(false)}
+                                onCancel={() => setIsEditOpen(false)}
+                            />
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -279,21 +146,40 @@ export default function InventoryShow({ material, logs, history }: PageProps) {
                                     </p>
                                 </div>
                             </div>
-                            <div>
-                                <h3 className="text-sm font-medium text-muted-foreground">
-                                    Código Interno
-                                </h3>
-                                <div className="mt-1">
-                                    {material.code ? (
-                                        <Badge
-                                            variant="outline"
-                                            className="font-mono"
-                                        >
-                                            {material.code}
-                                        </Badge>
-                                    ) : (
-                                        '-'
-                                    )}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h3 className="text-sm font-medium text-muted-foreground">
+                                        Código Interno
+                                    </h3>
+                                    <div className="mt-1">
+                                        {material.code ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono"
+                                            >
+                                                {material.code}
+                                            </Badge>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-medium text-muted-foreground">
+                                        Número de Serie
+                                    </h3>
+                                    <div className="mt-1">
+                                        {material.serial_number ? (
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono"
+                                            >
+                                                {material.serial_number}
+                                            </Badge>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div>

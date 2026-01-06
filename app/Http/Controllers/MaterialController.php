@@ -122,7 +122,7 @@ class MaterialController extends Controller
 
         // Constraint: If Serial Number exists, Stock max is 1.
         if (!empty($validated['serial_number']) && $validated['stock_quantity'] > 1) {
-            return redirect()->back()->withErrors(['stock_quantity' => 'Items with Serial Number must have a stock of 1 (Unique Asset).']);
+            return redirect()->back()->withErrors(['stock_quantity' => 'Los items con Serial Number deben tener un stock de 1 (Objeto Único).']);
         }
 
         // Check if we need to generate (or regenerate) code
@@ -220,7 +220,7 @@ class MaterialController extends Controller
 
         // Constraint: If Serial Number exists, Stock max is 1.
         if (!empty($validated['serial_number']) && $validated['stock_quantity'] > 1) {
-            return redirect()->back()->withErrors(['stock_quantity' => 'Items with Serial Number must have a stock of 1 (Unique Asset).']);
+            return redirect()->back()->withErrors(['stock_quantity' => 'Los items con Serial Number deben tener un stock de 1 (Objeto Único).']);
         }
 
         // Generate Code if Category is valid
@@ -288,23 +288,16 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'materials' => 'required|array',
             'materials.*.product_name' => 'required|string',
+            'materials.*.brand' => 'nullable|string',
+            'materials.*.model' => 'nullable|string',
             'materials.*.stock_quantity' => 'required|numeric',
             'materials.*.company' => 'required|string',
+            'materials.*.serial_number' => 'nullable|string',
+            'materials.*.category' => 'nullable|string',
+            'materials.*.code' => 'nullable|string',
         ]);
 
-        // STRICT Category List
-        $validCategories = [
-            'Equipos de Protección Personal' => 'EPP',
-            'Material de Extinción' => 'EXT',
-            'Herramientas de Rescate' => 'RES',
-            'Material Médico' => 'MED',
-            'Telecomunicaciones' => 'TEL',
-            'Entrada Forzada' => 'EFO',
-            'Escalas' => 'ESC',
-            'Ventilación' => 'VEN',
-            'Riesgos Eléctricos' => 'REL',
-            'Materiales Peligrosos' => 'HAZ',
-        ];
+
 
         // Intelligent Keyword Mapping (Lower Case)
         $keywordMap = [
@@ -384,80 +377,40 @@ class MaterialController extends Controller
             'absorbente' => 'Materiales Peligrosos',
         ];
 
-        $importedCount = 0;
-
+        $count = 0;
         foreach ($validated['materials'] as $item) {
-            $inputCategory = isset($item['category']) ? trim($item['category']) : '';
-            $productName = strtolower(trim($item['product_name']));
+            // Force defaults: Category is 'Sin Categoría' if not provided
+            $category = $item['category'] ?? 'Sin Categoría';
+            // Code is null for import
+            $code = null;
 
-            $finalCategory = null;
-
-            // 1. Direct Match Check
-            if ($inputCategory && array_key_exists($inputCategory, $validCategories)) {
-                $finalCategory = $inputCategory;
-            }
-
-            // 2. Intelligent Detection if still null
-            if (!$finalCategory) {
-                foreach ($keywordMap as $keyword => $cat) {
-                    if (str_contains($productName, $keyword)) {
-                        $finalCategory = $cat;
-                        break; // Stop at first match
-                    }
-                }
-            }
-
-            // 3. Fallback (Default to 'Herramientas de Rescate' or 'Varios' if we had it, using strict list so RES)
-            if (!$finalCategory) {
-                // If input category was something else not in strict list, maybe we should respect it if we could, but requirement says "use listed ones".
-                // Defaulting to 'Herramientas de Rescate' as a generic tool category
-                $finalCategory = 'Herramientas de Rescate';
-            }
-
-            $prefix = $validCategories[$finalCategory]; // Guaranteed to exist
-
-            // Auto-generate code
-            $code = $item['code'] ?? null;
-
-            if (empty($code)) {
-                // Get highest code for this Prefix (e.g. EPP-%)
-                // Use a atomic lock or robust method in real prod, here simplistic Approach
-                $lastMaterial = Material::where('code', 'like', $prefix . '-%')
-                    ->orderByRaw('CAST(SUBSTRING_INDEX(code, "-", -1) AS UNSIGNED) DESC') // Improved numeric sort
-                    ->first();
-
-                $nextNum = 1;
-                if ($lastMaterial) {
-                    $parts = explode('-', $lastMaterial->code);
-                    if (count($parts) === 2 && is_numeric($parts[1])) {
-                        $nextNum = intval($parts[1]) + 1;
-                    }
-                }
-
-                $code = $prefix . '-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
-
-                // Double check uniqueness locally within this batch to avoid collisions if inserting many of same cat
-                // (Though 'create' happens inside loop, so DB is source of truth)
-                while (Material::where('code', $code)->exists()) {
-                    $nextNum++;
-                    $code = $prefix . '-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
-                }
-            }
-
-            Material::create([
+            // Create Material
+            $material = Material::create([
                 'product_name' => $item['product_name'],
                 'brand' => $item['brand'] ?? null,
                 'model' => $item['model'] ?? null,
-                'code' => $code,
                 'stock_quantity' => $item['stock_quantity'] ?? 0,
                 'company' => $item['company'],
-                'category' => $finalCategory,
                 'serial_number' => $item['serial_number'] ?? null,
+                'category' => $category,
+                'code' => $code,
             ]);
 
-            $importedCount++;
+            // Create History Log (Alta)
+            \App\Models\MaterialHistory::create([
+                'material_id' => $material->id,
+                'user_id' => $request->user()->id,
+                'type' => 'ALTA',
+                'quantity_change' => $material->stock_quantity,
+                'current_balance' => $material->stock_quantity,
+                'reference_type' => null,
+                'reference_id' => null,
+                'description' => 'Importación Masiva',
+            ]);
+
+            $count++;
         }
 
-        return redirect()->back()->with('success', $importedCount . ' materiales importados y clasificados correctamente.');
+        return redirect()->back()->with('success', $count . ' materiales importados y clasificados correctamente.');
     }
 }
