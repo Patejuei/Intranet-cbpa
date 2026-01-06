@@ -176,7 +176,7 @@ export default function Dashboard({
                     Bienvenido al Sistema de Intranet
                 </h2>
             </div>
-            <div className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
                 {/* Critical Stock Alert */}
                 {criticalStockItems && criticalStockItems.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-6 shadow-sm dark:bg-red-950/10">
@@ -498,65 +498,70 @@ export default function Dashboard({
                             )}
                         </div>
                     )}
-            </div>
 
-            {/* Specific Workshop Widget with Order Details */}
-            {vehiclesInWorkshop.length > 0 && (
-                <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-6 shadow-sm">
-                    <div className="mb-4">
-                        <h2 className="flex items-center gap-2 text-xl font-bold">
-                            <span className="flex size-3 rounded-full bg-yellow-600" />
-                            Unidades en Taller
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            Vehículos con orden de trabajo activa.
-                        </p>
-                    </div>
-                    <div className="space-y-3">
-                        {vehiclesInWorkshop.map((vehicle) => {
-                            const maintenance = vehicle.maintenances?.[0];
-                            return (
-                                <Link
-                                    key={vehicle.id}
-                                    href={`/vehicles/status/${vehicle.id}`}
-                                    className="block"
-                                >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-bold">
-                                                    {vehicle.name}
-                                                </p>
-                                                <span className="text-xs text-muted-foreground">
-                                                    ({vehicle.company})
-                                                </span>
-                                            </div>
-                                            {maintenance ? (
-                                                <p className="text-xs font-medium text-yellow-700">
-                                                    {maintenance.workshop_name}{' '}
-                                                    - {maintenance.description}
-                                                </p>
-                                            ) : (
-                                                <p className="text-xs text-muted-foreground">
-                                                    Sin detalles de orden.
-                                                </p>
-                                            )}
-                                        </div>
-                                        {maintenance?.entry_date && (
-                                            <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
-                                                Ingreso:{' '}
-                                                {formatDate(
-                                                    maintenance.entry_date,
+                {/* Specific Workshop Widget with Order Details */}
+                {vehiclesInWorkshop.length > 0 && (
+                    <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-6 shadow-sm">
+                        <div className="mb-4">
+                            <h2 className="flex items-center gap-2 text-xl font-bold">
+                                <span className="flex size-3 rounded-full bg-yellow-600" />
+                                Unidades en Taller
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Vehículos con orden de trabajo activa.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            {vehiclesInWorkshop.map((vehicle) => {
+                                const maintenance = vehicle.maintenances?.[0];
+                                return (
+                                    <Link
+                                        key={vehicle.id}
+                                        href={`/vehicles/status/${vehicle.id}`}
+                                        className="block"
+                                    >
+                                        <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold">
+                                                        {vehicle.name}
+                                                    </p>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ({vehicle.company})
+                                                    </span>
+                                                </div>
+                                                {maintenance ? (
+                                                    <p className="text-xs font-medium text-yellow-700">
+                                                        {
+                                                            maintenance.workshop_name
+                                                        }{' '}
+                                                        -{' '}
+                                                        {
+                                                            maintenance.description
+                                                        }
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Sin detalles de orden.
+                                                    </p>
                                                 )}
                                             </div>
-                                        )}
-                                    </div>
-                                </Link>
-                            );
-                        })}
+                                            {maintenance?.entry_date && (
+                                                <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
+                                                    Ingreso:{' '}
+                                                    {formatDate(
+                                                        maintenance.entry_date,
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {upcomingBatteries.length > 0 && (
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
