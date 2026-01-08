@@ -859,7 +859,7 @@ export default function WorkshopShow({
                                                         )
                                                     }
                                                     placeholder="Descripción de la tarea"
-                                                    disabled={isReadOnly}
+                                                    disabled={isContentLocked}
                                                     className={
                                                         task.is_completed
                                                             ? 'text-muted-foreground line-through'
@@ -867,7 +867,7 @@ export default function WorkshopShow({
                                                     }
                                                 />
                                             </div>
-                                            {!isReadOnly && (
+                                            {!isContentLocked && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

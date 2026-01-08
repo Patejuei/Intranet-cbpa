@@ -38,6 +38,7 @@ class WorkshopInventoryController extends Controller
       'name' => 'required|string|max:255',
       'sku' => 'nullable|string|unique:workshop_inventory,sku',
       'category' => 'required|in:insumo,repuesto',
+      'unit_of_measure' => 'nullable|string|max:50',
       'stock' => 'required|integer|min:0',
       'min_stock' => 'required|integer|min:0',
       'unit_cost' => 'required|integer|min:0',
@@ -51,41 +52,85 @@ class WorkshopInventoryController extends Controller
     return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem creado correctamente.');
   }
 
-  public function edit(WorkshopInventory $item)
+  public function edit(WorkshopInventory $inventory)
   {
     return Inertia::render('vehicles/inventory/edit', [
-      'item' => $item
+      'item' => $inventory,
+      'vehicles' => \App\Models\Vehicle::all(['id', 'name', 'plate', 'model'])
     ]);
   }
 
-  public function update(Request $request, WorkshopInventory $item)
+  public function update(Request $request, WorkshopInventory $inventory)
   {
     $validated = $request->validate([
       'name' => 'required|string|max:255',
-      'sku' => 'nullable|string|unique:workshop_inventory,sku,' . $item->id,
+      'sku' => 'nullable|string|unique:workshop_inventory,sku,' . $inventory->id,
       'category' => 'required|in:insumo,repuesto',
+      'unit_of_measure' => 'nullable|string|max:50',
       'stock' => 'required|integer|min:0',
       'min_stock' => 'required|integer|min:0',
       'unit_cost' => 'required|integer|min:0',
       'location' => 'nullable|string|max:255',
-      'compatibility' => 'nullable|string',
+      'compatibility' => 'nullable|array',
       'description' => 'nullable|string',
     ]);
 
-    $item->update($validated);
+    $inventory->update($validated);
 
     return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem actualizado correctamente.');
   }
 
-  public function destroy(WorkshopInventory $item)
+  public function destroy(WorkshopInventory $inventory)
   {
-    // Prevent deletion if used in maintenance? Or allow and nullify?
-    // Usually safer to block or soft delete. For now, try/catch constrain
     try {
-      $item->delete();
+      $inventory->delete();
       return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem eliminado correctamente.');
     } catch (\Exception $e) {
       return back()->withErrors(['error' => 'No se puede eliminar este ítem porque tiene registros asociados.']);
     }
+  }
+
+  public function export()
+  {
+    $filename = 'inventario-bodega-' . date('Y-m-d') . '.csv';
+    $items = WorkshopInventory::all();
+
+    $columns = ['SKU', 'Nombre', 'Categoria', 'Unidad Medida', 'Stock', 'Min Stock', 'Costo Unit.', 'Total Valorizado', 'Ubicacion', 'Descripcion'];
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Set Headers
+    $sheet->fromArray($columns, NULL, 'A1');
+
+    // Add Data
+    $data = [];
+    foreach ($items as $item) {
+      $data[] = [
+        $item->sku,
+        $item->name,
+        $item->category,
+        $item->unit_of_measure,
+        $item->stock,
+        $item->min_stock,
+        $item->unit_cost,
+        $item->stock * $item->unit_cost,
+        $item->location,
+        $item->description
+      ];
+    }
+
+    if (!empty($data)) {
+      $sheet->fromArray($data, NULL, 'A2');
+    }
+
+    // Prepare Writer
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+    // Save to temp file
+    $tempFile = tempnam(sys_get_temp_dir(), 'inv');
+    $writer->save($tempFile);
+
+    return response()->download($tempFile, 'inventario-bodega-' . date('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
   }
 }

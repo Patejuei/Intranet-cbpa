@@ -12,6 +12,7 @@ class WorkshopInventory extends Model
     'name',
     'sku',
     'category',
+    'unit_of_measure',
     'stock',
     'min_stock',
     'unit_cost',

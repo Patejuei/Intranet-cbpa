@@ -320,28 +320,6 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                                     {detail.notes ||
                                                         'Sin observaciones'}
                                                 </div>
-                                                {detail.status !== 'ok' && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        onClick={() => {
-                                                            const subject = `Falla reportada: ${checklist.vehicle.name} - ${detail.item.name}`;
-                                                            const message = `Se reporta falla en checklist #${checklist.id}.\n\nÍtem: ${detail.item.name}\nEstado: ${detail.status === 'urgent' ? 'Urgente' : 'Próxima Mantención'}\nObservación: ${detail.notes || 'Sin observaciones'}\n\nVehículo: ${checklist.vehicle.name} (${checklist.vehicle.plate})`;
-
-                                                            const params =
-                                                                new URLSearchParams(
-                                                                    {
-                                                                        subject,
-                                                                        message,
-                                                                    },
-                                                                );
-
-                                                            window.location.href = `/tickets/create?${params.toString()}`;
-                                                        }}
-                                                    >
-                                                        Crear Incidencia
-                                                    </Button>
-                                                )}
                                             </div>
                                         ))}
                                     </div>

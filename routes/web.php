@@ -202,7 +202,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('workshop/{maintenance}/items', [VehicleMaintenanceController::class, 'addInventoryItem'])->name('vehicles.workshop.add_item');
         Route::delete('workshop/{maintenance}/items/{item}', [VehicleMaintenanceController::class, 'removeInventoryItem'])->name('vehicles.workshop.remove_item');
         Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
-        Route::resource('inventory', \App\Http\Controllers\VehicleInventoryController::class)->names('vehicles.inventory');
+        Route::get('inventory/export', [App\Http\Controllers\WorkshopInventoryController::class, 'export'])->name('vehicles.inventory.export');
+        Route::resource('inventory', App\Http\Controllers\WorkshopInventoryController::class)->names('vehicles.inventory');
 
         // Checklist Routes
         Route::post('checklists/{checklist}/review', [App\Http\Controllers\VehicleChecklistController::class, 'review'])->name('vehicles.checklists.review');

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Edit, Plus, Search, Trash2 } from 'lucide-react';
+import { Download, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 declare var route: any;
@@ -32,6 +32,7 @@ interface InventoryItem {
     min_stock: number;
     unit_cost: number;
     location: string;
+    unit_of_measure: string;
 }
 
 interface Props {
@@ -111,12 +112,20 @@ export default function InventoryIndex({ items, filters }: Props) {
                             Gestión de repuestos, insumos y control de stock.
                         </p>
                     </div>
-                    <Button asChild>
-                        <Link href="/vehicles/inventory/create">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo Ítem
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" asChild>
+                            <a href="/vehicles/inventory/export">
+                                <Download className="mr-2 h-4 w-4" />
+                                Descargar Excel
+                            </a>
+                        </Button>
+                        <Button asChild>
+                            <Link href="/vehicles/inventory/create">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nuevo Ítem
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm">
@@ -151,6 +160,7 @@ export default function InventoryIndex({ items, filters }: Props) {
                                 <TableHead className="w-[100px]">SKU</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Categoría</TableHead>
+                                <TableHead>Unidad</TableHead>
                                 <TableHead className="text-right">
                                     Stock
                                 </TableHead>
@@ -167,7 +177,7 @@ export default function InventoryIndex({ items, filters }: Props) {
                             {items.data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={7}
+                                        colSpan={8}
                                         className="h-24 text-center text-muted-foreground"
                                     >
                                         No se encontraron ítems en la bodega.
@@ -202,6 +212,9 @@ export default function InventoryIndex({ items, filters }: Props) {
                                                     ? 'Insumo'
                                                     : 'Repuesto'}
                                             </Badge>
+                                        </TableCell>
+                                        <TableCell className="capitalize">
+                                            {item.unit_of_measure || 'Unidades'}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">

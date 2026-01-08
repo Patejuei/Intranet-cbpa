@@ -146,7 +146,7 @@ class VehicleMaintenanceController extends Controller
 
         if (!empty($validated['tasks'])) {
             foreach ($validated['tasks'] as $taskDescription) {
-                if (!empty($taskDescription)) {
+                if (!empty(trim($taskDescription))) {
                     $maintenance->tasks()->create([
                         'description' => $taskDescription,
                     ]);
