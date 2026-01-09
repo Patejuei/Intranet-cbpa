@@ -91,7 +91,7 @@ const NAV_GROUPS = [
             },
             {
                 title: 'Recepción',
-                url: '/reception',
+                url: '/receptions',
                 icon: ClipboardCheck,
                 permission: 'reception',
                 tooltip: 'Recepción',
