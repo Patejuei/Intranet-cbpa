@@ -1,6 +1,11 @@
 import AppLogo from '@/components/app-logo';
 import { NavUser } from '@/components/nav-user';
 import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
@@ -18,6 +23,7 @@ import {
     Battery,
     BookOpen,
     Box,
+    ChevronDown,
     ClipboardCheck,
     ClipboardList,
     FileText,
@@ -31,9 +37,148 @@ import {
     Wrench,
 } from 'lucide-react';
 
+// Define the navigation structure
+const NAV_GROUPS = [
+    {
+        title: 'General',
+        items: [
+            {
+                title: 'Panel Principal',
+                url: '/dashboard',
+                icon: LayoutGrid,
+                tooltip: 'Panel Principal',
+                permission: undefined,
+            },
+        ],
+    },
+    {
+        title: 'Material Menor',
+        items: [
+            {
+                title: 'Inventario',
+                url: '/inventory',
+                icon: Package,
+                permission: 'inventory',
+                tooltip: 'Inventario',
+            },
+            {
+                title: 'Baterías',
+                url: '/batteries',
+                icon: Battery,
+                permission: 'batteries',
+                tooltip: 'Baterías',
+            },
+            {
+                title: 'Material Menor',
+                url: '/equipment',
+                icon: Box,
+                permission: 'equipment',
+                tooltip: 'Material Menor',
+            },
+            {
+                title: 'Actas de Entrega',
+                url: '/deliveries',
+                icon: FileText,
+                permission: 'deliveries',
+                tooltip: 'Actas de Entrega',
+            },
+            {
+                title: 'Ticketera',
+                url: '/tickets',
+                icon: Ticket,
+                permission: 'tickets',
+                tooltip: 'Ticketera',
+            },
+            {
+                title: 'Recepción',
+                url: '/receptions',
+                icon: ClipboardCheck,
+                permission: 'reception',
+                tooltip: 'Recepción',
+            },
+        ],
+    },
+    {
+        title: 'Material Mayor',
+        items: [
+            {
+                title: 'Control de Unidades',
+                url: '/vehicles/status',
+                icon: Truck,
+                permission: 'vehicles.status',
+                tooltip: 'Control de Unidades',
+            },
+            {
+                title: 'Incidencias',
+                url: '/vehicles/incidents',
+                icon: AlertTriangle,
+                permission: 'vehicles.incidents',
+                tooltip: 'Incidencias',
+            },
+            {
+                title: 'Bitácoras',
+                url: '/vehicles/logs',
+                icon: BookOpen,
+                permission: 'vehicles.logs',
+                tooltip: 'Bitácoras',
+            },
+            {
+                title: 'Taller Mecánico',
+                url: '/vehicles/workshop',
+                icon: Wrench,
+                permission: 'vehicles.workshop',
+                tooltip: 'Taller Mecánico',
+            },
+            {
+                title: 'Checklist',
+                url: '/vehicles/checklists',
+                icon: ClipboardList,
+                permission: 'vehicles.checklist',
+                tooltip: 'Checklist',
+            },
+            {
+                title: 'Bodega',
+                url: '/vehicles/inventory',
+                icon: ClipboardCheck,
+                permission: 'vehicles.inventory',
+                tooltip: 'Bodega',
+            },
+            {
+                title: 'Caja Chica',
+                url: '/vehicles/petty-cash',
+                icon: Receipt,
+                permission: 'vehicles.petty-cash',
+                tooltip: 'Caja Chica',
+            },
+        ],
+    },
+    {
+        title: 'Administración',
+        items: [
+            {
+                title: 'Usuarios',
+                url: '/admin/users',
+                icon: Users,
+                permission: 'users.index',
+                tooltip: 'Usuarios',
+            },
+            {
+                title: 'Bomberos',
+                url: '/admin/firefighters',
+                icon: Shield,
+                permission: 'firefighters.index',
+                tooltip: 'Bomberos',
+            },
+        ],
+    },
+];
+
 export function AppSidebar({ user }: { user: any }) {
-    const hasPermission = (module: string) => {
+    const hasPermission = (module?: string) => {
+        if (!module) return true; // Public items
         if (!user) return false;
+
+        // Admin, Capitan, Comandante have full access
         if (
             user.role === 'admin' ||
             user.role === 'capitan' ||
@@ -65,13 +210,13 @@ export function AppSidebar({ user }: { user: any }) {
                     'vehicles.checklist',
                     'vehicles',
                 ];
+                // Check if likely match
                 if (
                     allowed.some(
                         (m) => m === module || m.startsWith(module + '.'),
                     )
                 )
                     return true;
-                if (allowed.includes(module)) return true;
                 if (allowed.includes(module)) return true;
             } else if (dept === 'Material Menor') {
                 const allowed = [
@@ -81,7 +226,7 @@ export function AppSidebar({ user }: { user: any }) {
                     'deliveries',
                     'reception',
                     'equipment',
-                    'vehicles.petty-cash', // Added permission
+                    'vehicles.petty-cash',
                 ];
                 if (
                     allowed.some(
@@ -101,6 +246,17 @@ export function AppSidebar({ user }: { user: any }) {
         );
     };
 
+    // Filter groups and items based on permissions
+    const filteredGroups = NAV_GROUPS.map((group) => {
+        const visibleItems = group.items.filter((item) =>
+            hasPermission(item.permission),
+        );
+        return {
+            ...group,
+            items: visibleItems,
+        };
+    }).filter((group) => group.items.length > 0);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -116,274 +272,71 @@ export function AppSidebar({ user }: { user: any }) {
             </SidebarHeader>
 
             <SidebarContent>
-                {/* General Group */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>General</SidebarGroupLabel>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                tooltip="Panel Principal"
-                            >
-                                <Link href="/dashboard">
-                                    <LayoutGrid />
-                                    <span>Panel Principal</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarGroup>
+                {filteredGroups.map((group) => {
+                    const isSingleItem = group.items.length === 1;
 
-                {/* Material Menor Group */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Material Menor</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {hasPermission('inventory') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Inventario">
-                                    <Link href="/inventory">
-                                        <Package />
-                                        <span>Inventario</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('batteries') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Baterías">
-                                    <Link href="/batteries">
-                                        <Battery />
-                                        <span>Baterías</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('equipment') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Material Menor"
-                                >
-                                    <Link href="/equipment">
-                                        <Box />
-                                        <span>Material Menor</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('deliveries') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Actas de Entrega"
-                                >
-                                    <Link href="/deliveries">
-                                        <FileText />
-                                        <span>Actas de Entrega</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('tickets') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild tooltip="Ticketera">
-                                    <Link href="/tickets">
-                                        <Ticket />
-                                        <span>Ticketera</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('reception') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Actas de Recepción"
-                                >
-                                    <Link href="/receptions">
-                                        <ClipboardList />
-                                        <span>Actas de Recepción</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {hasPermission('assigned_materials') && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Prendas a Cargo"
-                                >
-                                    <Link href="/assigned-materials">
-                                        <Users />
-                                        <span>Prendas a Cargo</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
-                        {/* Material Menor Petty Cash */}
-                        {user.role === 'inspector' &&
-                            user.department === 'Material Menor' && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip="Caja Chica"
-                                    >
-                                        <Link href="/vehicles/petty-cash">
-                                            <Receipt />
-                                            <span>Caja Chica</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            )}
-                    </SidebarMenu>
-                </SidebarGroup>
+                    if (isSingleItem) {
+                        return (
+                            <SidebarGroup key={group.title}>
+                                <SidebarGroupLabel>
+                                    {group.title}
+                                </SidebarGroupLabel>
+                                <SidebarMenu>
+                                    {group.items.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton
+                                                asChild
+                                                tooltip={item.tooltip}
+                                            >
+                                                <Link href={item.url}>
+                                                    <item.icon />
+                                                    <span>{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroup>
+                        );
+                    }
 
-                {/* Material Mayor Group (New) */}
-                {(user.role === 'admin' ||
-                    user.role === 'capitan' ||
-                    user.role === 'comandante' ||
-                    user.role === 'cuartelero' ||
-                    user.role === 'mechanic' ||
-                    hasPermission('vehicles')) && (
-                    <SidebarGroup>
-                        <SidebarGroupLabel>Material Mayor</SidebarGroupLabel>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Estado de los Carros"
-                                >
-                                    <Link href="/vehicles/status">
-                                        <Truck />
-                                        <span>Estado Carros</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            {(user.role === 'admin' ||
-                                user.role === 'capitan' ||
-                                user.role === 'comandante' ||
-                                user.role === 'mechanic' ||
-                                hasPermission('vehicles.workshop')) && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip="Ingreso a Taller"
-                                    >
-                                        <Link href="/vehicles/workshop">
-                                            <Wrench />
-                                            <span>Taller Mecánico</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            )}
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Incidencias"
-                                >
-                                    <Link href="/vehicles/incidents">
-                                        <AlertTriangle />
-                                        <span>Incidencias</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Checklist Preventivo"
-                                >
-                                    <Link href="/vehicles/checklists">
-                                        <ClipboardCheck />
-                                        <span>Checklist Preventivo</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            {(user.role === 'admin' ||
-                                user.role === 'capitan' ||
-                                user.role === 'comandante' ||
-                                user.role === 'cuartelero' ||
-                                hasPermission('vehicles.logs')) && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        asChild
-                                        tooltip="Bitácora"
-                                    >
-                                        <Link href="/vehicles/logs">
-                                            <BookOpen />
-                                            <span>Bitácora</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            )}
-                            {(user.role === 'admin' ||
-                                user.role === 'cuartelero' ||
-                                (user.role === 'mechanic' &&
-                                    hasPermission('vehicles.inventory')) ||
-                                (hasPermission('vehicles.inventory') &&
-                                    user.role !== 'maquinista' &&
-                                    user.role !== 'capitan')) && (
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton asChild tooltip="Bodega">
-                                        <Link href="/vehicles/inventory">
-                                            <ClipboardList />
-                                            <span>Bodega</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            )}
-                            {(user.role === 'admin' ||
-                                user.role === 'comandante' ||
-                                user.role === 'mechanic' ||
-                                hasPermission('vehicles.petty-cash')) &&
-                                user.role !== 'capitan' && (
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            tooltip="Rendición Caja Chica"
-                                        >
-                                            <Link href="/vehicles/petty-cash">
-                                                <Receipt />
-                                                <span>Caja Chica</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                )}
-                        </SidebarMenu>
-                    </SidebarGroup>
-                )}
-
-                {/* Administración Group */}
-                {(user.role === 'admin' ||
-                    user.role === 'comandante' ||
-                    user.role === 'capitan') && (
-                    <SidebarGroup>
-                        <SidebarGroupLabel>Administración</SidebarGroupLabel>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Administrar Usuarios"
-                                >
-                                    <Link href="/admin/users">
-                                        <Shield />
-                                        <span>Usuarios</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip="Administrar Bomberos"
-                                >
-                                    <Link href="/admin/firefighters">
-                                        <Users />
-                                        <span>Bomberos</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarGroup>
-                )}
+                    return (
+                        <Collapsible
+                            key={group.title}
+                            asChild
+                            defaultOpen
+                            className="group/collapsible"
+                        >
+                            <SidebarGroup>
+                                <SidebarGroupLabel asChild>
+                                    <CollapsibleTrigger>
+                                        {group.title}
+                                        <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                                    </CollapsibleTrigger>
+                                </SidebarGroupLabel>
+                                <CollapsibleContent>
+                                    <SidebarMenu>
+                                        {group.items.map((item) => (
+                                            <SidebarMenuItem key={item.title}>
+                                                <SidebarMenuButton
+                                                    asChild
+                                                    tooltip={item.tooltip}
+                                                >
+                                                    <Link href={item.url}>
+                                                        <item.icon />
+                                                        <span>
+                                                            {item.title}
+                                                        </span>
+                                                    </Link>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        ))}
+                                    </SidebarMenu>
+                                </CollapsibleContent>
+                            </SidebarGroup>
+                        </Collapsible>
+                    );
+                })}
             </SidebarContent>
 
             <SidebarFooter>

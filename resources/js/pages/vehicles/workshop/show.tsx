@@ -23,8 +23,9 @@ import { Separator } from '@/components/ui/separator';
 import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    ArrowLeft,
     Calendar,
     CheckCircle2,
     FileText,
@@ -110,7 +111,9 @@ export default function WorkshopShow({
 }) {
     const { data, setData, put, processing, errors } = useForm({
         status: maintenance.status,
-        tentative_exit_date: maintenance.tentative_exit_date || '',
+        tentative_exit_date: maintenance.tentative_exit_date
+            ? maintenance.tentative_exit_date.split('T')[0]
+            : '',
         tasks: maintenance.tasks.map((t) => ({
             ...t,
             cost: t.cost ? Number(t.cost) : null,
@@ -223,7 +226,21 @@ export default function WorkshopShow({
     const { auth } = usePage<any>().props;
     const { canEdit: canEditPermission } = usePermissions();
     const canEdit = canEditPermission('vehicles.workshop');
+    const isLocked =
+        maintenance.status === 'Finalizado' ||
+        maintenance.status === 'Entregado';
+
+    // Header (Status, Dates, Save) is editable if user has permission,
+    // UNLESS it's Entregado (maybe? user only said Finalizado allows edits).
+    // Let's assume Entregado is final-final, but maybe they still need to fix dates?
+    // User request: "cuando esté finalizado no se desabiliten..."
+    // So "Finalizado" -> Header Editable.
+    // "Entregado" -> Probably also editable to fix things or revert?
+    // Let's keep Header editable solely based on permissions for maximum flexibility as requested.
     const isReadOnly = !canEdit;
+
+    // Content (Items, Tasks) is locked if Finalized/Entregado
+    const isContentLocked = !canEdit || isLocked;
 
     return (
         <AppLayout
@@ -239,6 +256,17 @@ export default function WorkshopShow({
             <Head title={`Orden de Trabajo #${maintenance.id}`} />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
+                <Button
+                    variant="ghost"
+                    className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-primary"
+                    asChild
+                >
+                    <Link href="/vehicles/workshop">
+                        <ArrowLeft className="h-4 w-4" />
+                        Volver al Taller
+                    </Link>
+                </Button>
+
                 {/* Header Actions */}
                 <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                     <div>
@@ -317,7 +345,7 @@ export default function WorkshopShow({
                                             );
                                         }
                                     }}
-                                    disabled={processing}
+                                    disabled={processing || isContentLocked}
                                 >
                                     <CheckCircle2 className="mr-2 h-4 w-4" />
                                     <span className="hidden sm:inline">
@@ -524,7 +552,7 @@ export default function WorkshopShow({
                                                     )
                                                 }
                                                 disabled={
-                                                    isReadOnly ||
+                                                    isContentLocked ||
                                                     issue.status === 'Resolved'
                                                 }
                                                 onCheckedChange={() =>
@@ -586,75 +614,68 @@ export default function WorkshopShow({
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 {/* Add Item Form */}
-                                {!isReadOnly &&
-                                    maintenance.status !== 'Finalizado' && (
-                                        <div className="flex items-end gap-2 rounded bg-muted/30 p-4">
-                                            <div className="flex-1 space-y-2">
-                                                <Label>Item de Bodega</Label>
-                                                <Select
-                                                    value={inventoryForm.inventory_item_id.toString()}
-                                                    onValueChange={(val) =>
-                                                        setInventoryForm({
-                                                            ...inventoryForm,
-                                                            inventory_item_id:
-                                                                val,
-                                                        })
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Seleccionar ítem..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {inventoryItems.map(
-                                                            (item) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        item.id
-                                                                    }
-                                                                    value={item.id.toString()}
-                                                                >
-                                                                    {item.name}{' '}
-                                                                    ({item.sku})
-                                                                    - Stock:{' '}
-                                                                    {item.stock}
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="w-24 space-y-2">
-                                                <Label>Cantidad</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    value={
-                                                        inventoryForm.quantity
-                                                    }
-                                                    onChange={(e) =>
-                                                        setInventoryForm({
-                                                            ...inventoryForm,
-                                                            quantity:
-                                                                parseInt(
-                                                                    e.target
-                                                                        .value,
-                                                                ) || 1,
-                                                        })
-                                                    }
-                                                />
-                                            </div>
-                                            <Button
-                                                onClick={handleAddInventoryItem}
-                                                disabled={
-                                                    isAddingItem ||
-                                                    !inventoryForm.inventory_item_id
+                                {!isContentLocked && (
+                                    <div className="flex items-end gap-2 rounded bg-muted/30 p-4">
+                                        <div className="flex-1 space-y-2">
+                                            <Label>Item de Bodega</Label>
+                                            <Select
+                                                value={inventoryForm.inventory_item_id.toString()}
+                                                onValueChange={(val) =>
+                                                    setInventoryForm({
+                                                        ...inventoryForm,
+                                                        inventory_item_id: val,
+                                                    })
                                                 }
                                             >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Agregar
-                                            </Button>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccionar ítem..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {inventoryItems.map(
+                                                        (item) => (
+                                                            <SelectItem
+                                                                key={item.id}
+                                                                value={item.id.toString()}
+                                                            >
+                                                                {item.name} (
+                                                                {item.sku}) -
+                                                                Stock:{' '}
+                                                                {item.stock}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                    )}
+                                        <div className="w-24 space-y-2">
+                                            <Label>Cantidad</Label>
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                value={inventoryForm.quantity}
+                                                onChange={(e) =>
+                                                    setInventoryForm({
+                                                        ...inventoryForm,
+                                                        quantity:
+                                                            parseInt(
+                                                                e.target.value,
+                                                            ) || 1,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                        <Button
+                                            onClick={handleAddInventoryItem}
+                                            disabled={
+                                                isAddingItem ||
+                                                !inventoryForm.inventory_item_id
+                                            }
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Agregar
+                                        </Button>
+                                    </div>
+                                )}
 
                                 {/* Items List */}
                                 <div className="rounded-md border">
@@ -673,7 +694,7 @@ export default function WorkshopShow({
                                                 <th className="p-3 text-right font-medium">
                                                     Total
                                                 </th>
-                                                {!isReadOnly && (
+                                                {!isContentLocked && (
                                                     <th className="w-[50px] p-3 text-right font-medium text-muted-foreground"></th>
                                                 )}
                                             </tr>
@@ -723,7 +744,7 @@ export default function WorkshopShow({
                                                                     'es-CL',
                                                                 )}
                                                             </td>
-                                                            {!isReadOnly && (
+                                                            {!isContentLocked && (
                                                                 <td className="p-3 text-right">
                                                                     <Button
                                                                         variant="ghost"
@@ -733,6 +754,9 @@ export default function WorkshopShow({
                                                                             handleRemoveInventoryItem(
                                                                                 item.id,
                                                                             )
+                                                                        }
+                                                                        disabled={
+                                                                            isContentLocked
                                                                         }
                                                                     >
                                                                         <Trash2 className="h-4 w-4" />
@@ -758,7 +782,7 @@ export default function WorkshopShow({
                                                         'es-CL',
                                                     )}
                                                 </td>
-                                                {!isReadOnly && <td></td>}
+                                                {!isContentLocked && <td></td>}
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -792,12 +816,13 @@ export default function WorkshopShow({
                                         <Label className="text-base font-semibold">
                                             Tareas Específicas
                                         </Label>
-                                        {!isReadOnly && (
+                                        {!isContentLocked && (
                                             <Button
                                                 size="sm"
                                                 variant="secondary"
                                                 onClick={addTask}
                                                 type="button"
+                                                disabled={isContentLocked}
                                             >
                                                 + Agregar Tarea
                                             </Button>
@@ -821,7 +846,7 @@ export default function WorkshopShow({
                                                 onCheckedChange={() =>
                                                     toggleTaskCompletion(index)
                                                 }
-                                                disabled={isReadOnly}
+                                                disabled={isContentLocked}
                                                 className="mt-1 md:mt-0"
                                             />
                                             <div className="w-full flex-1 space-y-2 md:flex md:gap-4 md:space-y-0">
@@ -834,7 +859,7 @@ export default function WorkshopShow({
                                                         )
                                                     }
                                                     placeholder="Descripción de la tarea"
-                                                    disabled={isReadOnly}
+                                                    disabled={isContentLocked}
                                                     className={
                                                         task.is_completed
                                                             ? 'text-muted-foreground line-through'
@@ -842,7 +867,7 @@ export default function WorkshopShow({
                                                     }
                                                 />
                                             </div>
-                                            {!isReadOnly && (
+                                            {!isContentLocked && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Paperclip, Send, User } from 'lucide-react';
+import { ArrowLeft, FileText, Paperclip, Send, User } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface User {
@@ -99,6 +99,15 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
         }
     };
 
+    const isImage = (path: string) => {
+        const ext = path.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+    };
+
+    const getFileName = (path: string) => {
+        return path.split('/').pop();
+    };
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -113,6 +122,17 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
             <Head title={`Ticket #${ticket.id}`} />
 
             <div className="mx-auto flex h-[calc(100vh-120px)] w-full max-w-5xl flex-col gap-6 p-4">
+                <Button
+                    variant="ghost"
+                    className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-primary"
+                    asChild
+                >
+                    <Link href="/tickets">
+                        <ArrowLeft className="h-4 w-4" />
+                        Volver a Ticketera
+                    </Link>
+                </Button>
+
                 {/* Header Ticket Info */}
                 <div className="flex flex-col justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:p-6">
                     <div className="space-y-1">
@@ -274,12 +294,36 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                                         </p>
                                     </div>
                                     {msg.image_path && (
-                                        <div className="mt-2 max-w-[200px] overflow-hidden rounded-md border">
-                                            <img
-                                                src={`/storage/${msg.image_path}`}
-                                                alt="Adjunto"
-                                                className="h-auto w-full"
-                                            />
+                                        <div className="mt-2 text-sm">
+                                            {isImage(msg.image_path) ? (
+                                                <div className="max-w-[200px] overflow-hidden rounded-md border">
+                                                    <a
+                                                        href={`/storage/${msg.image_path}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <img
+                                                            src={`/storage/${msg.image_path}`}
+                                                            alt="Adjunto"
+                                                            className="h-auto w-full"
+                                                        />
+                                                    </a>
+                                                </div>
+                                            ) : (
+                                                <a
+                                                    href={`/storage/${msg.image_path}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 rounded border bg-background p-2 text-primary hover:bg-accent"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                    <span className="truncate underline">
+                                                        {getFileName(
+                                                            msg.image_path,
+                                                        )}
+                                                    </span>
+                                                </a>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -321,7 +365,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                                         id="msg-image"
                                         type="file"
                                         className="hidden"
-                                        accept="image/*"
+                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
                                         onChange={(e) =>
                                             setData(
                                                 'image',

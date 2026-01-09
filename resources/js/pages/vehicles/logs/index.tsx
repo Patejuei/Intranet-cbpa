@@ -253,7 +253,10 @@ export default function VehicleLogs({
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div className="space-y-2">
                                                 <Label htmlFor="departure_time">
-                                                    Hora Salida
+                                                    Hora Salida{' '}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
                                                 </Label>
                                                 <Input
                                                     type="time"
@@ -269,7 +272,10 @@ export default function VehicleLogs({
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="arrival_time">
-                                                    Hora Llegada
+                                                    Hora Llegada{' '}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
                                                 </Label>
                                                 <Input
                                                     type="time"

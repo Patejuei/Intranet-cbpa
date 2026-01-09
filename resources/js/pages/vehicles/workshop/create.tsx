@@ -50,7 +50,7 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         'Fugas de líquidos',
     ];
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         vehicle_id: '',
         entry_date: new Date().toISOString().split('T')[0],
         tentative_exit_date: '',
@@ -123,6 +123,10 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        transform((data) => ({
+            ...data,
+            tasks: data.tasks.filter((t) => t.trim() !== ''),
+        }));
         post('/vehicles/workshop');
     };
 

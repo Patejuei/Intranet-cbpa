@@ -20,7 +20,7 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Settings } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -102,15 +102,7 @@ export default function IndexChecklist({
                                 </SelectContent>
                             </Select>
                         </div>
-                        {(auth.user.role === 'admin' ||
-                            auth.user.role === 'capitan') && (
-                            <Link href="/vehicles/checklist-items">
-                                <Button variant="outline">
-                                    <Settings className="mr-2 size-4" />
-                                    Configurar
-                                </Button>
-                            </Link>
-                        )}
+
                         {/* @ts-ignore */}
                         {canCreate('vehicles.checklist') && (
                             <Link href="/vehicles/checklists/create">
