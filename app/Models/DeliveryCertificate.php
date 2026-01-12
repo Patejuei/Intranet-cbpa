@@ -12,6 +12,7 @@ class DeliveryCertificate extends Model
         'date',
         'observations',
         'company',
+        'assignment_type',
     ];
 
     protected $casts = [

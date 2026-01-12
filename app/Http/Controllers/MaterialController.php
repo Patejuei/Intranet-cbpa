@@ -25,6 +25,8 @@ class MaterialController extends Controller
             'Ventilación' => 'VEN',
             'Riesgos Eléctricos' => 'REL',
             'Materiales Peligrosos' => 'HAZ',
+            'Seguridad' => 'SEG',
+            'Otro' => 'OTH'
         ];
         return $validCategories[$category] ?? null;
     }
@@ -412,5 +414,132 @@ class MaterialController extends Controller
         }
 
         return redirect()->back()->with('success', $count . ' materiales importados y clasificados correctamente.');
+    }
+
+    public function importViper(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        $file = $request->file('file');
+
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['file' => 'Error al leer el archivo Excel: ' . $e->getMessage()]);
+        }
+
+        // Load Dictionary
+        $dictionary = json_decode(file_get_contents(resource_path('js/types/viper-category-dictionary.json')), true);
+
+        $count = 0;
+        // Skip header row (index 0)
+        for ($i = 1; $i < count($rows); $i++) {
+            $row = $rows[$i];
+
+            // Adjust indices to 0-based array from 1-based column description
+            // Col 2 (Lugar) -> index 1
+            // Col 3 (Familia) -> index 2
+            // Col 5 (Producto) -> index 4
+            // Col 6 (Marca) -> index 5
+            // Col 9 (Serie) -> index 8
+            // Col 10 (Cantidad) -> index 9
+
+            $lugar = $row[1] ?? '';
+            $familia = $row[2] ?? '';
+            $productName = $row[4] ?? '';
+            $brand = $row[5] ?? '';
+            $serial = $row[8] ?? '';
+            $quantity = $row[9] ?? 0;
+
+            if (empty($productName)) continue; // Skip empty rows
+
+            // Parse Company
+            $company = 'Comandancia'; // Default
+            if (str_contains($lugar, 'Cuartel Primera') || str_contains($lugar, 'Primera Compañía')) $company = 'Primera Compañía';
+            elseif (str_contains($lugar, 'Cuartel Segunda') || str_contains($lugar, 'Segunda Compañía')) $company = 'Segunda Compañía';
+            elseif (str_contains($lugar, 'Cuartel Tercera') || str_contains($lugar, 'Tercera Compañía')) $company = 'Tercera Compañía';
+            elseif (str_contains($lugar, 'Cuartel Cuarta') || str_contains($lugar, 'Cuarta Compañía')) $company = 'Cuarta Compañía';
+            elseif (str_contains($lugar, 'Cuartel Quinta') || str_contains($lugar, 'Quinta Compañía')) $company = 'Quinta Compañía';
+            elseif (str_contains($lugar, 'Cuartel Séptima') || str_contains($lugar, 'Séptima Compañía')) $company = 'Séptima Compañía';
+            elseif (str_contains($lugar, 'Cuartel Octava') || str_contains($lugar, 'Octava Compañía')) $company = 'Octava Compañía';
+            elseif (str_contains($lugar, 'Cuartel Novena') || str_contains($lugar, 'Novena Compañía')) $company = 'Novena Compañía';
+            elseif (str_contains($lugar, 'Cuartel Décima') || str_contains($lugar, 'Décima Compañía')) $company = 'Décima Compañía';
+
+            // Parse Category
+            $category = $this->parseViperCategory($familia, $dictionary);
+
+            // Generate code
+            $prefix = $this->getValidPrefix($category);
+            if ($prefix) {
+                $code = $this->generateCode($prefix);
+            }
+
+            // Create
+            $material = Material::create([
+                'product_name' => $productName,
+                'brand' => $brand ?: null,
+                'model' => null,
+                'stock_quantity' => (int)$quantity,
+                'company' => $company,
+                'serial_number' => $serial ?: null,
+                'category' => $category,
+                'code' => $code ?? null,
+            ]);
+
+            \App\Models\MaterialHistory::create([
+                'material_id' => $material->id,
+                'user_id' => $request->user()->id,
+                'type' => 'ALTA', // Use a standard type or 'ADD'
+                'quantity_change' => $material->stock_quantity,
+                'current_balance' => $material->stock_quantity,
+                'reference_type' => null,
+                'reference_id' => null,
+                'description' => 'Importación VIPER',
+            ]);
+
+            $count++;
+        }
+
+        return redirect()->back()->with('success', "Importación VIPER completada. $count items procesados.");
+    }
+
+    private function parseViperCategory($familiaString, $dictionary)
+    {
+        $parts = explode('->', $familiaString);
+        // Trim all parts
+        $parts = array_map('trim', $parts);
+
+        $first = $parts[0] ?? '';
+        $second = $parts[1] ?? '';
+        $third = $parts[2] ?? '';
+
+        // Rule 1: First Element
+        if ($first === 'COMUNICACIONES') return 'Telecomunicaciones';
+        if ($first === 'Equipos de Protección Personal') return 'Equipos de Protección Personal';
+        if ($first === 'Otros') return 'Otro';
+
+        // Rule 2: Second Element Logic
+        if ($second === 'Detectores') {
+            if ($third === 'Detector Multigas' || $third === 'Detector de gas') return 'Materiales Peligrosos';
+            if ($third === 'Detector de corriente alterna') return 'Riesgos Eléctricos';
+            return 'Material de Extinción';
+        }
+
+        // Dictionary Lookup
+        foreach ($dictionary as $catKey => $keywords) {
+            if (in_array($second, $keywords)) {
+                return $catKey;
+            }
+        }
+
+        // Blank logic
+        if (empty($second)) return 'Sin Categoría';
+
+        // Implicit fallback
+        return 'Sin Categoría';
     }
 }

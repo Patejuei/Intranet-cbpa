@@ -13,6 +13,7 @@ class ReceptionCertificate extends Model
     'observations',
     'company',
     'correlative',
+    'assignment_type',
   ];
 
   protected $casts = [

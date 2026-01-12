@@ -227,8 +227,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Assuming users with 'equipment' permission can manage inventory and deliveries
     Route::middleware('module:equipment')->group(function () {
         Route::get('inventory/search', [\App\Http\Controllers\MaterialController::class, 'search'])->name('inventory.search');
+        Route::post('inventory/import-viper', [\App\Http\Controllers\MaterialController::class, 'importViper'])->name('inventory.import-viper');
         Route::post('inventory/import', [\App\Http\Controllers\MaterialController::class, 'import'])->name('inventory.import');
-        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show']);
+        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show', 'destroy']);
         Route::resource('deliveries', \App\Http\Controllers\DeliveryCertificateController::class);
         Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
         Route::resource('receptions', \App\Http\Controllers\ReceptionCertificateController::class);

@@ -1,0 +1,17 @@
+{
+    "Equipos de Protección Personal": [
+        "Equipos de Respiración Autocontenida",
+        "Iluminación"
+    ],
+    "Material de Extinción": ["Operaciones contra Incendios"],
+    "Herramientas de Rescate": ["Operaciones de Rescate en Técnico"],
+    "Material Médico": [],
+    "Telecomunicaciones": [],
+    "Entrada Forzada": ["Herramientas de Mano y Entrada Forzada"],
+    "Escalas": ["Escalas"],
+    "Ventilación": [],
+    "Riesgos Eléctricos": [],
+    "Materiales Peligrosos": ["HazMat"],
+    "Seguridad": ["Equipamiento de Seguridad"],
+    "Equipos a Combustión": ["Equipos con Motorización"]
+}

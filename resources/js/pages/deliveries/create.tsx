@@ -22,10 +22,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react'; // Added usePage
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Plus, Save, Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -35,18 +36,18 @@ interface DeliveryFormData {
     observations: string;
     company: string;
     items: { material_id: string; quantity: number }[];
+    assignment_type: 'firefighter' | 'company';
 }
 
 export default function DeliveryCreate({
     firefighters,
     materials,
-    auth, // destructure auth from props if passed, but better use usePage for consistency
+    auth,
 }: {
     firefighters: Firefighter[];
     materials: Material[];
-    auth?: any; // Just in case
+    auth?: any;
 }) {
-    // Explicitly type usePage return
     const { props } = usePage<SharedData>();
     const { auth: pageAuth } = props;
     const user = pageAuth.user;
@@ -61,11 +62,18 @@ export default function DeliveryCreate({
                 user.role === 'admin' ||
                 user.role === 'capitan'
                     ? 'Segunda Compañía'
-                    : user.company || '', // Fallback to empty string if undefined
+                    : user.company || '',
             items: [{ material_id: '', quantity: 1 }],
+            assignment_type: 'firefighter', // Default
         });
 
     const [openFirefighter, setOpenFirefighter] = useState(false);
+
+    // Permission to change assignment type (Only Comandancia/Admin)
+    const canChangeAssignment =
+        user.company === 'Comandancia' ||
+        user.role === 'admin' ||
+        user.role === 'comandante';
 
     const addItem = () => {
         setData('items', [...data.items, { material_id: '', quantity: 1 }]);
@@ -103,17 +111,45 @@ export default function DeliveryCreate({
             <Head title="Nueva Acta de Entrega" />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">
-                        Nueva Acta de Entrega
-                    </h2>
-                    <p className="text-muted-foreground">
-                        Registre la entrega de material a un voluntario.
-                    </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Nueva Acta de Entrega
+                        </h2>
+                        <p className="text-muted-foreground">
+                            Registre la entrega de material a un voluntario.
+                        </p>
+                    </div>
                 </div>
 
                 <form onSubmit={submit} className="flex flex-col gap-6">
                     <div className="grid gap-4 rounded-xl border bg-card p-6 shadow-sm">
+                        {/* Assignment Type Switch */}
+                        <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
+                            <div className="space-y-0.5">
+                                <Label className="text-base">
+                                    {data.assignment_type === 'firefighter'
+                                        ? 'Asignación al Bombero'
+                                        : 'Asignación a la Compañía'}
+                                </Label>
+                                <p className="text-sm text-muted-foreground">
+                                    {data.assignment_type === 'firefighter'
+                                        ? 'El material se cargará a la cuenta personal del bombero.'
+                                        : 'El material se moverá al inventario de la compañía (sin cargo personal).'}
+                                </p>
+                            </div>
+                            <Switch
+                                checked={data.assignment_type === 'company'}
+                                onCheckedChange={(checked) =>
+                                    setData(
+                                        'assignment_type',
+                                        checked ? 'company' : 'firefighter',
+                                    )
+                                }
+                                disabled={!canChangeAssignment}
+                            />
+                        </div>
+
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="flex flex-col gap-2">
                                 <Label>Bombero Receptor</Label>
