@@ -9,9 +9,7 @@ use App\Http\Controllers\VehicleIssueController;
 use App\Http\Controllers\VehicleMaintenanceController;
 
 Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return redirect()->route('dashboard');
 })->name('home');
 
 use App\Http\Controllers\BatteryLogController;
@@ -235,6 +233,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('receptions', \App\Http\Controllers\ReceptionCertificateController::class);
         Route::get('receptions/{reception}/pdf', [\App\Http\Controllers\ReceptionCertificateController::class, 'downloadPdf'])->name('receptions.pdf');
     });
+
+    // My Profile Module (Accessible to all auth users)
+    Route::get('/my-profile', [\App\Http\Controllers\MyProfileController::class, 'show'])->name('my-profile.show');
 });
 
 require __DIR__ . '/settings.php';

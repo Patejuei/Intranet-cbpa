@@ -126,6 +126,7 @@ export default function UserCreate({
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
+        rut: '',
         password: '',
         company: currentUserRole === 'capitan' ? user.company || '' : '',
         role: 'user',
@@ -292,6 +293,25 @@ export default function UserCreate({
                                     {errors.email && (
                                         <p className="mt-1 text-xs text-destructive">
                                             {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
+                                        RUT (Sin puntos y Con guión)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="12345678-K"
+                                        value={data.rut || ''}
+                                        onChange={(e) =>
+                                            setData('rut', e.target.value)
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    />
+                                    {errors.rut && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.rut}
                                         </p>
                                     )}
                                 </div>

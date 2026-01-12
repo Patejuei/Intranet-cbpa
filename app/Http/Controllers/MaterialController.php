@@ -467,7 +467,7 @@ class MaterialController extends Controller
             elseif (str_contains($lugar, 'Cuartel Séptima') || str_contains($lugar, 'Séptima Compañía')) $company = 'Séptima Compañía';
             elseif (str_contains($lugar, 'Cuartel Octava') || str_contains($lugar, 'Octava Compañía')) $company = 'Octava Compañía';
             elseif (str_contains($lugar, 'Cuartel Novena') || str_contains($lugar, 'Novena Compañía')) $company = 'Novena Compañía';
-            elseif (str_contains($lugar, 'Cuartel Décima') || str_contains($lugar, 'Décima Compañía')) $company = 'Décima Compañía';
+            elseif (str_contains($lugar, 'Cuartel Decima') || str_contains($lugar, 'Decima Compañía')) $company = 'Décima Compañía';
 
             // Parse Category
             $category = $this->parseViperCategory($familia, $dictionary);
