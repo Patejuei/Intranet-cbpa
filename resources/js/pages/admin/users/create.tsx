@@ -131,6 +131,7 @@ export default function UserCreate({
         company: currentUserRole === 'capitan' ? user.company || '' : '',
         role: 'user',
         department: '',
+        is_enabled: true,
         permissions: [] as string[],
         driver_vehicles: [] as number[],
     });
@@ -367,6 +368,28 @@ export default function UserCreate({
                                             {errors.company}
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <Checkbox
+                                    id="is_enabled"
+                                    checked={data.is_enabled}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_enabled', !!checked)
+                                    }
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="is_enabled"
+                                        className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Usuario Habilitado
+                                    </label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Si está deshabilitado, el usuario no
+                                        podrá iniciar sesión.
+                                    </p>
                                 </div>
                             </div>
                         </div>

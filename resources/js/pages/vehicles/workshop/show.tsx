@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
@@ -114,6 +115,7 @@ export default function WorkshopShow({
         tentative_exit_date: maintenance.tentative_exit_date
             ? maintenance.tentative_exit_date.split('T')[0]
             : '',
+        description: maintenance.description || '', // Added description
         tasks: maintenance.tasks.map((t) => ({
             ...t,
             cost: t.cost ? Number(t.cost) : null,
@@ -803,10 +805,19 @@ export default function WorkshopShow({
                                     <Label>
                                         Descripción General / Observaciones
                                     </Label>
-                                    <p className="min-h-[60px] rounded border bg-muted p-3 text-sm text-muted-foreground">
-                                        {maintenance.description ||
-                                            'Sin observaciones generales.'}
-                                    </p>
+                                    <Textarea
+                                        value={data.description}
+                                        onChange={(e) =>
+                                            setData(
+                                                'description',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Ingrese observaciones generales..."
+                                        className="min-h-[80px]"
+                                        disabled={isContentLocked}
+                                    />
+                                    {/* Removed static <p> */}
                                 </div>
 
                                 <Separator />

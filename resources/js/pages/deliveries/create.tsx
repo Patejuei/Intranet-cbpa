@@ -22,7 +22,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { Firefighter, Material, SharedData } from '@/types';
@@ -124,30 +123,50 @@ export default function DeliveryCreate({
 
                 <form onSubmit={submit} className="flex flex-col gap-6">
                     <div className="grid gap-4 rounded-xl border bg-card p-6 shadow-sm">
-                        {/* Assignment Type Switch */}
-                        <div className="flex items-center justify-between rounded-lg border p-4 shadow-sm">
-                            <div className="space-y-0.5">
-                                <Label className="text-base">
-                                    {data.assignment_type === 'firefighter'
-                                        ? 'Asignación al Bombero'
-                                        : 'Asignación a la Compañía'}
-                                </Label>
-                                <p className="text-sm text-muted-foreground">
-                                    {data.assignment_type === 'firefighter'
-                                        ? 'El material se cargará a la cuenta personal del bombero.'
-                                        : 'El material se moverá al inventario de la compañía (sin cargo personal).'}
-                                </p>
+                        {/* Assignment Type Tabs */}
+                        <div className="grid gap-3">
+                            <Label>Tipo de Asignación</Label>
+                            <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setData(
+                                            'assignment_type',
+                                            'firefighter',
+                                        )
+                                    }
+                                    className={cn(
+                                        'rounded-md px-3 py-2 text-sm font-medium transition-all',
+                                        data.assignment_type === 'firefighter'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+                                    )}
+                                >
+                                    Asignar a Bombero
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setData('assignment_type', 'company')
+                                    }
+                                    disabled={!canChangeAssignment}
+                                    className={cn(
+                                        'rounded-md px-3 py-2 text-sm font-medium transition-all',
+                                        data.assignment_type === 'company'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+                                        !canChangeAssignment &&
+                                            'cursor-not-allowed opacity-50',
+                                    )}
+                                >
+                                    Asignar a Compañía
+                                </button>
                             </div>
-                            <Switch
-                                checked={data.assignment_type === 'company'}
-                                onCheckedChange={(checked) =>
-                                    setData(
-                                        'assignment_type',
-                                        checked ? 'company' : 'firefighter',
-                                    )
-                                }
-                                disabled={!canChangeAssignment}
-                            />
+                            <p className="text-sm text-muted-foreground">
+                                {data.assignment_type === 'firefighter'
+                                    ? 'El material se cargará a la cuenta personal del bombero.'
+                                    : 'El material se moverá al inventario de la compañía (sin cargo personal).'}
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

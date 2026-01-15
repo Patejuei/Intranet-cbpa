@@ -55,6 +55,9 @@ class FortifyServiceProvider extends ServiceProvider
             }
 
             if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+                if (!$user->is_enabled) {
+                    return null; // Or throw ValidationException if we want a specific error, but null just fails login
+                }
                 return $user;
             }
         });

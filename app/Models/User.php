@@ -27,6 +27,7 @@ class User extends Authenticatable
         'role',
         'permissions',
         'department',
+        'is_enabled',
     ];
 
     /**
@@ -53,6 +54,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'permissions' => 'array',
+            'is_enabled' => 'boolean',
         ];
     }
 

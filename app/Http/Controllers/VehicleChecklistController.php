@@ -161,23 +161,6 @@ class VehicleChecklistController extends Controller
                 'status' => $detail['status'],
                 'notes' => $detail['notes'] ?? null,
             ]);
-
-            // Auto-create Incident if status is NOT 'ok'
-            if ($detail['status'] !== 'ok') {
-                $item = \App\Models\ChecklistItem::find($detail['item_id']);
-                $severity = 'Medium';
-                if ($detail['status'] === 'urgent') $severity = 'High';
-
-                \App\Models\VehicleIssue::create([
-                    'vehicle_id' => $checklist->vehicle_id,
-                    'reporter_id' => $checklist->user_id,
-                    'description' => "Falla reportada en Checklist: {$item->name}. Detalle: " . ($detail['notes'] ?? 'Sin observaciones'),
-                    'severity' => $severity,
-                    'status' => 'Open',
-                    'date' => now(),
-                    'is_stopped' => false, // Default to false, Captain decides
-                ]);
-            }
         }
 
         return redirect()->route('vehicles.checklists.show', $checklist)->with('success', 'Checklist creado correctamente.');
@@ -277,6 +260,27 @@ class VehicleChecklistController extends Controller
                 $checklist->update(['status' => 'Partially Reviewed']);
             }
 
+            // Create Incidents ONLY when Completed (Comandancia)
+            if ($checklist->status === 'Completed') {
+                $checklist->load('details.item');
+                foreach ($checklist->details as $detail) {
+                    if ($detail->status !== 'ok') {
+                        $severity = 'Medium';
+                        if ($detail->status === 'urgent') $severity = 'High';
+
+                        \App\Models\VehicleIssue::create([
+                            'vehicle_id' => $checklist->vehicle_id,
+                            'reporter_id' => $checklist->user_id,
+                            'description' => "Falla reportada en Checklist: {$detail->item->name}. Detalle: " . ($detail->notes ?? 'Sin observaciones'),
+                            'severity' => $severity,
+                            'status' => 'Open',
+                            'date' => now(),
+                            'is_stopped' => false,
+                        ]);
+                    }
+                }
+            }
+
             return back()->with('success', 'Checklist de Comandancia visado.');
         } else {
             // Logic for Company Vehicles (Standard)
@@ -307,6 +311,27 @@ class VehicleChecklistController extends Controller
                 $checklist->update(['status' => 'Completed']);
             } else {
                 $checklist->update(['status' => 'Partially Reviewed']);
+            }
+
+            // Create Incidents ONLY when Completed
+            if ($checklist->status === 'Completed') {
+                $checklist->load('details.item');
+                foreach ($checklist->details as $detail) {
+                    if ($detail->status !== 'ok') {
+                        $severity = 'Medium';
+                        if ($detail->status === 'urgent') $severity = 'High';
+
+                        \App\Models\VehicleIssue::create([
+                            'vehicle_id' => $checklist->vehicle_id,
+                            'reporter_id' => $checklist->user_id,
+                            'description' => "Falla reportada en Checklist: {$detail->item->name}. Detalle: " . ($detail->notes ?? 'Sin observaciones'),
+                            'severity' => $severity,
+                            'status' => 'Open',
+                            'date' => now(),
+                            'is_stopped' => false,
+                        ]);
+                    }
+                }
             }
 
             return back()->with('success', 'Checklist visado.');

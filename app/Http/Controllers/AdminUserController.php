@@ -57,6 +57,7 @@ class AdminUserController extends Controller
             'permissions.*' => 'string', // Validate contents
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
+            'is_enabled' => 'boolean',
             'password' => 'required|string|min:8',
         ]);
 
@@ -118,6 +119,7 @@ class AdminUserController extends Controller
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
+            'is_enabled' => $validated['is_enabled'] ?? true,
             'permissions' => $validated['permissions'] ?? [],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
@@ -173,6 +175,7 @@ class AdminUserController extends Controller
             'permissions' => 'nullable|array',
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
+            'is_enabled' => 'boolean',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
@@ -227,6 +230,7 @@ class AdminUserController extends Controller
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
+            'is_enabled' => $validated['is_enabled'] ?? true,
             'permissions' => $validated['permissions'] ?? [],
         ];
 

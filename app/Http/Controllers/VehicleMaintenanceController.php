@@ -334,6 +334,7 @@ class VehicleMaintenanceController extends Controller
         $validated = $request->validate([
             'status' => 'required|string',
             'tentative_exit_date' => 'nullable|date',
+            'description' => 'nullable|string', // Added description
             'tasks' => 'nullable|array',
             'tasks.*.id' => 'nullable|integer',
             'tasks.*.description' => 'required|string',
@@ -347,6 +348,7 @@ class VehicleMaintenanceController extends Controller
         $updateData = [
             'status' => $validated['status'],
             'tentative_exit_date' => $validated['tentative_exit_date'],
+            'description' => $validated['description'] ?? $workshop->description, // Update description
         ];
 
         if ($validated['status'] === 'Entregado') {

@@ -23,6 +23,7 @@ interface User {
     department?: string;
     permissions: string[] | null;
     driver_vehicles?: { id: number }[];
+    is_enabled?: boolean;
 }
 
 const modules = [
@@ -145,6 +146,7 @@ export default function UserEdit({
         company: user.company,
         role: user.role,
         department: user.department || '',
+        is_enabled: user.is_enabled ?? true,
         permissions: user.permissions ?? ([] as string[]),
         driver_vehicles:
             user.driver_vehicles?.map((v) => v.id) ?? ([] as number[]),
@@ -375,6 +377,28 @@ export default function UserEdit({
                                             {errors.company}
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <Checkbox
+                                    id="is_enabled"
+                                    checked={data.is_enabled}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_enabled', !!checked)
+                                    }
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="is_enabled"
+                                        className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Usuario Habilitado
+                                    </label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Si está deshabilitado, el usuario no
+                                        podrá iniciar sesión.
+                                    </p>
                                 </div>
                             </div>
                         </div>
