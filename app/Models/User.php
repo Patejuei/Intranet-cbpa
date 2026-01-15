@@ -21,11 +21,13 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'rut',
         'password',
         'company',
         'role',
         'permissions',
         'department',
+        'is_enabled',
     ];
 
     /**
@@ -52,6 +54,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'permissions' => 'array',
+            'is_enabled' => 'boolean',
         ];
     }
 

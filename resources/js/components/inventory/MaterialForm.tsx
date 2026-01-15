@@ -33,7 +33,7 @@ export default function MaterialForm({
         brand: material?.brand || '',
         model: material?.model || '',
         stock_quantity: material?.stock_quantity || 0,
-        company: material?.company || 'Segunda Compañía',
+        company: material?.company || 'Comandancia',
         category: material?.category || 'Sin Categoría',
         serial_number: material?.serial_number || '',
         document_path: null as File | null,
@@ -213,6 +213,8 @@ export default function MaterialForm({
                         <SelectItem value="Materiales Peligrosos">
                             Materiales Peligrosos
                         </SelectItem>
+                        <SelectItem value="Seguridad">Seguridad</SelectItem>
+                        <SelectItem value="Otro">Otro</SelectItem>
                     </SelectContent>
                 </Select>
                 <InputError message={errors.category} className="mt-2" />

@@ -44,6 +44,8 @@ const CATEGORIES = [
     { value: 'VEN', label: 'Ventilación (VEN)' },
     { value: 'REL', label: 'Riesgos Eléctricos (REL)' },
     { value: 'HAZ', label: 'Materiales Peligrosos (HAZ)' },
+    { value: 'SEG', label: 'Seguridad' },
+    { value: 'OTR', label: 'Otro' },
 ];
 
 import { usePermissions } from '@/hooks/use-permissions';

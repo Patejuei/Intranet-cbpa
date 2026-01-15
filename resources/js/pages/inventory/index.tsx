@@ -14,7 +14,7 @@ import { Material } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { Download, Eye, FileText, Pencil, Search, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { read, utils } from 'xlsx';
+import * as XLSX from 'xlsx';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
@@ -38,6 +38,7 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
 
     // Import State
     const [importOpen, setImportOpen] = useState(false);
+    const [viperImportOpen, setViperImportOpen] = useState(false);
     const [importing, setImporting] = useState(false);
 
     const openCreate = () => {
@@ -51,7 +52,7 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
     };
 
     const downloadTemplate = () => {
-        const ws = utils.json_to_sheet([
+        const ws = XLSX.utils.json_to_sheet([
             {
                 'Nombre del producto': 'Casco F1',
                 Cantidad: 5,
@@ -61,9 +62,9 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                 'Serie de Fabricante': '123456',
             },
         ]);
-        const wb = utils.book_new();
-        utils.book_append_sheet(wb, ws, 'Plantilla');
-        const excelBuffer = utils.write(wb, {
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+        const excelBuffer = XLSX.write(wb, {
             bookType: 'xlsx',
             type: 'array',
         });
@@ -84,9 +85,9 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
         setImporting(true);
         try {
             const data = await file.arrayBuffer();
-            const workbook = read(data);
+            const workbook = XLSX.read(data);
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = utils.sheet_to_json(worksheet);
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
             // Map Spanish headers to English keys
             const mappedData = jsonData.map((row: any) => ({
@@ -122,6 +123,26 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
             console.error(error);
             setImporting(false);
         }
+    };
+
+    const handleViperFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        router.post('/inventory/import-viper', formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                setViperImportOpen(false);
+                setImporting(false);
+            },
+            onError: () => {
+                setImporting(false);
+            },
+        });
     };
 
     const isFirstRun = useRef(true);
@@ -171,6 +192,14 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         </p>
                     </div>
                     <div className="flex gap-2">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setViperImportOpen(true)}
+                            className="gap-2"
+                        >
+                            <Upload className="size-4" />
+                            Importar VIPER
+                        </Button>
                         <Button
                             variant="outline"
                             onClick={() => setImportOpen(true)}
@@ -369,6 +398,33 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                             {importing && (
                                 <p className="text-sm text-muted-foreground">
                                     Procesando...
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            {/* VIPER IMPORT DIALOG */}
+            <Dialog open={viperImportOpen} onOpenChange={setViperImportOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Importar Formato VIPER</DialogTitle>
+                        <DialogDescription>
+                            Suba el archivo exportado de VIPER (.xlsx).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label>Subir Archivo (.xlsx)</Label>
+                            <Input
+                                type="file"
+                                accept=".xlsx, .xls"
+                                onChange={handleViperFileUpload}
+                                disabled={importing}
+                            />
+                            {importing && (
+                                <p className="text-sm text-muted-foreground">
+                                    Procesando VIPER...
                                 </p>
                             )}
                         </div>

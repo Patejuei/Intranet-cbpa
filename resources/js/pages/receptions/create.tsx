@@ -51,17 +51,18 @@ export default function ReceptionCreate({
                 ? 'Segunda Compañía'
                 : user.company,
         items: [{ material_id: '', quantity: 1 }],
+        assignment_type: 'firefighter', // Default
     });
 
     const [openFirefighter, setOpenFirefighter] = useState(false);
     const [assignedMaterials, setAssignedMaterials] = useState<Material[]>([]);
 
     useEffect(() => {
-        if (data.firefighter_id) {
+        // Only fetch assigned materials IF assignment_type is 'firefighter'
+        if (data.firefighter_id && data.assignment_type === 'firefighter') {
             axios
                 .get(`/api/assigned-materials/${data.firefighter_id}`)
                 .then((response) => {
-                    // Map assigned items to Material objects
                     const materials = response.data.map((assigned: any) => ({
                         ...assigned.material,
                         assigned_quantity: assigned.quantity,
@@ -72,10 +73,16 @@ export default function ReceptionCreate({
                     console.error('Error fetching assigned materials', error);
                     setAssignedMaterials([]);
                 });
+        } else if (data.assignment_type === 'company') {
+            // If 'company', we should allow selecting ANY material from the company inventory?
+            // The requirement says: "si se selecciona como asignación a la compañía, se seleccionarán los materiales desde el inventario de la compañía"
+            // This means we show ALL materials (filtered by company?)
+            // For now, let's just pass `materials` prop to the selector, which usually contains all materials.
+            setAssignedMaterials(materials);
         } else {
             setAssignedMaterials([]);
         }
-    }, [data.firefighter_id]);
+    }, [data.firefighter_id, data.assignment_type]); // Add assignment_type dependency
 
     const addItem = () => {
         setData('items', [...data.items, { material_id: '', quantity: 1 }]);
@@ -113,18 +120,62 @@ export default function ReceptionCreate({
             <Head title="Nueva Acta de Recepción" />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">
-                        Nueva Acta de Recepción
-                    </h2>
-                    <p className="text-muted-foreground">
-                        Registre la recepción de material devuelto por un
-                        voluntario.
-                    </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Nueva Acta de Recepción
+                        </h2>
+                        <p className="text-muted-foreground">
+                            Registre la recepción de material devuelto.
+                        </p>
+                    </div>
                 </div>
 
                 <form onSubmit={submit} className="flex flex-col gap-6">
                     <div className="grid gap-4 rounded-xl border bg-card p-6 shadow-sm">
+                        {/* Assignment Type Tabs */}
+                        <div className="grid gap-3">
+                            <Label>Tipo de Recepción</Label>
+                            <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setData(
+                                            'assignment_type',
+                                            'firefighter',
+                                        )
+                                    }
+                                    className={cn(
+                                        'rounded-md px-3 py-2 text-sm font-medium transition-all',
+                                        data.assignment_type === 'firefighter'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+                                    )}
+                                >
+                                    Desde Cargo Personal
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setData('assignment_type', 'company')
+                                    }
+                                    className={cn(
+                                        'rounded-md px-3 py-2 text-sm font-medium transition-all',
+                                        data.assignment_type === 'company'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+                                    )}
+                                >
+                                    Desde Inventario Compañía
+                                </button>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                {data.assignment_type === 'firefighter'
+                                    ? 'El material se descontará del cargo personal del bombero.'
+                                    : 'El material proviene del inventario general de la compañía (traspaso).'}
+                            </p>
+                        </div>
+
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="flex flex-col gap-2">
                                 <Label>Bombero (Entrega Material)</Label>

@@ -33,6 +33,7 @@ import {
     Shield,
     Ticket,
     Truck,
+    User,
     Users,
     Wrench,
 } from 'lucide-react';
@@ -47,6 +48,13 @@ const NAV_GROUPS = [
                 url: '/dashboard',
                 icon: LayoutGrid,
                 tooltip: 'Panel Principal',
+                permission: undefined,
+            },
+            {
+                title: 'Perfil',
+                url: '/my-profile',
+                icon: User,
+                tooltip: 'Perfil',
                 permission: undefined,
             },
         ],

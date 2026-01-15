@@ -9,9 +9,7 @@ use App\Http\Controllers\VehicleIssueController;
 use App\Http\Controllers\VehicleMaintenanceController;
 
 Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return redirect()->route('dashboard');
 })->name('home');
 
 use App\Http\Controllers\BatteryLogController;
@@ -160,6 +158,91 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $criticalStockItems = \App\Models\WorkshopInventory::whereColumn('stock', '<=', 'min_stock')->get();
         }
 
+        // Pending Checklists Logic
+        $pendingChecklists = [];
+        $checklistQuery = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->where('status', '!=', 'Completed');
+
+        if ($user->company === 'Comandancia') {
+            // Comandancia Flow
+            $isCommander = ($user->role === 'comandante' || $user->role === 'admin');
+            $isInspector = ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') || $user->role === 'admin';
+
+            if ($isCommander || $isInspector) {
+                $checklistQuery->whereHas('vehicle', function ($q) {
+                    $q->where('company', 'Comandancia');
+                });
+
+                if ($isCommander) {
+                    $checklistQuery->whereNull('commander_reviewed_at');
+                }
+                // If user is BOTH, we show if ANY is missing? Or prioritize?
+                // If I am admin (isCommander=true, isInspector=true), I see if commander_reviewed_at is null OR inspector_reviewed_at is null?
+                // Let's refine:
+                // If Admin/Commander: Show if commander_reviewed_at is NULL.
+                // If Admin/Inspector: Show if inspector_reviewed_at is NULL.
+                // If Admin: Show if EITHER is NULL.
+
+                // Let's stick to prompt requirements: "Captain or Machinist" / "Inspector or Commander".
+
+                if ($isInspector) {
+                    // If existing query already filtered by commander, this might conflict if I use multiple where clauses.
+                    // I should use "orWhere" logic if multiple roles?
+                    // Actually simplest is: Filter by what I AM missing.
+                    // If I am commander, I need to see checklists where commander_reviewed_at is null.
+                    // If I am inspector, I need to see where inspector_reviewed_at is null.
+                }
+
+                // Re-building query for clarity
+                $checklistQuery = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->where('status', '!=', 'Completed');
+                $checklistQuery->whereHas('vehicle', function ($q) {
+                    $q->where('company', 'Comandancia');
+                });
+
+                $conditions = [];
+                if ($isCommander) $conditions[] = 'commander_reviewed_at';
+                if ($isInspector) $conditions[] = 'inspector_reviewed_at';
+
+                $checklistQuery->where(function ($q) use ($conditions) {
+                    foreach ($conditions as $col) {
+                        $q->orWhereNull($col); // Show if ANY of my roles haven't signed
+                    }
+                });
+            }
+        } else {
+            // Company Flow
+            $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
+            $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
+
+            if ($isCaptain || $isMachinist) {
+                // Filter by Company
+                $checklistQuery->whereHas('vehicle', function ($q) use ($user) {
+                    $q->where('company', $user->company);
+                });
+
+                $conditions = [];
+                if ($isCaptain) $conditions[] = 'captain_reviewed_at';
+                if ($isMachinist) $conditions[] = 'machinist_reviewed_at';
+
+                $checklistQuery->where(function ($q) use ($conditions) {
+                    foreach ($conditions as $col) {
+                        $q->orWhereNull($col);
+                    }
+                });
+            } else {
+                // Regular user sees nothing
+                $checklistQuery->whereRaw('1 = 0');
+            }
+        }
+
+        // Final execute if roles matched
+        // If neither role, checklistQuery might return all? No, need to guard.
+        // Actually the `else` block `Regular user` guards the company flow.
+        // Comandancia flow guards with `if ($isCommander || $isInspector)`.
+
+        // Execute
+        $pendingChecklists = $checklistQuery->take(5)->get();
+
+
         return Inertia::render('dashboard', [
             'upcomingBatteries' => $upcomingBatteries,
             'pendingTickets' => $pendingTickets,
@@ -170,6 +253,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'expiringDocuments' => $expiringDocuments,
             'pendingPettyCash' => $pendingPettyCash,
             'criticalStockItems' => $criticalStockItems,
+            'pendingChecklists' => $pendingChecklists, // Added
         ]);
     })->name('dashboard');
 
@@ -227,13 +311,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Assuming users with 'equipment' permission can manage inventory and deliveries
     Route::middleware('module:equipment')->group(function () {
         Route::get('inventory/search', [\App\Http\Controllers\MaterialController::class, 'search'])->name('inventory.search');
+        Route::post('inventory/import-viper', [\App\Http\Controllers\MaterialController::class, 'importViper'])->name('inventory.import-viper');
         Route::post('inventory/import', [\App\Http\Controllers\MaterialController::class, 'import'])->name('inventory.import');
-        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show']);
+        Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show', 'destroy']);
         Route::resource('deliveries', \App\Http\Controllers\DeliveryCertificateController::class);
         Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
         Route::resource('receptions', \App\Http\Controllers\ReceptionCertificateController::class);
         Route::get('receptions/{reception}/pdf', [\App\Http\Controllers\ReceptionCertificateController::class, 'downloadPdf'])->name('receptions.pdf');
     });
+
+    // My Profile Module (Accessible to all auth users)
+    Route::get('/my-profile', [\App\Http\Controllers\MyProfileController::class, 'show'])->name('my-profile.show');
 });
 
 require __DIR__ . '/settings.php';

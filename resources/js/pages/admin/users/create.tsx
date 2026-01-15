@@ -126,10 +126,12 @@ export default function UserCreate({
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
+        rut: '',
         password: '',
         company: currentUserRole === 'capitan' ? user.company || '' : '',
         role: 'user',
         department: '',
+        is_enabled: true,
         permissions: [] as string[],
         driver_vehicles: [] as number[],
     });
@@ -295,6 +297,25 @@ export default function UserCreate({
                                         </p>
                                     )}
                                 </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
+                                        RUT (Sin puntos y Con guión)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="12345678-K"
+                                        value={data.rut || ''}
+                                        onChange={(e) =>
+                                            setData('rut', e.target.value)
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    />
+                                    {errors.rut && (
+                                        <p className="mt-1 text-xs text-destructive">
+                                            {errors.rut}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -347,6 +368,28 @@ export default function UserCreate({
                                             {errors.company}
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                                <Checkbox
+                                    id="is_enabled"
+                                    checked={data.is_enabled}
+                                    onCheckedChange={(checked) =>
+                                        setData('is_enabled', !!checked)
+                                    }
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="is_enabled"
+                                        className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Usuario Habilitado
+                                    </label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Si está deshabilitado, el usuario no
+                                        podrá iniciar sesión.
+                                    </p>
                                 </div>
                             </div>
                         </div>

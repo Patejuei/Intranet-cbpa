@@ -41,6 +41,7 @@ export default function Dashboard({
     expiringDocuments = [],
     pendingPettyCash = [],
     criticalStockItems = [],
+    pendingChecklists = [], // Added
 }: {
     upcomingBatteries?: UpcomingBattery[];
     pendingTickets?: Ticket[];
@@ -48,6 +49,7 @@ export default function Dashboard({
     vehiclesStopped?: any[]; // Typed loosely here or import from index.d.ts
     pendingIncidents?: any[];
     vehiclesInWorkshop?: any[];
+    pendingChecklists?: any[]; // Added
     expiringDocuments?: {
         id: number;
         name: string;
@@ -249,6 +251,53 @@ export default function Dashboard({
                                             </div>
                                             <div className="text-xs text-muted-foreground">
                                                 {formatDate(item.created_at)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Pending Checklists Widget */}
+                {pendingChecklists.length > 0 && (
+                    <div className="rounded-xl border border-l-4 border-l-cyan-500 bg-card p-6 shadow-sm">
+                        <div className="mb-4">
+                            <h2 className="flex items-center gap-2 text-xl font-bold">
+                                <span className="flex size-3 rounded-full bg-cyan-500" />
+                                Checklists Pendientes de Revisión
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Revisiones de material mayor pendientes de
+                                firma.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            {pendingChecklists.map((checklist: any) => (
+                                <Link
+                                    key={checklist.id}
+                                    href={`/vehicles/checklists/${checklist.id}`}
+                                    className="block"
+                                >
+                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                        <div>
+                                            <p className="font-medium">
+                                                {checklist.vehicle.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Realizado por:{' '}
+                                                {checklist.user.name}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="rounded bg-cyan-100 px-2 py-1 text-xs text-cyan-700">
+                                                Revisar
+                                            </div>
+                                            <div className="mt-1 text-[10px] text-muted-foreground">
+                                                {formatDate(
+                                                    checklist.created_at,
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -517,7 +566,11 @@ export default function Dashboard({
                                 return (
                                     <Link
                                         key={vehicle.id}
-                                        href={`/vehicles/status/${vehicle.id}`}
+                                        href={
+                                            maintenance
+                                                ? `/vehicles/workshop/${maintenance.id}`
+                                                : `/vehicles/status/${vehicle.id}`
+                                        }
                                         className="block"
                                     >
                                         <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">

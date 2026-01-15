@@ -65,6 +65,7 @@ class DeliveryCertificateController extends Controller
             'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'assignment_type' => 'required|in:firefighter,company',
         ]);
 
         // Enforce company for non-privileged users
@@ -84,6 +85,7 @@ class DeliveryCertificateController extends Controller
                 'observations' => $validated['observations'],
                 'company' => $validated['company'],
                 'correlative' => $nextCorrelative,
+                'assignment_type' => $validated['assignment_type'],
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -99,20 +101,22 @@ class DeliveryCertificateController extends Controller
                     'quantity' => $item['quantity'],
                 ]);
 
-                // Update Assigned Materials (Prendas a Cargo)
-                // Check if exists
-                $assigned = \App\Models\AssignedMaterial::where('firefighter_id', $validated['firefighter_id'])
-                    ->where('material_id', $item['material_id'])
-                    ->first();
+                // Update Assigned Materials (Prendas a Cargo) ONLY if assignment_type is 'firefighter'
+                if ($validated['assignment_type'] === 'firefighter') {
+                    // Check if exists
+                    $assigned = \App\Models\AssignedMaterial::where('firefighter_id', $validated['firefighter_id'])
+                        ->where('material_id', $item['material_id'])
+                        ->first();
 
-                if ($assigned) {
-                    $assigned->increment('quantity', $item['quantity']);
-                } else {
-                    \App\Models\AssignedMaterial::create([
-                        'firefighter_id' => $validated['firefighter_id'],
-                        'material_id' => $item['material_id'],
-                        'quantity' => $item['quantity'],
-                    ]);
+                    if ($assigned) {
+                        $assigned->increment('quantity', $item['quantity']);
+                    } else {
+                        \App\Models\AssignedMaterial::create([
+                            'firefighter_id' => $validated['firefighter_id'],
+                            'material_id' => $item['material_id'],
+                            'quantity' => $item['quantity'],
+                        ]);
+                    }
                 }
 
                 // Decrement stock

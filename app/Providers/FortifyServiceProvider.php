@@ -28,6 +28,40 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Fortify::authenticateUsing(function (Request $request) {
+            $input = $request->input('email'); // Fortify uses 'email' field name by default for username
+            $password = $request->input('password');
+
+            $user = null;
+
+            // 1. Check if input is Email
+            if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
+                $user = \App\Models\User::where('email', $input)->first();
+            } else {
+                // 2. Treat as RUT
+                // Strategy: Strip all non-alphanumeric.
+                // Reconstruct with hyphen before last char (DV) to query DB.
+                // This ensures "ignored hyphen" during input but matches "hyphenated" storage.
+
+                $rutClean = strtoupper(str_replace(['.', '-'], '', $input));
+
+                if (strlen($rutClean) > 1) {
+                    $rutFormatted = substr($rutClean, 0, -1) . '-' . substr($rutClean, -1);
+                    $user = \App\Models\User::where('rut', $rutFormatted)->first();
+                } else {
+                    // Fallback check if stored without hyphen or too short
+                    $user = \App\Models\User::where('rut', $rutClean)->first();
+                }
+            }
+
+            if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+                if (!$user->is_enabled) {
+                    return null; // Or throw ValidationException if we want a specific error, but null just fails login
+                }
+                return $user;
+            }
+        });
+
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
@@ -47,30 +81,30 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
+        Fortify::loginView(fn(Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
+        Fortify::resetPasswordView(fn(Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
             'token' => $request->route('token'),
         ]));
 
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
+        Fortify::requestPasswordResetLinkView(fn(Request $request) => Inertia::render('auth/forgot-password', [
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
+        Fortify::verifyEmailView(fn(Request $request) => Inertia::render('auth/verify-email', [
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(fn() => Inertia::render('auth/register'));
 
-        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
+        Fortify::twoFactorChallengeView(fn() => Inertia::render('auth/two-factor-challenge'));
 
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
+        Fortify::confirmPasswordView(fn() => Inertia::render('auth/confirm-password'));
     }
 
     /**
@@ -83,7 +117,7 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
         });

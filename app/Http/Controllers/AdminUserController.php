@@ -49,6 +49,7 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'rut' => 'nullable|string|max:20|unique:users',
             'company' => 'required|string',
             'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
@@ -56,6 +57,7 @@ class AdminUserController extends Controller
             'permissions.*' => 'string', // Validate contents
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
+            'is_enabled' => 'boolean',
             'password' => 'required|string|min:8',
         ]);
 
@@ -113,9 +115,11 @@ class AdminUserController extends Controller
         $createdUser = \App\Models\User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'rut' => isset($validated['rut']) ? $this->normalizeRut($validated['rut']) : null,
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
+            'is_enabled' => $validated['is_enabled'] ?? true,
             'permissions' => $validated['permissions'] ?? [],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
@@ -164,13 +168,15 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'rut' => 'nullable|string|max:20|unique:users,rut,' . $user->id,
             'company' => 'required|string',
             'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
-            'password' => 'nullable|string|min:8',
+            'is_enabled' => 'boolean',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         if ($currentUser->role === 'capitan') {
@@ -220,9 +226,11 @@ class AdminUserController extends Controller
         $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'rut' => isset($validated['rut']) ? $this->normalizeRut($validated['rut']) : null,
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
+            'is_enabled' => $validated['is_enabled'] ?? true,
             'permissions' => $validated['permissions'] ?? [],
         ];
 
@@ -252,5 +260,14 @@ class AdminUserController extends Controller
 
         $user->delete();
         return redirect()->back();
+    }
+    private function normalizeRut($rut)
+    {
+        if (!$rut) return null;
+        $rut = str_replace(['.', '-'], '', strtoupper($rut));
+        if (strlen($rut) > 1) {
+            return substr($rut, 0, -1) . '-' . substr($rut, -1);
+        }
+        return $rut;
     }
 }
