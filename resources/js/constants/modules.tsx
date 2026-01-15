@@ -104,7 +104,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/status',
         pattern: /^\/vehicles\/status/,
         icon: Truck,
-        permission: 'vehicles',
+        permission: 'vehicles.status',
     },
     {
         key: 'vehicles-logs',
@@ -113,7 +113,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/logs',
         pattern: /^\/vehicles\/logs/,
         icon: Clipboard,
-        permission: 'vehicles',
+        permission: 'vehicles.logs',
     },
     {
         key: 'vehicles-incidents',
@@ -122,7 +122,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/incidents',
         pattern: /^\/vehicles\/incidents/,
         icon: AlertTriangle,
-        permission: 'vehicles',
+        permission: 'vehicles.incidents',
     },
     {
         key: 'vehicles-workshop',
@@ -131,7 +131,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/workshop',
         pattern: /^\/vehicles\/workshop/,
         icon: Wrench,
-        permission: 'vehicles',
+        permission: 'vehicles.workshop',
     },
     {
         key: 'vehicles-inventory',
@@ -140,7 +140,7 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/inventory',
         pattern: /^\/vehicles\/inventory/,
         icon: List,
-        permission: 'vehicles',
+        permission: 'vehicles.inventory',
     },
     {
         key: 'vehicles-checklist',
@@ -149,6 +149,6 @@ export const MODULES: ModuleDefinition[] = [
         href: '/vehicles/checklists',
         pattern: /^\/vehicles\/checklists/,
         icon: ClipboardCheck,
-        permission: 'vehicles',
+        permission: 'vehicles.checklist',
     },
 ];

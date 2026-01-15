@@ -483,7 +483,8 @@ export default function UserEdit({
                                 data.role !== 'capitan' &&
                                 data.role !== 'maquinista' &&
                                 data.role !== 'inspector' &&
-                                data.role !== 'mechanic' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
+                                data.role !== 'mechanic' &&
+                                data.role !== 'cuartelero' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo

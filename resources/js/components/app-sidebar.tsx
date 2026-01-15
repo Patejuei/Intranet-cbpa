@@ -186,13 +186,21 @@ export function AppSidebar({ user }: { user: any }) {
         if (!module) return true; // Public items
         if (!user) return false;
 
-        // Admin, Capitan, Comandante have full access
-        if (
-            user.role === 'admin' ||
-            user.role === 'capitan' ||
-            user.role === 'comandante'
-        )
+        // Admin and Comandante have full access
+        if (user.role === 'admin' || user.role === 'comandante') return true;
+
+        // Capitan Restrictions
+        if (user.role === 'capitan') {
+            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            if (restricted.includes(module)) return false;
             return true;
+        }
+
+        // Maquinista Restrictions (Explicit Block)
+        if (user.role === 'maquinista') {
+            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            if (restricted.includes(module)) return false;
+        }
 
         if (user.role === 'mechanic') {
             const mechanicModules = [
@@ -202,8 +210,19 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.checklist',
                 'vehicles.logs',
                 'vehicles.inventory',
+                'vehicles.petty-cash', // Added as per request "Taller Mecánico... si"
             ];
             if (mechanicModules.includes(module)) return true;
+        }
+
+        if (user.role === 'cuartelero') {
+            const allowed = [
+                'vehicles.status',
+                'vehicles.incidents',
+                'vehicles.logs',
+                'vehicles.checklist',
+            ];
+            if (allowed.includes(module)) return true;
         }
 
         if (user.role === 'inspector') {
