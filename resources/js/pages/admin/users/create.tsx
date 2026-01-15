@@ -65,11 +65,11 @@ const modules = [
         label: 'M. Mayor - Taller',
         category: 'Material Mayor',
     },
-    {
-        id: 'vehicles.inventory',
-        label: 'M. Mayor - Inventario',
-        category: 'Material Mayor',
-    },
+    // {
+    //     id: 'vehicles.inventory',
+    //     label: 'M. Mayor - Inventario',
+    //     category: 'Material Mayor',
+    // },
     // Administración
     { id: 'firefighters', label: 'Bomberos', category: 'Administración' },
 ];
@@ -83,10 +83,9 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'admin', label: 'Administrador del Sistema' },
         { value: 'comandante', label: 'Comandante' },
         { value: 'capitan', label: 'Capitán' },
-        { value: 'teniente', label: 'Teniente' },
+        // { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
-        { value: 'ayudante', label: 'Ayudante' },
-        { value: 'ayudante', label: 'Ayudante' },
+        // { value: 'ayudante', label: 'Ayudante' },
         { value: 'cuartelero', label: 'Cuartelero' }, // Added missing ones from backend validation just in case
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
@@ -473,7 +472,9 @@ export default function UserCreate({
                                 data.role !== 'comandante' &&
                                 data.role !== 'capitan' &&
                                 data.role !== 'maquinista' &&
-                                data.role !== 'inspector' && ( // Admin/Capitan/Maquinista/Inspector have implicit permissions
+                                data.role !== 'inspector' &&
+                                data.role !== 'cuartelero' && (
+                                    // Admin/Capitan/Maquinista/Inspector have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo

@@ -30,7 +30,7 @@ class VehicleController extends Controller
         // but we can double check or rely on it. 
         // We need to return different data structure based on role.
 
-        if ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'cuartelero' || $user->role === 'mechanic') {
+        if ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'mechanic') {
             // Define custom order
             $order = [
                 'Comandancia',

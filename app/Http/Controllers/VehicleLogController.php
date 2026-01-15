@@ -86,6 +86,14 @@ class VehicleLogController extends Controller
             'arrival_time' => 'required|date_format:H:i',
         ]);
 
+        $user = $request->user();
+        if ($user->role === 'cuartelero') {
+            $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+            if ($vehicle->company !== $user->company) {
+                abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+            }
+        }
+
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
             $receiptPath = $request->file('receipt')->store('receipts', 'public');

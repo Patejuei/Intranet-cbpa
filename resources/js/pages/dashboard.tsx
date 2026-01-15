@@ -79,27 +79,47 @@ export default function Dashboard({
         const user = auth.user;
         if (!user) return false;
 
-        // Admin, Comandante and Capitan see everything
+        // Admin and Comandante have full access
+        if (user.role === 'admin' || user.role === 'comandante') return true;
+
+        const moduleKey = module.permission;
+
+        // Capitan Restrictions
+        if (user.role === 'capitan') {
+            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            if (restricted.includes(moduleKey)) return false;
+            return true;
+        }
+
+        // Maquinista Restrictions
+        if (user.role === 'maquinista') {
+            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            if (restricted.includes(moduleKey)) return false;
+        }
+
+        // Specific Roles check for vehicles
+        // Specific Roles check for vehicles
         if (
-            user.role === 'admin' ||
-            user.role === 'capitan' ||
-            user.role === 'comandante'
+            moduleKey.startsWith('vehicles') &&
+            ['mechanic'].includes(user.role || '')
         ) {
             return true;
         }
 
-        // Specific Roles check for vehicles
-        if (
-            module.permission === 'vehicles' &&
-            ['cuartelero', 'mechanic'].includes(user.role || '')
-        ) {
-            return true;
+        if (user.role === 'cuartelero') {
+            const allowed = [
+                'vehicles.status',
+                'vehicles.incidents',
+                'vehicles.logs',
+                'vehicles.checklist',
+            ];
+            if (allowed.includes(moduleKey)) return true;
         }
 
         // Inspector Role Logic
         if (user.role === 'inspector') {
             const dept = (user.department || '').trim();
-            const moduleKey = module.permission;
+            // const moduleKey = module.permission; // Removed duplicate
 
             if (dept === 'Material Mayor') {
                 const allowed = [
@@ -137,7 +157,7 @@ export default function Dashboard({
 
         // Check explicit permissions
         const permissions = user.permissions || [];
-        const moduleKey = module.permission;
+        // const moduleKey = module.permission; // Removed duplicate
 
         return (
             permissions.includes(moduleKey) ||

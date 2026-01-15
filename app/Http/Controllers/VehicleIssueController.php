@@ -56,6 +56,15 @@ class VehicleIssueController extends Controller
             'date' => 'required|date',
         ]);
 
+        // Enforcement for Cuartelero: Must be from same Company
+        $user = $request->user();
+        if ($user->role === 'cuartelero') {
+            $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+            if ($vehicle->company !== $user->company) {
+                abort(403, 'Solo puede reportar incidencias de vehículos de su compañía.');
+            }
+        }
+
         $issue = \App\Models\VehicleIssue::create([
             ...$validated,
             'reporter_id' => $request->user()->id,
@@ -102,9 +111,17 @@ class VehicleIssueController extends Controller
             $user->role !== 'capitan' &&
             $user->role !== 'comandante' &&
             $user->role !== 'admin' &&
+            $user->role !== 'cuartelero' && // Added Cuartelero
             !($user->role === 'inspector' && $user->department === 'Material Mayor')
         ) {
             abort(403);
+        }
+
+        // Trigger restriction for Cuartelero
+        if ($user->role === 'cuartelero') {
+            if ($incident->vehicle->company !== $user->company) {
+                abort(403, 'No tiene permisos para editar esta incidencia.');
+            }
         }
 
         $validated = $request->validate([

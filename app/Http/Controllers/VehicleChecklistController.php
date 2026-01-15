@@ -23,7 +23,7 @@ class VehicleChecklistController extends Controller
             $query = \App\Models\Vehicle::query();
             $assignedVehicleIds = $user->driverVehicles()->pluck('vehicles.id');
 
-            if ($user->role === 'capitan' || $user->role === 'maquinista') {
+            if ($user->role === 'capitan' || $user->role === 'maquinista' || $user->role === 'cuartelero') {
                 $query->where(function ($q) use ($user, $assignedVehicleIds) {
                     $q->where('company', $user->company)
                         ->orWhereIn('id', $assignedVehicleIds);
@@ -128,6 +128,12 @@ class VehicleChecklistController extends Controller
                     ->where('company', 'Comandancia')
                     ->pluck('id');
                 $allowedIds = $comandanciaAssignedIds;
+            }
+
+            // Cuartelero: Allow ALL vehicles from their company
+            if ($user->role === 'cuartelero') {
+                $companyVehicles = \App\Models\Vehicle::where('company', $user->company)->pluck('id');
+                $allowedIds = $allowedIds->merge($companyVehicles);
             }
 
             if (!$allowedIds->contains($validated['vehicle_id'])) {
