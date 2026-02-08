@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
-declare var route: any;
+declare let route: any;
 
 interface Task {
     id?: number;

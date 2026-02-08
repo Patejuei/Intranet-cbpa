@@ -151,4 +151,13 @@ export const MODULES: ModuleDefinition[] = [
         icon: ClipboardCheck,
         permission: 'vehicles.checklist',
     },
+    {
+        key: 'vehicles-renditions',
+        title: 'Rendiciones',
+        description: 'Gestión de gastos y facturas',
+        href: '/vehicles/renditions',
+        pattern: /^\/vehicles\/renditions/,
+        icon: FileText,
+        permission: 'vehicles.renditions',
+    },
 ];

@@ -258,6 +258,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('batteries', BatteryLogController::class)->only(['index', 'store'])->middleware('module:batteries');
+    // Equipment & Acquisitions
+    Route::post('equipment/request', [EquipmentLogController::class, 'storeRequest'])->name('equipment.request');
+    Route::post('equipment/acquisitions/{acquisition}/purchase', [EquipmentLogController::class, 'storePurchase'])->name('equipment.purchase');
+    Route::post('equipment/acquisitions/{acquisition}/reception', [EquipmentLogController::class, 'confirmReception'])->name('equipment.reception');
+    Route::post('equipment/acquisitions/{acquisition}/inventory-entry', [EquipmentLogController::class, 'finishInventoryEntry'])->name('equipment.inventory_entry');
     Route::resource('equipment', EquipmentLogController::class)->only(['index', 'store'])->middleware('module:equipment');
     Route::resource('tickets', TicketController::class)->middleware('module:tickets');
     Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
@@ -296,9 +301,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
 
         // Petty Cash Routes
-        Route::get('petty-cash/{petty_cash}/attachments/{attachment}', [App\Http\Controllers\PettyCashController::class, 'viewAttachment'])->name('vehicles.petty-cash.attachment');
-        Route::post('petty-cash/{petty_cash}/review', [App\Http\Controllers\PettyCashController::class, 'review'])->name('vehicles.petty-cash.review');
-        Route::resource('petty-cash', App\Http\Controllers\PettyCashController::class)->names('vehicles.petty-cash');
+        // Rendiciones (Ex-Petty Cash) Routes
+        Route::post('renditions/export', [App\Http\Controllers\RenditionController::class, 'export'])->name('vehicles.renditions.export');
+        Route::get('renditions/{rendition}/attachments/{attachment}', [App\Http\Controllers\RenditionController::class, 'viewAttachment'])->name('vehicles.renditions.attachment');
+        Route::post('renditions/validate-batch', [App\Http\Controllers\RenditionController::class, 'validateBatch'])->name('vehicles.renditions.validate_batch');
+        Route::post('renditions/{rendition}/validate', [App\Http\Controllers\RenditionController::class, 'validateRendition'])->name('vehicles.renditions.validate');
+        Route::resource('renditions', App\Http\Controllers\RenditionController::class)->names('vehicles.renditions');
     });
 
     // Admin Routes

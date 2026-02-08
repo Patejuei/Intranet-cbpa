@@ -103,6 +103,10 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'cuartelero', label: 'Cuartelero' },
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
+        {
+            value: 'secretaria_adquisiciones',
+            label: 'Secretaria de Adquisiciones',
+        },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -143,6 +147,7 @@ export default function UserEdit({
         email: user.email,
         rut: user.rut || '',
         password: '',
+        password_confirmation: '',
         company: user.company,
         role: user.role,
         department: user.department || '',
@@ -174,7 +179,7 @@ export default function UserEdit({
 
     const handlePermissionChange = (moduleId: string, value: string) => {
         // value: 'none', 'view', 'edit', 'full'
-        let newPermissions = data.permissions.filter(
+        const newPermissions = data.permissions.filter(
             (p) => !p.startsWith(`${moduleId}.`),
         );
 
@@ -348,6 +353,23 @@ export default function UserEdit({
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
+                                        Confirmar Contraseña
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) =>
+                                            setData(
+                                                'password_confirmation',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
                                         Compañía
                                     </label>
                                     <Select
@@ -425,7 +447,9 @@ export default function UserEdit({
                                                 value === 'capitan' ||
                                                 value === 'maquinista' ||
                                                 value === 'inspector' ||
-                                                value === 'mechanic'
+                                                value === 'mechanic' ||
+                                                value ===
+                                                    'secretaria_adquisiciones'
                                                     ? []
                                                     : prev.permissions,
                                             company:
@@ -484,7 +508,8 @@ export default function UserEdit({
                                 data.role !== 'maquinista' &&
                                 data.role !== 'inspector' &&
                                 data.role !== 'mechanic' &&
-                                data.role !== 'cuartelero' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
+                                data.role !== 'cuartelero' &&
+                                data.role !== 'secretaria_adquisiciones' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo

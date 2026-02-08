@@ -10,6 +10,7 @@
     <meta property="og:title" content="Intranet CBPA">
     <meta property="og:description" content="Intranet Corporativa del Cuerpo de Bomberos de Puente Alto.">
     <meta property="og:type" content="website">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>

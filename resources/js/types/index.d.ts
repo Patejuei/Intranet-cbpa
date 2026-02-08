@@ -132,6 +132,35 @@ export interface ReceptionCertificate {
     updated_at: string;
 }
 
+export interface MaterialAcquisitionItem {
+    id: number;
+    material_acquisition_id: number;
+    item_name: string;
+    quantity: number;
+    details: string | null;
+    brand: string | null;
+    model: string | null;
+    serial_number: string | null;
+    inventory_code: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface MaterialAcquisition {
+    id: number;
+    user_id: number;
+    company: string;
+    status: 'requested' | 'purchased' | 'received' | 'completed' | 'rejected';
+    invoice_number: string | null;
+    invoice_date: string | null;
+    supplier_rut: string | null;
+    supplier_name: string | null;
+    document_path: string | null;
+    items: MaterialAcquisitionItem[];
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Pagination<T> {
     data: T[];
     links: {

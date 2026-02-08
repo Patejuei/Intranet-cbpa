@@ -22,7 +22,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
-declare var route: any;
+declare let route: any;
 
 interface Vehicle {
     id: number;

@@ -89,6 +89,10 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'cuartelero', label: 'Cuartelero' }, // Added missing ones from backend validation just in case
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
+        {
+            value: 'secretaria_adquisiciones',
+            label: 'Secretaria de Adquisiciones',
+        },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -127,6 +131,7 @@ export default function UserCreate({
         email: '',
         rut: '',
         password: '',
+        password_confirmation: '',
         company: currentUserRole === 'capitan' ? user.company || '' : '',
         role: 'user',
         department: '',
@@ -157,7 +162,7 @@ export default function UserCreate({
 
     const handlePermissionChange = (moduleId: string, value: string) => {
         // value: 'none', 'view', 'edit', 'full'
-        let newPermissions = data.permissions.filter(
+        const newPermissions = data.permissions.filter(
             (p) => !p.startsWith(`${moduleId}.`),
         );
 
@@ -338,6 +343,22 @@ export default function UserCreate({
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium">
+                                        Confirmar Contraseña
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) =>
+                                            setData(
+                                                'password_confirmation',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium">
                                         Compañía
                                     </label>
                                     <Select
@@ -409,13 +430,16 @@ export default function UserCreate({
                                         setData((prev) => ({
                                             ...prev,
                                             role: value,
+                                            role: value,
                                             permissions:
                                                 value === 'admin' ||
                                                 value === 'comandante' ||
                                                 value === 'capitan' ||
                                                 value === 'maquinista' ||
                                                 value === 'inspector' ||
-                                                value === 'mechanic'
+                                                value === 'mechanic' ||
+                                                value ===
+                                                    'secretaria_adquisiciones'
                                                     ? []
                                                     : prev.permissions,
                                             company:
@@ -473,8 +497,9 @@ export default function UserCreate({
                                 data.role !== 'capitan' &&
                                 data.role !== 'maquinista' &&
                                 data.role !== 'inspector' &&
-                                data.role !== 'cuartelero' && (
-                                    // Admin/Capitan/Maquinista/Inspector have implicit permissions
+                                data.role !== 'cuartelero' &&
+                                data.role !== 'secretaria_adquisiciones' && (
+                                    // Admin/Capitan/Maquinista/Inspector/Secretaria have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
                                             Permisos por Módulo

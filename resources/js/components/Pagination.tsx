@@ -16,7 +16,7 @@ export default function Pagination({ links }: PaginationProps) {
     return (
         <div className="flex flex-wrap items-center justify-center gap-1 py-4">
             {links.map((link, key) => {
-                let label = link.label;
+                const label = link.label;
                 if (label === '&laquo; Previous')
                     return (
                         <Button

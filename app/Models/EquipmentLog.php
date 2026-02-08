@@ -19,7 +19,11 @@ class EquipmentLog extends Model
         'status',
         'user_id',
         'document_path',
-        'material_id'
+        'material_id',
+        'invoice_number',
+        'invoice_date',
+        'supplier_rut',
+        'supplier_name',
     ];
 
     public function user()

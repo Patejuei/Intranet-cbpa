@@ -34,6 +34,11 @@ class WorkshopInventoryController extends Controller
 
   public function store(Request $request)
   {
+    $user = $request->user();
+    if ($user->role === 'secretaria_adquisiciones') {
+      abort(403, 'Acceso de solo lectura.');
+    }
+
     $validated = $request->validate([
       'name' => 'required|string|max:255',
       'sku' => 'nullable|string|unique:workshop_inventory,sku',
@@ -62,6 +67,11 @@ class WorkshopInventoryController extends Controller
 
   public function update(Request $request, WorkshopInventory $inventory)
   {
+    $user = $request->user();
+    if ($user->role === 'secretaria_adquisiciones') {
+      abort(403, 'Acceso de solo lectura.');
+    }
+
     $validated = $request->validate([
       'name' => 'required|string|max:255',
       'sku' => 'nullable|string|unique:workshop_inventory,sku,' . $inventory->id,
@@ -82,6 +92,11 @@ class WorkshopInventoryController extends Controller
 
   public function destroy(WorkshopInventory $inventory)
   {
+    $user = request()->user();
+    if ($user->role === 'secretaria_adquisiciones') {
+      abort(403, 'Acceso de solo lectura.');
+    }
+
     try {
       $inventory->delete();
       return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem eliminado correctamente.');

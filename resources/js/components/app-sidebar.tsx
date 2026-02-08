@@ -29,7 +29,6 @@ import {
     FileText,
     LayoutGrid,
     Package,
-    Receipt,
     Shield,
     Ticket,
     Truck,
@@ -152,11 +151,11 @@ const NAV_GROUPS = [
                 tooltip: 'Bodega',
             },
             {
-                title: 'Caja Chica',
-                url: '/vehicles/petty-cash',
-                icon: Receipt,
-                permission: 'vehicles.petty-cash',
-                tooltip: 'Caja Chica',
+                title: 'Rendiciones',
+                url: '/vehicles/renditions',
+                icon: FileText,
+                permission: 'vehicles.renditions',
+                tooltip: 'Rendiciones (Fac. y Gastos)',
             },
         ],
     },
@@ -189,16 +188,37 @@ export function AppSidebar({ user }: { user: any }) {
         // Admin and Comandante have full access
         if (user.role === 'admin' || user.role === 'comandante') return true;
 
+        if (user.role === 'secretaria_adquisiciones') {
+            const allowed = [
+                'inventory',
+                'batteries',
+                'equipment',
+                'deliveries',
+                'tickets',
+                'reception',
+                'vehicles.renditions',
+            ];
+            if (allowed.includes(module)) return true;
+        }
+
         // Capitan Restrictions
         if (user.role === 'capitan') {
-            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            const restricted = [
+                'vehicles.inventory',
+                'vehicles.petty-cash',
+                'vehicles.renditions',
+            ];
             if (restricted.includes(module)) return false;
             return true;
         }
 
         // Maquinista Restrictions (Explicit Block)
         if (user.role === 'maquinista') {
-            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            const restricted = [
+                'vehicles.inventory',
+                'vehicles.petty-cash',
+                'vehicles.renditions',
+            ];
             if (restricted.includes(module)) return false;
         }
 
@@ -210,7 +230,7 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.checklist',
                 'vehicles.logs',
                 'vehicles.inventory',
-                'vehicles.petty-cash', // Added as per request "Taller Mecánico... si"
+                // 'vehicles.renditions', // Mechanic removed from system flow
             ];
             if (mechanicModules.includes(module)) return true;
         }

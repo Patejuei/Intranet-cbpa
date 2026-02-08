@@ -21,7 +21,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Download, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-declare var route: any;
+declare let route: any;
 
 interface InventoryItem {
     id: number;

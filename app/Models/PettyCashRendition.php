@@ -14,7 +14,13 @@ class PettyCashRendition extends Model
     'user_id',
     'amount',
     'description',
-    'status', // draft, pending_inspector, pending_comandante, approved, rejected
+    'status', // draft, pending_inspector, pending_comandante, approved, rejected, pending_validation, rendido
+    'supplier_rut',
+    'expense_type',
+    'invoice_number',
+    'invoice_date',
+    'vehicle_id',
+    'stock_item_id',
     'inspector_id',
     'inspector_vised_at',
     'comandante_id',
@@ -28,12 +34,19 @@ class PettyCashRendition extends Model
     'inspector_vised_at' => 'datetime',
     'comandante_vised_at' => 'datetime',
     'rejected_at' => 'datetime',
+    'date' => 'date',
+    'invoice_date' => 'date',
     'amount' => 'integer',
   ];
 
   public function user()
   {
     return $this->belongsTo(User::class);
+  }
+
+  public function vehicle()
+  {
+    return $this->belongsTo(Vehicle::class);
   }
 
   public function inspector()

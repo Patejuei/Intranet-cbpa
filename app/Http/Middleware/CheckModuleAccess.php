@@ -28,8 +28,24 @@ class CheckModuleAccess
         }
 
         // Roles with implicit module access
-        if ($module === 'vehicles' && in_array($user->role, ['cuartelero', 'mechanic'])) {
+        if ($module === 'vehicles' && in_array($user->role, ['cuartelero', 'mechanic', 'secretaria_adquisiciones'])) {
             return $next($request);
+        }
+
+        // Secretaria de Adquisiciones Access
+        if ($user->role === 'secretaria_adquisiciones') {
+            $allowed = [
+                'inventory',
+                'batteries',
+                'equipment',
+                'deliveries',
+                'tickets',
+                'reception',
+                'vehicles.renditions',
+            ];
+            if (in_array($module, $allowed)) {
+                return $next($request);
+            }
         }
 
         // Mechanic Implicit Access (mirrors frontend use-permissions.ts)

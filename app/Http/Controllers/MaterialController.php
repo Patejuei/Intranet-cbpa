@@ -56,7 +56,7 @@ class MaterialController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('inventory.view', $user->permissions ?? []) && !in_array('inventory.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('inventory.view', $user->permissions ?? []) && !in_array('inventory.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -82,7 +82,7 @@ class MaterialController extends Controller
     public function show(Material $inventory)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('inventory.view', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('inventory.view', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -101,7 +101,7 @@ class MaterialController extends Controller
     public function update(Request $request, Material $inventory)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('inventory.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('inventory.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -199,7 +199,7 @@ class MaterialController extends Controller
     public function store(Request $request)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('inventory.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('inventory.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -276,7 +276,7 @@ class MaterialController extends Controller
     public function destroy(Material $inventory)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('inventory.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('inventory.edit', $user->permissions ?? [])) {
             abort(403);
         }
 

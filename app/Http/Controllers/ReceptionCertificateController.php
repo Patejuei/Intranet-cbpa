@@ -19,7 +19,7 @@ class ReceptionCertificateController extends Controller
   public function index()
   {
     $user = request()->user();
-    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
+    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
       abort(403);
     }
 
@@ -194,7 +194,7 @@ class ReceptionCertificateController extends Controller
   public function show(ReceptionCertificate $reception)
   {
     $user = request()->user();
-    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
+    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
       abort(403);
     }
 
@@ -207,7 +207,7 @@ class ReceptionCertificateController extends Controller
   public function downloadPdf(ReceptionCertificate $reception)
   {
     $user = request()->user();
-    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
+    if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('reception.view', $user->permissions ?? []) && !in_array('reception.edit', $user->permissions ?? [])) {
       abort(403);
     }
 

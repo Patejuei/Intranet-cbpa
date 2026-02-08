@@ -6,174 +6,152 @@ use Illuminate\Http\Request;
 
 use App\Models\EquipmentLog;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\MaterialReceived;
 
 class EquipmentLogController extends Controller
 {
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('equipment.view', $user->permissions ?? []) && !in_array('equipment.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && $user->role !== 'inspector' && !in_array('equipment.view', $user->permissions ?? []) && !in_array('equipment.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
-        $query = EquipmentLog::with('user')->latest();
-
-        if ($user->role !== 'admin' && $user->company) {
-            $query->whereHas('user', function ($q) use ($user) {
+        // Equipment Logs (Historial de Movimientos Alta/Baja Manual)
+        $logsQuery = EquipmentLog::with('user')->latest();
+        if ($user->role !== 'admin' && $user->role !== 'secretaria_adquisiciones' && $user->company && $user->company !== 'Comandancia') {
+            $logsQuery->whereHas('user', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
         }
 
+        // Acquisitions Logic
+        $acquisitionsQuery = \App\Models\MaterialAcquisition::with('items')->latest();
+
+        if ($user->role === 'capitan') {
+            $acquisitionsQuery->where('company', $user->company);
+        } elseif ($user->role !== 'admin' && $user->role !== 'secretaria_adquisiciones' && $user->role !== 'inspector' && $user->company !== 'Comandancia') {
+            $acquisitionsQuery->where('company', $user->company);
+        }
+
+        $companies = [
+            'Primera Compañía',
+            'Segunda Compañía',
+            'Tercera Compañía',
+            'Cuarta Compañía',
+            'Quinta Compañía',
+            'Sexta Compañía',
+            'Séptima Compañía',
+            'Octava Compañía',
+            'Novena Compañía',
+            'Comandancia',
+            'Taller',
+            'TIC',
+            'Mayordomía'
+        ];
+
         return Inertia::render('equipment/index', [
-            'logs' => $query->paginate(10),
-            'materials' => \App\Models\Material::where('company', $user->company)->get()
+            'logs' => $logsQuery->paginate(10),
+            'acquisitions' => $acquisitionsQuery->get(), // List for Tabs
+            'materials' => \App\Models\Material::where('company', $user->company)->get(),
+            'userRole' => $user->role,
+            'userCompany' => $user->company,
+            'companies' => $companies // Passed for Alta Manual Selector
         ]);
     }
 
     public function store(Request $request)
     {
+        return $this->storeManualLog($request);
+    }
+
+    private function storeManualLog(Request $request)
+    {
         $user = $request->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('equipment.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && $user->role !== 'secretaria_adquisiciones' && !in_array('equipment.edit', $user->permissions ?? [])) {
             abort(403);
         }
 
-        $validated = $request->validate([
-            'item_name' => 'required|string',
-            'brand' => 'nullable|string',
-            'model' => 'nullable|string',
-            'serial_number' => 'nullable|string',
+        $type = $request->input('type');
+
+        // Validation Rules
+        $rules = [
             'type' => 'required|in:ALTA,BAJA',
             'reason' => 'nullable|string',
-            'document' => 'nullable|file|max:10240', // 10MB limit
-            'category' => 'nullable|string', // e.g. 'EPP', 'EXT'
-            'quantity' => 'required|integer|min:1',
-        ]);
+            'document' => 'nullable|file|max:10240',
+        ];
+
+        if ($type === 'ALTA') {
+            $rules['invoice_number'] = 'required|string';
+            $rules['invoice_date'] = 'required|date';
+            $rules['supplier_rut'] = 'required|string';
+            $rules['supplier_name'] = 'required|string';
+            $rules['items'] = 'required|array|min:1';
+            $rules['items.*.item_name'] = 'required|string';
+            $rules['items.*.quantity'] = 'required|integer|min:1';
+            $rules['items.*.unit_price'] = 'nullable|integer|min:0';
+            $rules['company'] = 'nullable|string'; // For Admin/Commanders/Secretary
+        } else {
+            // BAJA uses single item structure
+            $rules['item_name'] = 'required|string';
+            $rules['quantity'] = 'required|integer|min:1';
+            $rules['brand'] = 'nullable|string';
+            $rules['model'] = 'nullable|string';
+            $rules['serial_number'] = 'nullable|string';
+            $rules['category'] = 'nullable|string';
+            $rules['inventory_number'] = 'nullable|string';
+        }
+
+        $validated = $request->validate($rules);
 
         $documentPath = null;
         if ($request->hasFile('document')) {
             $documentPath = $request->file('document')->store('equipment_docs', 'public');
         }
 
-        $quantity = $validated['quantity'];
-        $inventoryNumber = null;
-        $manualInventoryNumber = $request->input('inventory_number'); // From "Smart Alta" or "Smart Baja"
-        $material = null;
+        if ($type === 'ALTA') {
+            // NEW WORKFLOW: Creates MaterialAcquisition instead of EquipmentLog
 
-        // Logic for ALTA
-        if ($validated['type'] === 'ALTA') {
+            $targetCompany = $validated['company'] ?? $user->company ?? 'Comandancia';
 
-            // Constraint: If Serial Number is provided, Quantity MUST be 1
-            if (!empty($validated['serial_number']) && $quantity > 1) {
-                return redirect()->back()->withErrors(['quantity' => 'Materiales con número de serie deben registrarse de a uno (unique).']);
-            }
+            // Create Acquisition with status 'purchased' (Pendiente)
+            $acquisition = \App\Models\MaterialAcquisition::create([
+                'company' => $targetCompany,
+                'status' => 'purchased',
+                'invoice_number' => $validated['invoice_number'],
+                'invoice_date' => $validated['invoice_date'],
+                'supplier_rut' => $validated['supplier_rut'],
+                'supplier_name' => $validated['supplier_name'],
+                'document_path' => $documentPath,
+            ]);
 
-            // Check if Smart Alta (Existing Manual Number) provided
-            if (!empty($manualInventoryNumber)) {
-                // Find existing material by this code
-                $existingMaterial = \App\Models\Material::where('code', $manualInventoryNumber)
-                    ->where('company', $user->company)
-                    ->first();
-
-                if ($existingMaterial) {
-                    $material = $existingMaterial;
-
-                    // Specific check for S/N constraint on existing material
-                    if (!empty($material->serial_number) && $material->stock_quantity >= 1) {
-                        // Cannot add more stock to a S/N item
-                        return redirect()->back()->withErrors(['serial_number' => 'Este material con serie ya existe y no puede tener stock > 1.']);
-                    }
-
-                    $material->increment('stock_quantity', $quantity);
-                    $inventoryNumber = $manualInventoryNumber;
-
-                    // Update Serial Number if provided and not set
-                    if (!empty($validated['serial_number'])) {
-                        $material->update(['serial_number' => $validated['serial_number']]);
-                    }
-                } else {
-                    // New item with manually specified Inventory Number
-                    $inventoryNumber = $manualInventoryNumber;
-                }
-            } elseif (!empty($validated['category'])) {
-                // Generate Automatic Inventory Number
-                $prefix = $validated['category'];
-                $latestLog = EquipmentLog::where('inventory_number', 'like', "{$prefix}-%")
-                    ->orderByRaw('CAST(SUBSTRING(inventory_number, LENGTH(?) + 2) AS UNSIGNED) DESC', [$prefix])
-                    ->first();
-
-                $nextSequence = 1;
-                if ($latestLog && preg_match('/-(\d+)$/', $latestLog->inventory_number, $matches)) {
-                    $nextSequence = intval($matches[1]) + 1;
-                }
-                $inventoryNumber = $prefix . '-' . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-            }
-
-            // Material Sync Logic
-            if (isset($material) && $material) { // Already handled above
-                // Done
-            } else {
-                // Try to find by name if no specific code used or new item
-                $material = \App\Models\Material::where('company', $user->company)
-                    ->where('product_name', $validated['item_name'])
-                    ->first();
-
-                if ($material && !$inventoryNumber) {
-                    // Grouping logic (Consumables, no inventory number)
-                    if (!empty($material->serial_number) && $material->stock_quantity >= 1) {
-                        // Cannot add more stock to a S/N item
-                        return redirect()->back()->withErrors(['item_name' => 'Este material con serie ya existe y no puede tener stock > 1.']);
-                    }
-                    $material->increment('stock_quantity', $quantity);
-                    // Update details only if empty
-                    if (empty($material->brand) && !empty($validated['brand'])) $material->brand = $validated['brand'];
-                    if (empty($material->model) && !empty($validated['model'])) $material->model = $validated['model'];
-                    if (empty($material->category) && !empty($validated['category'])) $material->category = $validated['category'];
-                    // Update Serial Number if provided
-                    if (!empty($validated['serial_number'])) $material->serial_number = $validated['serial_number'];
-
-                    $material->save();
-                } else {
-                    // Create NEW Unique Asset (Inventory Number exists) OR New Consumable
-                    $material = \App\Models\Material::create([
-                        'product_name' => $validated['item_name'],
-                        'brand' => $validated['brand'],
-                        'model' => $validated['model'],
-                        'stock_quantity' => $quantity,
-                        'company' => $user->company,
-                        'category' => $validated['category'],
-                        'code' => $inventoryNumber, // Null if consumable
-                        'serial_number' => $validated['serial_number'],
-                    ]);
-                }
-            }
-
-            // Create History Record
-            if ($material) {
-                \App\Models\MaterialHistory::create([
-                    'material_id' => $material->id,
-                    'user_id' => $user->id,
-                    'type' => 'ADD', // ALTA
-                    'quantity_change' => $quantity,
-                    'current_balance' => $material->stock_quantity,
-                    'reference_type' => EquipmentLog::class,
-                    'reference_id' => null,
-                    'description' => 'Alta Manual: ' . $validated['reason'],
+            foreach ($request->items as $itemData) {
+                // Save items with their Unit Price
+                \App\Models\MaterialAcquisitionItem::create([
+                    'material_acquisition_id' => $acquisition->id,
+                    'item_name' => $itemData['item_name'],
+                    'quantity' => $itemData['quantity'],
+                    'unit_price' => $itemData['unit_price'] ?? null,
+                    'details' => $validated['reason'] ?? 'Alta Manual',
                 ]);
             }
-        } elseif ($validated['type'] === 'BAJA') {
-            // Logic for BAJA
-            // Try explicit Inventory Number or Serial Look up first (Smart Baja)
+
+            return redirect()->back()->with('success', 'Adquisición registrada exitosamente como Pendiente. Debe confirmar la recepción en el listado de solicitudes.');
+        } else {
+            // BAJA Logic (Keep existing single item)
+            $quantity = $validated['quantity'];
+            $inventoryNumber = null;
+            $manualInventoryNumber = $request->input('inventory_number');
+            $material = null;
+
             if (!empty($manualInventoryNumber)) {
                 $material = \App\Models\Material::where(function ($q) use ($manualInventoryNumber) {
                     $q->where('code', $manualInventoryNumber)
                         ->orWhere('serial_number', $manualInventoryNumber);
-                })
-                    ->where('company', $user->company)
-                    ->first();
+                })->where('company', $user->company)->first();
             }
-
             if (!$material) {
-                // Fallback to name search
                 $material = \App\Models\Material::where('company', $user->company)
                     ->where('product_name', $validated['item_name'])
                     ->first();
@@ -184,51 +162,209 @@ class EquipmentLogController extends Controller
                     $material->decrement('stock_quantity', $quantity);
                     $inventoryNumber = $material->code;
 
-                    // Create History Record
+                    $log = EquipmentLog::create([
+                        'item_name' => $material->product_name,
+                        'brand' => $material->brand,
+                        'model' => $material->model,
+                        'serial_number' => $validated['serial_number'] ?? $material->serial_number,
+                        'inventory_number' => $inventoryNumber,
+                        'category' => $material->category,
+                        'type' => 'BAJA',
+                        'quantity' => $quantity,
+                        'reason' => $validated['reason'],
+                        'document_path' => $documentPath,
+                        'material_id' => $material->id,
+                        'user_id' => $user->id,
+                    ]);
+
                     \App\Models\MaterialHistory::create([
                         'material_id' => $material->id,
                         'user_id' => $user->id,
-                        'type' => 'REMOVE', // BAJA
-                        'quantity_change' => -$quantity, // Negative
+                        'type' => 'REMOVE',
+                        'quantity_change' => -$quantity,
                         'current_balance' => $material->stock_quantity,
                         'reference_type' => EquipmentLog::class,
-                        'reference_id' => null,
+                        'reference_id' => $log->id,
                         'description' => 'Baja Manual: ' . $validated['reason'],
                     ]);
                 } else {
-                    return redirect()->back()->withErrors(['quantity' => 'No hay suficiente stock para dar de baja esa cantidad.']);
+                    return redirect()->back()->withErrors(['quantity' => 'No hay suficiente stock.']);
                 }
             } else {
-                return redirect()->back()->withErrors(['item_name' => 'No se encontró el material para dar de baja.']);
+                return redirect()->back()->withErrors(['item_name' => 'Material no encontrado.']);
+            }
+
+            return redirect()->back()->with('success', 'Baja registrada exitosamente.');
+        }
+    }
+
+    // --- Acquisition Flow Methods ---
+
+    public function storeRequest(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.item_name' => 'required|string',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.details' => 'nullable|string',
+        ]);
+
+        $company = $request->user()->company;
+        if (!$company) $company = 'Comandancia'; // Default if none
+
+        $acquisition = \App\Models\MaterialAcquisition::create([
+            'company' => $company,
+            'status' => 'requested',
+        ]);
+
+        foreach ($request->items as $item) {
+            \App\Models\MaterialAcquisitionItem::create([
+                'material_acquisition_id' => $acquisition->id,
+                'item_name' => $item['item_name'],
+                'quantity' => $item['quantity'],
+                'details' => $item['details'] ?? null,
+            ]);
+        }
+
+        return back()->with('success', 'Solicitud de material creada.');
+    }
+
+    public function storePurchase(Request $request, \App\Models\MaterialAcquisition $acquisition)
+    {
+        $request->validate([
+            'invoice_number' => 'required|string',
+            'invoice_date' => 'required|date',
+            'supplier_rut' => 'required|string',
+            'supplier_name' => 'required|string',
+            'document' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+        ]);
+
+        $path = null;
+        if ($request->hasFile('document')) {
+            $path = $request->file('document')->store('invoices', 'public');
+        }
+
+        $acquisition->update([
+            'status' => 'purchased',
+            'invoice_number' => $request->invoice_number,
+            'invoice_date' => $request->invoice_date,
+            'supplier_rut' => $request->supplier_rut,
+            'supplier_name' => $request->supplier_name,
+            'document_path' => $path,
+        ]);
+
+        return back()->with('success', 'Compra registrada/confirmada.');
+    }
+
+    public function confirmReception(Request $request, \App\Models\MaterialAcquisition $acquisition)
+    {
+        // Confirm reception by Secretary. Status: Received.
+        // Optional: Update Inventory Codes if provided
+        if ($request->has('items')) {
+            $request->validate([
+                'items' => 'array',
+                'items.*.id' => 'required|exists:material_acquisition_items,id',
+                'items.*.inventory_code' => 'nullable|string',
+            ]);
+
+            foreach ($request->items as $itemData) {
+                $dbItem = \App\Models\MaterialAcquisitionItem::find($itemData['id']);
+                if ($dbItem && isset($itemData['inventory_code'])) {
+                    $dbItem->update(['inventory_code' => $itemData['inventory_code']]);
+                }
             }
         }
 
-        $log = EquipmentLog::create([
-            'item_name' => $material ? $material->product_name : $validated['item_name'], // Ensure consistent naming
-            'brand' => $material ? $material->brand : $validated['brand'],
-            'model' => $material ? $material->model : $validated['model'],
-            'serial_number' => $validated['serial_number'] ?? ($material ? $material->serial_number : null),
-            'inventory_number' => $inventoryNumber,
-            'category' => $validated['category'] ?? ($material ? $material->category : null),
-            'type' => $validated['type'],
-            'quantity' => $quantity, // Log quantity
-            'reason' => $validated['reason'],
-            'document_path' => $documentPath,
-            'material_id' => $material ? $material->id : null,
-            'user_id' => $user->id,
+        $acquisition->update(['status' => 'received']);
+
+        return back()->with('success', 'Material recibido en secretaría. Pendiente de ingreso por Inspector.');
+    }
+
+    public function finishInventoryEntry(Request $request, \App\Models\MaterialAcquisition $acquisition)
+    {
+        // Inspector Logic: Loop items, create exact materials in Comandancia
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:material_acquisition_items,id',
+            'items.*.item_name' => 'required|string', // Allow editing name
+            'items.*.category' => 'required|string', // Category is mandatory
+            'items.*.brand' => 'required|string',
+            'items.*.model' => 'nullable|string',
+            'items.*.serial_number' => 'nullable|string',
+            'items.*.inventory_code' => 'nullable|string',
+            // unit_price is persisted from item, but inspector might edit? No, price is from invoice.
         ]);
 
-        // Update Reference ID in History if mapped
-        if ($material) {
-            \App\Models\MaterialHistory::where('reference_type', EquipmentLog::class)
-                ->where('material_id', $material->id)
-                ->where('user_id', $user->id)
-                ->where('created_at', '>=', now()->subSeconds(5))
-                ->latest()
-                ->first()
-                ?->update(['reference_id' => $log->id]);
+        foreach ($request->items as $itemData) {
+            $dbItem = \App\Models\MaterialAcquisitionItem::find($itemData['id']);
+            if (!$dbItem) continue;
+
+            $dbItem->update([
+                'item_name' => $itemData['item_name'], // Update name if changed
+                'brand' => $itemData['brand'],
+                'model' => $itemData['model'] ?? null,
+                'category' => $itemData['category'], // Save category
+                'serial_number' => $itemData['serial_number'] ?? null,
+                'inventory_code' => $itemData['inventory_code'] ?? null,
+            ]);
+
+            // Create Material in COMANDANCIA
+            $material = \App\Models\Material::create([
+                'product_name' => $dbItem->item_name,
+                'brand' => $dbItem->brand,
+                'model' => $dbItem->model,
+                'serial_number' => $dbItem->serial_number,
+                'code' => $dbItem->inventory_code,
+                'stock_quantity' => $dbItem->quantity,
+                'company' => 'Comandancia',
+                'category' => $itemData['category'], // Use selected category
+            ]);
+
+            // Create Log (Alta) so it appears in history
+            EquipmentLog::create([
+                'item_name' => $material->product_name,
+                'type' => 'ALTA',
+                'quantity' => $dbItem->quantity,
+                'unit_price' => $dbItem->unit_price,
+                'category' => $itemData['category'],
+                'brand' => $dbItem->brand,
+                'model' => $dbItem->model,
+                'serial_number' => $dbItem->serial_number,
+                'inventory_number' => $dbItem->inventory_code,
+                'reason' => "Adquisición Factura #{$acquisition->invoice_number}",
+                'document_path' => $acquisition->document_path,
+                'material_id' => $material->id,
+                'user_id' => $request->user()->id,
+                'invoice_number' => $acquisition->invoice_number,
+                'invoice_date' => $acquisition->invoice_date,
+                'supplier_rut' => $acquisition->supplier_rut,
+                'supplier_name' => $acquisition->supplier_name,
+            ]);
+
+            // History Link
+            \App\Models\MaterialHistory::create([
+                'material_id' => $material->id,
+                'user_id' => $request->user()->id,
+                'type' => 'ADD',
+                'quantity_change' => $dbItem->quantity,
+                'current_balance' => $dbItem->quantity,
+                'reference_type' => \App\Models\MaterialAcquisition::class,
+                'reference_id' => $acquisition->id,
+                'description' => "Ingreso por Adquisición (Factura: {$acquisition->invoice_number})",
+            ]);
         }
 
-        return redirect()->back();
+        $acquisition->update(['status' => 'completed']);
+
+        // Notify Captain (Requester/Target Company)
+        $captain = \App\Models\User::where('company', $acquisition->company)
+            ->where('role', 'capitan')
+            ->first();
+
+        // if ($captain) {
+        //     Mail::to($captain->email)->send(new MaterialReceived($acquisition));
+        // }
+
+        return back()->with('success', 'Material ingresado al inventario de Comandancia y notificado al Capitán.');
     }
 }
