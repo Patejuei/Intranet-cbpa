@@ -35,4 +35,9 @@ class Material extends Model
     {
         return $this->hasMany(AssignedMaterial::class);
     }
+
+    public function repairs()
+    {
+        return $this->hasMany(RepairRequest::class);
+    }
 }

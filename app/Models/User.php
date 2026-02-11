@@ -28,6 +28,7 @@ class User extends Authenticatable
         'permissions',
         'department',
         'is_enabled',
+        'signature_path',
     ];
 
     /**

@@ -27,12 +27,46 @@ class ProfileController extends Controller
     /**
      * Update the user's profile settings.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => [
+                'sometimes',
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique(\App\Models\User::class)->ignore($request->user()->id),
+            ],
+            'signature' => ['nullable', 'image', 'max:1024'], // 1MB Max
+        ]);
+
+        $request->user()->fill($validated);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
+        }
+
+        if ($request->hasFile('signature')) {
+            $user = $request->user();
+            // Delete old signature if exists
+            if ($user->signature_path && file_exists(public_path($user->signature_path))) {
+                unlink(public_path($user->signature_path));
+            }
+
+            $file = $request->file('signature');
+            $filename = 'signature_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+            // Ensure directory exists
+            if (!file_exists(public_path('signatures'))) {
+                mkdir(public_path('signatures'), 0755, true);
+            }
+
+            $file->move(public_path('signatures'), $filename);
+
+            $request->user()->signature_path = 'signatures/' . $filename;
         }
 
         $request->user()->save();

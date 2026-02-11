@@ -2,7 +2,13 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import { send } from '@/routes/verification';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import {
+    Form,
+    Head,
+    Link,
+    useForm as useInertiaForm,
+    usePage,
+} from '@inertiajs/react';
 
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
@@ -29,6 +35,19 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<SharedData>().props;
+    const { data, setData, post, processing, errors, recentlySuccessful } =
+        useInertiaForm({
+            _method: 'PATCH',
+            signature: null as File | null,
+        });
+
+    const submitSignature = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(ProfileController.update.url(), {
+            preserveScroll: true,
+            forceFormData: true,
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -142,6 +161,75 @@ export default function Profile({
                             </>
                         )}
                     </Form>
+
+                    {/* Separate Signature Form */}
+                    <div className="border-t border-gray-200 pt-6">
+                        <HeadingSmall
+                            title="Firma Digital"
+                            description="Suba una imagen de su firma para usar en documentos"
+                        />
+                        <form
+                            onSubmit={submitSignature}
+                            className="mt-6 space-y-6"
+                        >
+                            <div className="grid gap-2">
+                                <Label htmlFor="signature">
+                                    Subir nueva firma (Imagen)
+                                </Label>
+                                <Input
+                                    id="signature"
+                                    type="file"
+                                    className="mt-1 block w-full"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (
+                                            e.target.files &&
+                                            e.target.files[0]
+                                        ) {
+                                            setData(
+                                                'signature',
+                                                e.target.files[0],
+                                            );
+                                        }
+                                    }}
+                                />
+                                {auth.user.signature_path && (
+                                    <div className="mt-2">
+                                        <p className="text-sm text-gray-500">
+                                            Firma actual:
+                                        </p>
+                                        <img
+                                            src={`/${auth.user.signature_path}?t=${Date.now()}`} // Cache buster
+                                            alt="Firma actual"
+                                            className="h-16 rounded border border-gray-200 object-contain p-1"
+                                        />
+                                    </div>
+                                )}
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.signature}
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <Button disabled={processing}>
+                                    Guardar Firma
+                                </Button>
+
+                                <Transition
+                                    show={recentlySuccessful}
+                                    enter="transition ease-in-out"
+                                    enterFrom="opacity-0"
+                                    leave="transition ease-in-out"
+                                    leaveTo="opacity-0"
+                                >
+                                    <p className="text-sm text-neutral-600">
+                                        Firma Guardada
+                                    </p>
+                                </Transition>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <DeleteUser />

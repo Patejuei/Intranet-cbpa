@@ -23,8 +23,10 @@ return new class extends Migration
             $table->unsignedBigInteger('stock_item_id')->nullable()->after('vehicle_id');
         });
 
-        // Update status enum
-        DB::statement("ALTER TABLE petty_cash_renditions MODIFY COLUMN status ENUM('draft', 'pending_inspector', 'pending_comandante', 'approved', 'rejected', 'pending_validation', 'rendido') DEFAULT 'pending_validation'");
+        // Update status enum (Skip for SQLite testing)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE petty_cash_renditions MODIFY COLUMN status ENUM('draft', 'pending_inspector', 'pending_comandante', 'approved', 'rejected', 'pending_validation', 'rendido') DEFAULT 'pending_validation'");
+        }
     }
 
     /**
@@ -38,6 +40,8 @@ return new class extends Migration
         });
 
         // Revert status enum (Warning: Data loss if new statuses were used)
-        DB::statement("ALTER TABLE petty_cash_renditions MODIFY COLUMN status ENUM('draft', 'pending_inspector', 'pending_comandante', 'approved', 'rejected') DEFAULT 'draft'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE petty_cash_renditions MODIFY COLUMN status ENUM('draft', 'pending_inspector', 'pending_comandante', 'approved', 'rejected') DEFAULT 'draft'");
+        }
     }
 };

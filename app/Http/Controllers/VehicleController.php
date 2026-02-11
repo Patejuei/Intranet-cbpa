@@ -116,12 +116,17 @@ class VehicleController extends Controller
             $q->latest();
         }, 'maintenances' => function ($q) {
             $q->latest();
-        }, 'maintenances.tasks', 'maintenances.issues'])->findOrFail($id);
+        }, 'maintenances.tasks', 'maintenances.issues', 'maintenances.items', 'maintenances.externalWorks'])->findOrFail($id);
 
         $totalMaintenanceCost = $vehicle->maintenances->sum(function ($maintenance) {
             $tasksCost = $maintenance->tasks->sum('cost');
             $itemsCost = $maintenance->items->sum('pivot.total_cost');
-            return $tasksCost + $itemsCost;
+            $externalWorksCost = $maintenance->externalWorks->sum('cost');
+
+            // Calculate and set cost for the individual maintenance record
+            $maintenance->cost = $tasksCost + $itemsCost + $externalWorksCost;
+
+            return $tasksCost + $itemsCost + $externalWorksCost;
         });
 
         return Inertia::render('vehicles/status/show', [

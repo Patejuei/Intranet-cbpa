@@ -20,13 +20,13 @@ import { dashboard } from '@/routes';
 import { Link } from '@inertiajs/react';
 import {
     AlertTriangle,
-    Battery,
     BookOpen,
     Box,
     ChevronDown,
     ClipboardCheck,
     ClipboardList,
     FileText,
+    Hammer,
     LayoutGrid,
     Package,
     Shield,
@@ -68,19 +68,26 @@ const NAV_GROUPS = [
                 permission: 'inventory',
                 tooltip: 'Inventario',
             },
-            {
-                title: 'Baterías',
-                url: '/batteries',
-                icon: Battery,
-                permission: 'batteries',
-                tooltip: 'Baterías',
-            },
+            // {
+            //     title: 'Baterías',
+            //     url: '/batteries',
+            //     icon: Battery,
+            //     permission: 'batteries',
+            //     tooltip: 'Baterías',
+            // },
             {
                 title: 'Material Menor',
                 url: '/equipment',
                 icon: Box,
                 permission: 'equipment',
                 tooltip: 'Material Menor',
+            },
+            {
+                title: 'Reparaciones',
+                url: '/repairs',
+                icon: Hammer,
+                permission: 'equipment', // Using equipment permission for visibility
+                tooltip: 'Reparaciones',
             },
             {
                 title: 'Actas de Entrega',

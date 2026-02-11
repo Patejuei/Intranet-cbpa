@@ -15,7 +15,7 @@ class VehicleMaintenanceController extends Controller
         $status = $request->input('status');
         $search = $request->input('search');
 
-        $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues'])
+        $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues', 'externalWorks'])
             ->orderBy('entry_date', 'desc');
 
         $user = $request->user();
@@ -119,6 +119,10 @@ class VehicleMaintenanceController extends Controller
             'fuel_type' => 'required|string',
             'transmission' => 'required|string',
             'entry_checklist' => 'nullable|array',
+            'external_works' => 'nullable|array',
+            'external_works.*.description' => 'required|string',
+            'external_works.*.provider' => 'required|string',
+            'external_works.*.cost' => 'required|integer',
         ]);
 
         $maintenance = \App\Models\VehicleMaintenance::create([
@@ -134,6 +138,7 @@ class VehicleMaintenanceController extends Controller
             'fuel_type' => $validated['fuel_type'],
             'transmission' => $validated['transmission'],
             'entry_checklist' => $validated['entry_checklist'] ?? null,
+            'receiver_user_id' => $request->user()->id,
         ]);
 
         if (!empty($validated['issue_ids'])) {
@@ -151,6 +156,12 @@ class VehicleMaintenanceController extends Controller
                         'description' => $taskDescription,
                     ]);
                 }
+            }
+        }
+
+        if (!empty($validated['external_works'])) {
+            foreach ($validated['external_works'] as $work) {
+                $maintenance->externalWorks()->create($work);
             }
         }
 
@@ -172,6 +183,7 @@ class VehicleMaintenanceController extends Controller
         $maintenance->update([
             'status' => 'Finalizado',
             'exit_date' => now(),
+            'finalizer_user_id' => $request->user()->id,
         ]);
 
         // Resolve issues
@@ -279,7 +291,7 @@ class VehicleMaintenanceController extends Controller
      */
     public function show(\App\Models\VehicleMaintenance $workshop)
     {
-        $workshop->load(['vehicle', 'issues', 'tasks', 'items']);
+        $workshop->load(['vehicle', 'issues', 'tasks', 'items', 'externalWorks']);
 
         // Filter inventory items compatible with this vehicle or generic (empty compatibility)
         $vehicleId = $workshop->vehicle_id;
@@ -309,7 +321,7 @@ class VehicleMaintenanceController extends Controller
 
     public function print(\App\Models\VehicleMaintenance $maintenance)
     {
-        $maintenance->load(['vehicle', 'issues', 'tasks']);
+        $maintenance->load(['vehicle', 'issues', 'tasks', 'receiverUser', 'externalWorks']);
         return Inertia::render('vehicles/workshop/print', [
             'maintenance' => $maintenance
         ]);
@@ -317,7 +329,7 @@ class VehicleMaintenanceController extends Controller
 
     public function printExit(\App\Models\VehicleMaintenance $maintenance)
     {
-        $maintenance->load(['vehicle', 'issues', 'tasks', 'items']);
+        $maintenance->load(['vehicle', 'issues', 'tasks', 'items', 'finalizerUser', 'externalWorks']);
         return Inertia::render('vehicles/workshop/print_exit', [
             'maintenance' => $maintenance
         ]);
@@ -343,6 +355,11 @@ class VehicleMaintenanceController extends Controller
             'resolved_issue_ids' => 'nullable|array',
             'withdrawal_responsible_name' => 'nullable|string',
             'withdrawal_responsible_rut' => 'nullable|string',
+            'external_works' => 'nullable|array',
+            'external_works.*.id' => 'nullable|integer',
+            'external_works.*.description' => 'required|string',
+            'external_works.*.provider' => 'required|string',
+            'external_works.*.cost' => 'required|integer',
         ]);
 
         $updateData = [
@@ -383,6 +400,28 @@ class VehicleMaintenanceController extends Controller
             }
             // Optional: Delete tasks not in the list? User didn't ask for deletion explicitly but editing specific tasks implies list management.
             // For now, let's keep it additive/update unless we implement delete in frontend.
+        }
+
+        // Handle External Works
+        if (isset($validated['external_works'])) {
+            foreach ($validated['external_works'] as $work) {
+                if (isset($work['id'])) {
+                    $externalWork = \App\Models\VehicleMaintenanceExternalWork::find($work['id']);
+                    if ($externalWork && $externalWork->vehicle_maintenance_id === $workshop->id) {
+                        $externalWork->update([
+                            'description' => $work['description'],
+                            'provider' => $work['provider'],
+                            'cost' => $work['cost'],
+                        ]);
+                    }
+                } else {
+                    $workshop->externalWorks()->create([
+                        'description' => $work['description'],
+                        'provider' => $work['provider'],
+                        'cost' => $work['cost'],
+                    ]);
+                }
+            }
         }
 
         // Handle Issues Resolution

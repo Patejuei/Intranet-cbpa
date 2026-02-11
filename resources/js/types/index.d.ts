@@ -42,6 +42,7 @@ export interface User {
     role?: string;
     company?: string;
     department?: string;
+    signature_path?: string;
     permissions?: string[];
     [key: string]: unknown;
 }
@@ -179,4 +180,12 @@ export interface Pagination<T> {
     prev_page_url: string | null;
     to: number | null;
     total: number;
+}
+
+declare global {
+    var route: (
+        name: string,
+        params?: Record<string, unknown>,
+        absolute?: boolean,
+    ) => string;
 }

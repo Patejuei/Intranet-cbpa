@@ -12,7 +12,15 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { Download, Eye, FileText, Pencil, Search, Upload } from 'lucide-react';
+import {
+    Download,
+    Eye,
+    FileText,
+    Pencil,
+    PlusCircle,
+    Search,
+    Upload,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 
@@ -207,6 +215,10 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         >
                             <Upload className="size-4" />
                             Importar
+                        </Button>
+                        <Button onClick={openCreate} className="gap-2">
+                            <PlusCircle className="size-4" />
+                            Nuevo Material
                         </Button>
                     </div>
                 </div>

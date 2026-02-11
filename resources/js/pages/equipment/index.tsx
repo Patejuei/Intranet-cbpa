@@ -892,7 +892,6 @@ export default function EquipmentIndex({
                                             </div>
                                         </div>
                                     )}
-
                                     {/* Document Upload (Shared) */}
                                     <div>
                                         <label className="mb-1 block text-sm font-medium">

@@ -273,6 +273,29 @@ class MaterialController extends Controller
         return response()->json($material);
     }
 
+    public function listForSelect(Request $request)
+    {
+        $query = Material::query()->select('id', 'product_name', 'code', 'serial_number', 'brand', 'model');
+        $this->applyCompanyScope($query, $request);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
+        // Return simple JSON array, not paginated, limit to reasonable amount if no search
+        if (!$search) {
+            $query->limit(100);
+        }
+
+        return response()->json([
+            'data' => $query->get()
+        ]);
+    }
+
     public function destroy(Material $inventory)
     {
         $user = request()->user();

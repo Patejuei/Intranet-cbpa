@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calendar,
@@ -38,12 +38,17 @@ import {
 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
-declare let route: any;
-
 interface Task {
     id?: number;
     description: string;
     is_completed: boolean;
+    cost: number | null;
+}
+
+interface ExternalWork {
+    id?: number;
+    description: string;
+    provider: string;
     cost: number | null;
 }
 
@@ -92,6 +97,7 @@ interface Maintenance {
         name: string;
         sku: string;
     }[];
+    external_works?: ExternalWork[];
 }
 
 interface InventoryItem {
@@ -110,7 +116,7 @@ export default function WorkshopShow({
     maintenance: Maintenance;
     inventoryItems: InventoryItem[];
 }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing } = useForm({
         status: maintenance.status,
         tentative_exit_date: maintenance.tentative_exit_date
             ? maintenance.tentative_exit_date.split('T')[0]
@@ -125,6 +131,10 @@ export default function WorkshopShow({
             maintenance.withdrawal_responsible_name || '',
         withdrawal_responsible_rut:
             maintenance.withdrawal_responsible_rut || '',
+        external_works: (maintenance.external_works || []).map((w) => ({
+            ...w,
+            cost: w.cost ? Number(w.cost) : null,
+        })) as ExternalWork[],
     });
 
     const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
@@ -225,7 +235,6 @@ export default function WorkshopShow({
 
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
-    const { auth } = usePage<any>().props;
     const { canEdit: canEditPermission } = usePermissions();
     const canEdit = canEditPermission('vehicles.workshop');
     const isLocked =
@@ -501,7 +510,7 @@ export default function WorkshopShow({
                                                 const issues = Object.entries(
                                                     maintenance.entry_checklist,
                                                 ).filter(
-                                                    ([_, v]) => v === 'Fallas',
+                                                    ([, v]) => v === 'Fallas',
                                                 );
                                                 if (issues.length === 0)
                                                     return (
@@ -788,6 +797,160 @@ export default function WorkshopShow({
                                             </tr>
                                         </tfoot>
                                     </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Trabajos Externos</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    {data.external_works.map((work, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex flex-col gap-2 rounded border p-2 md:flex-row md:items-start"
+                                        >
+                                            <div className="flex-[2]">
+                                                {isContentLocked ? (
+                                                    <div>
+                                                        <Label className="text-xs text-muted-foreground">
+                                                            Descripción
+                                                        </Label>
+                                                        <p className="text-sm font-medium">
+                                                            {work.description}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <Input
+                                                        placeholder="Descripción..."
+                                                        value={work.description}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].description =
+                                                                e.target.value;
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                {isContentLocked ? (
+                                                    <div>
+                                                        <Label className="text-xs text-muted-foreground">
+                                                            Proveedor
+                                                        </Label>
+                                                        <p className="text-sm">
+                                                            {work.provider}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <Input
+                                                        placeholder="Proveedor..."
+                                                        value={work.provider}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].provider =
+                                                                e.target.value;
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="w-full md:w-32">
+                                                {isContentLocked ? (
+                                                    <div>
+                                                        <Label className="text-xs text-muted-foreground">
+                                                            Costo
+                                                        </Label>
+                                                        <p className="text-sm font-bold">
+                                                            $
+                                                            {(
+                                                                work.cost || 0
+                                                            ).toLocaleString(
+                                                                'es-CL',
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Costo"
+                                                        value={work.cost || ''}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].cost = Number(
+                                                                e.target.value,
+                                                            );
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                            {!isContentLocked && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-destructive hover:bg-destructive/10"
+                                                    onClick={() => {
+                                                        const newWorks =
+                                                            data.external_works.filter(
+                                                                (_, i) =>
+                                                                    i !== index,
+                                                            );
+                                                        setData(
+                                                            'external_works',
+                                                            newWorks,
+                                                        );
+                                                    }}
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {!isContentLocked && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                setData('external_works', [
+                                                    ...data.external_works,
+                                                    {
+                                                        description: '',
+                                                        provider: '',
+                                                        cost: null,
+                                                    },
+                                                ])
+                                            }
+                                        >
+                                            + Agregar Trabajo Externo
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

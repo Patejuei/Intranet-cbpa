@@ -23,6 +23,12 @@ interface Issue {
     severity: string;
 }
 
+interface ExternalWork {
+    description: string;
+    provider: string;
+    cost: string;
+}
+
 interface Vehicle {
     id: number;
     name: string;
@@ -57,6 +63,7 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         workshop_name: 'Nemesio Vicuña 275, Puente Alto',
         description: '',
         tasks: [] as string[],
+        external_works: [] as ExternalWork[],
         issue_ids: [] as number[],
         // New Fields
         responsible_person: '',
@@ -609,6 +616,114 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                             }
                                         >
                                             + Agregar Trabajo
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Trabajos Externos</Label>
+                                    <div className="space-y-2">
+                                        {data.external_works.map(
+                                            (work, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex flex-col gap-2 md:flex-row md:items-start"
+                                                >
+                                                    <Input
+                                                        placeholder="Descripción del trabajo..."
+                                                        value={work.description}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].description =
+                                                                e.target.value;
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                        className="flex-[2]"
+                                                    />
+                                                    <Input
+                                                        placeholder="Proveedor / Taller"
+                                                        value={work.provider}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].provider =
+                                                                e.target.value;
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                        className="flex-1"
+                                                    />
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Costo"
+                                                        value={work.cost}
+                                                        onChange={(e) => {
+                                                            const newWorks = [
+                                                                ...data.external_works,
+                                                            ];
+                                                            newWorks[
+                                                                index
+                                                            ].cost =
+                                                                e.target.value;
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                        className="w-full md:w-32"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            const newWorks =
+                                                                data.external_works.filter(
+                                                                    (_, i) =>
+                                                                        i !==
+                                                                        index,
+                                                                );
+                                                            setData(
+                                                                'external_works',
+                                                                newWorks,
+                                                            );
+                                                        }}
+                                                    >
+                                                        <span className="sr-only">
+                                                            Eliminar
+                                                        </span>
+                                                        &times;
+                                                    </Button>
+                                                </div>
+                                            ),
+                                        )}
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                setData('external_works', [
+                                                    ...data.external_works,
+                                                    {
+                                                        description: '',
+                                                        provider: '',
+                                                        cost: '',
+                                                    },
+                                                ])
+                                            }
+                                        >
+                                            + Agregar Trabajo Externo
                                         </Button>
                                     </div>
                                 </div>

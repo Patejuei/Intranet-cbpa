@@ -46,6 +46,69 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+    <script>
+        const Ziggy = {
+            url: '{{ url(' / ') }}',
+            port: null,
+            defaults: {},
+            routes: {
+                'dashboard': {
+                    uri: 'dashboard',
+                    methods: ['GET', 'HEAD']
+                },
+                'equipment.repairs.index': {
+                    uri: 'repairs',
+                    methods: ['GET', 'HEAD']
+                },
+                'equipment.repairs.create': {
+                    uri: 'repairs/create',
+                    methods: ['GET', 'HEAD']
+                },
+                'equipment.repairs.store': {
+                    uri: 'repairs',
+                    methods: ['POST']
+                },
+                'equipment.repairs.show': {
+                    uri: 'repairs/{repair}',
+                    methods: ['GET', 'HEAD'],
+                    parameters: ['repair']
+                },
+                'equipment.repairs.receive': {
+                    uri: 'repairs/{repair}/receive',
+                    methods: ['POST'],
+                    parameters: ['repair']
+                },
+                'equipment.repairs.evaluate': {
+                    uri: 'repairs/{repair}/evaluate',
+                    methods: ['POST'],
+                    parameters: ['repair']
+                },
+                'equipment.repairs.send_provider': {
+                    uri: 'repairs/{repair}/send-provider',
+                    methods: ['POST'],
+                    parameters: ['repair']
+                },
+                'equipment.repairs.finish': {
+                    uri: 'repairs/{repair}/finish',
+                    methods: ['POST'],
+                    parameters: ['repair']
+                },
+                'equipment.repairs.download_provider_act': {
+                    uri: 'repairs/{repair}/provider-act',
+                    methods: ['GET', 'HEAD'],
+                    parameters: ['repair']
+                },
+                'materials.lookup': {
+                    uri: 'materials/lookup',
+                    methods: ['GET', 'HEAD']
+                },
+            }
+        };
+        if (typeof window !== 'undefined') {
+            window.Ziggy = Ziggy;
+        }
+    </script>
+    {{-- @routes disabled until tightenco/ziggy can be installed --}}
     @viteReactRefresh
     @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
     @inertiaHead

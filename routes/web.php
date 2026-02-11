@@ -319,6 +319,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Assuming users with 'equipment' permission can manage inventory and deliveries
     Route::middleware('module:equipment')->group(function () {
         Route::get('inventory/search', [\App\Http\Controllers\MaterialController::class, 'search'])->name('inventory.search');
+        Route::get('materials/lookup', [\App\Http\Controllers\MaterialController::class, 'listForSelect'])->name('materials.lookup');
         Route::post('inventory/import-viper', [\App\Http\Controllers\MaterialController::class, 'importViper'])->name('inventory.import-viper');
         Route::post('inventory/import', [\App\Http\Controllers\MaterialController::class, 'import'])->name('inventory.import');
         Route::resource('inventory', \App\Http\Controllers\MaterialController::class)->only(['index', 'store', 'update', 'show', 'destroy']);
@@ -326,6 +327,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('deliveries/{delivery}/pdf', [\App\Http\Controllers\DeliveryCertificateController::class, 'downloadPdf'])->name('deliveries.pdf');
         Route::resource('receptions', \App\Http\Controllers\ReceptionCertificateController::class);
         Route::get('receptions/{reception}/pdf', [\App\Http\Controllers\ReceptionCertificateController::class, 'downloadPdf'])->name('receptions.pdf');
+
+        // Repair Requests
+        Route::get('repairs', [\App\Http\Controllers\RepairRequestController::class, 'index'])->name('equipment.repairs.index');
+        Route::get('repairs/create', [\App\Http\Controllers\RepairRequestController::class, 'create'])->name('equipment.repairs.create');
+        Route::post('repairs', [\App\Http\Controllers\RepairRequestController::class, 'store'])->name('equipment.repairs.store');
+        Route::get('repairs/{repair}', [\App\Http\Controllers\RepairRequestController::class, 'show'])->name('equipment.repairs.show');
+        Route::post('repairs/{repair}/receive', [\App\Http\Controllers\RepairRequestController::class, 'receive'])->name('equipment.repairs.receive');
+        Route::post('repairs/{repair}/evaluate', [\App\Http\Controllers\RepairRequestController::class, 'evaluate'])->name('equipment.repairs.evaluate');
+        Route::post('repairs/{repair}/send-provider', [\App\Http\Controllers\RepairRequestController::class, 'sendToProvider'])->name('equipment.repairs.send_provider');
+        Route::get('repairs/{repair}/provider-act', [\App\Http\Controllers\RepairRequestController::class, 'downloadProviderAct'])->name('equipment.repairs.download_provider_act');
+        Route::post('repairs/{repair}/finish', [\App\Http\Controllers\RepairRequestController::class, 'finish'])->name('equipment.repairs.finish');
     });
 
     // My Profile Module (Accessible to all auth users)

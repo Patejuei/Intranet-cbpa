@@ -23,6 +23,8 @@ class VehicleMaintenance extends Model
         'entry_checklist',
         'withdrawal_responsible_name',
         'withdrawal_responsible_rut',
+        'receiver_user_id',
+        'finalizer_user_id',
     ];
 
     protected $casts = [
@@ -35,6 +37,16 @@ class VehicleMaintenance extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function receiverUser()
+    {
+        return $this->belongsTo(User::class, 'receiver_user_id');
+    }
+
+    public function finalizerUser()
+    {
+        return $this->belongsTo(User::class, 'finalizer_user_id');
     }
 
     public function issues()
@@ -52,5 +64,10 @@ class VehicleMaintenance extends Model
         return $this->belongsToMany(WorkshopInventory::class, 'vehicle_maintenance_items', 'maintenance_id', 'inventory_item_id')
             ->withPivot('quantity', 'unit_cost', 'total_cost')
             ->withTimestamps();
+    }
+
+    public function externalWorks()
+    {
+        return $this->hasMany(VehicleMaintenanceExternalWork::class);
     }
 }

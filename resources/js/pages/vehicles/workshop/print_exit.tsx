@@ -1,3 +1,4 @@
+import PrintHeader from '@/components/print-header';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { Head } from '@inertiajs/react';
@@ -53,7 +54,12 @@ interface Maintenance {
     entry_checklist?: Record<string, string>;
     issues: Issue[];
     tasks: Task[];
+    external_works?: { description: string; provider: string; cost: number }[];
     items?: InventoryItem[];
+    finalizer_user?: {
+        name: string;
+        signature_path: string | null;
+    };
 }
 
 export default function MaintenanceExitPrint({
@@ -61,35 +67,6 @@ export default function MaintenanceExitPrint({
 }: {
     maintenance: Maintenance;
 }) {
-    const PrintHeader = () => (
-        <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4">
-            <div className="flex items-center gap-4">
-                <img
-                    src="/images/cbpa_logo.jpg"
-                    alt="Logo CBPA"
-                    className="h-16 w-16 object-contain"
-                />
-                <div>
-                    <h1 className="text-2xl font-bold tracking-wider uppercase">
-                        Cuerpo de Bomberos Puente Alto
-                    </h1>
-                    <h2 className="text-lg font-semibold text-slate-700 uppercase">
-                        Depto. Material Mayor
-                    </h2>
-                </div>
-            </div>
-            <div className="text-right">
-                <h3 className="text-xl font-bold">ORDEN DE SALIDA</h3>
-                <p className="font-mono text-lg">
-                    #{String(maintenance.id).padStart(6, '0')}
-                </p>
-                <p className="text-sm text-slate-600">
-                    {formatDate(new Date().toISOString())}
-                </p>
-            </div>
-        </div>
-    );
-
     return (
         <>
             <Head title={`Orden de Salida #${maintenance.id}`} />
@@ -119,7 +96,10 @@ export default function MaintenanceExitPrint({
                 {/* PAGE 1: Vehicle Data & Entry Summary */}
                 <div className="mx-auto flex h-[31cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:h-auto print:border-none print:p-0 print:shadow-none">
                     <div className="space-y-6">
-                        <PrintHeader />
+                        <PrintHeader
+                            title="ORDEN DE SALIDA"
+                            id={maintenance.id}
+                        />
 
                         {/* Info Grid */}
                         <div className="grid grid-cols-2 gap-x-12 gap-y-3">
@@ -232,7 +212,10 @@ export default function MaintenanceExitPrint({
                 {/* PAGE 2: Completed Works & Signatures */}
                 <div className="page-break mx-auto mt-8 flex h-[31cm] max-w-[21.5cm] flex-col justify-between border border-slate-300 bg-white p-8 shadow-md print:mt-0 print:h-auto print:border-none print:p-0 print:shadow-none">
                     <div className="space-y-6">
-                        <PrintHeader />
+                        <PrintHeader
+                            title="ORDEN DE SALIDA"
+                            id={maintenance.id}
+                        />
 
                         {/* Issues List - Resolved */}
                         {maintenance.issues.some(
@@ -351,6 +334,63 @@ export default function MaintenanceExitPrint({
                             </div>
                         )}
 
+                        {/* External Works List */}
+                        {maintenance.external_works &&
+                            maintenance.external_works.length > 0 && (
+                                <div className="mt-6">
+                                    <div className="mb-2 border-b border-slate-300 pb-1">
+                                        <span className="text-sm font-bold text-slate-900 uppercase">
+                                            Trabajos Externos Realizados
+                                        </span>
+                                    </div>
+                                    <div className="text-sm">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-200">
+                                                    <th className="py-1 font-semibold">
+                                                        Descripción
+                                                    </th>
+                                                    <th className="py-1 font-semibold">
+                                                        Proveedor
+                                                    </th>
+                                                    <th className="py-1 text-right font-semibold">
+                                                        Costo
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {maintenance.external_works.map(
+                                                    (work, idx) => (
+                                                        <tr
+                                                            key={idx}
+                                                            className="border-b border-slate-100 last:border-0"
+                                                        >
+                                                            <td className="py-1">
+                                                                {
+                                                                    work.description
+                                                                }
+                                                            </td>
+                                                            <td className="py-1">
+                                                                {work.provider}
+                                                            </td>
+                                                            <td className="py-1 text-right font-medium">
+                                                                $
+                                                                {(
+                                                                    work.cost ||
+                                                                    0
+                                                                ).toLocaleString(
+                                                                    'es-CL',
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
                         {/* Description / Works */}
                         <div className="mt-6 min-h-[150px] rounded border border-slate-300 p-4">
                             <span className="mb-2 block text-sm font-bold text-slate-700 uppercase">
@@ -364,13 +404,25 @@ export default function MaintenanceExitPrint({
 
                         {/* Signatures */}
                         <div className="mt-12 grid grid-cols-2 gap-16 pt-8">
-                            <div className="border-t border-slate-900 pt-2 text-center">
-                                <p className="text-sm font-bold uppercase">
-                                    Firma Mecánico Jefe
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    (Aceptación de Trabajos)
-                                </p>
+                            <div className="flex h-32 flex-col justify-between border-t border-slate-900 pt-2 text-center">
+                                <div className="flex flex-1 items-end justify-center pb-2">
+                                    {maintenance.finalizer_user
+                                        ?.signature_path ? (
+                                        <img
+                                            src={`/${maintenance.finalizer_user.signature_path}`}
+                                            alt="Firma"
+                                            className="max-h-24 object-contain"
+                                        />
+                                    ) : null}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold uppercase">
+                                        Firma Mecánico Jefe
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        (Aceptación de Trabajos)
+                                    </p>
+                                </div>
                             </div>
                             <div className="border-t border-slate-900 pt-2 text-center">
                                 <p className="text-sm font-bold uppercase">
