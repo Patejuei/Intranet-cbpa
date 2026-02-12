@@ -12,12 +12,13 @@ class PettyCashAttachment extends Model
   protected $fillable = [
     'rendition_id',
     'file_path',
+    'file_content',
     'file_name',
     'mime_type',
   ];
 
   public function rendition()
   {
-    return $this->belongsTo(PettyCashRendition::class, 'rendition_id');
+    return $this->belongsTo(PettyCashRendition::class , 'rendition_id');
   }
 }

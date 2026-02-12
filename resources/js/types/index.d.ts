@@ -68,6 +68,7 @@ export interface Material {
     stock_quantity: number;
     company: string;
     category: string | null;
+    dependency?: string | null;
     document_path?: string | null;
     created_at: string;
     updated_at: string;

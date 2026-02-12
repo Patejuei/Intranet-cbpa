@@ -201,7 +201,7 @@ export default function Dashboard({
             <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
                 {/* Critical Stock Alert */}
                 {criticalStockItems && criticalStockItems.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-6 shadow-sm dark:bg-red-950/10">
+                    <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-4 shadow-sm dark:bg-red-950/10 sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold text-red-700 dark:text-red-500">
                                 <span className="flex size-3 animate-pulse rounded-full bg-red-600 dark:bg-red-500" />
@@ -215,7 +215,7 @@ export default function Dashboard({
                             {criticalStockItems.map((item: any) => (
                                 <div
                                     key={item.id}
-                                    className="flex items-center justify-between rounded-lg border border-red-200 bg-white p-3 dark:border-red-900/50 dark:bg-red-950/20"
+                                    className="flex flex-col gap-2 rounded-lg border border-red-200 bg-white p-3 dark:border-red-900/50 dark:bg-red-950/20 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <span className="font-medium">
                                         {item.name}
@@ -232,7 +232,7 @@ export default function Dashboard({
 
                 {/* Petty Cash Pending (Inspector/Comandante) */}
                 {pendingPettyCash.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <Receipt className="size-5 text-blue-600" />
@@ -249,7 +249,7 @@ export default function Dashboard({
                                     href={`/vehicles/petty-cash/${item.id}`}
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="font-medium">
                                                 {item.user.name}
@@ -259,7 +259,7 @@ export default function Dashboard({
                                                     'Sin descripción'}
                                             </p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-left sm:text-right">
                                             <div className="font-bold text-blue-700">
                                                 {new Intl.NumberFormat(
                                                     'es-CL',
@@ -282,7 +282,7 @@ export default function Dashboard({
 
                 {/* Pending Checklists Widget */}
                 {pendingChecklists.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-cyan-500 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-cyan-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-cyan-500" />
@@ -300,7 +300,7 @@ export default function Dashboard({
                                     href={`/vehicles/checklists/${checklist.id}`}
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="font-medium">
                                                 {checklist.vehicle.name}
@@ -310,7 +310,7 @@ export default function Dashboard({
                                                 {checklist.user.name}
                                             </p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-left sm:text-right">
                                             <div className="rounded bg-cyan-100 px-2 py-1 text-xs text-cyan-700">
                                                 Revisar
                                             </div>
@@ -329,7 +329,7 @@ export default function Dashboard({
 
                 {/* Tickets Pendientes (Comandancia) */}
                 {pendingTickets.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-yellow-500" />
@@ -346,7 +346,7 @@ export default function Dashboard({
                                     href={`/tickets/${ticket.id}`}
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="font-medium">
                                                 {ticket.subject}
@@ -368,7 +368,7 @@ export default function Dashboard({
 
                 {/* Tickets Respondidos (Compañías) */}
                 {respondedTickets.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-blue-500 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-blue-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-blue-500" />
@@ -385,7 +385,7 @@ export default function Dashboard({
                                     href={`/tickets/${ticket.id}`}
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="font-medium">
                                                 {ticket.subject}
@@ -406,7 +406,7 @@ export default function Dashboard({
 
                 {/* Material Mayor Widgets */}
                 {vehiclesStopped.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-red-500" />
@@ -423,7 +423,7 @@ export default function Dashboard({
                                     href={`/vehicles/status/${vehicle.id}`}
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="font-bold">
                                                 {vehicle.name}
@@ -447,7 +447,7 @@ export default function Dashboard({
                 )}
 
                 {pendingIncidents.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-orange-500 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-orange-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-orange-500" />
@@ -464,7 +464,7 @@ export default function Dashboard({
                                     href={`/vehicles/incidents`} // Ideally link to specific incident or filtered view
                                     className="block"
                                 >
-                                    <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
                                             <p className="line-clamp-1 font-medium">
                                                 {incident.vehicle.name} -{' '}
@@ -494,7 +494,7 @@ export default function Dashboard({
                         auth.user.role === 'comandante' ||
                         (auth.user.role === 'inspector' &&
                             auth.user.department === 'Material Mayor')) && (
-                        <div className="rounded-xl border border-l-4 border-l-red-600 bg-card p-6 shadow-sm">
+                        <div className="rounded-xl border border-l-4 border-l-red-600 bg-card p-4 shadow-sm sm:p-6">
                             <div className="mb-4">
                                 <h2 className="flex items-center gap-2 text-xl font-bold">
                                     <span className="flex size-3 animate-pulse rounded-full bg-red-600" />
@@ -570,7 +570,7 @@ export default function Dashboard({
 
                 {/* Specific Workshop Widget with Order Details */}
                 {vehiclesInWorkshop.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-6 shadow-sm">
+                    <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <span className="flex size-3 rounded-full bg-yellow-600" />
@@ -593,7 +593,7 @@ export default function Dashboard({
                                         }
                                         className="block"
                                     >
-                                        <div className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                        <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-bold">
@@ -677,11 +677,10 @@ export default function Dashboard({
                                             </td>
                                             <td className="py-3">
                                                 <span
-                                                    className={`rounded px-2 py-1 font-bold ${
-                                                        days <= 3
+                                                    className={`rounded px-2 py-1 font-bold ${days <= 3
                                                             ? 'bg-destructive/20 text-destructive'
                                                             : 'bg-muted text-muted-foreground'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {days} días
                                                 </span>
