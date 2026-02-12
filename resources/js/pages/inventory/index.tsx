@@ -257,7 +257,7 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                                         Categoría
                                     </th>
                                     <th className="px-4 py-3 font-medium">
-                                        Compañía
+                                        Dependencia
                                     </th>
                                     <th className="px-4 py-3 font-medium">
                                         Acciones
@@ -283,12 +283,11 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span
-                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                        material.stock_quantity >
+                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${material.stock_quantity >
                                                         0
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : 'bg-red-100 text-red-700'
-                                                    }`}
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                        }`}
                                                 >
                                                     {material.stock_quantity}{' '}
                                                     un.
@@ -298,7 +297,7 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                                                 {material.category || '-'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {material.company}
+                                                {material.dependency || '-'}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">

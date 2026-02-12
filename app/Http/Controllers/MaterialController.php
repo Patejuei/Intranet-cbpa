@@ -114,12 +114,15 @@ class MaterialController extends Controller
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
+            'dependency' => 'nullable|string',
             'document_path' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
         ]);
 
         if ($request->hasFile('document_path')) {
-            $path = $request->file('document_path')->store('materials', 'public');
-            $validated['document_path'] = $path;
+            $file = $request->file('document_path');
+            $content = base64_encode(file_get_contents($file->getRealPath()));
+            $validated['document_content'] = $content;
+            $validated['document_path'] = null; // No longer used
         }
 
         // Constraint: If Serial Number exists, Stock max is 1.
@@ -128,18 +131,42 @@ class MaterialController extends Controller
         }
 
         // Check if we need to generate (or regenerate) code
-        // 1. If Code is empty AND Category is valid
-        // 2. OR If Category Changed AND New Category is valid
-        // Note: We check $request->category against $inventory->category
-        $newCategory = $validated['category'] ?? null;
-        $isNewCategoryValid = !empty($newCategory) && $newCategory !== 'Sin Categoría';
-        $categoryChanged = $inventory->category !== $newCategory;
+        $newCategory = $validated['category'] ?? $inventory->category;
+        $newCompany = $validated['company'] ?? $inventory->company;
+        $inputCode = $validated['code'] ?? null;
 
-        if ($isNewCategoryValid && ($categoryChanged || empty($inventory->code))) {
-            $prefix = $this->getValidPrefix($newCategory);
-            if ($prefix) {
-                // If regenerating, we overwrite the code.
-                $validated['code'] = $this->generateCode($prefix);
+        $categoryChanged = $newCategory !== $inventory->category;
+        $companyChanged = $newCompany !== $inventory->company;
+        // User provided a NEW code manually?
+        $codeIsManual = !empty($inputCode) && $inputCode !== $inventory->code;
+
+        if ($codeIsManual) {
+        // Use the manually provided code (already in $validated['code'])
+        }
+        else {
+            // Auto-generation logic
+            $shouldGenerate = false;
+
+            // 1. If Category Changed (and is valid)
+            if ($categoryChanged && $newCategory !== 'Sin Categoría') {
+                $shouldGenerate = true;
+            }
+
+            // 2. If Company Changed AND no distinct code assigned
+            if ($companyChanged) {
+                $shouldGenerate = true;
+            }
+
+            // 3. If it didn't have a code before
+            if (empty($inventory->code) && $newCategory !== 'Sin Categoría') {
+                $shouldGenerate = true;
+            }
+
+            if ($shouldGenerate) {
+                $prefix = $this->getValidPrefix($newCategory);
+                if ($prefix) {
+                    $validated['code'] = $this->generateCode($prefix);
+                }
             }
         }
 
@@ -212,12 +239,15 @@ class MaterialController extends Controller
             'stock_quantity' => 'required|integer',
             'company' => 'required|string',
             'category' => 'nullable|string',
+            'dependency' => 'nullable|string',
             'document_path' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240', // Max 10MB
         ]);
 
         if ($request->hasFile('document_path')) {
-            $path = $request->file('document_path')->store('materials', 'public');
-            $validated['document_path'] = $path;
+            $file = $request->file('document_path');
+            $content = base64_encode(file_get_contents($file->getRealPath()));
+            $validated['document_content'] = $content;
+            $validated['document_path'] = null; // No longer used
         }
 
         // Constraint: If Serial Number exists, Stock max is 1.
@@ -225,9 +255,8 @@ class MaterialController extends Controller
             return redirect()->back()->withErrors(['stock_quantity' => 'Los items con Serial Number deben tener un stock de 1 (Objeto Único).']);
         }
 
-        // Generate Code if Category is valid
-        $validated['code'] = null;
-        if (!empty($validated['category']) && $validated['category'] !== 'Sin Categoría') {
+        // Generate Code if Category is valid and no manual code provided
+        if (empty($validated['code']) && !empty($validated['category']) && $validated['category'] !== 'Sin Categoría') {
             $prefix = $this->getValidPrefix($validated['category']);
             if ($prefix) {
                 $validated['code'] = $this->generateCode($prefix);
@@ -451,7 +480,8 @@ class MaterialController extends Controller
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray();
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             return redirect()->back()->withErrors(['file' => 'Error al leer el archivo Excel: ' . $e->getMessage()]);
         }
 
@@ -478,19 +508,29 @@ class MaterialController extends Controller
             $serial = $row[8] ?? '';
             $quantity = $row[9] ?? 0;
 
-            if (empty($productName)) continue; // Skip empty rows
+            if (empty($productName))
+                continue; // Skip empty rows
 
             // Parse Company
             $company = 'Comandancia'; // Default
-            if (str_contains($lugar, 'Cuartel Primera') || str_contains($lugar, 'Primera Compañía')) $company = 'Primera Compañía';
-            elseif (str_contains($lugar, 'Cuartel Segunda') || str_contains($lugar, 'Segunda Compañía')) $company = 'Segunda Compañía';
-            elseif (str_contains($lugar, 'Cuartel Tercera') || str_contains($lugar, 'Tercera Compañía')) $company = 'Tercera Compañía';
-            elseif (str_contains($lugar, 'Cuartel Cuarta') || str_contains($lugar, 'Cuarta Compañía')) $company = 'Cuarta Compañía';
-            elseif (str_contains($lugar, 'Cuartel Quinta') || str_contains($lugar, 'Quinta Compañía')) $company = 'Quinta Compañía';
-            elseif (str_contains($lugar, 'Cuartel Séptima') || str_contains($lugar, 'Séptima Compañía')) $company = 'Séptima Compañía';
-            elseif (str_contains($lugar, 'Cuartel Octava') || str_contains($lugar, 'Octava Compañía')) $company = 'Octava Compañía';
-            elseif (str_contains($lugar, 'Cuartel Novena') || str_contains($lugar, 'Novena Compañía')) $company = 'Novena Compañía';
-            elseif (str_contains($lugar, 'Cuartel Decima') || str_contains($lugar, 'Decima Compañía')) $company = 'Décima Compañía';
+            if (str_contains($lugar, 'Cuartel Primera') || str_contains($lugar, 'Primera Compañía'))
+                $company = 'Primera Compañía';
+            elseif (str_contains($lugar, 'Cuartel Segunda') || str_contains($lugar, 'Segunda Compañía'))
+                $company = 'Segunda Compañía';
+            elseif (str_contains($lugar, 'Cuartel Tercera') || str_contains($lugar, 'Tercera Compañía'))
+                $company = 'Tercera Compañía';
+            elseif (str_contains($lugar, 'Cuartel Cuarta') || str_contains($lugar, 'Cuarta Compañía'))
+                $company = 'Cuarta Compañía';
+            elseif (str_contains($lugar, 'Cuartel Quinta') || str_contains($lugar, 'Quinta Compañía'))
+                $company = 'Quinta Compañía';
+            elseif (str_contains($lugar, 'Cuartel Séptima') || str_contains($lugar, 'Séptima Compañía'))
+                $company = 'Séptima Compañía';
+            elseif (str_contains($lugar, 'Cuartel Octava') || str_contains($lugar, 'Octava Compañía'))
+                $company = 'Octava Compañía';
+            elseif (str_contains($lugar, 'Cuartel Novena') || str_contains($lugar, 'Novena Compañía'))
+                $company = 'Novena Compañía';
+            elseif (str_contains($lugar, 'Cuartel Decima') || str_contains($lugar, 'Decima Compañía'))
+                $company = 'Décima Compañía';
 
             // Parse Category
             $category = $this->parseViperCategory($familia, $dictionary);
@@ -541,14 +581,19 @@ class MaterialController extends Controller
         $third = $parts[2] ?? '';
 
         // Rule 1: First Element
-        if ($first === 'COMUNICACIONES') return 'Telecomunicaciones';
-        if ($first === 'Equipos de Protección Personal') return 'Equipos de Protección Personal';
-        if ($first === 'Otros') return 'Otro';
+        if ($first === 'COMUNICACIONES')
+            return 'Telecomunicaciones';
+        if ($first === 'Equipos de Protección Personal')
+            return 'Equipos de Protección Personal';
+        if ($first === 'Otros')
+            return 'Otro';
 
         // Rule 2: Second Element Logic
         if ($second === 'Detectores') {
-            if ($third === 'Detector Multigas' || $third === 'Detector de gas') return 'Materiales Peligrosos';
-            if ($third === 'Detector de corriente alterna') return 'Riesgos Eléctricos';
+            if ($third === 'Detector Multigas' || $third === 'Detector de gas')
+                return 'Materiales Peligrosos';
+            if ($third === 'Detector de corriente alterna')
+                return 'Riesgos Eléctricos';
             return 'Material de Extinción';
         }
 
@@ -560,9 +605,37 @@ class MaterialController extends Controller
         }
 
         // Blank logic
-        if (empty($second)) return 'Sin Categoría';
+        if (empty($second))
+            return 'Sin Categoría';
 
         // Implicit fallback
         return 'Sin Categoría';
+        return 'Sin Categoría';
+    }
+
+    public function downloadDocument(Material $inventory)
+    {
+        if ($inventory->document_content) {
+            // Basic detection - assume generic binary or try to detect from mime guess if stored?
+            // We didn't store mime type for Materials (!). We will defaults to application/pdf or try to detect.
+            // Actually, the user can upload images too.
+            // For now, we will just stream it with a generic type or guess based on old extension if available?
+            // Since we don't have a separate mime column for Materials, we will try to detect or default.
+
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $decoded = base64_decode($inventory->document_content);
+            $mime = $finfo->buffer($decoded);
+
+            return response($decoded)
+                ->header('Content-Type', $mime)
+                ->header('Content-Disposition', 'inline; filename="document_' . $inventory->id . '"');
+        }
+
+        // Fallback
+        if ($inventory->document_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($inventory->document_path)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($inventory->document_path));
+        }
+
+        abort(404);
     }
 }

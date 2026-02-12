@@ -35,6 +35,8 @@ export default function MaterialForm({
         stock_quantity: material?.stock_quantity || 0,
         company: material?.company || 'Comandancia',
         category: material?.category || 'Sin Categoría',
+        dependency: material?.dependency || '',
+        code: material?.code || '',
         serial_number: material?.serial_number || '',
         document_path: null as File | null,
     });
@@ -103,6 +105,24 @@ export default function MaterialForm({
                     </SelectContent>
                 </Select>
                 <InputError message={errors.company} className="mt-2" />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor="dependency">Dependencia (Opcional)</Label>
+                <Input
+                    id="dependency"
+                    value={data.dependency}
+                    onChange={(e) => setData('dependency', e.target.value)}
+                    placeholder="Ej: Cuartel, Carro B-1, Pañol"
+                />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor="code">Código Interno (Opcional)</Label>
+                <Input
+                    id="code"
+                    value={data.code}
+                    onChange={(e) => setData('code', e.target.value)}
+                    placeholder="Dejar en blanco para generar automáticamente"
+                />
             </div>
             <div className="grid gap-2">
                 <Label htmlFor="product_name">Nombre del Producto</Label>

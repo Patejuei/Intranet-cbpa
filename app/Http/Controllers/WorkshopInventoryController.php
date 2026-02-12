@@ -29,7 +29,9 @@ class WorkshopInventoryController extends Controller
 
   public function create()
   {
-    return Inertia::render('vehicles/inventory/create');
+    return Inertia::render('vehicles/inventory/create', [
+      'vehicles' => \App\Models\Vehicle::all(['id', 'name', 'plate', 'model'])
+    ]);
   }
 
   public function store(Request $request)
@@ -100,7 +102,8 @@ class WorkshopInventoryController extends Controller
     try {
       $inventory->delete();
       return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem eliminado correctamente.');
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       return back()->withErrors(['error' => 'No se puede eliminar este ítem porque tiene registros asociados.']);
     }
   }

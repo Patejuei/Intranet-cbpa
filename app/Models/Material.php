@@ -19,7 +19,9 @@ class Material extends Model
         'stock_quantity',
         'company',
         'category',
+        'dependency',
         'document_path',
+        'document_content',
     ];
     public function logs()
     {

@@ -23,6 +23,7 @@ import { FormEventHandler, useState } from 'react';
 
 // Ziggy route helper
 import { Combobox } from '@/components/ui/combobox';
+import { Switch } from '@/components/ui/switch';
 
 type PageProps = {
     vehicles: { id: number; name: string; company: string }[];
@@ -49,6 +50,10 @@ export default function RenditionCreate({
         stock_item_id: '',
         stock_quantity: '',
         attachments: [] as File[],
+        is_new_entry: false,
+        sku: '',
+        unit_of_measure: 'UNIDAD',
+        unit_cost: '',
     });
 
     const [previews, setPreviews] = useState<string[]>([]);
@@ -367,38 +372,197 @@ export default function RenditionCreate({
                             </CardTitle>
                             <CardDescription>
                                 Si la compra corresponde a un ítem de
-                                inventario, seleccione para sumar stock.
+                                inventario, seleccione para gestionar stock.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label>Ítem de Bodega</Label>
-                                <Combobox
-                                    options={inventoryOptions}
-                                    value={data.stock_item_id}
-                                    onChange={(val) =>
-                                        setData('stock_item_id', val)
-                                    }
-                                    placeholder="Buscar por Nombre o Código..."
-                                    searchPlaceholder="Nombre, SKU, Código..."
-                                    emptyText="No se encontró producto."
-                                />
-                            </div>
-                            {data.stock_item_id && (
-                                <div className="space-y-2">
-                                    <Label>Cantidad a Sumar</Label>
-                                    <Input
-                                        type="number"
-                                        min="1"
-                                        value={data.stock_quantity}
-                                        onChange={(e) =>
-                                            setData(
-                                                'stock_quantity',
-                                                e.target.value,
-                                            )
-                                        }
-                                        required={!!data.stock_item_id}
-                                    />
+                        <CardContent className="space-y-6">
+                            {(data.expense_type === 'repair_supplies' ||
+                                data.expense_type === 'spare_parts') && (
+                                    <>
+                                        <div className="flex items-center space-x-2">
+                                            <Switch
+                                                id="new_entry"
+                                                checked={data.is_new_entry}
+                                                onCheckedChange={(checked) =>
+                                                    setData('is_new_entry', checked)
+                                                }
+                                            />
+                                            <Label htmlFor="new_entry">
+                                                {data.is_new_entry
+                                                    ? 'Nuevo Ingreso a Bodega'
+                                                    : 'Reabastecimiento (Ítem Existente)'}
+                                            </Label>
+                                        </div>
+
+                                        {!data.is_new_entry ? (
+                                            // RESTOCKING
+                                            <div className="grid gap-6 md:grid-cols-2">
+                                                <div className="space-y-2">
+                                                    <Label>Ítem de Bodega</Label>
+                                                    <Combobox
+                                                        options={inventoryOptions}
+                                                        value={data.stock_item_id}
+                                                        onChange={(val) =>
+                                                            setData(
+                                                                'stock_item_id',
+                                                                val,
+                                                            )
+                                                        }
+                                                        placeholder="Buscar por Nombre o Código..."
+                                                        searchPlaceholder="Nombre, SKU, Código..."
+                                                        emptyText="No se encontró producto."
+                                                    />
+                                                </div>
+                                                {data.stock_item_id && (
+                                                    <div className="space-y-2">
+                                                        <Label>
+                                                            Cantidad a Sumar
+                                                        </Label>
+                                                        <Input
+                                                            type="number"
+                                                            min="1"
+                                                            value={
+                                                                data.stock_quantity
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'stock_quantity',
+                                                                    e.target.value,
+                                                                )
+                                                            }
+                                                            required={
+                                                                !!data.stock_item_id
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            // NEW ENTRY
+                                            <div className="grid gap-6 md:grid-cols-2">
+                                                <div className="col-span-2 rounded-md bg-blue-50 p-4 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                                                    Se creará un nuevo artículo en
+                                                    Bodega (Material Mayor) con el
+                                                    nombre igual al "Concepto /
+                                                    Descripción". Compatibilidad:
+                                                    Todos. Ubicación: Taller.
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label>SKU / Código Parte</Label>
+                                                    <Input
+                                                        placeholder="Ej: FIL-OIL-2024"
+                                                        value={data.sku}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'sku',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Unidad de Medida</Label>
+                                                    <Select
+                                                        value={data.unit_of_measure}
+                                                        onValueChange={(val) =>
+                                                            setData(
+                                                                'unit_of_measure',
+                                                                val,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="UNIDAD">
+                                                                UNIDAD
+                                                            </SelectItem>
+                                                            <SelectItem value="LITRO">
+                                                                LITRO
+                                                            </SelectItem>
+                                                            <SelectItem value="METRO">
+                                                                METRO
+                                                            </SelectItem>
+                                                            <SelectItem value="KIT">
+                                                                KIT
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Cantidad Inicial</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={data.stock_quantity}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'stock_quantity',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        required={data.is_new_entry}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>
+                                                        Costo Unitario (Neto Aprox)
+                                                    </Label>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={data.unit_cost}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'unit_cost',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                            {(data.expense_type === 'tools' ||
+                                data.expense_type === 'other_tools') && (
+                                    <div className="space-y-4">
+                                        <div className="rounded-md bg-amber-50 p-4 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                                            Este ítem se ingresará automáticamente
+                                            al inventario de <strong>Material Menor</strong>.
+                                            <ul className="mt-1 list-inside list-disc">
+                                                <li>Compañía: Comandancia</li>
+                                                <li>Dependencia: Taller Mecánico</li>
+                                                <li>Categoría: Otro</li>
+                                                <li>Nombre: Concepto / Descripción</li>
+                                            </ul>
+                                        </div>
+                                        <div className="grid gap-6 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label>Cantidad</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={data.stock_quantity}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'stock_quantity',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Cantidad de herramientas..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                            {!['repair_supplies', 'spare_parts', 'tools', 'other_tools'].includes(data.expense_type) && (
+                                <div className="text-sm text-muted-foreground">
+                                    Seleccione un tipo de gasto compatible para ver opciones de inventario.
                                 </div>
                             )}
                         </CardContent>
