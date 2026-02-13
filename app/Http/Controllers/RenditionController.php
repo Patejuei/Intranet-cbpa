@@ -66,7 +66,11 @@ class RenditionController extends Controller
       'description' => 'required|string',
       'amount' => 'required|integer|min:1',
       'stock_item_id' => 'nullable|exists:workshop_inventory,id',
-      'stock_quantity' => 'nullable|required_with:stock_item_id|integer|min:1',
+      'stock_quantity' => 'nullable|integer|min:1',
+      'is_new_entry' => 'boolean',
+      'sku' => 'nullable|string',
+      'unit_of_measure' => 'nullable|string',
+      'unit_cost' => 'nullable|numeric',
       'attachments' => 'required|array|min:1',
       'attachments.*' => 'file|mimes:jpeg,png,jpg,pdf|max:10240',
     ]);
@@ -85,11 +89,63 @@ class RenditionController extends Controller
         'status' => 'pending_validation',
       ]);
 
-      if ($request->stock_item_id && $request->stock_quantity) {
-        $item = WorkshopInventory::find($request->stock_item_id);
-        if ($item) {
-          $item->increment('stock', $request->stock_quantity);
+      // Logic for Workshop Inventory (Supplies / Spare Parts)
+      if (in_array($request->expense_type, ['repair_supplies', 'spare_parts'])) {
+        // If User selected "New Entry"
+        if ($request->is_new_entry) {
+          $category = $request->expense_type === 'repair_supplies' ? 'insumo' : 'repuesto';
+
+          $newItem = WorkshopInventory::create([
+            'name' => $request->description, // Use description as name
+            'sku' => $request->sku,
+            'category' => $category,
+            'unit_of_measure' => $request->unit_of_measure ?? 'UNIDAD',
+            'stock' => $request->stock_quantity ?? 0,
+            'min_stock' => 1, // Default
+            'unit_cost' => $request->unit_cost ?? 0,
+            'location' => 'Taller',
+            'compatibility' => 'Todos',
+            'description' => 'Ingresado por Rendición #' . $request->invoice_number,
+          ]);
+
+          // Link the rendition to this new item? 
+          // The table has stock_item_id, we should update it.
+          $rendition->update(['stock_item_id' => $newItem->id]);
+        } else {
+          // Existing Item Logic
+          if ($request->stock_item_id && $request->stock_quantity) {
+            $item = WorkshopInventory::find($request->stock_item_id);
+            if ($item) {
+              $item->increment('stock', $request->stock_quantity);
+            }
+          }
         }
+      }
+
+      // Logic for Tools (Material Menor)
+      if (in_array($request->expense_type, ['tools', 'other_tools'])) {
+        // Verify we have a quantity
+        $qty = $request->stock_quantity ?? 1;
+
+        // Create Material (Material Mayor / Menor logic implies this is Material Menor generally)
+        // User asked: "si es Herramienta u otra herramienta, que se agregue además al Inventario de Comandancia como dependencia Taller Mecánico"
+
+        // We need to generate a code? MaterialController does it. We can try to replicate or leave null.
+        // Material model allows null code.
+
+        \App\Models\Material::create([
+          'product_name' => $request->description,
+          'stock_quantity' => $qty,
+          'company' => 'Comandancia',
+          'dependency' => 'Taller Mecánico',
+          'category' => 'Otro', // Default for tools/other unless we map 'Herramientas' specific category if exists
+          'brand' => null,
+          'model' => null,
+          'serial_number' => null,
+          'document_path' => null,
+          // 'code' => ... // Leave null for now or auto-generate implies logic duplication. 
+          // Better to leave null and let Admin assign later or leave as is.
+        ]);
       }
 
       if ($request->hasFile('attachments')) {
