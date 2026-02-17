@@ -1,4 +1,3 @@
-import { MaterialSelector } from '@/components/MaterialSelector';
 import Pagination from '@/components/Pagination';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
@@ -18,6 +17,7 @@ import { FormEventHandler, useState } from 'react';
 
 // New Components
 import AcquisitionsList from './components/AcquisitionsList';
+import BajasList, { MaterialBajaRequest } from './components/BajasList';
 import RequestForm from './components/RequestForm';
 
 interface Log {
@@ -43,64 +43,63 @@ interface PageProps {
     userRole: string;
     userCompany: string;
     companies: string[];
+    bajaRequests: {
+        data: MaterialBajaRequest[];
+        links: any[];
+    };
 }
-
-const CATEGORIES = [
-    { value: 'EPP', label: 'Equipos de Protección Personal (EPP)' },
-    { value: 'EXT', label: 'Material de Extinción (EXT)' },
-    { value: 'RES', label: 'Herramientas de Rescate (RES)' },
-    { value: 'MED', label: 'Material Médico (MED)' },
-    { value: 'TEL', label: 'Telecomunicaciones (TEL)' },
-    { value: 'EFO', label: 'Entrada Forzada (EFO)' },
-    { value: 'ESC', label: 'Escalas (ESC)' },
-    { value: 'VEN', label: 'Ventilación (VEN)' },
-    { value: 'REL', label: 'Riesgos Eléctricos (REL)' },
-    { value: 'HAZ', label: 'Materiales Peligrosos (HAZ)' },
-    { value: 'SEG', label: 'Seguridad' },
-    { value: 'OTR', label: 'Otro' },
-];
 
 export default function EquipmentIndex({
     logs,
     acquisitions,
     materials,
     companies, // Add prop
+    bajaRequests,
 }: PageProps) {
-    const { userRole, userCompany } = usePage<any>().props; // Destructure userCompany here from page props if needed or use from props
+    const { userRole, userCompany, url } = usePage<any>().props; // Destructure userCompany here from page props if needed or use from props
     const { canCreate } = usePermissions();
-    const [activeTab, setActiveTab] = useState<'GESTION' | 'ALTA' | 'BAJA'>(
-        'GESTION',
+
+    // Determine initial tab
+    const initialTab =
+        typeof window !== 'undefined' &&
+        window.location.search.includes('bajas_page')
+            ? 'BAJAS'
+            : 'GESTION';
+    const [activeTab, setActiveTab] = useState<'GESTION' | 'ALTA' | 'BAJAS'>(
+        initialTab,
     );
     const [showRequestForm, setShowRequestForm] = useState(false);
 
-    // --- Manual Log Form Logic (Alta/Baja) ---
-    const { data, setData, post, processing, reset, errors } = useForm({
-        // Shared
-        type: 'ALTA',
-        document: null as File | null,
-        company: userCompany || '', // Add company state
-
-        // Alta Specific (Invoice Header)
-        invoice_number: '',
-        invoice_date: '',
-        supplier_rut: '',
-        supplier_name: '',
-        items: [] as {
+    interface EquipmentFormData {
+        type: 'ALTA';
+        document: File | null;
+        company: string;
+        invoice_number: string;
+        invoice_date: string;
+        supplier_rut: string;
+        supplier_name: string;
+        items: {
             item_name: string;
             quantity: number;
             unit_price: number;
-        }[],
+        }[];
+    }
 
-        // Baja Specific (Single Item)
-        item_name: '', // Also used for single item input in Baja
-        brand: '',
-        model: '',
-        serial_number: '',
-        inventory_number: '',
-        category: '',
-        quantity: 1,
-        reason: '',
-    });
+    // --- Manual Log Form Logic (Alta) ---
+    const { data, setData, post, processing, reset, errors } =
+        useForm<EquipmentFormData>({
+            // Shared
+            type: 'ALTA',
+            document: null,
+            company: userCompany || '', // Add company state
+
+            // Alta Specific (Invoice Header)
+            invoice_number: '',
+            invoice_date: '',
+            supplier_rut: '',
+            supplier_name: '',
+            items: [],
+        });
 
     const formatRut = (rut: string) => {
         if (!rut) return '';
@@ -140,21 +139,16 @@ export default function EquipmentIndex({
 
     const submitManual: FormEventHandler = (e) => {
         e.preventDefault();
-        // Force type based on active tab
-        const type = activeTab === 'ALTA' ? 'ALTA' : 'BAJA';
-        data.type = type; // Ensure data has correct type
-
         post('/equipment', {
             onSuccess: () => {
                 reset();
-                // If Alta, reset items specifically if needed (reset() handles default values)
-                if (type === 'ALTA') setData('items', []);
+                setData('items', []);
             },
         });
     };
 
     // Helper for manual form
-    const isManualTab = activeTab === 'ALTA' || activeTab === 'BAJA';
+    const isManualTab = activeTab === 'ALTA';
 
     return (
         <AppLayout
@@ -185,7 +179,6 @@ export default function EquipmentIndex({
                             <button
                                 onClick={() => {
                                     setActiveTab('ALTA');
-                                    setData('type', 'ALTA');
                                     // Initialize with one item if empty
                                     if (data.items.length === 0) {
                                         setData('items', [
@@ -207,18 +200,15 @@ export default function EquipmentIndex({
                                 Compra
                             </button>
                             <button
-                                onClick={() => {
-                                    setActiveTab('BAJA');
-                                    setData('type', 'BAJA');
-                                }}
+                                onClick={() => setActiveTab('BAJAS')}
                                 className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-2 transition-colors ${
-                                    activeTab === 'BAJA'
+                                    activeTab === 'BAJAS'
                                         ? 'border-red-600 bg-red-50 font-semibold text-red-700'
                                         : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                             >
-                                <ArrowDownCircle className="size-4" /> Registrar
-                                Baja
+                                <ArrowDownCircle className="size-4" />{' '}
+                                Solicitudes de Baja
                             </button>
                         </>
                     )}
@@ -242,19 +232,30 @@ export default function EquipmentIndex({
                                         </p>
                                     </div>
                                     {/* Captain can request */}
-                                    {userRole === 'capitan' && (
+                                    <div className="flex gap-2">
                                         <button
                                             onClick={() =>
-                                                setShowRequestForm(
-                                                    !showRequestForm,
-                                                )
+                                                setActiveTab('BAJAS')
                                             }
-                                            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+                                            className="flex items-center gap-2 rounded-md bg-secondary px-4 py-2 text-sm text-secondary-foreground hover:bg-secondary/80"
                                         >
-                                            <PlusCircle className="size-4" />{' '}
-                                            Nueva Solicitud
+                                            <Trash className="size-4" />
+                                            Solicitudes de Baja
                                         </button>
-                                    )}
+                                        {userRole === 'capitan' && (
+                                            <button
+                                                onClick={() =>
+                                                    setShowRequestForm(
+                                                        !showRequestForm,
+                                                    )
+                                                }
+                                                className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+                                            >
+                                                <PlusCircle className="size-4" />{' '}
+                                                Nueva Solicitud
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Request Form (Collapsible) */}
@@ -384,9 +385,7 @@ export default function EquipmentIndex({
                                 <div className="mb-6 flex items-center gap-2">
                                     <Box className="size-5 text-primary" />
                                     <h2 className="text-lg font-semibold text-foreground">
-                                        {activeTab === 'ALTA'
-                                            ? 'Registro de Alta Manual'
-                                            : 'Registro de Baja Manual'}
+                                        Registro de Alta Manual
                                     </h2>
                                 </div>
 
@@ -687,252 +686,26 @@ export default function EquipmentIndex({
                                         </div>
                                     )}
 
-                                    {/* BAJA: Single Item Form (Restored with Removed Alta Fields Logic) */}
-                                    {activeTab === 'BAJA' && (
-                                        <div className="space-y-4">
-                                            {/* Smart Search */}
-                                            <div className="space-y-4 rounded-lg bg-muted/50 p-4">
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Buscador Inteligente
-                                                </label>
-                                                <MaterialSelector
-                                                    materials={materials}
-                                                    value={undefined}
-                                                    onChange={(id: number) => {
-                                                        const m =
-                                                            materials.find(
-                                                                (mat) =>
-                                                                    mat.id ===
-                                                                    id,
-                                                            );
-                                                        if (m) {
-                                                            setData((prev) => ({
-                                                                ...prev,
-                                                                item_name:
-                                                                    m.product_name,
-                                                                brand:
-                                                                    m.brand ||
-                                                                    '',
-                                                                model:
-                                                                    m.model ||
-                                                                    '',
-                                                                category:
-                                                                    m.category ||
-                                                                    prev.category,
-                                                                serial_number:
-                                                                    m.serial_number ||
-                                                                    '',
-                                                                inventory_number:
-                                                                    m.code ||
-                                                                    m.serial_number ||
-                                                                    '',
-                                                            }));
-                                                        }
-                                                    }}
-                                                    placeholder="Buscar por Nombre, Código o S/N..."
-                                                />
-                                                <div className="opacity-70">
-                                                    <label className="mb-1 block text-sm font-medium">
-                                                        N° Inventario
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={
-                                                            data.inventory_number
-                                                        }
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'inventory_number',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                        readOnly={true}
-                                                        placeholder="Auto-rellenado"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Nombre del Material
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={data.item_name}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'item_name',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    placeholder="Ej: Pitón Protek, Hacha..."
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="mb-1 block text-sm font-medium">
-                                                        Marca
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={data.brand || ''}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'brand',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="mb-1 block text-sm font-medium">
-                                                        Modelo
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={data.model || ''}
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'model',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Categoría
-                                                </label>
-                                                <select
-                                                    value={data.category}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'category',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    required
-                                                >
-                                                    <option value="">
-                                                        Seleccione Categoría
-                                                    </option>
-                                                    {CATEGORIES.map((cat) => (
-                                                        <option
-                                                            key={cat.value}
-                                                            value={cat.value}
-                                                        >
-                                                            {cat.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            <div>
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Número de Serie
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={data.serial_number}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'serial_number',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Cantidad
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={data.quantity}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'quantity',
-                                                            parseInt(
-                                                                e.target.value,
-                                                            ) || 1,
-                                                        )
-                                                    }
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="mb-1 block text-sm font-medium">
-                                                    Motivo / Descripción
-                                                </label>
-                                                <textarea
-                                                    value={data.reason}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'reason',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                    {/* Document Upload (Shared) */}
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium">
-                                            Documento (Opcional)
-                                        </label>
-                                        <input
-                                            type="file"
-                                            onChange={(e) =>
-                                                setData(
-                                                    'document',
-                                                    e.target.files
-                                                        ? e.target.files[0]
-                                                        : null,
-                                                )
-                                            }
-                                            className="w-full text-sm"
-                                            accept=".pdf,.jpg,.png"
-                                        />
-                                    </div>
-
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className={`flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors ${
-                                            activeTab === 'ALTA'
-                                                ? 'bg-green-600 hover:bg-green-700'
-                                                : 'bg-red-600 hover:bg-red-700'
-                                        }`}
+                                        className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
                                     >
                                         <Save className="size-4" />
-                                        Confirmar{' '}
-                                        {activeTab === 'ALTA'
-                                            ? 'Alta Masiva'
-                                            : 'Baja'}
+                                        Confirmar Alta Masiva
                                     </button>
                                 </form>
                             </div>
                         )}
-                    </div>
 
-                    {/* Sidebar / Logs History (Right 1/3) - Only for GESTION or BAJA */}
+                        {/* Tab: BAJAS */}
+                        {activeTab === 'BAJAS' && (
+                            <BajasList
+                                requests={bajaRequests}
+                                userRole={userRole}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
         </AppLayout>

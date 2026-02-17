@@ -51,9 +51,23 @@ class EquipmentLogController extends Controller
             'Mayordomía'
         ];
 
+        // Baja Requests Logic
+        $bajaRequestsQuery = \App\Models\MaterialBajaRequest::with(['user', 'material'])->latest();
+
+        if ($user->role === 'capitan') {
+            $bajaRequestsQuery->whereHas('user', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        } elseif ($user->role !== 'admin' && $user->role !== 'secretaria_adquisiciones' && $user->role !== 'inspector' && $user->company !== 'Comandancia') {
+            $bajaRequestsQuery->whereHas('user', function ($q) use ($user) {
+                $q->where('company', $user->company);
+            });
+        }
+
         return Inertia::render('equipment/index', [
-            'logs' => $logsQuery->paginate(10),
+            'logs' => $logsQuery->paginate(10)->withQueryString(),
             'acquisitions' => $acquisitionsQuery->get(), // List for Tabs
+            'bajaRequests' => $bajaRequestsQuery->paginate(10, ['*'], 'bajas_page')->withQueryString(),
             'materials' => \App\Models\Material::where('company', $user->company)->get(),
             'userRole' => $user->role,
             'userCompany' => $user->company,

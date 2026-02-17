@@ -430,7 +430,6 @@ export default function UserCreate({
                                         setData((prev) => ({
                                             ...prev,
                                             role: value,
-                                            role: value,
                                             permissions:
                                                 value === 'admin' ||
                                                 value === 'comandante' ||
