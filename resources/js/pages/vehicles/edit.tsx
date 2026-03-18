@@ -214,17 +214,14 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="company">Compañía</Label>
-                                    <Label htmlFor="company">Compañía</Label>
                                     <Select
                                         value={data.company}
                                         onValueChange={(val) =>
                                             setData('company', val)
                                         }
                                         disabled={
-                                            vehicle.company !== 'Comandancia' && // If vehicle is not Comandancia (which implies user context check usually, but here based on req: "usuario de Comandancia podrá editar")
-                                            // Actually I need to check the AUTH layer here.
-                                            // The valid check is: disabled={ auth.user.company !== 'Comandancia' && auth.user.role !== 'admin' }
-                                            false // Placeholder, will fix in "Check 2" below
+                                            auth.user.role === 'capitan' ||
+                                            (auth.user.company !== 'Comandancia' && auth.user.role !== 'admin' && auth.user.role !== 'comandante')
                                         }
                                     >
                                         <SelectTrigger className="bg-muted">

@@ -96,7 +96,7 @@ const getFilteredRoles = (currentUserRole: string) => {
     ];
 
     if (currentUserRole === 'capitan') {
-        const allowed = ['user', 'teniente', 'maquinista', 'ayudante'];
+        const allowed = ['user', 'maquinista', 'cuartelero'];
         return allRoles.filter((r) => allowed.includes(r.value));
     }
 
@@ -432,18 +432,18 @@ export default function UserCreate({
                                             role: value,
                                             permissions:
                                                 value === 'admin' ||
-                                                value === 'comandante' ||
-                                                value === 'capitan' ||
-                                                value === 'maquinista' ||
-                                                value === 'inspector' ||
-                                                value === 'mechanic' ||
-                                                value ===
+                                                    value === 'comandante' ||
+                                                    value === 'capitan' ||
+                                                    value === 'maquinista' ||
+                                                    value === 'inspector' ||
+                                                    value === 'mechanic' ||
+                                                    value ===
                                                     'secretaria_adquisiciones'
                                                     ? []
                                                     : prev.permissions,
                                             company:
                                                 value === 'comandante' ||
-                                                value === 'inspector'
+                                                    value === 'inspector'
                                                     ? 'Comandancia'
                                                     : prev.company,
                                         }));
@@ -553,14 +553,13 @@ export default function UserCreate({
                                                                                                         'none',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                    getPermissionValue(
-                                                                                                        module.id,
-                                                                                                    ) ===
-                                                                                                    'none'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                        'none'
                                                                                                         ? 'bg-background shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                }`}
+                                                                                                    }`}
                                                                                             >
                                                                                                 Ninguno
                                                                                             </button>
@@ -572,14 +571,13 @@ export default function UserCreate({
                                                                                                         'view',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                    getPermissionValue(
-                                                                                                        module.id,
-                                                                                                    ) ===
-                                                                                                    'view'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                        'view'
                                                                                                         ? 'bg-blue-100 text-blue-700 shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                }`}
+                                                                                                    }`}
                                                                                             >
                                                                                                 Ver
                                                                                             </button>
@@ -591,41 +589,39 @@ export default function UserCreate({
                                                                                                         'edit',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                    getPermissionValue(
-                                                                                                        module.id,
-                                                                                                    ) ===
-                                                                                                    'edit'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
+                                                                                                    module.id,
+                                                                                                ) ===
+                                                                                                        'edit'
                                                                                                         ? 'bg-green-100 text-green-700 shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                }`}
+                                                                                                    }`}
                                                                                             >
                                                                                                 Editar
                                                                                             </button>
                                                                                             {(module.id ===
                                                                                                 'vehicles' ||
                                                                                                 module.id ===
-                                                                                                    'equipment') && (
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={() =>
-                                                                                                        handlePermissionChange(
-                                                                                                            module.id,
-                                                                                                            'full',
-                                                                                                        )
-                                                                                                    }
-                                                                                                    className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
-                                                                                                        getPermissionValue(
+                                                                                                'equipment') && (
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={() =>
+                                                                                                            handlePermissionChange(
+                                                                                                                module.id,
+                                                                                                                'full',
+                                                                                                            )
+                                                                                                        }
+                                                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
                                                                                                             module.id,
                                                                                                         ) ===
-                                                                                                        'full'
-                                                                                                            ? 'bg-purple-100 text-purple-700 shadow-sm'
-                                                                                                            : 'text-muted-foreground hover:bg-background/50'
-                                                                                                    }`}
-                                                                                                >
-                                                                                                    Total
-                                                                                                </button>
-                                                                                            )}
+                                                                                                                'full'
+                                                                                                                ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                                                : 'text-muted-foreground hover:bg-background/50'
+                                                                                                            }`}
+                                                                                                    >
+                                                                                                        Total
+                                                                                                    </button>
+                                                                                                )}
                                                                                         </div>
                                                                                     </td>
                                                                                 </tr>
