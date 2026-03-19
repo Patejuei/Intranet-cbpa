@@ -15,6 +15,15 @@ export function usePermissions() {
 
         if (user.role === 'admin' || user.role === 'comandante') return true;
 
+        if (user.role === 'cuartelero') {
+            const cuarteleroModules = [
+                'vehicles.logs',
+                'vehicles.checklist',
+                'vehicles.status',
+            ];
+            if (cuarteleroModules.includes(module)) return true;
+        }
+
         if (user.role === 'maquinista') {
             const maquinistaModules = [
                 'vehicles.logs',
@@ -104,7 +113,17 @@ export function usePermissions() {
             return true;
         }
 
-        if (user.role === 'admin' || user.role === 'comandante') return true;
+        if (user.role === 'admin' || user.role === 'comandante') {
+            return true;
+        }
+
+        if (user.role === 'cuartelero') {
+            const editModules = [
+                'vehicles.logs',      // bitácoras
+                'vehicles.checklist', // checklist
+            ];
+            if (editModules.includes(module)) return true;
+        }
 
         if (user.role === 'maquinista') {
             // Maquinista Edit permissions
@@ -168,6 +187,14 @@ export function usePermissions() {
     };
 
     const canCreate = (module: string) => {
+        if (!user) return false;
+
+        if (user.role === 'capitan') {
+            if (module === 'vehicles' || module === 'vehicles.status') {
+                return false;
+            }
+        }
+
         return canEdit(module); // Usually create implies edit rights
     };
 

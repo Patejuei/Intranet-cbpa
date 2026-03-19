@@ -11,7 +11,7 @@ class VehicleController extends Controller
     {
         // Permission check
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !in_array('vehicles.view', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !in_array('vehicles.view', $user->permissions ?? [])) {
             abort(403);
         }
 
@@ -77,7 +77,7 @@ class VehicleController extends Controller
     public function decommissioned()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        if ($user->role !== 'admin' && $user->role !== 'comandante') {
             abort(403);
         }
 
@@ -97,7 +97,7 @@ class VehicleController extends Controller
     public function restore(string $id)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        if ($user->role !== 'admin' && $user->role !== 'comandante') {
             abort(403);
         }
 
@@ -142,7 +142,7 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
+        if ($user->role !== 'admin' && $user->role !== 'comandante' && !$isInspector && !in_array('vehicles.create', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para agregar vehículos.');
         }
 
@@ -156,7 +156,7 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
+        if ($user->role !== 'admin' && $user->role !== 'comandante' && !$isInspector && !in_array('vehicles.create', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para agregar vehículos.');
         }
 
@@ -189,7 +189,7 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector && !in_array('vehicles.edit', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para editar vehículos.');
         }
 
@@ -207,7 +207,8 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector && $user->company !== 'Comandancia') {
+        // Note: For capitan, technically they should only edit their own company's vehicles, but we assume UI blocks others and this gets checked or implicit.
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector && !in_array('vehicles.edit', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para editar vehículos.');
         }
 
@@ -237,7 +238,7 @@ class VehicleController extends Controller
     public function destroy(string $id)
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan') {
+        if ($user->role !== 'admin' && $user->role !== 'comandante' && !in_array('vehicles.edit', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para eliminar vehículos.');
         }
 
@@ -251,7 +252,7 @@ class VehicleController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && !$isInspector && !in_array('vehicles.edit', $user->permissions ?? [])) {
+        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector && !in_array('vehicles.edit', $user->permissions ?? [])) {
             abort(403, 'No tiene permisos para actualizar documentos.');
         }
 

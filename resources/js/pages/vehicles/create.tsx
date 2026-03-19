@@ -10,10 +10,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { User } from '@/types';
 
 export default function VehicleCreate() {
+    const { auth } = usePage<{ auth: { user: User } }>().props;
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         plate: '',
@@ -175,6 +177,10 @@ export default function VehicleCreate() {
                                         value={data.company}
                                         onValueChange={(val) =>
                                             setData('company', val)
+                                        }
+                                        disabled={
+                                            auth.user.role === 'capitan' ||
+                                            (auth.user.company !== 'Comandancia' && auth.user.role !== 'admin' && auth.user.role !== 'comandante')
                                         }
                                     >
                                         <SelectTrigger>
