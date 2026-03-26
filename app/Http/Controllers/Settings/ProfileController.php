@@ -40,8 +40,25 @@ class ProfileController extends Controller
                 'max:255',
                 \Illuminate\Validation\Rule::unique(\App\Models\User::class)->ignore($request->user()->id),
             ],
+            'rut' => [
+                'nullable',
+                'string',
+                'max:20',
+                \Illuminate\Validation\Rule::unique(\App\Models\User::class)->ignore($request->user()->id),
+            ],
             'signature' => ['nullable', 'image', 'max:1024'], // 1MB Max
         ]);
+
+        if (array_key_exists('rut', $validated)) {
+            $rut = $validated['rut'];
+            if ($rut) {
+                $rut = str_replace(['.', '-'], '', strtoupper($rut));
+                if (strlen($rut) > 1) {
+                    $rut = substr($rut, 0, -1) . '-' . substr($rut, -1);
+                }
+            }
+            $validated['rut'] = $rut;
+        }
 
         $request->user()->fill($validated);
 

@@ -42,7 +42,7 @@ export default function Login({
                                 </Label>
                                 <Input
                                     id="email"
-                                    type="email"
+                                    // type="email"
                                     name="email"
                                     required
                                     autoFocus

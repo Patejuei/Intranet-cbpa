@@ -17,7 +17,18 @@ export default function Pagination({ links }: PaginationProps) {
         <div className="flex flex-wrap items-center justify-center gap-1 py-4">
             {links.map((link, key) => {
                 const label = link.label;
-                if (label === '&laquo; Previous')
+                const isPrevious =
+                    label.includes('Previous') ||
+                    label.includes('Anterior') ||
+                    label === 'pagination.previous' ||
+                    label.includes('&laquo;');
+                const isNext =
+                    label.includes('Next') ||
+                    label.includes('Siguiente') ||
+                    label === 'pagination.next' ||
+                    label.includes('&raquo;');
+
+                if (isPrevious)
                     return (
                         <Button
                             key={key}
@@ -41,7 +52,7 @@ export default function Pagination({ links }: PaginationProps) {
                             )}
                         </Button>
                     );
-                if (label === 'Next &raquo;')
+                if (isNext)
                     return (
                         <Button
                             key={key}
