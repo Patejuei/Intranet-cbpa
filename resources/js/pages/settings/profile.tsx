@@ -89,6 +89,24 @@ export default function Profile({
                                 </div>
 
                                 <div className="grid gap-2">
+                                    <Label htmlFor="rut">RUT</Label>
+
+                                    <Input
+                                        id="rut"
+                                        className="mt-1 block w-full"
+                                        defaultValue={auth.user.rut ?? ''}
+                                        name="rut"
+                                        autoComplete="off"
+                                        placeholder="Ej: 12345678-9"
+                                    />
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.rut}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
                                     <Label htmlFor="email">
                                         Correo electrónico
                                     </Label>
