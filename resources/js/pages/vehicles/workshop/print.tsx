@@ -278,8 +278,8 @@ export default function WorkshopPrint({
 
                         {/* Signatures */}
                         <div className="mt-12 grid grid-cols-2 gap-16 pt-8">
-                            <div className="flex h-32 flex-col justify-between border-t border-slate-900 pt-2 text-center">
-                                <div className="flex flex-1 items-end justify-center pb-2">
+                            <div className="flex h-32 flex-col justify-between pt-2 text-center">
+                                <div className="flex flex-1 items-end justify-center border-b border-slate-900 pb-2">
                                     {maintenance.receiver_user
                                         ?.signature_path ? (
                                         <img
@@ -298,9 +298,9 @@ export default function WorkshopPrint({
                                     </p>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-900 pt-2 text-center">
-                                <p className="text-sm font-bold uppercase">
-                                    Firma Maquinista / Conductor
+                            <div className="flex h-32 flex-col justify-between pt-28 text-center">
+                                <p className="text-sm font-bold uppercase border-t border-slate-900 pb-2">
+                                    Firma Maquinista / Conductor / A Cargo
                                 </p>
                                 <p className="text-xs text-slate-500">
                                     (Entrega Conforme)
