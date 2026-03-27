@@ -47,6 +47,8 @@ interface Issue {
     sent_to_workshop: boolean;
     workshop_read_at?: string;
     hq_read_at?: string;
+    reported_to_commander: boolean;
+    commander_seen: boolean;
 }
 
 export default function VehicleIncidents({
@@ -72,6 +74,7 @@ export default function VehicleIncidents({
         is_stopped: false,
         sent_to_hq: false,
         sent_to_workshop: false,
+        reported_to_commander: false,
         status: '',
     });
 
@@ -111,6 +114,7 @@ export default function VehicleIncidents({
             is_stopped: issue.is_stopped,
             sent_to_hq: issue.sent_to_hq,
             sent_to_workshop: issue.sent_to_workshop,
+            reported_to_commander: issue.reported_to_commander,
             status: issue.status,
         });
         setReviewOpen(true);
@@ -385,6 +389,18 @@ export default function VehicleIncidents({
                                                 Reportar a Taller Mecánico
                                             </Label>
                                         </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="reported_to_commander"
+                                                checked={reviewData.reported_to_commander}
+                                                onCheckedChange={(checked) =>
+                                                    setReviewData('reported_to_commander', checked as boolean)
+                                                }
+                                            />
+                                            <Label htmlFor="reported_to_commander">
+                                                Reportar a Comandante
+                                            </Label>
+                                        </div>
                                     </div>
                                 </div>
                                 <DialogFooter>
@@ -529,6 +545,20 @@ export default function VehicleIncidents({
                                                                     {issue.workshop_read_at
                                                                         ? 'Visto Taller'
                                                                         : 'Enviado Taller'}
+                                                                </Badge>
+                                                            )}
+                                                            {issue.reported_to_commander && (
+                                                                <Badge
+                                                                    variant={
+                                                                        issue.commander_seen
+                                                                            ? 'secondary'
+                                                                            : 'outline'
+                                                                    }
+                                                                    className="w-fit text-xs border-orange-200"
+                                                                >
+                                                                    {issue.commander_seen
+                                                                        ? 'Visto Cmdte.'
+                                                                        : 'Reportado Cmdte.'}
                                                                 </Badge>
                                                             )}
                                                         </>

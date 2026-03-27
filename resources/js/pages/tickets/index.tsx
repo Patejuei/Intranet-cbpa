@@ -17,6 +17,8 @@ interface TicketModel {
     status: string;
     created_at: string;
     user: { name: string };
+    commander_seen: boolean;
+    reported_to_commander: boolean;
 }
 
 interface PageProps {
@@ -156,6 +158,9 @@ export default function TicketIndex({ tickets }: PageProps) {
                                     <th className="px-4 py-3 font-medium">
                                         Fecha
                                     </th>
+                                    <th className="px-4 py-3 font-medium text-center">
+                                        Visto Cmdte.
+                                    </th>
                                     <th className="px-4 py-3 text-right font-medium">
                                         Acciones
                                     </th>
@@ -191,6 +196,21 @@ export default function TicketIndex({ tickets }: PageProps) {
                                             <td className="px-4 py-3 text-muted-foreground">
                                                 {formatDate(ticket.created_at)}
                                             </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {ticket.reported_to_commander ? (
+                                                    ticket.commander_seen ? (
+                                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+                                                            Visto
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200">
+                                                            No Visto
+                                                        </Badge>
+                                                    )
+                                                ) : (
+                                                    <span className="text-muted-foreground text-xs">-</span>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
                                                     href={`/tickets/${ticket.id}`}
@@ -210,7 +230,7 @@ export default function TicketIndex({ tickets }: PageProps) {
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={9}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
                                             No se encontraron tickets en esta

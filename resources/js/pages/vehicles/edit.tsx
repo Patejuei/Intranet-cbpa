@@ -36,6 +36,7 @@ interface Vehicle {
     technical_review_expires_at?: string;
     circulation_permit_expires_at?: string;
     insurance_expires_at?: string;
+    coupon_number?: string;
 }
 
 import { User } from '@/types';
@@ -59,6 +60,7 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
         insurance_expires_at: vehicle.insurance_expires_at
             ? vehicle.insurance_expires_at.split('T')[0]
             : '',
+        coupon_number: vehicle.coupon_number || '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -259,6 +261,24 @@ export default function VehicleEdit({ vehicle }: { vehicle: Vehicle }) {
                                     {errors.type && (
                                         <p className="text-sm text-destructive">
                                             {errors.type}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="coupon_number">
+                                        Cupón de Combustible
+                                    </Label>
+                                    <Input
+                                        id="coupon_number"
+                                        value={data.coupon_number}
+                                        onChange={(e) =>
+                                            setData('coupon_number', e.target.value)
+                                        }
+                                        placeholder="Opcional. ej: R0525"
+                                    />
+                                    {errors.coupon_number && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.coupon_number}
                                         </p>
                                     )}
                                 </div>

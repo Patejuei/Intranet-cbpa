@@ -20,7 +20,9 @@ class VehicleIssue extends Model
         'sent_to_hq',
         'sent_to_workshop',
         'workshop_read_at',
-        'hq_read_at'
+        'hq_read_at',
+        'reported_to_commander',
+        'commander_seen'
     ];
 
     protected $casts = [

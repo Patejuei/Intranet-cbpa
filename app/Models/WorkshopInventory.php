@@ -27,4 +27,9 @@ class WorkshopInventory extends Model
     'unit_cost' => 'integer',
     'compatibility' => 'array',
   ];
+
+  public function history()
+  {
+    return $this->hasMany(WorkshopHistory::class, 'workshop_inventory_id')->orderBy('created_at', 'desc');
+  }
 }

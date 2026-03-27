@@ -16,6 +16,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -39,6 +40,7 @@ interface Vehicle {
     technical_review_expires_at?: string;
     circulation_permit_expires_at?: string;
     insurance_expires_at?: string;
+    coupon_number?: string | null;
     issues?: {
         id: number;
         description: string;
@@ -119,24 +121,31 @@ export default function VehicleShow({
         return { status: 'ok', days: diffDays };
     };
 
+    const [docModalOpen, setDocModalOpen] = useState(false);
+
+    const formatDateForInput = (dateStr?: string) => {
+        if (!dateStr) return '';
+        return dateStr.split('T')[0];
+    };
+
     const {
         data: docData,
         setData: setDocData,
         patch: patchDocs,
         processing: processingDocs,
         errors: docErrors,
+        reset: resetDocs
     } = useForm({
-        technical_review_expires_at: vehicle.technical_review_expires_at || '',
-        circulation_permit_expires_at:
-            vehicle.circulation_permit_expires_at || '',
-        insurance_expires_at: vehicle.insurance_expires_at || '',
+        technical_review_expires_at: formatDateForInput(vehicle.technical_review_expires_at),
+        circulation_permit_expires_at: formatDateForInput(vehicle.circulation_permit_expires_at),
+        insurance_expires_at: formatDateForInput(vehicle.insurance_expires_at),
     });
 
     const submitDocuments = (e: React.FormEvent) => {
         e.preventDefault();
         patchDocs(`/vehicles/${vehicle.id}/documents`, {
             onSuccess: () => {
-                // optional toast or close dialog logic if handled manually
+                setDocModalOpen(false);
             },
         });
     };
@@ -227,7 +236,16 @@ export default function VehicleShow({
 
                         {/* Documents Update Button (Permission Based) */}
                         {canEdit('vehicles.status') && (
-                            <Dialog>
+                            <Dialog open={docModalOpen} onOpenChange={(open) => {
+                                setDocModalOpen(open);
+                                if (open) {
+                                    setDocData({
+                                        technical_review_expires_at: formatDateForInput(vehicle.technical_review_expires_at),
+                                        circulation_permit_expires_at: formatDateForInput(vehicle.circulation_permit_expires_at),
+                                        insurance_expires_at: formatDateForInput(vehicle.insurance_expires_at),
+                                    });
+                                }
+                            }}>
                                 <DialogTrigger asChild>
                                     <Button variant="secondary">
                                         <Calendar className="mr-2 h-4 w-4" />
@@ -427,6 +445,14 @@ export default function VehicleShow({
                                     </label>
                                     <p className="text-lg font-semibold">
                                         {vehicle.model}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-muted-foreground">
+                                        Cupón Combustible
+                                    </label>
+                                    <p className="text-lg font-semibold">
+                                        {vehicle.coupon_number || 'No asignado'}
                                     </p>
                                 </div>
                             </div>

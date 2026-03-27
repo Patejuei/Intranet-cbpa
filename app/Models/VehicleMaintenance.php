@@ -25,6 +25,8 @@ class VehicleMaintenance extends Model
         'withdrawal_responsible_rut',
         'receiver_user_id',
         'finalizer_user_id',
+        'working_hours',
+        'hour_rate',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class VehicleMaintenance extends Model
         'entry_date' => 'date',
         'exit_date' => 'date',
         'tentative_exit_date' => 'date',
+        'working_hours' => 'decimal:2',
+        'hour_rate' => 'integer',
     ];
 
     public function vehicle()
@@ -69,5 +73,10 @@ class VehicleMaintenance extends Model
     public function externalWorks()
     {
         return $this->hasMany(VehicleMaintenanceExternalWork::class);
+    }
+
+    public function getLaborCostAttribute()
+    {
+        return $this->working_hours * $this->hour_rate;
     }
 }

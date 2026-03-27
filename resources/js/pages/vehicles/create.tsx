@@ -28,6 +28,7 @@ export default function VehicleCreate() {
         technical_review_expires_at: '',
         circulation_permit_expires_at: '',
         insurance_expires_at: '',
+        coupon_number: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -218,6 +219,24 @@ export default function VehicleCreate() {
                                     {errors.type && (
                                         <p className="text-sm text-destructive">
                                             {errors.type}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="coupon_number">
+                                        Cupón de Combustible
+                                    </Label>
+                                    <Input
+                                        id="coupon_number"
+                                        value={data.coupon_number}
+                                        onChange={(e) =>
+                                            setData('coupon_number', e.target.value)
+                                        }
+                                        placeholder="Opcional. ej: R0525"
+                                    />
+                                    {errors.coupon_number && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.coupon_number}
                                         </p>
                                     )}
                                 </div>

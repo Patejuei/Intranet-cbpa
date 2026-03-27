@@ -93,7 +93,8 @@ class VehicleMaintenanceController extends Controller
             });
 
         return Inertia::render('vehicles/workshop/create', [
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
+            'defaultHourRate' => (int)(\App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0),
         ]);
     }
 
@@ -112,10 +113,9 @@ class VehicleMaintenanceController extends Controller
             'issue_ids.*' => 'exists:vehicle_issues,id',
             'tasks' => 'nullable|array',
             'tasks.*' => 'string',
-            // New Fields
             'responsible_person' => 'required|string',
             'mileage_in' => 'required|integer',
-            'traction' => 'required|string', // 4x2, 4x4
+            'traction' => 'required|string',
             'fuel_type' => 'required|string',
             'transmission' => 'required|string',
             'entry_checklist' => 'nullable|array',
@@ -128,7 +128,11 @@ class VehicleMaintenanceController extends Controller
             'external_works.*.invoice_image' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
             'external_works.*.entry_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
             'external_works.*.exit_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
+            'working_hours' => 'nullable|numeric|min:0',
+            'hour_rate' => 'nullable|integer|min:0',
         ]);
+
+        $defaultRate = \App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0;
 
         $maintenance = \App\Models\VehicleMaintenance::create([
             'vehicle_id' => $validated['vehicle_id'],
@@ -144,6 +148,8 @@ class VehicleMaintenanceController extends Controller
             'transmission' => $validated['transmission'],
             'entry_checklist' => $validated['entry_checklist'] ?? null,
             'receiver_user_id' => $request->user()->id,
+            'working_hours' => $validated['working_hours'] ?? 0,
+            'hour_rate' => $validated['hour_rate'] ?? $defaultRate,
         ]);
 
         if (!empty($validated['issue_ids'])) {
@@ -287,6 +293,21 @@ class VehicleMaintenanceController extends Controller
         // Decrement stock was done before this block
         $item->decrement('stock', $validated['quantity']);
 
+        // Log History
+        \App\Models\WorkshopHistory::create([
+            'workshop_inventory_id' => $item->id,
+            'user_id' => $request->user()->id,
+            'type' => 'REMOVE',
+            'quantity_change' => -$validated['quantity'],
+            'current_balance' => $item->stock, // Stock is already decremented
+            'description' => "Carga de material a Orden de Taller #{$maintenance->id} (Vehículo: {$maintenance->vehicle->name})",
+        ]);
+        
+        // Auto-status transition
+        if (in_array($maintenance->status, ['Ingresado', 'En Taller'])) {
+            $maintenance->update(['status' => 'Trabajando']);
+        }
+
         return back()->with('success', 'Ítem agregado correctamente.');
     }
 
@@ -310,6 +331,16 @@ class VehicleMaintenanceController extends Controller
 
         // Detach
         $maintenance->items()->detach($itemId);
+
+        // Log History
+        \App\Models\WorkshopHistory::create([
+            'workshop_inventory_id' => $itemId,
+            'user_id' => $request->user()->id,
+            'type' => 'ADD',
+            'quantity_change' => $pivot->quantity,
+            'current_balance' => \App\Models\WorkshopInventory::find($itemId)->stock, // Stock is already incremented
+            'description' => "Retorno de material desde Orden de Taller #{$maintenance->id} (Anulación de carga)",
+        ]);
 
         return back()->with('success', 'Ítem eliminado y stock restaurado.');
     }
@@ -375,7 +406,7 @@ class VehicleMaintenanceController extends Controller
         $validated = $request->validate([
             'status' => 'required|string',
             'tentative_exit_date' => 'nullable|date',
-            'description' => 'nullable|string', // Added description
+            'description' => 'nullable|string',
             'tasks' => 'nullable|array',
             'tasks.*.id' => 'nullable|integer',
             'tasks.*.description' => 'required|string',
@@ -394,17 +425,35 @@ class VehicleMaintenanceController extends Controller
             'external_works.*.invoice_image' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
             'external_works.*.entry_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
             'external_works.*.exit_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
+            'working_hours' => 'nullable|numeric|min:0',
+            'hour_rate' => 'nullable|integer|min:0',
         ]);
 
         $updateData = [
             'status' => $validated['status'],
             'tentative_exit_date' => $validated['tentative_exit_date'],
-            'description' => $validated['description'] ?? $workshop->description, // Update description
+            'description' => $validated['description'] ?? $workshop->description,
+            'working_hours' => $validated['working_hours'] ?? $workshop->working_hours,
+            'hour_rate' => $validated['hour_rate'] ?? $workshop->hour_rate,
         ];
 
         if ($validated['status'] === 'Entregado') {
             $updateData['withdrawal_responsible_name'] = $validated['withdrawal_responsible_name'] ?? null;
             $updateData['withdrawal_responsible_rut'] = $validated['withdrawal_responsible_rut'] ?? null;
+        }
+
+        // Auto-status transition on activity
+        if (in_array($workshop->status, ['Ingresado', 'En Taller'])) {
+            // Check if there's any activity beyond just metadata
+            $hasActivity = !empty($validated['tasks']) || 
+                           !empty($validated['external_works']) || 
+                           !empty($validated['resolved_issue_ids']) || 
+                           ($validated['working_hours'] ?? 0) > 0 ||
+                           $workshop->items()->exists();
+            
+            if ($hasActivity && $validated['status'] === $workshop->status) {
+                $updateData['status'] = 'Trabajando';
+            }
         }
 
         $workshop->update($updateData);
@@ -523,11 +572,17 @@ class VehicleMaintenanceController extends Controller
         // User asked for states like "Ingresado, Trabajando, En espera de materiales".
         // If "Entregado" or "Finalizado", we might want to set Vehicle to Operative.
         if ($validated['status'] === 'Entregado' || $validated['status'] === 'Finalizado') {
-            $workshop->update(['exit_date' => now()]);
+            $updateDataForFinalization = [
+                'exit_date' => $workshop->exit_date ?? now(), // Keep existing if already set
+                'finalizer_user_id' => $workshop->finalizer_user_id ?? $request->user()->id,
+            ];
+            
+            $workshop->update($updateDataForFinalization);
             $workshop->vehicle->update(['status' => 'Operative']);
-
-            // Auto-resolve all linked issues
+ 
+            // Auto-resolve all linked issues and check off all tasks
             $workshop->issues()->update(['status' => 'Resolved']);
+            $workshop->tasks()->update(['is_completed' => true]);
         }
 
         return redirect()->back()->with('success', 'Orden de trabajo actualizada.');

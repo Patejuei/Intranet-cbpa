@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { usePermissions } from '@/hooks/use-permissions'; // Added hook
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -96,6 +96,8 @@ interface Maintenance {
         sku: string;
     }[];
     external_works?: ExternalWork[];
+    working_hours?: number;
+    hour_rate?: number;
 }
 
 interface InventoryItem {
@@ -119,7 +121,7 @@ export default function WorkshopShow({
         tentative_exit_date: maintenance.tentative_exit_date
             ? maintenance.tentative_exit_date.split('T')[0]
             : '',
-        description: maintenance.description || '', // Added description
+        description: maintenance.description || '',
         tasks: maintenance.tasks.map((t) => ({
             ...t,
             cost: t.cost ? Number(t.cost) : null,
@@ -133,6 +135,8 @@ export default function WorkshopShow({
             ...w,
             cost: w.cost ? Number(w.cost) : '',
         })) as ExternalWork[],
+        working_hours: maintenance.working_hours || 0,
+        hour_rate: maintenance.hour_rate || 0,
     });
 
     const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
@@ -158,11 +162,6 @@ export default function WorkshopShow({
         'Entregado',
     ];
 
-    const handleSubmit: FormEventHandler = (e) => {
-        e.preventDefault();
-        put(`/vehicles/workshop/${maintenance.id}`);
-    };
-
     const handleSaveWorks = () => {
         router.post(`/vehicles/workshop/${maintenance.id}`, {
             _method: 'put',
@@ -171,6 +170,19 @@ export default function WorkshopShow({
             forceFormData: true,
             preserveScroll: true,
         });
+    };
+
+    const handleFinalize = () => {
+        if (confirm('¿Está seguro de finalizar el trabajo? Esto resolverá las incidencias marcadas y generará el documento de salida.')) {
+            router.post(`/vehicles/workshop/${maintenance.id}`, {
+                _method: 'put',
+                ...data,
+                status: 'Finalizado',
+            } as any, {
+                forceFormData: true,
+                preserveScroll: true,
+            });
+        }
     };
 
     const toggleTaskCompletion = (index: number) => {
@@ -244,6 +256,11 @@ export default function WorkshopShow({
             (sum, item) => sum + (item.pivot.total_cost || 0),
             0,
         ) || 0;
+    
+    const laborCost = Number(data.working_hours) * Number(data.hour_rate);
+    const externalWorksCost = data.external_works.reduce((sum, w) => sum + (Number(w.cost) || 0), 0);
+
+    const totalOrderCost = totalPartsCost + laborCost + externalWorksCost;
 
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
@@ -253,16 +270,7 @@ export default function WorkshopShow({
         maintenance.status === 'Finalizado' ||
         maintenance.status === 'Entregado';
 
-    // Header (Status, Dates, Save) is editable if user has permission,
-    // UNLESS it's Entregado (maybe? user only said Finalizado allows edits).
-    // Let's assume Entregado is final-final, but maybe they still need to fix dates?
-    // User request: "cuando esté finalizado no se desabiliten..."
-    // So "Finalizado" -> Header Editable.
-    // "Entregado" -> Probably also editable to fix things or revert?
-    // Let's keep Header editable solely based on permissions for maximum flexibility as requested.
     const isReadOnly = !canEdit;
-
-    // Content (Items, Tasks) is locked if Finalized/Entregado
     const isContentLocked = !canEdit || isLocked;
 
     return (
@@ -290,7 +298,6 @@ export default function WorkshopShow({
                     </Link>
                 </Button>
 
-                {/* Header Actions */}
                 <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold">
@@ -353,21 +360,7 @@ export default function WorkshopShow({
                             maintenance.status !== 'Entregado' && (
                                 <Button
                                     variant="destructive"
-                                    onClick={() => {
-                                        if (
-                                            confirm(
-                                                '¿Está seguro de finalizar el trabajo? Esto resolverá las incidencias marcadas y generará el documento de salida.',
-                                            )
-                                        ) {
-                                            router.put(
-                                                `/vehicles/workshop/${maintenance.id}`,
-                                                {
-                                                    ...data,
-                                                    status: 'Finalizado',
-                                                } as any,
-                                            );
-                                        }
-                                    }}
+                                    onClick={handleFinalize}
                                     disabled={processing || isContentLocked}
                                 >
                                     <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -380,7 +373,6 @@ export default function WorkshopShow({
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Left Column: Details & Status */}
                     <div className="space-y-6 lg:col-span-1">
                         <Card>
                             <CardHeader>
@@ -394,13 +386,6 @@ export default function WorkshopShow({
                                         onValueChange={(val) => {
                                             if (val === 'Entregado') {
                                                 setIsWithdrawalModalOpen(true);
-                                                // We don't set status yet, or we set it but don't save.
-                                                // Let's set it to trigger the UI, but the modal blocks the final save?
-                                                // Actually, "Guardar Cambios" is separate.
-                                                // If I set it here, the dropdown changes.
-                                                // Then the modal appears.
-                                                // If they cancel modal, I should revert status?
-                                                // For simplicity: Set it. If they cancel, they can change it back.
                                                 setData('status', val);
                                             } else {
                                                 setData('status', val);
@@ -447,7 +432,6 @@ export default function WorkshopShow({
                                         disabled={isReadOnly}
                                     />
                                 </div>
-                                {/* ... (Separator and Workshop Name remain same) ... */}
                                 <Separator />
                                 <div className="space-y-2">
                                     <Label>Taller / Proveedor</Label>
@@ -458,7 +442,6 @@ export default function WorkshopShow({
                             </CardContent>
                         </Card>
 
-                        {/* Detalles del Ingreso Card (Assuming previously here, keeping previous content if existed) */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">
@@ -511,44 +494,46 @@ export default function WorkshopShow({
                                         </p>
                                     </div>
                                 </div>
-
-                                {maintenance.entry_checklist && (
-                                    <div className="mt-4">
-                                        <Label className="mb-2 block text-xs text-muted-foreground">
-                                            Checklist de Recepción (Fallas)
-                                        </Label>
-                                        <div className="space-y-1 rounded border p-2">
-                                            {(() => {
-                                                const issues = Object.entries(
-                                                    maintenance.entry_checklist,
-                                                ).filter(
-                                                    ([, v]) => v === 'Fallas',
-                                                );
-                                                if (issues.length === 0)
-                                                    return (
-                                                        <p className="text-xs text-muted-foreground">
-                                                            No se reportaron
-                                                            fallas en el
-                                                            ingreso.
-                                                        </p>
-                                                    );
-                                                return issues.map(([k]) => (
-                                                    <div
-                                                        key={k}
-                                                        className="flex items-center gap-2 text-xs text-red-600"
-                                                    >
-                                                        <CheckCircle2 className="h-3 w-3" />
-                                                        <span>{k}</span>
-                                                    </div>
-                                                ));
-                                            })()}
+                                
+                                <Separator />
+                                
+                                <div className="space-y-4">
+                                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Mano de Obra (HH)
+                                    </Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Horas (HH)</Label>
+                                            <Input
+                                                type="number"
+                                                step="0.5"
+                                                value={data.working_hours}
+                                                onChange={(e) => setData('working_hours', Number(e.target.value))}
+                                                disabled={isReadOnly}
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Precio/Hora</Label>
+                                            <Input
+                                                type="number"
+                                                value={data.hour_rate}
+                                                onChange={(e) => setData('hour_rate', Number(e.target.value))}
+                                                disabled={isReadOnly}
+                                                className="h-8 text-sm"
+                                            />
                                         </div>
                                     </div>
-                                )}
+                                    <div className="flex justify-between border-t border-dashed pt-2 text-sm">
+                                        <span className="text-muted-foreground">Subtotal Labor:</span>
+                                        <span className="font-bold">
+                                            ${(Number(data.working_hours) * Number(data.hour_rate)).toLocaleString('es-CL')}
+                                        </span>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
 
-                        {/* Linked Incidents */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">
@@ -621,7 +606,6 @@ export default function WorkshopShow({
                         </Card>
                     </div>
 
-                    {/* Right Column: Tasks Checklist & Inventory */}
                     <div className="space-y-6 lg:col-span-2">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
@@ -636,7 +620,6 @@ export default function WorkshopShow({
                                 </Badge>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {/* Add Item Form */}
                                 {!isContentLocked && (
                                     <div className="flex items-end gap-2 rounded bg-muted/30 p-4">
                                         <div className="flex-1 space-y-2">
@@ -700,7 +683,6 @@ export default function WorkshopShow({
                                     </div>
                                 )}
 
-                                {/* Items List */}
                                 <div className="rounded-md border">
                                     <table className="w-full text-sm">
                                         <thead>
@@ -810,22 +792,109 @@ export default function WorkshopShow({
                                         </tfoot>
                                     </table>
                                 </div>
-                                
-                                {/* External Works Integrated Section */}
-                                <div className="space-y-4 pt-6 border-t">
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between py-4">
+                                <CardTitle className="text-lg">
+                                    Listado de Trabajos
+                                </CardTitle>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline">
+                                        {completedTasks}/{data.tasks.length}{' '}
+                                        Completados
+                                    </Badge>
+                                    {!isContentLocked && (
+                                        <Button
+                                            onClick={addTask}
+                                            size="sm"
+                                            className="h-8 gap-1"
+                                        >
+                                            <Plus className="h-3.5 w-3.5" />
+                                            <span className="hidden sm:inline">
+                                                Agregar
+                                            </span>
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-3">
+                                    {data.tasks.map((task, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/20"
+                                        >
+                                            {!isReadOnly && (
+                                                <Checkbox
+                                                    checked={task.is_completed}
+                                                    onCheckedChange={() =>
+                                                        toggleTaskCompletion(
+                                                            index,
+                                                        )
+                                                    }
+                                                    className="mt-1"
+                                                />
+                                            )}
+                                            <div className="flex-1 space-y-2">
+                                                <Input
+                                                    value={task.description}
+                                                    onChange={(e) =>
+                                                        updateTaskDescription(
+                                                            index,
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Descripción del trabajo..."
+                                                    className={`border-none bg-transparent p-0 text-sm font-medium focus-visible:ring-0 ${
+                                                        task.is_completed
+                                                            ? 'text-muted-foreground line-through'
+                                                            : ''
+                                                    }`}
+                                                    readOnly={isContentLocked}
+                                                />
+                                            </div>
+                                            {!isContentLocked && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        removeTask(index)
+                                                    }
+                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {data.tasks.length === 0 && (
+                                        <p className="py-4 text-center text-sm text-muted-foreground">
+                                            No hay trabajos registrados.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-lg font-semibold">Trabajos Externos</h3>
+                                        <Label className="text-base font-semibold">
+                                            Trabajos Externos
+                                        </Label>
                                         {!isContentLocked && (
                                             <Button
-                                                variant="outline"
-                                                size="sm"
                                                 onClick={() => {
                                                     setEditingWorkIndex(null);
                                                     setIsExternalModalOpen(true);
                                                 }}
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 gap-1"
                                             >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Agregar
+                                                <Plus className="h-3.5 w-3.5" />
+                                                Agregar Externo
                                             </Button>
                                         )}
                                     </div>
@@ -836,13 +905,13 @@ export default function WorkshopShow({
                                                     <th className="p-3 font-medium">Descripción</th>
                                                     <th className="p-3 font-medium">Proveedor</th>
                                                     <th className="p-3 text-right font-medium">Costo</th>
-                                                    <th className="w-[100px] p-3 text-right font-medium text-muted-foreground"></th>
+                                                    {!isContentLocked && <th className="p-3 w-[100px]"></th>}
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.external_works.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                                                        <td colSpan={isContentLocked ? 3 : 4} className="p-4 text-center text-muted-foreground">
                                                             No hay trabajos externos registrados.
                                                         </td>
                                                     </tr>
@@ -851,30 +920,28 @@ export default function WorkshopShow({
                                                         <tr key={index} className="border-b last:border-0 hover:bg-muted/10">
                                                             <td className="p-3">{work.description}</td>
                                                             <td className="p-3">{work.provider}</td>
-                                                            <td className="p-3 text-right font-medium">
-                                                                ${Number(work.cost).toLocaleString('es-CL')}
-                                                            </td>
-                                                            <td className="p-3 flex justify-end gap-2">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                                                    onClick={() => {
-                                                                        setEditingWorkIndex(index);
-                                                                        setIsExternalModalOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Pencil className="h-4 w-4" />
-                                                                </Button>
-                                                                {!isContentLocked && (
+                                                            <td className="p-3 text-right font-medium">${Number(work.cost).toLocaleString('es-CL')}</td>
+                                                            {!isContentLocked && (
+                                                                <td className="p-3 text-right flex gap-1 justify-end">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                                                        onClick={() => {
+                                                                            setEditingWorkIndex(index);
+                                                                            setIsExternalModalOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        <Pencil className="h-4 w-4" />
+                                                                    </Button>
                                                                     <Button
                                                                         type="button"
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                                                         onClick={() => {
-                                                                            if (confirm('¿Seguro que desea eliminar este trabajo externo?')) {
+                                                                            if (confirm('¿Eliminar trabajo externo?')) {
                                                                                 const newWorks = data.external_works.filter((_, i) => i !== index);
                                                                                 setData('external_works', newWorks);
                                                                             }
@@ -882,8 +949,8 @@ export default function WorkshopShow({
                                                                     >
                                                                         <Trash2 className="h-4 w-4" />
                                                                     </Button>
-                                                                )}
-                                                            </td>
+                                                                </td>
+                                                            )}
                                                         </tr>
                                                     ))
                                                 )}
@@ -892,198 +959,35 @@ export default function WorkshopShow({
                                     </div>
                                 </div>
 
-                            </CardContent>
-                        </Card>
-
-
-
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle>Lista de Trabajos</CardTitle>
-                                <Badge variant="outline" className="text-base">
-                                    Progreso: {completedTasks} /{' '}
-                                    {data.tasks.length}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>
-                                        Descripción General / Observaciones
-                                    </Label>
-                                    <Textarea
-                                        value={data.description}
-                                        onChange={(e) =>
-                                            setData(
-                                                'description',
-                                                e.target.value,
-                                            )
-                                        }
-                                        placeholder="Ingrese observaciones generales..."
-                                        className="min-h-[80px]"
-                                        disabled={isContentLocked}
-                                    />
-                                    {/* Removed static <p> */}
-                                </div>
-
                                 <Separator />
 
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <Label className="text-base font-semibold">
-                                            Tareas Específicas
-                                        </Label>
-                                        {!isContentLocked && (
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={addTask}
-                                                type="button"
-                                                disabled={isContentLocked}
-                                            >
-                                                + Agregar Tarea
-                                            </Button>
-                                        )}
-                                    </div>
-
-                                    {data.tasks.length === 0 && (
-                                        <p className="rounded border-2 border-dashed py-8 text-center text-muted-foreground">
-                                            No hay tareas registradas. Agrega
-                                            una para comenzar el seguimiento.
-                                        </p>
-                                    )}
-
-                                    {data.tasks.map((task, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex flex-col items-start gap-3 rounded border bg-card p-3 transition-colors hover:bg-accent/5 md:flex-row md:items-center"
-                                        >
-                                            <Checkbox
-                                                checked={task.is_completed}
-                                                onCheckedChange={() =>
-                                                    toggleTaskCompletion(index)
-                                                }
-                                                disabled={isContentLocked}
-                                                className="mt-1 md:mt-0"
-                                            />
-                                            <div className="w-full flex-1 space-y-2 md:flex md:gap-4 md:space-y-0">
-                                                <Input
-                                                    value={task.description}
-                                                    onChange={(e) =>
-                                                        updateTaskDescription(
-                                                            index,
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Descripción de la tarea"
-                                                    disabled={isContentLocked}
-                                                    className={
-                                                        task.is_completed
-                                                            ? 'text-muted-foreground line-through'
-                                                            : ''
-                                                    }
-                                                />
-                                            </div>
-                                            {!isContentLocked && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={() =>
-                                                        removeTask(index)
-                                                    }
-                                                    type="button"
+                                <div className="rounded-lg bg-primary/5 p-4">
+                                    <table className="w-full">
+                                        <tfoot>
+                                            <tr className="bg-primary/5 text-primary">
+                                                <td
+                                                    colSpan={3}
+                                                    className="p-4 text-right text-lg font-bold"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-end gap-4 text-muted-foreground">
-                                        <span className="text-sm">
-                                            Total Repuestos:
-                                        </span>
-                                        <span className="font-semibold">
-                                            $
-                                            {totalPartsCost.toLocaleString(
-                                                'es-CL',
-                                            )}
-                                        </span>
-                                    </div>
+                                                    Total Inversión de Orden:
+                                                </td>
+                                                <td className="p-4 text-right text-lg font-bold">
+                                                    ${totalOrderCost.toLocaleString('es-CL')}
+                                                </td>
+                                                {!isContentLocked && <td></td>}
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 </div>
-
-                <Dialog
-                    open={isWithdrawalModalOpen}
-                    onOpenChange={setIsWithdrawalModalOpen}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Confirmar Entrega de Unidad
-                            </DialogTitle>
-                            <DialogDescription>
-                                Para registrar la salida, por favor ingrese los
-                                datos de quien retira el vehículo.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Nombre Responsable Retiro</Label>
-                                <Input
-                                    value={data.withdrawal_responsible_name}
-                                    onChange={(e) =>
-                                        setData(
-                                            'withdrawal_responsible_name',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="Ej: Tte. Juan Perez"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>RUT Responsable</Label>
-                                <Input
-                                    value={data.withdrawal_responsible_rut}
-                                    onChange={(e) =>
-                                        setData(
-                                            'withdrawal_responsible_rut',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="12.345.678-9"
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsWithdrawalModalOpen(false)}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    setIsWithdrawalModalOpen(false);
-                                }}
-                            >
-                                Confirmar Datos
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
             </div>
+
             <ExternalWorkModal
                 isOpen={isExternalModalOpen}
                 onClose={() => setIsExternalModalOpen(false)}
-                isReadOnly={isContentLocked}
                 initialData={
                     editingWorkIndex !== null
                         ? data.external_works[editingWorkIndex]
@@ -1099,6 +1003,71 @@ export default function WorkshopShow({
                     setData('external_works', newWorks);
                 }}
             />
+
+            <Dialog
+                open={isWithdrawalModalOpen}
+                onOpenChange={setIsWithdrawalModalOpen}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Información de Retiro</DialogTitle>
+                        <DialogDescription>
+                            Por favor, complete los datos de la persona que
+                            retira el vehículo.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Nombre Completo</Label>
+                            <Input
+                                value={data.withdrawal_responsible_name}
+                                onChange={(e) =>
+                                    setData(
+                                        'withdrawal_responsible_name',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="Ej: Juan Pérez"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>RUT</Label>
+                            <Input
+                                value={data.withdrawal_responsible_rut}
+                                onChange={(e) =>
+                                    setData(
+                                        'withdrawal_responsible_rut',
+                                        e.target.value,
+                                    )
+                                }
+                                placeholder="12.345.678-9"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsWithdrawalModalOpen(false)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (
+                                    data.withdrawal_responsible_name &&
+                                    data.withdrawal_responsible_rut
+                                ) {
+                                    setIsWithdrawalModalOpen(false);
+                                } else {
+                                    alert('Por favor complete todos los campos');
+                                }
+                            }}
+                        >
+                            Confirmar Datos
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

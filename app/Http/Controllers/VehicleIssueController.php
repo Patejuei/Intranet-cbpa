@@ -127,8 +127,8 @@ class VehicleIssueController extends Controller
         $validated = $request->validate([
             'is_stopped' => 'required|boolean',
             'sent_to_hq' => 'boolean',
-            'sent_to_hq' => 'boolean',
             'sent_to_workshop' => 'boolean',
+            'reported_to_commander' => 'boolean',
             'status' => 'nullable|string',
         ]);
 
@@ -136,6 +136,7 @@ class VehicleIssueController extends Controller
             'is_stopped' => $validated['is_stopped'],
             'sent_to_hq' => $validated['sent_to_hq'] ?? false,
             'sent_to_workshop' => $validated['sent_to_workshop'] ?? false,
+            'reported_to_commander' => $validated['reported_to_commander'] ?? false,
             'reviewed_at' => now(),
             'reviewed_by' => $user->id,
             'status' => $request->input('status', $incident->status), // Allow manual status update
@@ -180,6 +181,17 @@ class VehicleIssueController extends Controller
         ) {
             // "Visto por Material Mayor" (uses hq_read_at field)
             $incident->update(['hq_read_at' => now()]);
+        }
+
+        return redirect()->back();
+    }
+
+    public function markCommanderSeen(Request $request, \App\Models\VehicleIssue $incident)
+    {
+        $user = $request->user();
+
+        if ($user->role === 'comandante' || $user->role === 'admin') {
+            $incident->update(['commander_seen' => true]);
         }
 
         return redirect()->back();
