@@ -27,7 +27,7 @@ interface InventoryItem {
     id: number;
     name: string;
     sku: string;
-    category: 'insumo' | 'repuesto';
+    category: 'insumo' | 'repuesto' | 'herramienta';
     stock: number;
     min_stock: number;
     unit_cost: number;
@@ -149,6 +149,7 @@ export default function InventoryIndex({ items, filters }: Props) {
                             <SelectItem value="all">Todas</SelectItem>
                             <SelectItem value="insumo">Insumos</SelectItem>
                             <SelectItem value="repuesto">Repuestos</SelectItem>
+                            <SelectItem value="herramienta">Herramientas</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -200,17 +201,23 @@ export default function InventoryIndex({ items, filters }: Props) {
                                                 variant={
                                                     item.category === 'insumo'
                                                         ? 'secondary'
-                                                        : 'outline'
+                                                        : item.category === 'herramienta'
+                                                          ? 'default'
+                                                          : 'outline'
                                                 }
                                                 className={
                                                     item.category === 'insumo'
                                                         ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
-                                                        : 'border-orange-200 text-orange-700'
+                                                        : item.category === 'herramienta'
+                                                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200'
+                                                          : 'border-orange-200 text-orange-700'
                                                 }
                                             >
                                                 {item.category === 'insumo'
                                                     ? 'Insumo'
-                                                    : 'Repuesto'}
+                                                    : item.category === 'herramienta'
+                                                      ? 'Herramienta'
+                                                      : 'Repuesto'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="capitalize">

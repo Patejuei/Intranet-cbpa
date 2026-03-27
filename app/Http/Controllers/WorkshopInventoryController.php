@@ -44,13 +44,13 @@ class WorkshopInventoryController extends Controller
     $validated = $request->validate([
       'name' => 'required|string|max:255',
       'sku' => 'nullable|string|unique:workshop_inventory,sku',
-      'category' => 'required|in:insumo,repuesto',
+      'category' => 'required|in:insumo,repuesto,herramienta',
       'unit_of_measure' => 'nullable|string|max:50',
       'stock' => 'required|integer|min:0',
       'min_stock' => 'required|integer|min:0',
       'unit_cost' => 'required|integer|min:0',
       'location' => 'nullable|string|max:255',
-      'compatibility' => 'nullable|string',
+      'compatibility' => 'nullable|array',
       'description' => 'nullable|string',
     ]);
 
@@ -77,7 +77,7 @@ class WorkshopInventoryController extends Controller
     $validated = $request->validate([
       'name' => 'required|string|max:255',
       'sku' => 'nullable|string|unique:workshop_inventory,sku,' . $inventory->id,
-      'category' => 'required|in:insumo,repuesto',
+      'category' => 'required|in:insumo,repuesto,herramienta',
       'unit_of_measure' => 'nullable|string|max:50',
       'stock' => 'required|integer|min:0',
       'min_stock' => 'required|integer|min:0',

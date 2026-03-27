@@ -11,6 +11,11 @@ class VehicleMaintenanceExternalWork extends Model
         'description',
         'provider',
         'cost',
+        'supplier_rut',
+        'invoice_number',
+        'invoice_image_path',
+        'entry_image_path',
+        'exit_image_path',
     ];
 
     public function maintenance()
