@@ -21,8 +21,10 @@ class TicketController extends Controller
         $query = Ticket::with('user');
         $this->applyCompanyScope($query, request());
 
-        // For Comandancia, maybe default to "Pending" or show all? 
-        // Let frontend handle tabs. We return all relevant tickets.
+        // Comandancia roles only see tickets reported to them (and admin sees all)
+        if ($user->company === 'Comandancia' && $user->role !== 'admin' && $user->role !== 'inspector') {
+            $query->where('reported_to_commander', true);
+        }
 
         return Inertia::render('tickets/index', [
             'tickets' => $query->latest()->paginate(10)
@@ -55,14 +57,13 @@ class TicketController extends Controller
             'status' => 'ABIERTO',
             'user_id' => $request->user()->id,
             'company' => $request->user()->company,
+            'reported_to_commander' => false,
+            'commander_seen' => false,
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('tickets', 'public');
-            // Update ticket generic image path if we want a thumbnail, 
-            // or just rely on the first message's image?
-            // The plan said Ticket has image_path. I'll save it there too for list view.
             $ticket->update(['image_path' => $imagePath]);
         }
 
@@ -84,8 +85,12 @@ class TicketController extends Controller
         }
 
         // Authorization: User must be Comandancia OR belong to the ticket's company
-        if ($user->company !== 'Comandancia' && $ticket->company !== $user->company) {
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $ticket->company !== $user->company) {
             abort(403);
+        }
+        
+        if ($user->company === 'Comandancia' && $user->role !== 'admin' && $user->role !== 'inspector' && !$ticket->reported_to_commander) {
+            abort(403, 'Ticket not reported to comandancia yet.');
         }
 
         $ticket->load(['messages.user', 'user']);
@@ -105,6 +110,10 @@ class TicketController extends Controller
         if ($user->company !== 'Comandancia' && $ticket->company !== $user->company) {
             abort(403);
         }
+        
+        if ($user->company === 'Comandancia' && $user->role !== 'admin' && $user->role !== 'inspector' && !$ticket->reported_to_commander) {
+            abort(403, 'Ticket not reported to comandancia yet.');
+        }
 
         $validated = $request->validate([
             'message' => 'required|string',
@@ -123,11 +132,6 @@ class TicketController extends Controller
             'image_path' => $imagePath,
         ]);
 
-        // If Comandancia replies, maybe update status to EN_PROCESO?
-        if ($user->company === 'Comandancia' && $ticket->status === 'ABIERTO') {
-            $ticket->update(['status' => 'EN_PROCESO']);
-        }
-
         return redirect()->back();
     }
 
@@ -138,8 +142,10 @@ class TicketController extends Controller
             abort(403);
         }
 
-        if ($user->company !== 'Comandancia') {
-            abort(403, 'Solo Comandancia puede cambiar el estado.');
+        // Allow Comandancia OR Admin OR Capitan to update status?
+        // Let's keep it restricted as before, or maybe Capitan can resolve it if it hasn't been escalated.
+        if ($user->company !== 'Comandancia' && $user->role !== 'capitan' && $user->role !== 'admin') {
+            abort(403, 'No tienes permisos para cambiar el estado.');
         }
 
         $validated = $request->validate([
@@ -147,6 +153,42 @@ class TicketController extends Controller
         ]);
 
         $ticket->update(['status' => $validated['status']]);
+
+        return redirect()->back();
+    }
+
+    public function reportToCommander(Request $request, Ticket $ticket)
+    {
+        $user = request()->user();
+        
+        // Only Capitán (or Admin) can report to Comandante
+        if ($user->role !== 'capitan' && $user->role !== 'admin') {
+            abort(403, 'Solo el Capitán puede reportar al Comandante.');
+        }
+
+        if ($user->role !== 'admin' && $ticket->company !== $user->company) {
+            abort(403, 'No puedes reportar un ticket de otra compañía.');
+        }
+
+        $ticket->update([
+            'reported_to_commander' => true,
+            'commander_seen' => false,
+        ]);
+
+        return redirect()->back();
+    }
+
+    public function markAsSeenByCommander(Request $request, Ticket $ticket)
+    {
+        $user = request()->user();
+
+        if ($user->role !== 'comandante' && $user->role !== 'admin') {
+            abort(403, 'Solo el Comandante puede marcar el ticket como visto.');
+        }
+
+        $ticket->update([
+            'commander_seen' => true,
+        ]);
 
         return redirect()->back();
     }

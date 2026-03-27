@@ -21,13 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 
 interface Vehicle {
     id: number;
     name: string;
     last_mileage?: number;
+    coupon_number?: string | null;
 }
 
 interface Log {
@@ -90,11 +91,12 @@ export default function VehicleLogs({
     const handleVehicleChange = (val: string) => {
         setData('vehicle_id', val);
         const selectedVehicle = vehicles.find((v) => v.id.toString() === val);
-        if (selectedVehicle && selectedVehicle.last_mileage) {
+        if (selectedVehicle) {
             setData((prev) => ({
                 ...prev,
                 vehicle_id: val,
-                start_km: String(selectedVehicle.last_mileage),
+                start_km: selectedVehicle.last_mileage !== undefined && selectedVehicle.last_mileage !== null ? String(selectedVehicle.last_mileage) : prev.start_km,
+                fuel_coupon: prev.has_fuel && selectedVehicle.coupon_number ? selectedVehicle.coupon_number : (prev.has_fuel ? '' : prev.fuel_coupon),
             }));
         }
     };
@@ -336,14 +338,14 @@ export default function VehicleLogs({
                                                 <Switch
                                                     id="fuel-mode"
                                                     checked={data.has_fuel}
-                                                    onCheckedChange={(
-                                                        checked,
-                                                    ) =>
-                                                        setData(
-                                                            'has_fuel',
-                                                            checked,
-                                                        )
-                                                    }
+                                                    onCheckedChange={(checked) => {
+                                                        const selectedVehicle = vehicles.find((v) => v.id.toString() === data.vehicle_id);
+                                                        setData((prev) => ({
+                                                            ...prev,
+                                                            has_fuel: checked,
+                                                            fuel_coupon: checked && selectedVehicle?.coupon_number ? selectedVehicle.coupon_number : prev.fuel_coupon,
+                                                        }));
+                                                    }}
                                                 />
                                                 <Label htmlFor="fuel-mode">
                                                     ¿Fue a Cargar Combustible?
@@ -393,6 +395,9 @@ export default function VehicleLogs({
                                                                 )
                                                             }
                                                             placeholder="Nº Documento"
+                                                            disabled={
+                                                                !!vehicles.find((v) => v.id.toString() === data.vehicle_id)?.coupon_number
+                                                            }
                                                         />
                                                     </div>
                                                 </div>
@@ -540,6 +545,9 @@ export default function VehicleLogs({
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Conductor
                                                 </th>
+                                                <th className="h-12 px-4 text-right font-medium">
+                                                    Acciones
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -584,6 +592,19 @@ export default function VehicleLogs({
                                                     </td>
                                                     <td className="p-4">
                                                         {log.driver?.name}
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            asChild
+                                                        >
+                                                            <Link
+                                                                href={`/vehicles/logs/${log.id}`}
+                                                            >
+                                                                Ver
+                                                            </Link>
+                                                        </Button>
                                                     </td>
                                                 </tr>
                                             ))}

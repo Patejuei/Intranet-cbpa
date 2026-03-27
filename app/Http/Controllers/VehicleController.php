@@ -122,11 +122,12 @@ class VehicleController extends Controller
             $tasksCost = $maintenance->tasks->sum('cost');
             $itemsCost = $maintenance->items->sum('pivot.total_cost');
             $externalWorksCost = $maintenance->externalWorks->sum('cost');
+            $laborCost = $maintenance->working_hours * $maintenance->hour_rate;
 
             // Calculate and set cost for the individual maintenance record
-            $maintenance->cost = $tasksCost + $itemsCost + $externalWorksCost;
+            $maintenance->cost = $tasksCost + $itemsCost + $externalWorksCost + $laborCost;
 
-            return $tasksCost + $itemsCost + $externalWorksCost;
+            return $tasksCost + $itemsCost + $externalWorksCost + $laborCost;
         });
 
         return Inertia::render('vehicles/status/show', [
@@ -171,6 +172,7 @@ class VehicleController extends Controller
             'technical_review_expires_at' => 'nullable|date',
             'circulation_permit_expires_at' => 'nullable|date',
             'insurance_expires_at' => 'nullable|date',
+            'coupon_number' => 'nullable|string|max:255',
         ]);
 
         $vehicle = \App\Models\Vehicle::create([
@@ -225,6 +227,7 @@ class VehicleController extends Controller
             'technical_review_expires_at' => 'nullable|date',
             'circulation_permit_expires_at' => 'nullable|date',
             'insurance_expires_at' => 'nullable|date',
+            'coupon_number' => 'nullable|string|max:255',
         ]);
 
         $vehicle->update($validated);

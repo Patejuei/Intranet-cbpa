@@ -13,13 +13,12 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, Pencil, Trash2 } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
 import ExternalWorkModal, {
     ExternalWork,
 } from '@/components/vehicles/workshop/ExternalWorkModal';
-import { Pencil, Trash2 } from 'lucide-react';
 
 interface Issue {
     id: number;
@@ -39,7 +38,7 @@ interface Vehicle {
     active_maintenance_id?: number;
 }
 
-export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
+export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles: Vehicle[], defaultHourRate: number }) {
     const checklistItems = [
         'Sistema de frenos (Incluye ABS)',
         'Sistema Eléctrico y luces de emergencia',
@@ -64,7 +63,6 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         tasks: [] as string[],
         external_works: [] as ExternalWork[],
         issue_ids: [] as number[],
-        // New Fields
         responsible_person: '',
         mileage_in: '',
         traction: '4x2',
@@ -74,6 +72,8 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
             (acc, item) => ({ ...acc, [item]: 'Funcional' }),
             {} as Record<string, string>,
         ),
+        working_hours: 0,
+        hour_rate: defaultHourRate,
     });
 
     const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
@@ -86,12 +86,10 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         let newTasks = [...data.tasks];
 
         if (status === 'Fallas') {
-            // Add task if not present
             if (!newTasks.includes(taskName)) {
                 newTasks.push(taskName);
             }
         } else {
-            // Remove task if present
             newTasks = newTasks.filter((t) => t !== taskName);
         }
 
@@ -113,7 +111,6 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
         if (data.vehicle_id) {
             const v = vehicles.find((v) => v.id.toString() === data.vehicle_id);
             setSelectedVehicle(v || null);
-            // Reset issues when vehicle changes?
             setData('issue_ids', []);
         } else {
             setSelectedVehicle(null);
@@ -233,7 +230,6 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                             </div>
                                         </div>
 
-                                        {/* Duplicate Warning */}
                                         {selectedVehicle.active_maintenance_id && (
                                             <div className="mt-4 rounded-md border border-yellow-500/20 bg-yellow-500/10 p-4">
                                                 <div className="flex items-center gap-3">
@@ -434,6 +430,44 @@ export default function WorkshopCreate({ vehicles }: { vehicles: Vehicle[] }) {
                                                 </button>
                                             ))}
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Labor Section */}
+                                <div className="rounded-lg border bg-muted/30 p-4">
+                                    <h3 className="mb-4 font-medium">Mano de Obra (Estimada/Inicial)</h3>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label>Horas de Trabajo (HH)</Label>
+                                            <Input
+                                                type="number"
+                                                step="0.5"
+                                                value={data.working_hours}
+                                                onChange={(e) => setData('working_hours', Number(e.target.value))}
+                                                placeholder="0.0"
+                                            />
+                                            {errors.working_hours && (
+                                                <p className="text-sm text-destructive">{errors.working_hours}</p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Precio por Hora</Label>
+                                            <Input
+                                                type="number"
+                                                value={data.hour_rate}
+                                                onChange={(e) => setData('hour_rate', Number(e.target.value))}
+                                                placeholder="0"
+                                            />
+                                            {errors.hour_rate && (
+                                                <p className="text-sm text-destructive">{errors.hour_rate}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 text-right">
+                                        <span className="text-sm text-muted-foreground">Subtotal Mano de Obra:</span>
+                                        <span className="ml-2 font-bold">
+                                            ${(Number(data.working_hours) * Number(data.hour_rate)).toLocaleString('es-CL')}
+                                        </span>
                                     </div>
                                 </div>
 

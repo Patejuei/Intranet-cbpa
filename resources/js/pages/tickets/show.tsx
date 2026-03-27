@@ -38,6 +38,8 @@ interface Ticket {
     created_at: string;
     user: User;
     messages: TicketMessage[];
+    reported_to_commander: boolean;
+    commander_seen: boolean;
 }
 
 export default function TicketShow({ ticket }: { ticket: Ticket }) {
@@ -204,6 +206,25 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                             ({ticket.company}) el{' '}
                             {formatDate(ticket.created_at)}
                         </p>
+                    </div>
+
+                    {/* New Actions: Reportar a Comandante and Visto Cmdte */}
+                    <div className="flex gap-2">
+                        {(currentUser.role === 'capitan' || currentUser.role === 'admin') && !ticket.reported_to_commander && ticket.company === currentUser.company && (
+                            <Link href={`/tickets/${ticket.id}/report`} method="post" as="button">
+                                <Button className="bg-orange-500 hover:bg-orange-600 gap-2" size="sm">
+                                    Reportar a Comandante
+                                </Button>
+                            </Link>
+                        )}
+
+                        {(currentUser.role === 'comandante' || currentUser.role === 'admin') && ticket.reported_to_commander && !ticket.commander_seen && (
+                            <Link href={`/tickets/${ticket.id}/mark-seen`} method="post" as="button">
+                                <Button className="bg-green-600 hover:bg-green-700 gap-2" size="sm">
+                                    Marcar como Visto
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Status Actions (Comandancia Only) */}

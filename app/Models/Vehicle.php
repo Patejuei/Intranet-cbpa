@@ -21,6 +21,7 @@ class Vehicle extends Model
         'technical_review_expires_at',
         'circulation_permit_expires_at',
         'insurance_expires_at',
+        'coupon_number',
     ];
 
     protected $casts = [

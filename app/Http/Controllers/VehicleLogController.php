@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VehicleLogController extends Controller
 {
@@ -31,7 +33,7 @@ class VehicleLogController extends Controller
         }
 
         // Vehicle Filter
-        if (request()->has('vehicle_id') && request()->vehicle_id) {
+        if (request()->has('vehicle_id') && request()->vehicle_id && request()->vehicle_id !== 'all') {
             $logQuery->where('vehicle_id', request()->vehicle_id);
         }
 
@@ -53,7 +55,7 @@ class VehicleLogController extends Controller
                         ->latest('date')
                         ->limit(1)
                 ])
-                ->orderBy('name')->get(['id', 'name', 'last_mileage']),
+                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.coupon_number', 'last_mileage']),
             'filters' => request()->only(['vehicle_id']),
         ]);
     }
@@ -113,7 +115,19 @@ class VehicleLogController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $user = request()->user();
+        $log = \App\Models\VehicleLog::with(['vehicle', 'driver'])->findOrFail($id);
+
+        // Security check
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+            if ($log->vehicle->company !== $user->company) {
+                abort(403, 'No tiene permiso para ver esta bitácora.');
+            }
+        }
+
+        return Inertia::render('vehicles/logs/show', [
+            'log' => $log,
+        ]);
     }
 
     /**
@@ -140,7 +154,7 @@ class VehicleLogController extends Controller
         //
     }
     /**
-     * Export logs to Excel (Native HTML Table).
+     * Export logs to Excel (XLSX).
      */
     public function export(Request $request)
     {
@@ -156,61 +170,55 @@ class VehicleLogController extends Controller
             }
         }
 
-        // Vehicle Filter
-        if ($request->has('vehicle_id') && $request->vehicle_id) {
+        // Vehicle Filter - Fixed to handle 'all'
+        if ($request->has('vehicle_id') && $request->vehicle_id && $request->vehicle_id !== 'all') {
             $logQuery->where('vehicle_id', $request->vehicle_id);
         }
 
         $logs = $logQuery->get();
 
-        $filename = "bitacora_export_" . date('Y-m-d_H-i') . ".xls";
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
 
-        $headers = [
-            "Content-Type" => "application/vnd.ms-excel",
-            "Content-Disposition" => "attachment; filename=\"$filename\"",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        // Header Row
+        $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Lts. Combust.', 'Nº Cupón Comb.', 'Destino', 'Obs'];
+        $sheet->fromArray($columns, NULL, 'A1');
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
 
-        $callback = function () use ($logs) {
-            $file = fopen('php://output', 'w');
+        // Data Rows
+        $row = 2;
+        foreach ($logs as $log) {
+            $sheet->setCellValue('A' . $row, $log->id);
+            $sheet->setCellValue('B' . $row, $log->vehicle ? $log->vehicle->name : 'N/A');
+            $sheet->setCellValue('C' . $row, $log->vehicle ? $log->vehicle->company : 'N/A');
+            $sheet->setCellValue('D' . $row, $log->driver ? $log->driver->name : 'N/A');
+            $sheet->setCellValue('E' . $row, $log->date);
+            $sheet->setCellValue('F' . $row, $log->departure_time);
+            $sheet->setCellValue('G' . $row, $log->arrival_time);
+            $sheet->setCellValue('H' . $row, $log->start_km);
+            $sheet->setCellValue('I' . $row, $log->end_km);
+            $sheet->setCellValue('J' . $row, ($log->end_km && $log->start_km) ? $log->end_km - $log->start_km : 0);
+            $sheet->setCellValue('K' . $row, $log->activity_type);
+            $sheet->setCellValue('L' . $row, $log->fuel_liters ?? 'N/A');
+            $sheet->setCellValue('M' . $row, $log->fuel_coupon ?? 'N/A');
+            $sheet->setCellValue('N' . $row, $log->destination);
+            $sheet->setCellValue('O' . $row, $log->observations);
+            $row++;
+        }
 
-            // Start HTML
-            fputs($file, '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"></head><body>');
-            fputs($file, '<table border="1">');
+        // Auto size columns
+        foreach (range('A', 'O') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
 
-            // Header Row
-            fputs($file, '<tr style="background-color: #f0f0f0; font-weight: bold;">');
-            $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Destino', 'Obs'];
-            foreach ($columns as $col) {
-                fputs($file, "<th>{$col}</th>");
-            }
-            fputs($file, '</tr>');
+        $writer = new Xlsx($spreadsheet);
+        $filename = "bitacora_export_" . date('Y-m-d_H-i') . ".xlsx";
 
-            // Data Rows
-            foreach ($logs as $log) {
-                fputs($file, '<tr>');
-                fputs($file, "<td>{$log->id}</td>");
-                fputs($file, "<td>" . ($log->vehicle ? $log->vehicle->name : 'N/A') . "</td>");
-                fputs($file, "<td>" . ($log->vehicle ? $log->vehicle->company : 'N/A') . "</td>");
-                fputs($file, "<td>" . ($log->driver ? $log->driver->full_name : 'N/A') . "</td>");
-                fputs($file, "<td>{$log->date}</td>");
-                fputs($file, "<td>{$log->departure_time}</td>");
-                fputs($file, "<td>{$log->arrival_time}</td>");
-                fputs($file, "<td>{$log->start_km}</td>");
-                fputs($file, "<td>{$log->end_km}</td>");
-                fputs($file, "<td>" . (($log->end_km && $log->start_km) ? $log->end_km - $log->start_km : 0) . "</td>");
-                fputs($file, "<td>{$log->activity_type}</td>");
-                fputs($file, "<td>{$log->destination}</td>");
-                fputs($file, "<td>{$log->observations}</td>");
-                fputs($file, '</tr>');
-            }
-
-            fputs($file, '</table></body></html>');
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 }

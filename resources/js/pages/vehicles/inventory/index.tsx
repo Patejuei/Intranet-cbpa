@@ -1,6 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -16,9 +18,17 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Download, Edit, Plus, Search, Trash2 } from 'lucide-react';
+import { Download, Edit, Plus, Search, Trash2, Clock, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 declare let route: any;
@@ -44,16 +54,18 @@ interface Props {
         search?: string;
         category?: string;
     };
+    defaultHourRate: number;
 }
 
-export default function InventoryIndex({ items, filters }: Props) {
+export default function InventoryIndex({ items, filters, defaultHourRate }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [category, setCategory] = useState(filters.category || 'all');
+    const [hourRate, setHourRate] = useState(defaultHourRate);
+    const [isSavingRate, setIsSavingRate] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            // Only trigger router.get if search or category has actually changed from initial filters
-            // or if they have changed from the last state that triggered a router.get
             const currentSearch = filters.search || '';
             const currentCategory = filters.category || 'all';
 
@@ -70,17 +82,27 @@ export default function InventoryIndex({ items, filters }: Props) {
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [search, category, filters.search, filters.category]); // Trigger on search or category change
+    }, [search, category, filters.search, filters.category]);
 
     const handleCategoryChange = (val: string) => {
         setCategory(val);
-        // The useEffect hook will handle the router.get call after debounce
     };
 
     const handleDelete = (id: number) => {
         if (confirm('¿Está seguro de eliminar este ítem?')) {
             router.delete(`/vehicles/inventory/${id}`);
         }
+    };
+
+    const handleSaveRate = () => {
+        setIsSavingRate(true);
+        router.post('/vehicles/inventory/settings', {
+            default_hour_rate: hourRate
+        }, {
+            onSuccess: () => setIsSavingRate(false),
+            onError: () => setIsSavingRate(false),
+            preserveScroll: true
+        });
     };
 
     const formatCurrency = (amount: number) => {
@@ -124,6 +146,10 @@ export default function InventoryIndex({ items, filters }: Props) {
                                 <Plus className="mr-2 h-4 w-4" />
                                 Nuevo Ítem
                             </Link>
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Ajustes Taller
                         </Button>
                     </div>
                 </div>
@@ -193,8 +219,10 @@ export default function InventoryIndex({ items, filters }: Props) {
                                         <TableCell className="font-mono text-xs font-medium text-muted-foreground">
                                             {item.sku || 'N/A'}
                                         </TableCell>
-                                        <TableCell className="font-medium">
-                                            {item.name}
+                                        <TableCell className="font-medium hover:text-primary transition-colors cursor-pointer">
+                                            <Link href={`/vehicles/inventory/${item.id}`}>
+                                                {item.name}
+                                            </Link>
                                         </TableCell>
                                         <TableCell>
                                             <Badge
@@ -282,6 +310,53 @@ export default function InventoryIndex({ items, filters }: Props) {
                     </Table>
                 </div>
             </div>
+
+            <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Clock className="h-5 w-5" />
+                            Ajustes del Taller
+                        </DialogTitle>
+                        <DialogDescription>
+                            Configure los parámetros globales para el módulo de taller mecánico.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="hour-rate">Precio Valor Hora Hombre (HH)</Label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                                <Input
+                                    id="hour-rate"
+                                    type="number"
+                                    value={hourRate}
+                                    onChange={(e) => setHourRate(Number(e.target.value))}
+                                    className="pl-7"
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Este valor se aplicará a todas las órdenes de trabajo activas y será el valor inicial para órdenes nuevas.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSettingsModalOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button 
+                            onClick={() => {
+                                handleSaveRate();
+                                setIsSettingsModalOpen(false);
+                            }}
+                            disabled={isSavingRate}
+                        >
+                            <Save className="mr-2 h-4 w-4" />
+                            Guardar Configuración
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AuthenticatedLayout>
     );
 }

@@ -42,7 +42,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $respondedTickets = [];
 
             if ($user->company === 'Comandancia') {
-                $pendingTickets = \App\Models\Ticket::where('status', 'ABIERTO')->with('user')->take(5)->get();
+                $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
+                    ->when($user->role !== 'admin' && $user->role !== 'inspector', function($q) {
+                        $q->where('reported_to_commander', true)
+                          ->where('commander_seen', false);
+                    })
+                    ->with('user')->take(5)->get();
             } else {
                 $respondedTickets = \App\Models\Ticket::where('company', $user->company)
                     ->where('status', 'EN_PROCESO') // Assuming En Proceso means responded/active
@@ -302,6 +307,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
     Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
     Route::patch('tickets/{ticket}/priority', [TicketController::class, 'updatePriority'])->name('tickets.updatePriority');
+    Route::post('tickets/{ticket}/report', [TicketController::class, 'reportToCommander'])->name('tickets.report');
+    Route::post('tickets/{ticket}/mark-seen', [TicketController::class, 'markAsSeenByCommander'])->name('tickets.markSeen');
 
     // Material Mayor Routes
     Route::middleware('module:vehicles')->prefix('vehicles')->group(
@@ -320,6 +327,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('logs/export', [VehicleLogController::class, 'export'])->name('vehicles.logs.export');
             Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
             Route::patch('incidents/{incident}/mark-read', [VehicleIssueController::class, 'markAsRead'])->name('vehicles.incidents.markRead');
+            Route::patch('incidents/{incident}/mark-commander-seen', [VehicleIssueController::class, 'markCommanderSeen'])->name('vehicles.incidents.markCommanderSeen');
             Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
             Route::get('workshop/{maintenance}/print', [VehicleMaintenanceController::class, 'print'])->name('vehicles.workshop.print');
             Route::get('workshop/{maintenance}/print-exit', [VehicleMaintenanceController::class, 'printExit'])->name('vehicles.workshop.print_exit');
@@ -327,6 +335,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('workshop/{maintenance}/items/{item}', [VehicleMaintenanceController::class, 'removeInventoryItem'])->name('vehicles.workshop.remove_item');
             Route::resource('workshop', VehicleMaintenanceController::class)->names('vehicles.workshop');
             Route::get('inventory/export', [App\Http\Controllers\WorkshopInventoryController::class, 'export'])->name('vehicles.inventory.export');
+            Route::post('inventory/settings', [App\Http\Controllers\WorkshopInventoryController::class, 'updateSetting'])->name('vehicles.inventory.settings.update');
             Route::resource('inventory', App\Http\Controllers\WorkshopInventoryController::class)->names('vehicles.inventory');
 
             // Checklist Routes

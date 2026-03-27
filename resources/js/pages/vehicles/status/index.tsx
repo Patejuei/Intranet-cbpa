@@ -22,9 +22,11 @@ interface Vehicle {
     name: string; // e.g., B-1
     make: string;
     model: string;
+    year: number;
     plate: string;
     status: 'Operative' | 'Workshop' | 'Out of Service';
     company: string;
+    coupon_number?: string | null;
 }
 
 interface PageProps {
@@ -102,8 +104,11 @@ export default function VehicleStatus({
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="mb-2 text-sm text-muted-foreground">
+                    <p className="mb-0 text-sm text-muted-foreground">
                         PPU: {vehicle.plate}
+                    </p>
+                    <p className="mb-2 text-sm text-muted-foreground font-medium">
+                        Cupón: {vehicle.coupon_number || '-'}
                     </p>
                     <Button variant="outline" className="w-full">
                         Ver Detalles
