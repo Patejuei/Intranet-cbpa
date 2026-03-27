@@ -32,23 +32,21 @@ import {
     FileText,
     Plus,
     Printer,
+    Pencil,
     Save,
     Trash2,
     Wrench,
 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
+import ExternalWorkModal, {
+    ExternalWork,
+} from '@/components/vehicles/workshop/ExternalWorkModal';
+
 interface Task {
     id?: number;
     description: string;
     is_completed: boolean;
-    cost: number | null;
-}
-
-interface ExternalWork {
-    id?: number;
-    description: string;
-    provider: string;
     cost: number | null;
 }
 
@@ -133,11 +131,15 @@ export default function WorkshopShow({
             maintenance.withdrawal_responsible_rut || '',
         external_works: (maintenance.external_works || []).map((w) => ({
             ...w,
-            cost: w.cost ? Number(w.cost) : null,
+            cost: w.cost ? Number(w.cost) : '',
         })) as ExternalWork[],
     });
 
     const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+    const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
+    const [editingWorkIndex, setEditingWorkIndex] = useState<number | null>(
+        null,
+    );
 
     const [inventoryForm, setInventoryForm] = useState({
         inventory_item_id: '',
@@ -159,6 +161,16 @@ export default function WorkshopShow({
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
         put(`/vehicles/workshop/${maintenance.id}`);
+    };
+
+    const handleSaveWorks = () => {
+        router.post(`/vehicles/workshop/${maintenance.id}`, {
+            _method: 'put',
+            ...data,
+        } as any, {
+            forceFormData: true,
+            preserveScroll: true,
+        });
     };
 
     const toggleTaskCompletion = (index: number) => {
@@ -326,7 +338,7 @@ export default function WorkshopShow({
 
                         {!isReadOnly && (
                             <Button
-                                onClick={handleSubmit}
+                                onClick={handleSaveWorks}
                                 disabled={processing}
                             >
                                 <Save className="mr-2 h-4 w-4" />
@@ -798,162 +810,92 @@ export default function WorkshopShow({
                                         </tfoot>
                                     </table>
                                 </div>
+                                
+                                {/* External Works Integrated Section */}
+                                <div className="space-y-4 pt-6 border-t">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold">Trabajos Externos</h3>
+                                        {!isContentLocked && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setEditingWorkIndex(null);
+                                                    setIsExternalModalOpen(true);
+                                                }}
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Agregar
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className="rounded-md border">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b bg-muted/50 text-left">
+                                                    <th className="p-3 font-medium">Descripción</th>
+                                                    <th className="p-3 font-medium">Proveedor</th>
+                                                    <th className="p-3 text-right font-medium">Costo</th>
+                                                    <th className="w-[100px] p-3 text-right font-medium text-muted-foreground"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {data.external_works.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                                                            No hay trabajos externos registrados.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    data.external_works.map((work, index) => (
+                                                        <tr key={index} className="border-b last:border-0 hover:bg-muted/10">
+                                                            <td className="p-3">{work.description}</td>
+                                                            <td className="p-3">{work.provider}</td>
+                                                            <td className="p-3 text-right font-medium">
+                                                                ${Number(work.cost).toLocaleString('es-CL')}
+                                                            </td>
+                                                            <td className="p-3 flex justify-end gap-2">
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                                                    onClick={() => {
+                                                                        setEditingWorkIndex(index);
+                                                                        setIsExternalModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                                {!isContentLocked && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                                        onClick={() => {
+                                                                            if (confirm('¿Seguro que desea eliminar este trabajo externo?')) {
+                                                                                const newWorks = data.external_works.filter((_, i) => i !== index);
+                                                                                setData('external_works', newWorks);
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Trabajos Externos</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    {data.external_works.map((work, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex flex-col gap-2 rounded border p-2 md:flex-row md:items-start"
-                                        >
-                                            <div className="flex-[2]">
-                                                {isContentLocked ? (
-                                                    <div>
-                                                        <Label className="text-xs text-muted-foreground">
-                                                            Descripción
-                                                        </Label>
-                                                        <p className="text-sm font-medium">
-                                                            {work.description}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <Input
-                                                        placeholder="Descripción..."
-                                                        value={work.description}
-                                                        onChange={(e) => {
-                                                            const newWorks = [
-                                                                ...data.external_works,
-                                                            ];
-                                                            newWorks[
-                                                                index
-                                                            ].description =
-                                                                e.target.value;
-                                                            setData(
-                                                                'external_works',
-                                                                newWorks,
-                                                            );
-                                                        }}
-                                                    />
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                {isContentLocked ? (
-                                                    <div>
-                                                        <Label className="text-xs text-muted-foreground">
-                                                            Proveedor
-                                                        </Label>
-                                                        <p className="text-sm">
-                                                            {work.provider}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <Input
-                                                        placeholder="Proveedor..."
-                                                        value={work.provider}
-                                                        onChange={(e) => {
-                                                            const newWorks = [
-                                                                ...data.external_works,
-                                                            ];
-                                                            newWorks[
-                                                                index
-                                                            ].provider =
-                                                                e.target.value;
-                                                            setData(
-                                                                'external_works',
-                                                                newWorks,
-                                                            );
-                                                        }}
-                                                    />
-                                                )}
-                                            </div>
-                                            <div className="w-full md:w-32">
-                                                {isContentLocked ? (
-                                                    <div>
-                                                        <Label className="text-xs text-muted-foreground">
-                                                            Costo
-                                                        </Label>
-                                                        <p className="text-sm font-bold">
-                                                            $
-                                                            {(
-                                                                work.cost || 0
-                                                            ).toLocaleString(
-                                                                'es-CL',
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Costo"
-                                                        value={work.cost || ''}
-                                                        onChange={(e) => {
-                                                            const newWorks = [
-                                                                ...data.external_works,
-                                                            ];
-                                                            newWorks[
-                                                                index
-                                                            ].cost = Number(
-                                                                e.target.value,
-                                                            );
-                                                            setData(
-                                                                'external_works',
-                                                                newWorks,
-                                                            );
-                                                        }}
-                                                    />
-                                                )}
-                                            </div>
-                                            {!isContentLocked && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:bg-destructive/10"
-                                                    onClick={() => {
-                                                        const newWorks =
-                                                            data.external_works.filter(
-                                                                (_, i) =>
-                                                                    i !== index,
-                                                            );
-                                                        setData(
-                                                            'external_works',
-                                                            newWorks,
-                                                        );
-                                                    }}
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    {!isContentLocked && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setData('external_works', [
-                                                    ...data.external_works,
-                                                    {
-                                                        description: '',
-                                                        provider: '',
-                                                        cost: null,
-                                                    },
-                                                ])
-                                            }
-                                        >
-                                            + Agregar Trabajo Externo
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+
 
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
@@ -1138,6 +1080,25 @@ export default function WorkshopShow({
                     </DialogContent>
                 </Dialog>
             </div>
+            <ExternalWorkModal
+                isOpen={isExternalModalOpen}
+                onClose={() => setIsExternalModalOpen(false)}
+                isReadOnly={isContentLocked}
+                initialData={
+                    editingWorkIndex !== null
+                        ? data.external_works[editingWorkIndex]
+                        : null
+                }
+                onSave={(work) => {
+                    const newWorks = [...data.external_works];
+                    if (editingWorkIndex !== null) {
+                        newWorks[editingWorkIndex] = work;
+                    } else {
+                        newWorks.push(work);
+                    }
+                    setData('external_works', newWorks);
+                }}
+            />
         </AppLayout>
     );
 }

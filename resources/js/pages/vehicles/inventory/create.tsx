@@ -123,9 +123,18 @@ export default function InventoryCreate({
                                     <Label>Categoría</Label>
                                     <Select
                                         value={data.category}
-                                        onValueChange={(val) =>
-                                            setData('category', val)
-                                        }
+                                        onValueChange={(val) => {
+                                            if (val === 'herramienta') {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    category: val,
+                                                    unit_of_measure: 'unidades',
+                                                    compatibility: vehicles.map((v) => v.id),
+                                                }));
+                                            } else {
+                                                setData('category', val);
+                                            }
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Seleccione una categoría" />
@@ -136,6 +145,9 @@ export default function InventoryCreate({
                                             </SelectItem>
                                             <SelectItem value="repuesto">
                                                 Repuesto (Parte)
+                                            </SelectItem>
+                                            <SelectItem value="herramienta">
+                                                Herramienta
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -150,10 +162,11 @@ export default function InventoryCreate({
                                 <div className="space-y-2">
                                     <Label>Unidad de Medida</Label>
                                     <Select
-                                        value={data.unit_of_measure}
+                                        value={data.category === 'herramienta' ? 'unidades' : data.unit_of_measure}
                                         onValueChange={(val) =>
                                             setData('unit_of_measure', val)
                                         }
+                                        disabled={data.category === 'herramienta'}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Seleccione unidad" />
@@ -278,9 +291,11 @@ export default function InventoryCreate({
                                         <Checkbox
                                             id="all-vehicles"
                                             checked={
+                                                data.category === 'herramienta' ||
                                                 data.compatibility.length ===
                                                 vehicles.length
                                             }
+                                            disabled={data.category === 'herramienta'}
                                             onCheckedChange={(checked) => {
                                                 if (checked) {
                                                     setData(
@@ -311,9 +326,13 @@ export default function InventoryCreate({
                                         >
                                             <Checkbox
                                                 id={`vehicle-${vehicle.id}`}
-                                                checked={data.compatibility.includes(
-                                                    vehicle.id,
-                                                )}
+                                                checked={
+                                                    data.category === 'herramienta' ||
+                                                    data.compatibility.includes(
+                                                        vehicle.id,
+                                                    )
+                                                }
+                                                disabled={data.category === 'herramienta'}
                                                 onCheckedChange={(checked) => {
                                                     const current = [
                                                         ...data.compatibility,

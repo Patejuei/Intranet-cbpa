@@ -122,7 +122,12 @@ class VehicleMaintenanceController extends Controller
             'external_works' => 'nullable|array',
             'external_works.*.description' => 'required|string',
             'external_works.*.provider' => 'required|string',
-            'external_works.*.cost' => 'required|integer',
+            'external_works.*.cost' => 'required|numeric',
+            'external_works.*.supplier_rut' => 'nullable|string',
+            'external_works.*.invoice_number' => 'nullable|string',
+            'external_works.*.invoice_image' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
+            'external_works.*.entry_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
+            'external_works.*.exit_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         $maintenance = \App\Models\VehicleMaintenance::create([
@@ -160,8 +165,31 @@ class VehicleMaintenanceController extends Controller
         }
 
         if (!empty($validated['external_works'])) {
-            foreach ($validated['external_works'] as $work) {
-                $maintenance->externalWorks()->create($work);
+            foreach ($validated['external_works'] as $index => $work) {
+                $invoicePath = null;
+                $entryPath = null;
+                $exitPath = null;
+
+                if ($request->hasFile("external_works.{$index}.invoice_image")) {
+                    $invoicePath = $request->file("external_works.{$index}.invoice_image")->store('external_works/invoices', 'public');
+                }
+                if ($request->hasFile("external_works.{$index}.entry_image")) {
+                    $entryPath = $request->file("external_works.{$index}.entry_image")->store('external_works/entries', 'public');
+                }
+                if ($request->hasFile("external_works.{$index}.exit_image")) {
+                    $exitPath = $request->file("external_works.{$index}.exit_image")->store('external_works/exits', 'public');
+                }
+
+                $maintenance->externalWorks()->create([
+                    'description' => $work['description'],
+                    'provider' => $work['provider'],
+                    'cost' => $work['cost'],
+                    'supplier_rut' => $work['supplier_rut'] ?? null,
+                    'invoice_number' => $work['invoice_number'] ?? null,
+                    'invoice_image_path' => $invoicePath,
+                    'entry_image_path' => $entryPath,
+                    'exit_image_path' => $exitPath,
+                ]);
             }
         }
 
@@ -302,6 +330,7 @@ class VehicleMaintenanceController extends Controller
                     ->orWhere('compatibility', '[]') // Empty JSON array
                     ->orWhereJsonContains('compatibility', $vehicleId);
             })
+            ->where('category', '!=', 'herramienta')
             ->orderBy('name')
             ->get();
 
@@ -359,7 +388,12 @@ class VehicleMaintenanceController extends Controller
             'external_works.*.id' => 'nullable|integer',
             'external_works.*.description' => 'required|string',
             'external_works.*.provider' => 'required|string',
-            'external_works.*.cost' => 'required|integer',
+            'external_works.*.cost' => 'required|numeric',
+            'external_works.*.supplier_rut' => 'nullable|string',
+            'external_works.*.invoice_number' => 'nullable|string',
+            'external_works.*.invoice_image' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:10240',
+            'external_works.*.entry_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
+            'external_works.*.exit_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         $updateData = [
@@ -404,23 +438,77 @@ class VehicleMaintenanceController extends Controller
 
         // Handle External Works
         if (isset($validated['external_works'])) {
-            foreach ($validated['external_works'] as $work) {
+            $currentExternalWorkIds = [];
+            foreach ($validated['external_works'] as $index => $work) {
                 if (isset($work['id'])) {
                     $externalWork = \App\Models\VehicleMaintenanceExternalWork::find($work['id']);
                     if ($externalWork && $externalWork->vehicle_maintenance_id === $workshop->id) {
-                        $externalWork->update([
+                        $updateData = [
                             'description' => $work['description'],
                             'provider' => $work['provider'],
                             'cost' => $work['cost'],
-                        ]);
+                            'supplier_rut' => $work['supplier_rut'] ?? null,
+                            'invoice_number' => $work['invoice_number'] ?? null,
+                        ];
+
+                        if ($request->hasFile("external_works.{$index}.invoice_image")) {
+                            if ($externalWork->invoice_image_path) {
+                                \Illuminate\Support\Facades\Storage::disk('public')->delete($externalWork->invoice_image_path);
+                            }
+                            $updateData['invoice_image_path'] = $request->file("external_works.{$index}.invoice_image")->store('external_works/invoices', 'public');
+                        }
+                        if ($request->hasFile("external_works.{$index}.entry_image")) {
+                            if ($externalWork->entry_image_path) {
+                                \Illuminate\Support\Facades\Storage::disk('public')->delete($externalWork->entry_image_path);
+                            }
+                            $updateData['entry_image_path'] = $request->file("external_works.{$index}.entry_image")->store('external_works/entries', 'public');
+                        }
+                        if ($request->hasFile("external_works.{$index}.exit_image")) {
+                            if ($externalWork->exit_image_path) {
+                                \Illuminate\Support\Facades\Storage::disk('public')->delete($externalWork->exit_image_path);
+                            }
+                            $updateData['exit_image_path'] = $request->file("external_works.{$index}.exit_image")->store('external_works/exits', 'public');
+                        }
+
+                        $externalWork->update($updateData);
+                        $currentExternalWorkIds[] = $externalWork->id;
                     }
                 } else {
-                    $workshop->externalWorks()->create([
+                    $invoicePath = null;
+                    $entryPath = null;
+                    $exitPath = null;
+
+                    if ($request->hasFile("external_works.{$index}.invoice_image")) {
+                        $invoicePath = $request->file("external_works.{$index}.invoice_image")->store('external_works/invoices', 'public');
+                    }
+                    if ($request->hasFile("external_works.{$index}.entry_image")) {
+                        $entryPath = $request->file("external_works.{$index}.entry_image")->store('external_works/entries', 'public');
+                    }
+                    if ($request->hasFile("external_works.{$index}.exit_image")) {
+                        $exitPath = $request->file("external_works.{$index}.exit_image")->store('external_works/exits', 'public');
+                    }
+
+                    $newWork = $workshop->externalWorks()->create([
                         'description' => $work['description'],
                         'provider' => $work['provider'],
                         'cost' => $work['cost'],
+                        'supplier_rut' => $work['supplier_rut'] ?? null,
+                        'invoice_number' => $work['invoice_number'] ?? null,
+                        'invoice_image_path' => $invoicePath,
+                        'entry_image_path' => $entryPath,
+                        'exit_image_path' => $exitPath,
                     ]);
+                    $currentExternalWorkIds[] = $newWork->id;
                 }
+            }
+            
+            // Delete removed extra works
+            $worksToDelete = $workshop->externalWorks()->whereNotIn('id', $currentExternalWorkIds)->get();
+            foreach ($worksToDelete as $workToDelete) {
+                if ($workToDelete->invoice_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->invoice_image_path);
+                if ($workToDelete->entry_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->entry_image_path);
+                if ($workToDelete->exit_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->exit_image_path);
+                $workToDelete->delete();
             }
         }
 
