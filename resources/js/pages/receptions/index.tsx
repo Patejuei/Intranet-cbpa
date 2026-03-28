@@ -6,6 +6,7 @@ import { ReceptionCertificate } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 
@@ -17,6 +18,7 @@ interface PageProps {
 }
 
 export default function ReceptionIndex({ certificates }: PageProps) {
+    const { canCreate } = usePermissions();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredCertificates = certificates.data.filter(
@@ -47,12 +49,14 @@ export default function ReceptionIndex({ certificates }: PageProps) {
                             bomberos.
                         </p>
                     </div>
-                    <Link href="/receptions/create">
-                        <Button className="gap-2">
-                            <Plus className="size-4" />
-                            Nueva Acta
-                        </Button>
-                    </Link>
+                    {canCreate('reception') && (
+                        <Link href="/receptions/create">
+                            <Button className="gap-2">
+                                <Plus className="size-4" />
+                                Nueva Acta
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

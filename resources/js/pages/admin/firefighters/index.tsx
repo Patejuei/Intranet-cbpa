@@ -21,6 +21,7 @@ import { Firefighter } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Pencil, Search, Trash, UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PageProps {
     firefighters: {
@@ -33,6 +34,7 @@ interface PageProps {
 }
 
 export default function FirefighterIndex({ firefighters, filters }: PageProps) {
+    const { canCreate, canEdit } = usePermissions();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [isEdit, setIsEdit] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -136,10 +138,12 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                             Administra el personal de bomberos.
                         </p>
                     </div>
-                    <Button onClick={openCreate} className="gap-2">
-                        <UserPlus className="size-4" />
-                        Nuevo Bombero
-                    </Button>
+                    {canCreate('firefighters') && (
+                        <Button onClick={openCreate} className="gap-2">
+                            <UserPlus className="size-4" />
+                            Nuevo Bombero
+                        </Button>
+                    )}
                 </div>
 
                 <div className="flex max-w-sm items-center gap-2">
@@ -201,26 +205,30 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() =>
-                                                            openEdit(
-                                                                firefighter,
-                                                            )
-                                                        }
-                                                        className="rounded p-1 text-blue-600 hover:bg-blue-100"
-                                                    >
-                                                        <Pencil className="size-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                firefighter.id,
-                                                            )
-                                                        }
-                                                        className="rounded p-1 text-red-600 hover:bg-red-100"
-                                                    >
-                                                        <Trash className="size-4" />
-                                                    </button>
+                                                    {canEdit('firefighters') && (
+                                                        <button
+                                                            onClick={() =>
+                                                                openEdit(
+                                                                    firefighter,
+                                                                )
+                                                            }
+                                                            className="rounded p-1 text-blue-600 hover:bg-blue-100"
+                                                        >
+                                                            <Pencil className="size-4" />
+                                                        </button>
+                                                    )}
+                                                    {canEdit('firefighters') && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    firefighter.id,
+                                                                )
+                                                            }
+                                                            className="rounded p-1 text-red-600 hover:bg-red-100"
+                                                        >
+                                                            <Trash className="size-4" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

@@ -18,7 +18,7 @@ class FirefighterController extends Controller
             abort(403, 'Unauthorized access to Firefighters module');
         }
 
-        if ($user->role !== 'admin' && $user->role !== 'comandante' && $user->company) {
+        if ($user->role !== 'admin' && $user->role !== 'comandante' && $user->company !== 'Comandancia' && $user->company) {
             $query->where('company', $user->company);
         }
 

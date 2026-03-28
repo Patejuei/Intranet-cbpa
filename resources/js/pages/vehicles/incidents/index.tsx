@@ -25,6 +25,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { Eye, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface Vehicle {
     id: number;
@@ -59,6 +60,7 @@ export default function VehicleIncidents({
     vehicles: Vehicle[];
 }) {
     const { auth } = usePage().props as any;
+    const { canCreate, canEdit } = usePermissions();
     const [open, setOpen] = useState(false);
 
     // Review Modal State
@@ -172,131 +174,133 @@ export default function VehicleIncidents({
                             Reporte y seguimiento de problemas mecánicos.
                         </p>
                     </div>
-                    <Dialog open={open} onOpenChange={setOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Nueva
-                                Incidencia
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[500px]">
-                            <form onSubmit={handleSubmit}>
-                                <DialogHeader>
-                                    <DialogTitle>
-                                        Reportar Incidencia
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                        Ingrese los detalles del problema
-                                        detectado en la unidad.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="vehicle">
-                                            Vehículo
-                                        </Label>
-                                        <Select
-                                            onValueChange={(value) =>
-                                                setData('vehicle_id', value)
-                                            }
-                                            value={data.vehicle_id}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione unidad" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {vehicles.map((v) => (
-                                                    <SelectItem
-                                                        key={v.id}
-                                                        value={v.id.toString()}
-                                                    >
-                                                        {v.name}
+                    {canCreate('vehicles.incidents') && (
+                        <Dialog open={open} onOpenChange={setOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <Plus className="mr-2 h-4 w-4" /> Nueva
+                                    Incidencia
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[500px]">
+                                <form onSubmit={handleSubmit}>
+                                    <DialogHeader>
+                                        <DialogTitle>
+                                            Reportar Incidencia
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Ingrese los detalles del problema
+                                            detectado en la unidad.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="vehicle">
+                                                Vehículo
+                                            </Label>
+                                            <Select
+                                                onValueChange={(value) =>
+                                                    setData('vehicle_id', value)
+                                                }
+                                                value={data.vehicle_id}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione unidad" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {vehicles.map((v) => (
+                                                        <SelectItem
+                                                            key={v.id}
+                                                            value={v.id.toString()}
+                                                        >
+                                                            {v.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.vehicle_id && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.vehicle_id}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="severity">
+                                                Severidad
+                                            </Label>
+                                            <Select
+                                                onValueChange={(value) =>
+                                                    setData('severity', value)
+                                                }
+                                                value={data.severity}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Nivel de Gravedad" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Low">
+                                                        Baja (Observación)
                                                     </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {errors.vehicle_id && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.vehicle_id}
-                                            </p>
-                                        )}
-                                    </div>
+                                                    <SelectItem value="Medium">
+                                                        Media (Reparación necesaria)
+                                                    </SelectItem>
+                                                    <SelectItem value="High">
+                                                        Alta (Riesgo operativo)
+                                                    </SelectItem>
+                                                    <SelectItem value="Critical">
+                                                        Crítica (Inoperativo)
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="severity">
-                                            Severidad
-                                        </Label>
-                                        <Select
-                                            onValueChange={(value) =>
-                                                setData('severity', value)
-                                            }
-                                            value={data.severity}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Nivel de Gravedad" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Low">
-                                                    Baja (Observación)
-                                                </SelectItem>
-                                                <SelectItem value="Medium">
-                                                    Media (Reparación necesaria)
-                                                </SelectItem>
-                                                <SelectItem value="High">
-                                                    Alta (Riesgo operativo)
-                                                </SelectItem>
-                                                <SelectItem value="Critical">
-                                                    Crítica (Inoperativo)
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="date">
+                                                Fecha Detección
+                                            </Label>
+                                            <Input
+                                                type="date"
+                                                value={data.date}
+                                                onChange={(e) =>
+                                                    setData('date', e.target.value)
+                                                }
+                                            />
+                                        </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="date">
-                                            Fecha Detección
-                                        </Label>
-                                        <Input
-                                            type="date"
-                                            value={data.date}
-                                            onChange={(e) =>
-                                                setData('date', e.target.value)
-                                            }
-                                        />
-                                    </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="description">
+                                                Descripción del Problema
+                                            </Label>
+                                            <Textarea
+                                                id="description"
+                                                value={data.description}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'description',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Detalle el problema, observaciones, etc."
+                                            />
+                                            {errors.description && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.description}
+                                                </p>
+                                            )}
+                                        </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="description">
-                                            Descripción del Problema
-                                        </Label>
-                                        <Textarea
-                                            id="description"
-                                            value={data.description}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'description',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            placeholder="Detalle el problema, observaciones, etc."
-                                        />
-                                        {errors.description && (
-                                            <p className="text-sm text-destructive">
-                                                {errors.description}
-                                            </p>
-                                        )}
+                                        {/* is_stopped removed for generic input */}
                                     </div>
-
-                                    {/* is_stopped removed for generic input */}
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit" disabled={processing}>
-                                        Reportar
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                                    <DialogFooter>
+                                        <Button type="submit" disabled={processing}>
+                                            Reportar
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    )}
 
                     {/* Review Modal for Captains */}
                     <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
