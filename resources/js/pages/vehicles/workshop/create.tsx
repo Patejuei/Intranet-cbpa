@@ -729,7 +729,7 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Observaciones Generales</Label>
+                                    <Label>Trabajos Generales</Label>
                                     <Textarea
                                         value={data.description}
                                         onChange={(e) =>
@@ -738,7 +738,7 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                                 e.target.value,
                                             )
                                         }
-                                        placeholder="Detalles adicionales..."
+                                        placeholder="Detalles general de los trabajos a realizar..."
                                         rows={3}
                                     />
                                     {errors.description && (
