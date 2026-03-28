@@ -355,12 +355,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     );
 
     // Admin Routes
-    Route::middleware('module:admin')->group(
-        function () {
-            Route::resource('admin/users', \App\Http\Controllers\AdminUserController::class);
-            Route::resource('admin/firefighters', \App\Http\Controllers\FirefighterController::class);
-        }
-    );
+    Route::middleware('module:users')->resource('admin/users', \App\Http\Controllers\AdminUserController::class);
+    Route::middleware('module:firefighters')->resource('admin/firefighters', \App\Http\Controllers\FirefighterController::class);
 
     // Inventory & Deliveries (Protected by equipment permission for now, or just auth?)
     // Assuming users with 'equipment' permission can manage inventory and deliveries

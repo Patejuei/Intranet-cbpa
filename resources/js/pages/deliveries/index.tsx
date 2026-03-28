@@ -6,6 +6,7 @@ import { DeliveryCertificate } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Eye, FileText, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 
@@ -17,6 +18,7 @@ interface PageProps {
 }
 
 export default function DeliveryIndex({ certificates }: PageProps) {
+    const { canCreate } = usePermissions();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredCertificates = certificates.data.filter(
@@ -46,12 +48,14 @@ export default function DeliveryIndex({ certificates }: PageProps) {
                             Historial de entrega de materiales a bomberos.
                         </p>
                     </div>
-                    <Link href="/deliveries/create">
-                        <Button className="gap-2">
-                            <Plus className="size-4" />
-                            Nueva Acta
-                        </Button>
-                    </Link>
+                    {canCreate('deliveries') && (
+                        <Link href="/deliveries/create">
+                            <Button className="gap-2">
+                                <Plus className="size-4" />
+                                Nueva Acta
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

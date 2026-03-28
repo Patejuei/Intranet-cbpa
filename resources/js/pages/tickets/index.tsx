@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
 import { Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface TicketModel {
     id: number;
@@ -29,6 +30,7 @@ interface PageProps {
 }
 
 export default function TicketIndex({ tickets }: PageProps) {
+    const { canCreate } = usePermissions();
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredTickets = tickets.data.filter(
@@ -111,12 +113,14 @@ export default function TicketIndex({ tickets }: PageProps) {
                             Gestión de requerimientos a Comandancia.
                         </p>
                     </div>
-                    <Link href="/tickets/create">
-                        <Button className="gap-2">
-                            <Plus className="size-4" />
-                            Nuevo Ticket
-                        </Button>
-                    </Link>
+                    {canCreate('tickets') && (
+                        <Link href="/tickets/create">
+                            <Button className="gap-2">
+                                <Plus className="size-4" />
+                                Nuevo Ticket
+                            </Button>
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

@@ -109,16 +109,29 @@ class CheckModuleAccess
 
         // Check specific permission
         $permissions = $user->permissions ?? [];
+        $isWriteRequest = !in_array($request->method(), ['GET', 'HEAD', 'OPTIONS']);
 
-        // Allow if user has exact module permission OR .view OR .edit suffix
-        if (
-            in_array($module, $permissions) ||
-            in_array($module . '.view', $permissions) ||
-            in_array($module . '.edit', $permissions)
-        ) {
-            return $next($request);
+        if ($isWriteRequest) {
+            // Write requests: need base module, .edit or .full
+            if (
+                in_array($module, $permissions) ||
+                in_array($module . '.edit', $permissions) ||
+                in_array($module . '.full', $permissions)
+            ) {
+                return $next($request);
+            }
+        } else {
+            // Read requests: can have base, .view, .edit or .full
+            if (
+                in_array($module, $permissions) ||
+                in_array($module . '.view', $permissions) ||
+                in_array($module . '.edit', $permissions) ||
+                in_array($module . '.full', $permissions)
+            ) {
+                return $next($request);
+            }
         }
 
-        abort(403, 'No tienes permiso para acceder a este módulo.');
+        abort(403, 'No tienes permiso para acceder a este módulo o realizar esta acción.');
     }
 }

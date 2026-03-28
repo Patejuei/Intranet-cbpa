@@ -30,6 +30,7 @@ import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Download, Edit, Plus, Search, Trash2, Clock, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 
 declare let route: any;
 
@@ -58,6 +59,7 @@ interface Props {
 }
 
 export default function InventoryIndex({ items, filters, defaultHourRate }: Props) {
+    const { canCreate, canEdit, hasPermission } = usePermissions();
     const [search, setSearch] = useState(filters.search || '');
     const [category, setCategory] = useState(filters.category || 'all');
     const [hourRate, setHourRate] = useState(defaultHourRate);
@@ -141,16 +143,20 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                                 Descargar Excel
                             </a>
                         </Button>
-                        <Button asChild>
-                            <Link href="/vehicles/inventory/create">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nuevo Ítem
-                            </Link>
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
-                            <Clock className="mr-2 h-4 w-4" />
-                            Ajustes Taller
-                        </Button>
+                        {canCreate('vehicles.inventory') && (
+                            <Button asChild>
+                                <Link href="/vehicles/inventory/create">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nuevo Ítem
+                                </Link>
+                            </Button>
+                        )}
+                        {hasPermission('vehicles.inventory.edit') && (
+                            <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
+                                <Clock className="mr-2 h-4 w-4" />
+                                Ajustes Taller
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -279,28 +285,32 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                    className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                                                >
-                                                    <Link
-                                                        href={`/vehicles/inventory/${item.id}/edit`}
+                                                {canEdit('vehicles.inventory') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        asChild
+                                                        className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
                                                     >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                                                    onClick={() =>
-                                                        handleDelete(item.id)
-                                                    }
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                        <Link
+                                                            href={`/vehicles/inventory/${item.id}/edit`}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                                {hasPermission('vehicles.inventory.edit') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                                                        onClick={() =>
+                                                            handleDelete(item.id)
+                                                        }
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

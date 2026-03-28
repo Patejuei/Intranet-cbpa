@@ -26,6 +26,7 @@ import * as XLSX from 'xlsx';
 
 import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PageProps {
     materials: {
@@ -38,6 +39,7 @@ interface PageProps {
 }
 
 export default function InventoryIndex({ materials, filters }: PageProps) {
+    const { canCreate, canEdit } = usePermissions();
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [isOpen, setIsOpen] = useState(false);
     const [currentMaterial, setCurrentMaterial] = useState<Material | null>(
@@ -200,26 +202,30 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button
-                            variant="secondary"
-                            onClick={() => setViperImportOpen(true)}
-                            className="gap-2"
-                        >
-                            <Upload className="size-4" />
-                            Importar VIPER
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setImportOpen(true)}
-                            className="gap-2"
-                        >
-                            <Upload className="size-4" />
-                            Importar
-                        </Button>
-                        <Button onClick={openCreate} className="gap-2">
-                            <PlusCircle className="size-4" />
-                            Nuevo Material
-                        </Button>
+                        {canCreate('equipment') && (
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => setViperImportOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <Upload className="size-4" />
+                                    Importar VIPER
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setImportOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <Upload className="size-4" />
+                                    Importar
+                                </Button>
+                                <Button onClick={openCreate} className="gap-2">
+                                    <PlusCircle className="size-4" />
+                                    Nuevo Material
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -325,15 +331,17 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                                                             <FileText className="size-4" />
                                                         </a>
                                                     )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            openEdit(material)
-                                                        }
-                                                    >
-                                                        <Pencil className="size-4" />
-                                                    </Button>
+                                                    {canEdit('equipment') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                openEdit(material)
+                                                            }
+                                                        >
+                                                            <Pencil className="size-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

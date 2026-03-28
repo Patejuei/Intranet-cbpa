@@ -15,9 +15,11 @@ import { BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { usePermissions } from '@/hooks/use-permissions';
 // import { route } from 'ziggy-js';
 
 export default function RepairRequestsIndex({ requests }: { requests: any[] }) {
+    const { canCreate } = usePermissions();
     const { auth } = usePage().props;
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -81,12 +83,14 @@ export default function RepairRequestsIndex({ requests }: { requests: any[] }) {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Historial de Solicitudes</CardTitle>
-                            <Button asChild>
-                                <Link href="/repairs/create">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nueva Solicitud
-                                </Link>
-                            </Button>
+                            {canCreate('equipment') && (
+                                <Button asChild>
+                                    <Link href="/repairs/create">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nueva Solicitud
+                                    </Link>
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="mb-4 flex items-center gap-2">
