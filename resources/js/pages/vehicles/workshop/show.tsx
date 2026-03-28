@@ -29,6 +29,7 @@ import {
     ArrowLeft,
     Calendar,
     CheckCircle2,
+    Eye,
     FileText,
     Plus,
     Printer,
@@ -141,9 +142,8 @@ export default function WorkshopShow({
 
     const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
     const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
-    const [editingWorkIndex, setEditingWorkIndex] = useState<number | null>(
-        null,
-    );
+    const [editingWorkIndex, setEditingWorkIndex] = useState<number | null>(null);
+    const [viewingWorkIndex, setViewingWorkIndex] = useState<number | null>(null);
 
     const [inventoryForm, setInventoryForm] = useState({
         inventory_item_id: '',
@@ -438,6 +438,28 @@ export default function WorkshopShow({
                                     <p className="font-medium">
                                         {maintenance.workshop_name}
                                     </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* ── Descripción / Detalle General ── */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Detalle General</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">
+                                        Descripción de la orden (se puede actualizar a medida que avanza el trabajo)
+                                    </Label>
+                                    <Textarea
+                                        value={data.description}
+                                        onChange={(e) => setData('description', e.target.value)}
+                                        placeholder="Descripción general del trabajo a realizar..."
+                                        rows={5}
+                                        readOnly={isReadOnly}
+                                        className={isReadOnly ? 'bg-muted/50 resize-none' : 'resize-none'}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -905,13 +927,13 @@ export default function WorkshopShow({
                                                     <th className="p-3 font-medium">Descripción</th>
                                                     <th className="p-3 font-medium">Proveedor</th>
                                                     <th className="p-3 text-right font-medium">Costo</th>
-                                                    {!isContentLocked && <th className="p-3 w-[100px]"></th>}
+                                                    <th className="p-3 w-[120px]"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.external_works.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan={isContentLocked ? 3 : 4} className="p-4 text-center text-muted-foreground">
+                                                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
                                                             No hay trabajos externos registrados.
                                                         </td>
                                                     </tr>
@@ -921,36 +943,56 @@ export default function WorkshopShow({
                                                             <td className="p-3">{work.description}</td>
                                                             <td className="p-3">{work.provider}</td>
                                                             <td className="p-3 text-right font-medium">${Number(work.cost).toLocaleString('es-CL')}</td>
-                                                            {!isContentLocked && (
-                                                                <td className="p-3 text-right flex gap-1 justify-end">
+                                                            <td className="p-3 text-right">
+                                                                <div className="flex gap-1 justify-end">
+                                                                    {/* Ver detalles – siempre visible */}
                                                                     <Button
                                                                         type="button"
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                                                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                                                        title="Ver detalles"
                                                                         onClick={() => {
-                                                                            setEditingWorkIndex(index);
-                                                                            setIsExternalModalOpen(true);
+                                                                            setViewingWorkIndex(index);
                                                                         }}
                                                                     >
-                                                                        <Pencil className="h-4 w-4" />
+                                                                        <Eye className="h-4 w-4" />
                                                                     </Button>
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                                        onClick={() => {
-                                                                            if (confirm('¿Eliminar trabajo externo?')) {
-                                                                                const newWorks = data.external_works.filter((_, i) => i !== index);
-                                                                                setData('external_works', newWorks);
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </td>
-                                                            )}
+                                                                    {/* Editar y Eliminar – solo cuando no está bloqueado */}
+                                                                    {!isContentLocked && (
+                                                                        <>
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                                                                title="Editar"
+                                                                                onClick={() => {
+                                                                                    setEditingWorkIndex(index);
+                                                                                    setIsExternalModalOpen(true);
+                                                                                }}
+                                                                            >
+                                                                                <Pencil className="h-4 w-4" />
+                                                                            </Button>
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                                                title="Eliminar"
+                                                                                onClick={() => {
+                                                                                    if (confirm('¿Eliminar trabajo externo?')) {
+                                                                                        const newWorks = data.external_works.filter((_, i) => i !== index);
+                                                                                        setData('external_works', newWorks);
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </td>
                                                         </tr>
                                                     ))
                                                 )}
@@ -985,9 +1027,13 @@ export default function WorkshopShow({
                 </div>
             </div>
 
+            {/* Modal para editar / agregar trabajo externo */}
             <ExternalWorkModal
                 isOpen={isExternalModalOpen}
-                onClose={() => setIsExternalModalOpen(false)}
+                onClose={() => {
+                    setIsExternalModalOpen(false);
+                    setEditingWorkIndex(null);
+                }}
                 initialData={
                     editingWorkIndex !== null
                         ? data.external_works[editingWorkIndex]
@@ -1002,6 +1048,19 @@ export default function WorkshopShow({
                     }
                     setData('external_works', newWorks);
                 }}
+            />
+
+            {/* Modal de solo lectura para visualizar trabajo externo */}
+            <ExternalWorkModal
+                isOpen={viewingWorkIndex !== null}
+                onClose={() => setViewingWorkIndex(null)}
+                initialData={
+                    viewingWorkIndex !== null
+                        ? data.external_works[viewingWorkIndex]
+                        : null
+                }
+                onSave={() => {}}
+                isReadOnly={true}
             />
 
             <Dialog
