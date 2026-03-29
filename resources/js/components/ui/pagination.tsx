@@ -17,6 +17,11 @@ export function Pagination({ links }: PaginationProps) {
         <div className="flex items-center justify-center gap-1 mt-6">
             {links.map((link, i) => {
                 if (!link.url) {
+                    const isPreviousDisabled = link.label.includes('Previous') || link.label.includes('Anterior') || link.label === 'pagination.previous' || link.label.includes('&laquo;');
+                    const isNextDisabled = link.label.includes('Next') || link.label.includes('Siguiente') || link.label === 'pagination.next' || link.label.includes('&raquo;');
+                    let emptyContent = <span dangerouslySetInnerHTML={{ __html: link.label }}></span>;
+                    if (isPreviousDisabled) emptyContent = <ChevronLeft className="size-4" />;
+                    if (isNextDisabled) emptyContent = <ChevronRight className="size-4" />;
                     return (
                         <Button
                             key={i}
@@ -25,16 +30,19 @@ export function Pagination({ links }: PaginationProps) {
                             className="pointer-events-none text-muted-foreground"
                             disabled
                         >
-                            <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                            {emptyContent}
                         </Button>
                     );
                 }
 
-                // Previous/Next logic usually handled by Laravel labels (&laquo; Previous, Next &raquo;)
-                // We can just render them or check labels.
-                
+                const isPrevious = link.label.includes('Previous') || link.label.includes('Anterior') || link.label === 'pagination.previous' || link.label.includes('&laquo;');
+                const isNext = link.label.includes('Next') || link.label.includes('Siguiente') || link.label === 'pagination.next' || link.label.includes('&raquo;');
                 const isActive = link.active;
                 
+                let content = <span dangerouslySetInnerHTML={{ __html: link.label }}></span>;
+                if (isPrevious) content = <ChevronLeft className="size-4" />;
+                if (isNext) content = <ChevronRight className="size-4" />;
+
                 return (
                     <Link key={i} href={link.url} preserveScroll>
                          <Button
@@ -42,7 +50,7 @@ export function Pagination({ links }: PaginationProps) {
                             size="icon"
                             className={cn("w-9 h-9", isActive && "pointer-events-none")}
                         >
-                            <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                            {content}
                         </Button>
                     </Link>
                 );
