@@ -107,6 +107,7 @@ const getFilteredRoles = (currentUserRole: string) => {
             value: 'secretaria_adquisiciones',
             label: 'Secretaria de Adquisiciones',
         },
+        { value: 'central_operator', label: 'Operador de Central' },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -449,12 +450,14 @@ export default function UserEdit({
                                                     value === 'inspector' ||
                                                     value === 'mechanic' ||
                                                     value ===
-                                                    'secretaria_adquisiciones'
+                                                    'secretaria_adquisiciones' ||
+                                                    value === 'central_operator'
                                                     ? []
                                                     : prev.permissions,
                                             company:
                                                 value === 'comandante' ||
-                                                    value === 'inspector'
+                                                    value === 'inspector' ||
+                                                    value === 'central_operator'
                                                     ? 'Comandancia'
                                                     : prev.company,
                                         }));

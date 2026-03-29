@@ -53,7 +53,10 @@ class CentralController extends Controller
             'vehicle_ids' => 'required|array',
             'vehicle_ids.*' => 'exists:vehicles,id',
             'is_primary' => 'required|boolean',
+            'start_time' => 'nullable',
         ]);
+
+        $startTime = $request->start_time ? Carbon::parse($request->start_time) : now();
 
         foreach ($request->vehicle_ids as $vId) {
             $vehicle = Vehicle::find($vId);
@@ -61,12 +64,12 @@ class CentralController extends Controller
             DutyLog::where('vehicle_id', $vId)
                 ->where('is_primary', $request->is_primary)
                 ->whereNull('end_time')
-                ->update(['end_time' => now()]);
+                ->update(['end_time' => $startTime]);
 
             DutyLog::create([
                 'user_id' => $request->user_id,
                 'vehicle_id' => $vId,
-                'start_time' => now(),
+                'start_time' => $startTime,
                 'is_primary' => $request->is_primary,
                 'company' => $vehicle->company,
             ]);
@@ -75,9 +78,15 @@ class CentralController extends Controller
         return back()->with('success', 'Puestas en servicio registradas.');
     }
 
-    public function endDuty(DutyLog $duty)
+    public function endDuty(Request $request, DutyLog $duty)
     {
-        $duty->update(['end_time' => now()]);
+        $request->validate([
+            'end_time' => 'nullable',
+        ]);
+
+        $endTime = $request->end_time ? Carbon::parse($request->end_time) : now();
+
+        $duty->update(['end_time' => $endTime]);
         return back()->with('success', 'Puesta en servicio finalizada.');
     }
 
