@@ -29,6 +29,8 @@
             <tr>
                 <th>Conductor</th>
                 <th>Vehículo</th>
+                <th>Inicio</th>
+                <th>Término</th>
                 <th>Tipo</th>
                 <th>Tiempo Total</th>
             </tr>
@@ -38,6 +40,8 @@
             <tr>
                 <td>{{ $item['user_name'] }}</td>
                 <td>{{ $item['vehicle_name'] }}</td>
+                <td style="font-family: monospace; font-size: 10px;">{{ $item['start_time'] }}</td>
+                <td style="font-family: monospace; font-size: 10px;">{{ $item['end_time'] }}</td>
                 <td>{{ $item['is_primary'] ? 'Primario' : 'Secundario' }}</td>
                 <td>{{ $item['duration_human'] }}</td>
             </tr>

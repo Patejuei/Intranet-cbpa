@@ -26,6 +26,8 @@ import { CalendarDays, FileSpreadsheet, FileText, Filter, Search } from 'lucide-
 interface ReportItem {
     user_name: string;
     vehicle_name: string;
+    start_time: string;
+    end_time: string;
     duration_human: string;
     is_primary: boolean;
 }
@@ -129,13 +131,13 @@ export default function CentralReports({
                                     <Filter className="h-4 w-4" />
                                     <span>Rápidos:</span>
                                 </div>
-                                <Button variant="secondary" size="xs" className="h-7 px-3 text-xs" onClick={() => setPreset('current_month')}>
+                                <Button variant="secondary" size="sm" className="h-7 px-3 text-xs" onClick={() => setPreset('current_month')}>
                                     Mes
                                 </Button>
-                                <Button variant="secondary" size="xs" className="h-7 px-3 text-xs" onClick={() => setPreset('last_quarter')}>
+                                <Button variant="secondary" size="sm" className="h-7 px-3 text-xs" onClick={() => setPreset('last_quarter')}>
                                     Trimestre
                                 </Button>
-                                <Button variant="secondary" size="xs" className="h-7 px-3 text-xs" onClick={() => setPreset('current_year')}>
+                                <Button variant="secondary" size="sm" className="h-7 px-3 text-xs" onClick={() => setPreset('current_year')}>
                                     Año
                                 </Button>
                                 
@@ -183,7 +185,7 @@ export default function CentralReports({
                                     onChange={(e) => setEndDate(e.target.value)} 
                                     className="h-7 w-[120px] bg-background p-1 text-xs" 
                                 />
-                                <Button size="xs" className="h-7 px-3 text-xs" onClick={handleManualFilter}>
+                                <Button size="sm" className="h-7 px-3 text-xs" onClick={handleManualFilter}>
                                     <Search className="mr-1.5 h-3 w-3" />
                                     Filtrar
                                 </Button>
@@ -208,15 +210,19 @@ export default function CentralReports({
                                     <TableRow className="bg-muted/30">
                                         <TableHead className="h-9 px-4 text-xs">Conductor</TableHead>
                                         <TableHead className="h-9 px-4 text-xs">Vehículo</TableHead>
+                                        <TableHead className="h-9 px-4 text-xs font-mono">Inicio</TableHead>
+                                        <TableHead className="h-9 px-4 text-xs font-mono">Término</TableHead>
                                         <TableHead className="h-9 px-4 text-xs">Tipo</TableHead>
                                         <TableHead className="h-9 px-4 text-right text-xs">Horas Totales</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {reportData.map((item, idx) => (
-                                        <TableRow key={idx} className="hover:bg-muted/10 transition-colors">
-                                            <TableCell className="py-2 px-4 font-medium text-sm">{item.user_name}</TableCell>
-                                            <TableCell className="py-2 px-4 text-sm">{item.vehicle_name}</TableCell>
+                                        <TableRow key={idx} className="hover:bg-muted/10 transition-colors text-xs sm:text-sm">
+                                            <TableCell className="py-2 px-4 font-medium">{item.user_name}</TableCell>
+                                            <TableCell className="py-2 px-4">{item.vehicle_name}</TableCell>
+                                            <TableCell className="py-2 px-4 font-mono text-muted-foreground text-[11px]">{item.start_time}</TableCell>
+                                            <TableCell className="py-2 px-4 font-mono text-muted-foreground text-[11px]">{item.end_time}</TableCell>
                                             <TableCell className="py-2 px-4">
                                                 {item.is_primary ? (
                                                     <Badge className="h-5 px-1.5 text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 border-none">Primario</Badge>
@@ -231,7 +237,7 @@ export default function CentralReports({
                                     ))}
                                     {reportData.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="py-12 text-center text-muted-foreground italic text-sm">
+                                            <TableCell colSpan={6} className="py-12 text-center text-muted-foreground italic text-sm">
                                                 Sin registros para las fechas seleccionadas.
                                             </TableCell>
                                         </TableRow>

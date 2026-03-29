@@ -98,8 +98,8 @@ class CentralController extends Controller
 
         $query = DutyLog::with(['user', 'vehicle'])
             ->whereNotNull('end_time')
-            ->where('start_time', '>=', $startDate)
-            ->where('end_time', '<=', $endDate->endOfDay());
+            ->whereDate('start_time', '>=', $startDate)
+            ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
             $query->whereHas('vehicle', function($q) use ($user) {
@@ -107,28 +107,22 @@ class CentralController extends Controller
             });
         }
 
-        $logs = $query->get();
+        $logs = $query->orderBy('start_time', 'desc')->get();
 
-        $reportData = [];
-        foreach ($logs as $log) {
-            $key = $log->user_id . '_' . $log->vehicle_id;
-            if (!isset($reportData[$key])) {
-                $reportData[$key] = [
-                    'user_name' => $log->user->name,
-                    'vehicle_name' => $log->vehicle->name,
-                    'total_seconds' => 0,
-                    'is_primary' => $log->is_primary,
-                ];
-            }
-            $reportData[$key]['total_seconds'] += $log->start_time->diffInSeconds($log->end_time);
-        }
-
-        $formattedData = array_values(array_map(function($item) {
-            $hours = floor($item['total_seconds'] / 3600);
-            $minutes = floor(($item['total_seconds'] % 3600) / 60);
-            $item['duration_human'] = "{$hours}h {$minutes}m";
-            return $item;
-        }, $reportData));
+        $formattedData = $logs->map(function($log) {
+            $diffInSeconds = $log->start_time->diffInSeconds($log->end_time);
+            $hours = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+            
+            return [
+                'user_name' => $log->user->name,
+                'vehicle_name' => $log->vehicle->name,
+                'start_time' => $log->start_time->format('d-m-Y H:i'),
+                'end_time' => $log->end_time->format('d-m-Y H:i'),
+                'duration_human' => "{$hours}h {$minutes}m",
+                'is_primary' => $log->is_primary,
+            ];
+        });
 
         return Inertia::render('central/reports', [
             'reportData' => $formattedData,
@@ -147,8 +141,8 @@ class CentralController extends Controller
 
         $query = DutyLog::with(['user', 'vehicle'])
             ->whereNotNull('end_time')
-            ->where('start_time', '>=', $startDate)
-            ->where('end_time', '<=', $endDate->endOfDay());
+            ->whereDate('start_time', '>=', $startDate)
+            ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
             $query->whereHas('vehicle', function($q) use ($user) {
@@ -156,42 +150,34 @@ class CentralController extends Controller
             });
         }
 
-        $logs = $query->get();
-
-        $reportData = [];
-        foreach ($logs as $log) {
-            $key = $log->user_id . '_' . $log->vehicle_id;
-            if (!isset($reportData[$key])) {
-                $reportData[$key] = [
-                    'user_name' => $log->user->name,
-                    'vehicle_name' => $log->vehicle->name,
-                    'total_seconds' => 0,
-                    'is_primary' => $log->is_primary,
-                ];
-            }
-            $reportData[$key]['total_seconds'] += $log->start_time->diffInSeconds($log->end_time);
-        }
+        $logs = $query->orderBy('start_time', 'desc')->get();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setCellValue('A1', 'Conductor');
         $sheet->setCellValue('B1', 'Vehículo');
         $sheet->setCellValue('C1', 'Tipo');
-        $sheet->setCellValue('D1', 'Tiempo Total');
+        $sheet->setCellValue('D1', 'Inicio');
+        $sheet->setCellValue('E1', 'Término');
+        $sheet->setCellValue('F1', 'Tiempo Total');
 
         $row = 2;
-        foreach ($reportData as $item) {
-            $hours = floor($item['total_seconds'] / 3600);
-            $minutes = floor(($item['total_seconds'] % 3600) / 60);
-            $sheet->setCellValue('A' . $row, $item['user_name']);
-            $sheet->setCellValue('B' . $row, $item['vehicle_name']);
-            $sheet->setCellValue('C' . $row, $item['is_primary'] ? 'Primario' : 'Secundario');
-            $sheet->setCellValue('D' . $row, "{$hours}h {$minutes}m");
+        foreach ($logs as $log) {
+            $diffInSeconds = $log->start_time->diffInSeconds($log->end_time);
+            $hours = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+
+            $sheet->setCellValue('A' . $row, $log->user->name);
+            $sheet->setCellValue('B' . $row, $log->vehicle->name);
+            $sheet->setCellValue('C' . $row, $log->is_primary ? 'Primario' : 'Secundario');
+            $sheet->setCellValue('D' . $row, $log->start_time->format('d-m-Y H:i'));
+            $sheet->setCellValue('E' . $row, $log->end_time ? $log->end_time->format('d-m-Y H:i') : '');
+            $sheet->setCellValue('F' . $row, "{$hours}h {$minutes}m");
             $row++;
         }
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $fileName = 'reporte_conductores_' . now()->format('YmdHis') . '.xlsx';
+        $fileName = 'reporte_tiempos_' . now()->format('YmdHis') . '.xlsx';
         $tempFile = tempnam(sys_get_temp_dir(), $fileName);
         $writer->save($tempFile);
 
@@ -206,8 +192,8 @@ class CentralController extends Controller
 
         $query = DutyLog::with(['user', 'vehicle'])
             ->whereNotNull('end_time')
-            ->where('start_time', '>=', $startDate)
-            ->where('end_time', '<=', $endDate->endOfDay());
+            ->whereDate('start_time', '>=', $startDate)
+            ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
             $query->whereHas('vehicle', function($q) use ($user) {
@@ -215,28 +201,22 @@ class CentralController extends Controller
             });
         }
 
-        $logs = $query->get();
+        $logs = $query->orderBy('start_time', 'desc')->get();
 
-        $reportData = [];
-        foreach ($logs as $log) {
-            $key = $log->user_id . '_' . $log->vehicle_id;
-            if (!isset($reportData[$key])) {
-                $reportData[$key] = [
-                    'user_name' => $log->user->name,
-                    'vehicle_name' => $log->vehicle->name,
-                    'total_seconds' => 0,
-                    'is_primary' => $log->is_primary,
-                ];
-            }
-            $reportData[$key]['total_seconds'] += $log->start_time->diffInSeconds($log->end_time);
-        }
-
-        $formattedData = array_values(array_map(function($item) {
-            $hours = floor($item['total_seconds'] / 3600);
-            $minutes = floor(($item['total_seconds'] % 3600) / 60);
-            $item['duration_human'] = "{$hours}h {$minutes}m";
-            return $item;
-        }, $reportData));
+        $formattedData = $logs->map(function($log) {
+            $diffInSeconds = $log->start_time->diffInSeconds($log->end_time);
+            $hours = floor($diffInSeconds / 3600);
+            $minutes = floor(($diffInSeconds % 3600) / 60);
+            
+            return [
+                'user_name' => $log->user->name,
+                'vehicle_name' => $log->vehicle->name,
+                'start_time' => $log->start_time->format('d-m-Y H:i'),
+                'end_time' => $log->end_time->format('d-m-Y H:i'),
+                'duration_human' => "{$hours}h {$minutes}m",
+                'is_primary' => $log->is_primary,
+            ];
+        });
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.duty-report', [
             'reportData' => $formattedData,
