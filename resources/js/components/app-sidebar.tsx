@@ -167,6 +167,25 @@ const NAV_GROUPS = [
         ],
     },
     {
+        title: 'Central de Alarmas',
+        items: [
+            {
+                title: 'Puestas en Servicio',
+                url: '/central/duty',
+                icon: ClipboardList,
+                permission: 'central',
+                tooltip: 'Puestas en Servicio',
+            },
+            {
+                title: 'Reportes Central',
+                url: '/central/reports',
+                icon: FileText,
+                permission: 'central',
+                tooltip: 'Reportes Central',
+            },
+        ],
+    },
+    {
         title: 'Administración',
         items: [
             {
@@ -193,7 +212,7 @@ export function AppSidebar({ user }: { user: any }) {
         if (!user) return false;
 
         // Admin and Comandante have full access
-        if (user.role === 'admin' || user.role === 'comandante') return true;
+        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
 
         if (user.role === 'secretaria_adquisiciones') {
             const allowed = [

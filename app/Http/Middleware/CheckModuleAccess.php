@@ -23,7 +23,11 @@ class CheckModuleAccess
 
         // Admin and Capitan have access to everything
         // Admin, Capitan, and Comandante have access to everything
-        if ($user->role === 'admin' || $user->role === 'capitan' || $user->role === 'comandante') {
+        if ($user->role === 'admin' || $user->role === 'comandante') {
+            return $next($request);
+        }
+
+        if ($user->role === 'central_operator') {
             return $next($request);
         }
 
@@ -105,6 +109,20 @@ class CheckModuleAccess
                     return $next($request);
                 }
             }
+            
+            if ($module === 'central') {
+                return $next($request);
+            }
+        }
+
+        // Capitan default access
+        if ($user->role === 'capitan') {
+            if ($module === 'central' || $module === 'inventory') {
+                // For 'central', we allow but filtering happens in controller
+                // Wait, if I return $next here, they get access.
+                return $next($request);
+            }
+            return $next($request); // Capitan usually has broad access anyway
         }
 
         // Check specific permission

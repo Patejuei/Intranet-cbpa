@@ -8,6 +8,7 @@ use App\Http\Controllers\VehicleLogController;
 use App\Http\Controllers\VehicleIssueController;
 use App\Http\Controllers\VehicleMaintenanceController;
 
+use App\Http\Controllers\Central\CentralController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
@@ -353,6 +354,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('renditions', App\Http\Controllers\RenditionController::class)->names('vehicles.renditions');
         }
     );
+
+    // Central de Alarmas Routes
+    Route::middleware('module:central')->prefix('central')->group(function () {
+        Route::get('duty', [CentralController::class, 'dutyIndex'])->name('central.duty.index');
+        Route::post('duty/start', [CentralController::class, 'startDuty'])->name('central.duty.start');
+        Route::post('duty/{duty}/end', [CentralController::class, 'endDuty'])->name('central.duty.end');
+        
+        Route::get('reports', [CentralController::class, 'reportsIndex'])->name('central.reports.index');
+        Route::get('reports/export-excel', [CentralController::class, 'exportReportsExcel'])->name('central.reports.export.excel');
+        Route::get('reports/export-pdf', [CentralController::class, 'exportReportsPdf'])->name('central.reports.export.pdf');
+    });
 
     // Admin Routes
     Route::middleware('module:users')->resource('admin/users', \App\Http\Controllers\AdminUserController::class);

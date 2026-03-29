@@ -13,7 +13,7 @@ export function usePermissions() {
             return true; // Default to true for everything else (legacy behavior)
         }
 
-        if (user.role === 'admin' || user.role === 'comandante') return true;
+        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
 
         if (user.role === 'cuartelero') {
             const cuarteleroModules = [
@@ -66,6 +66,7 @@ export function usePermissions() {
                     'vehicles.checklist',
                     'vehicles.petty-cash',
                     'vehicles',
+                    'central',
                 ];
                 if (
                     allowed.some(
@@ -113,7 +114,7 @@ export function usePermissions() {
             return true;
         }
 
-        if (user.role === 'admin' || user.role === 'comandante') {
+        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') {
             return true;
         }
 
