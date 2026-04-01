@@ -1,8 +1,0 @@
-resources/js/actions/App/Http/Controllers/MaterialController.ts(294,5): error TS1117: An object literal cannot have multiple properties with the same name.
-resources/js/pages/deliveries/index.tsx(114,55): error TS2339: Property 'items' does not exist on type 'DeliveryCertificate'.
-resources/js/pages/deliveries/show.tsx(101,46): error TS2339: Property 'items' does not exist on type 'DeliveryCertificate'.
-resources/js/pages/deliveries/show.tsx(101,58): error TS7006: Parameter 'item' implicitly has an 'any' type.
-resources/js/pages/deliveries/show.tsx(101,64): error TS7006: Parameter 'index' implicitly has an 'any' type.
-resources/js/pages/my-profile/index.tsx(47,18): error TS2571: Object is of type 'unknown'.
-resources/js/pages/vehicles/workshop/index.tsx(61,47): error TS2344: Type 'PageProps' does not satisfy the constraint 'import("C:/xampp/htdocs/intranet-cbpa/node_modules/@inertiajs/core/types/types").PageProps'.
-  Index signature for type 'string' is missing in type 'PageProps'.

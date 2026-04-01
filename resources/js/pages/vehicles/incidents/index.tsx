@@ -154,7 +154,7 @@ export default function VehicleIncidents({
     const isWorkshop =
         auth.user.role === 'mechanic' || auth.user.role === 'admin';
     const isHQ =
-        auth.user.company === 'Comandancia' || auth.user.role === 'admin';
+        (auth.user.role === 'inspector' && auth.user.department === 'Material Mayor') || auth.user.role === 'admin';
 
     return (
         <AppLayout
@@ -471,7 +471,7 @@ export default function VehicleIncidents({
                                                 {issue.severity}
                                             </Badge>
                                         </td>
-                                        <td className="max-w-[300px] truncate p-4 align-middle">
+                                        <td className="min-w-[300px] p-4 align-middle whitespace-pre-line">
                                             {issue.description}
                                         </td>
                                         <td className="p-4 align-middle">
@@ -603,15 +603,7 @@ export default function VehicleIncidents({
                                                             Taller
                                                         </Button>
                                                     )}
-                                                {/* Inspector / Material Mayor / Comandante View Button */}
-                                                {((auth.user.role ===
-                                                    'inspector' &&
-                                                    auth.user.department ===
-                                                        'Material Mayor') ||
-                                                    auth.user.role ===
-                                                        'comandante' ||
-                                                    auth.user.company ===
-                                                        'Comandancia') &&
+                                                {isHQ &&
                                                     issue.sent_to_hq &&
                                                     !issue.hq_read_at && (
                                                         <Button
@@ -625,7 +617,26 @@ export default function VehicleIncidents({
                                                             title="Marcar como Visto"
                                                         >
                                                             <Eye className="mr-1 size-4" />{' '}
-                                                            Visto
+                                                            M.Mayor
+                                                        </Button>
+                                                    )}
+                                                {/* Inspector / Material Mayor / Comandante View Button */}
+                                                {auth.user.role ===
+                                                    'comandante' &&
+                                                    issue.reported_to_commander &&
+                                                    !issue.commander_seen && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                markAsRead(
+                                                                    issue,
+                                                                )
+                                                            }
+                                                            title="Marcar como Visto"
+                                                        >
+                                                            <Eye className="mr-1 size-4" />{' '}
+                                                            Cmdte
                                                         </Button>
                                                     )}
                                                 {/* Comandancia View Button - kept for backward compatibility if needed, or removed if migrated completely */}

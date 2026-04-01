@@ -272,7 +272,8 @@ class VehicleChecklistController extends Controller
                 foreach ($checklist->details as $detail) {
                     if ($detail->status !== 'ok') {
                         $severity = 'Medium';
-                        if ($detail->status === 'urgent') $severity = 'High';
+                        if ($detail->status === 'urgent')
+                            $severity = 'High';
 
                         \App\Models\VehicleIssue::create([
                             'vehicle_id' => $checklist->vehicle_id,
@@ -291,7 +292,7 @@ class VehicleChecklistController extends Controller
         } else {
             // Logic for Company Vehicles (Standard)
             $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
-            $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
+            $isMachinist = ($user->role === 'maquinista' || $user->role === 'admin');
 
             if (!$isCaptain && !$isMachinist) {
                 return back()->with('error', 'No autorizado.');
@@ -325,7 +326,8 @@ class VehicleChecklistController extends Controller
                 foreach ($checklist->details as $detail) {
                     if ($detail->status !== 'ok') {
                         $severity = 'Medium';
-                        if ($detail->status === 'urgent') $severity = 'High';
+                        if ($detail->status === 'urgent')
+                            $severity = 'High';
 
                         \App\Models\VehicleIssue::create([
                             'vehicle_id' => $checklist->vehicle_id,
@@ -346,23 +348,29 @@ class VehicleChecklistController extends Controller
 
     private function userCanReview($user, $checklist)
     {
-        if (!$user) return false;
-        if ($checklist->status === 'Completed') return false;
+        if (!$user)
+            return false;
+        if ($checklist->status === 'Completed')
+            return false;
 
         if ($checklist->vehicle->company === 'Comandancia') {
             $isCommander = ($user->role === 'comandante' || $user->role === 'admin');
             $isInspector = ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') || $user->role === 'admin';
 
-            if ($isCommander && !$checklist->commander_reviewed_at) return true;
-            if ($isInspector && !$checklist->inspector_reviewed_at) return true;
+            if ($isCommander && !$checklist->commander_reviewed_at)
+                return true;
+            if ($isInspector && !$checklist->inspector_reviewed_at)
+                return true;
 
             return false;
         } else {
             $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
-            $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
+            $isMachinist = ($user->role === 'maquinista' || $user->role === 'admin');
 
-            if ($isCaptain && !$checklist->captain_reviewed_at) return true;
-            if ($isMachinist && !$checklist->machinist_reviewed_at) return true;
+            if ($isCaptain && !$checklist->captain_reviewed_at)
+                return true;
+            if ($isMachinist && !$checklist->machinist_reviewed_at)
+                return true;
 
             return false;
         }

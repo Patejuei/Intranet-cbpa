@@ -181,7 +181,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             // Pending Checklists Logic
-            $pendingChecklists = [];
             $checklistQuery = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->where('status', '!=', 'Completed');
 
             if ($user->company === 'Comandancia') {
@@ -190,35 +189,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $isInspector = ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') || $user->role === 'admin';
 
                 if ($isCommander || $isInspector) {
-                    $checklistQuery->whereHas(
-                        'vehicle',
-                        function ($q) {
-                            $q->where('company', 'Comandancia');
-                        }
-                    );
-
-                    if ($isCommander) {
-                        $checklistQuery->whereNull('commander_reviewed_at');
-                    }
-                    // If user is BOTH, we show if ANY is missing? Or prioritize?
-                    // If I am admin (isCommander=true, isInspector=true), I see if commander_reviewed_at is null OR inspector_reviewed_at is null?
-                    // Let's refine:
-                    // If Admin/Commander: Show if commander_reviewed_at is NULL.
-                    // If Admin/Inspector: Show if inspector_reviewed_at is NULL.
-                    // If Admin: Show if EITHER is NULL.
-
-                    // Let's stick to prompt requirements: "Captain or Machinist" / "Inspector or Commander".
-
-                    if ($isInspector) {
-                        // If existing query already filtered by commander, this might conflict if I use multiple where clauses.
-                        // I should use "orWhere" logic if multiple roles?
-                        // Actually simplest is: Filter by what I AM missing.
-                        // If I am commander, I need to see checklists where commander_reviewed_at is null.
-                        // If I am inspector, I need to see where inspector_reviewed_at is null.
-                    }
-
-                    // Re-building query for clarity
-                    $checklistQuery = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->where('status', '!=', 'Completed');
                     $checklistQuery->whereHas(
                         'vehicle',
                         function ($q) {
@@ -239,11 +209,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
                             }
                         }
                     );
+                } else {
+                    // Regular Comandancia user (like Workshop) sees nothing
+                    $checklistQuery->whereRaw('1 = 0');
                 }
             } else {
                 // Company Flow
                 $isCaptain = ($user->role === 'capitan' || $user->role === 'admin');
-                $isMachinist = ($user->role === 'maquinista' || $user->role === 'mechanic');
+                $isMachinist = ($user->role === 'maquinista');
 
                 if ($isCaptain || $isMachinist) {
                     // Filter by Company
@@ -273,12 +246,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 }
             }
 
-            // Final execute if roles matched
-            // If neither role, checklistQuery might return all? No, need to guard.
-            // Actually the `else` block `Regular user` guards the company flow.
-            // Comandancia flow guards with `if ($isCommander || $isInspector)`.
-
-            // Execute
+            // Final execute
             $pendingChecklists = $checklistQuery->take(5)->get();
 
 

@@ -20,6 +20,15 @@ class VehicleIssueController extends Controller
                 $q->where('company', $user->company);
             });
         }
+        if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
+            $query->where('sent_to_hq', '=', 1);
+        }
+        if ($user->role === 'mechanic') {
+            $query->where('sent_to_workshop', '=', 1);
+        }
+        if ($user->role === 'commander') {
+            $query->where('reported_to_commander', '=', 1);
+        }
 
         return Inertia::render('vehicles/incidents/index', [
             'issues' => $query->paginate(10),
@@ -174,14 +183,17 @@ class VehicleIssueController extends Controller
 
         // Comandancia (HQ) OR Inspector Material Mayor
         if (
-            $user->company === 'Comandancia' ||
             $user->role === 'admin' ||
-            $user->role === 'comandante' ||
             ($user->role === 'inspector' && $user->department === 'Material Mayor')
         ) {
             // "Visto por Material Mayor" (uses hq_read_at field)
             $incident->update(['hq_read_at' => now()]);
         }
+
+        if ($user->role === 'comandante' || $user->role === 'admin') {
+            $incident->update(['commander_seen' => true]);
+        }
+
 
         return redirect()->back();
     }
