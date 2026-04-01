@@ -31,14 +31,14 @@ import {
     CheckCircle2,
     Eye,
     FileText,
+    Pencil,
     Plus,
     Printer,
-    Pencil,
     Save,
     Trash2,
     Wrench,
 } from 'lucide-react';
-import { FormEventHandler, useState } from 'react';
+import { useState } from 'react';
 
 import ExternalWorkModal, {
     ExternalWork,
@@ -142,8 +142,12 @@ export default function WorkshopShow({
 
     const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
     const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
-    const [editingWorkIndex, setEditingWorkIndex] = useState<number | null>(null);
-    const [viewingWorkIndex, setViewingWorkIndex] = useState<number | null>(null);
+    const [editingWorkIndex, setEditingWorkIndex] = useState<number | null>(
+        null,
+    );
+    const [viewingWorkIndex, setViewingWorkIndex] = useState<number | null>(
+        null,
+    );
 
     const [inventoryForm, setInventoryForm] = useState({
         inventory_item_id: '',
@@ -154,7 +158,6 @@ export default function WorkshopShow({
 
     const statusOptions = [
         'En Taller',
-        'Ingresado',
         'Trabajando',
         'En Espera de Repuestos',
         'Pruebas Finales',
@@ -163,25 +166,39 @@ export default function WorkshopShow({
     ];
 
     const handleSaveWorks = () => {
-        router.post(`/vehicles/workshop/${maintenance.id}`, {
-            _method: 'put',
-            ...data,
-        } as any, {
-            forceFormData: true,
-            preserveScroll: true,
-        });
+        router.post(
+            `/vehicles/workshop/${maintenance.id}`,
+            {
+                _method: 'put',
+                ...data,
+            } as any,
+            {
+                forceFormData: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleFinalize = () => {
-        if (confirm('¿Está seguro de finalizar el trabajo? Esto resolverá las incidencias marcadas y generará el documento de salida.')) {
-            router.post(`/vehicles/workshop/${maintenance.id}`, {
-                _method: 'put',
-                ...data,
-                status: 'Finalizado',
-            } as any, {
-                forceFormData: true,
-                preserveScroll: true,
-            });
+        if (
+            confirm(
+                '¿Está seguro de finalizar el trabajo? Esto resolverá las incidencias marcadas y generará el documento de salida.',
+            )
+        ) {
+            router.post(
+                `/vehicles/workshop/${maintenance.id}`,
+                {
+                    _method: 'put',
+                    ...data,
+                    status: 'Finalizado',
+                } as any,
+                {
+                    forceFormData: true,
+                    preserveScroll: true,
+                },
+            );
+            setData('status', 'Finalizado');
+            router.reload();
         }
     };
 
@@ -256,9 +273,12 @@ export default function WorkshopShow({
             (sum, item) => sum + (item.pivot.total_cost || 0),
             0,
         ) || 0;
-    
+
     const laborCost = Number(data.working_hours) * Number(data.hour_rate);
-    const externalWorksCost = data.external_works.reduce((sum, w) => sum + (Number(w.cost) || 0), 0);
+    const externalWorksCost = data.external_works.reduce(
+        (sum, w) => sum + (Number(w.cost) || 0),
+        0,
+    );
 
     const totalOrderCost = totalPartsCost + laborCost + externalWorksCost;
 
@@ -442,28 +462,6 @@ export default function WorkshopShow({
                             </CardContent>
                         </Card>
 
-                        {/* ── Descripción / Detalle General ── */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base">Detalle General</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Descripción de la orden (se puede actualizar a medida que avanza el trabajo)
-                                    </Label>
-                                    <Textarea
-                                        value={data.description}
-                                        onChange={(e) => setData('description', e.target.value)}
-                                        placeholder="Descripción general del trabajo a realizar..."
-                                        rows={5}
-                                        readOnly={isReadOnly}
-                                        className={isReadOnly ? 'bg-muted/50 resize-none' : 'resize-none'}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">
@@ -516,40 +514,70 @@ export default function WorkshopShow({
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <Separator />
-                                
+
                                 <div className="space-y-4">
-                                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         Mano de Obra (HH)
                                     </Label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="text-xs">Horas (HH)</Label>
+                                            <Label className="text-xs">
+                                                Horas (HH)
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 step="0.5"
                                                 value={data.working_hours}
-                                                onChange={(e) => setData('working_hours', Number(e.target.value))}
-                                                disabled={isReadOnly}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'working_hours',
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                disabled={
+                                                    isReadOnly ||
+                                                    data.status ===
+                                                        'Entregado' ||
+                                                    data.status === 'Finalizado'
+                                                }
                                                 className="h-8 text-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-xs">Precio/Hora</Label>
+                                            <Label className="text-xs">
+                                                Precio/Hora
+                                            </Label>
                                             <Input
                                                 type="number"
                                                 value={data.hour_rate}
-                                                onChange={(e) => setData('hour_rate', Number(e.target.value))}
-                                                disabled={isReadOnly}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'hour_rate',
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                disabled={
+                                                    isReadOnly ||
+                                                    data.status ===
+                                                        'Entregado' ||
+                                                    data.status === 'Finalizado'
+                                                }
                                                 className="h-8 text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div className="flex justify-between border-t border-dashed pt-2 text-sm">
-                                        <span className="text-muted-foreground">Subtotal Labor:</span>
+                                        <span className="text-muted-foreground">
+                                            Subtotal Labor:
+                                        </span>
                                         <span className="font-bold">
-                                            ${(Number(data.working_hours) * Number(data.hour_rate)).toLocaleString('es-CL')}
+                                            $
+                                            {(
+                                                Number(data.working_hours) *
+                                                Number(data.hour_rate)
+                                            ).toLocaleString('es-CL')}
                                         </span>
                                     </div>
                                 </div>
@@ -857,6 +885,13 @@ export default function WorkshopShow({
                                                         )
                                                     }
                                                     className="mt-1"
+                                                    disabled={
+                                                        isReadOnly ||
+                                                        data.status ===
+                                                            'Finalizado' ||
+                                                        data.status ===
+                                                            'Entregado'
+                                                    }
                                                 />
                                             )}
                                             <div className="flex-1 space-y-2">
@@ -874,7 +909,13 @@ export default function WorkshopShow({
                                                             ? 'text-muted-foreground line-through'
                                                             : ''
                                                     }`}
-                                                    readOnly={isContentLocked}
+                                                    readOnly={
+                                                        isContentLocked ||
+                                                        data.status ===
+                                                            'Finalizado' ||
+                                                        data.status ===
+                                                            'Entregado'
+                                                    }
                                                 />
                                             </div>
                                             {!isContentLocked && (
@@ -909,7 +950,9 @@ export default function WorkshopShow({
                                             <Button
                                                 onClick={() => {
                                                     setEditingWorkIndex(null);
-                                                    setIsExternalModalOpen(true);
+                                                    setIsExternalModalOpen(
+                                                        true,
+                                                    );
                                                 }}
                                                 variant="outline"
                                                 size="sm"
@@ -924,77 +967,130 @@ export default function WorkshopShow({
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b bg-muted/50 text-left">
-                                                    <th className="p-3 font-medium">Descripción</th>
-                                                    <th className="p-3 font-medium">Proveedor</th>
-                                                    <th className="p-3 text-right font-medium">Costo</th>
-                                                    <th className="p-3 w-[120px]"></th>
+                                                    <th className="p-3 font-medium">
+                                                        Descripción
+                                                    </th>
+                                                    <th className="p-3 font-medium">
+                                                        Proveedor
+                                                    </th>
+                                                    <th className="p-3 text-right font-medium">
+                                                        Costo
+                                                    </th>
+                                                    <th className="w-[120px] p-3"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.external_works.length === 0 ? (
+                                                {data.external_works.length ===
+                                                0 ? (
                                                     <tr>
-                                                        <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                                                            No hay trabajos externos registrados.
+                                                        <td
+                                                            colSpan={4}
+                                                            className="p-4 text-center text-muted-foreground"
+                                                        >
+                                                            No hay trabajos
+                                                            externos
+                                                            registrados.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    data.external_works.map((work, index) => (
-                                                        <tr key={index} className="border-b last:border-0 hover:bg-muted/10">
-                                                            <td className="p-3">{work.description}</td>
-                                                            <td className="p-3">{work.provider}</td>
-                                                            <td className="p-3 text-right font-medium">${Number(work.cost).toLocaleString('es-CL')}</td>
-                                                            <td className="p-3 text-right">
-                                                                <div className="flex gap-1 justify-end">
-                                                                    {/* Ver detalles – siempre visible */}
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-                                                                        title="Ver detalles"
-                                                                        onClick={() => {
-                                                                            setViewingWorkIndex(index);
-                                                                        }}
-                                                                    >
-                                                                        <Eye className="h-4 w-4" />
-                                                                    </Button>
-                                                                    {/* Editar y Eliminar – solo cuando no está bloqueado */}
-                                                                    {!isContentLocked && (
-                                                                        <>
-                                                                            <Button
-                                                                                type="button"
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                                                                title="Editar"
-                                                                                onClick={() => {
-                                                                                    setEditingWorkIndex(index);
-                                                                                    setIsExternalModalOpen(true);
-                                                                                }}
-                                                                            >
-                                                                                <Pencil className="h-4 w-4" />
-                                                                            </Button>
-                                                                            <Button
-                                                                                type="button"
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                                                                title="Eliminar"
-                                                                                onClick={() => {
-                                                                                    if (confirm('¿Eliminar trabajo externo?')) {
-                                                                                        const newWorks = data.external_works.filter((_, i) => i !== index);
-                                                                                        setData('external_works', newWorks);
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            </Button>
-                                                                        </>
+                                                    data.external_works.map(
+                                                        (work, index) => (
+                                                            <tr
+                                                                key={index}
+                                                                className="border-b last:border-0 hover:bg-muted/10"
+                                                            >
+                                                                <td className="p-3">
+                                                                    {
+                                                                        work.description
+                                                                    }
+                                                                </td>
+                                                                <td className="p-3">
+                                                                    {
+                                                                        work.provider
+                                                                    }
+                                                                </td>
+                                                                <td className="p-3 text-right font-medium">
+                                                                    $
+                                                                    {Number(
+                                                                        work.cost,
+                                                                    ).toLocaleString(
+                                                                        'es-CL',
                                                                     )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))
+                                                                </td>
+                                                                <td className="p-3 text-right">
+                                                                    <div className="flex justify-end gap-1">
+                                                                        {/* Ver detalles – siempre visible */}
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                                            title="Ver detalles"
+                                                                            onClick={() => {
+                                                                                setViewingWorkIndex(
+                                                                                    index,
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <Eye className="h-4 w-4" />
+                                                                        </Button>
+                                                                        {/* Editar y Eliminar – solo cuando no está bloqueado */}
+                                                                        {!isContentLocked && (
+                                                                            <>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-8 w-8 text-blue-600 hover:bg-blue-100 hover:text-blue-800"
+                                                                                    title="Editar"
+                                                                                    onClick={() => {
+                                                                                        setEditingWorkIndex(
+                                                                                            index,
+                                                                                        );
+                                                                                        setIsExternalModalOpen(
+                                                                                            true,
+                                                                                        );
+                                                                                    }}
+                                                                                >
+                                                                                    <Pencil className="h-4 w-4" />
+                                                                                </Button>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                                                    title="Eliminar"
+                                                                                    onClick={() => {
+                                                                                        if (
+                                                                                            confirm(
+                                                                                                '¿Eliminar trabajo externo?',
+                                                                                            )
+                                                                                        ) {
+                                                                                            const newWorks =
+                                                                                                data.external_works.filter(
+                                                                                                    (
+                                                                                                        _,
+                                                                                                        i,
+                                                                                                    ) =>
+                                                                                                        i !==
+                                                                                                        index,
+                                                                                                );
+                                                                                            setData(
+                                                                                                'external_works',
+                                                                                                newWorks,
+                                                                                            );
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                    )
                                                 )}
                                             </tbody>
                                         </table>
@@ -1014,12 +1110,53 @@ export default function WorkshopShow({
                                                     Total Inversión de Orden:
                                                 </td>
                                                 <td className="p-4 text-right text-lg font-bold">
-                                                    ${totalOrderCost.toLocaleString('es-CL')}
+                                                    $
+                                                    {totalOrderCost.toLocaleString(
+                                                        'es-CL',
+                                                    )}
                                                 </td>
                                                 {!isContentLocked && <td></td>}
                                             </tr>
                                         </tfoot>
                                     </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        {/* ── Descripción / Detalle General ── */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">
+                                    Detalle General
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">
+                                        Descripción de la orden (se puede
+                                        actualizar a medida que avanza el
+                                        trabajo)
+                                    </Label>
+                                    <Textarea
+                                        value={data.description}
+                                        onChange={(e) =>
+                                            setData(
+                                                'description',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Descripción general del trabajo a realizar..."
+                                        rows={5}
+                                        readOnly={
+                                            isReadOnly ||
+                                            data.status === 'Entregado'
+                                        }
+                                        className={
+                                            isReadOnly ||
+                                            data.status === 'Entregado'
+                                                ? 'resize-none bg-muted/50'
+                                                : 'resize-none'
+                                        }
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -1118,7 +1255,9 @@ export default function WorkshopShow({
                                 ) {
                                     setIsWithdrawalModalOpen(false);
                                 } else {
-                                    alert('Por favor complete todos los campos');
+                                    alert(
+                                        'Por favor complete todos los campos',
+                                    );
                                 }
                             }}
                         >

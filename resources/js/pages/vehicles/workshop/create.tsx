@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Combobox } from '@/components/ui/combobox';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { ClipboardCheck, Pencil, Trash2 } from 'lucide-react';
@@ -162,26 +163,20 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label>Vehículo</Label>
-                                        <Select
-                                            onValueChange={(val) =>
+                                        <Combobox
+                                            options={vehicles.map((v) => ({
+                                                value: v.id.toString(),
+                                                label: v.name,
+                                                description: v.company,
+                                            }))}
+                                            value={data.vehicle_id}
+                                            onChange={(val) =>
                                                 setData('vehicle_id', val)
                                             }
-                                            value={data.vehicle_id}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un vehículo" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {vehicles.map((v) => (
-                                                    <SelectItem
-                                                        key={v.id}
-                                                        value={v.id.toString()}
-                                                    >
-                                                        {v.name} ({v.company})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Seleccione un vehículo"
+                                            searchPlaceholder="Buscar vehículo..."
+                                            searchInDescription={false}
+                                        />
                                         {errors.vehicle_id && (
                                             <p className="text-sm text-destructive">
                                                 {errors.vehicle_id}

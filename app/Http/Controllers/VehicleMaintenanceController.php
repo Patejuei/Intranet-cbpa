@@ -16,7 +16,7 @@ class VehicleMaintenanceController extends Controller
         $search = $request->input('search');
 
         $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues', 'externalWorks'])
-            ->orderBy('entry_date', 'desc');
+            ->orderBy('id', 'desc');
 
         $user = $request->user();
         if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
@@ -30,8 +30,6 @@ class VehicleMaintenanceController extends Controller
                 $query->whereNull('exit_date');
             } elseif ($status === 'history') {
                 $query->whereNotNull('exit_date');
-            } else {
-                $query->where('status', $status);
             }
         } else {
             // Default to active if no filter? Or all? 
@@ -302,7 +300,7 @@ class VehicleMaintenanceController extends Controller
             'current_balance' => $item->stock, // Stock is already decremented
             'description' => "Carga de material a Orden de Taller #{$maintenance->id} (Vehículo: {$maintenance->vehicle->name})",
         ]);
-        
+
         // Auto-status transition
         if (in_array($maintenance->status, ['Ingresado', 'En Taller'])) {
             $maintenance->update(['status' => 'Trabajando']);
@@ -445,12 +443,12 @@ class VehicleMaintenanceController extends Controller
         // Auto-status transition on activity
         if (in_array($workshop->status, ['Ingresado', 'En Taller'])) {
             // Check if there's any activity beyond just metadata
-            $hasActivity = !empty($validated['tasks']) || 
-                           !empty($validated['external_works']) || 
-                           !empty($validated['resolved_issue_ids']) || 
-                           ($validated['working_hours'] ?? 0) > 0 ||
-                           $workshop->items()->exists();
-            
+            $hasActivity = !empty($validated['tasks']) ||
+                !empty($validated['external_works']) ||
+                !empty($validated['resolved_issue_ids']) ||
+                ($validated['working_hours'] ?? 0) > 0 ||
+                $workshop->items()->exists();
+
             if ($hasActivity && $validated['status'] === $workshop->status) {
                 $updateData['status'] = 'Trabajando';
             }
@@ -550,7 +548,7 @@ class VehicleMaintenanceController extends Controller
                     $currentExternalWorkIds[] = $newWork->id;
                 }
             }
-            
+
             // Delete removed extra works
             $worksToDelete = $workshop->externalWorks()->whereNotIn('id', $currentExternalWorkIds)->get();
             foreach ($worksToDelete as $workToDelete) {
@@ -565,7 +563,7 @@ class VehicleMaintenanceController extends Controller
         if (isset($validated['resolved_issue_ids'])) {
             \App\Models\VehicleIssue::whereIn('id', $validated['resolved_issue_ids'])
                 ->where('vehicle_maintenance_id', $workshop->id)
-                ->update(['status' => 'Resolved']); // Or 'Fixed'
+                ->update(['status' => 'Resolved']);
         }
 
         // Check if status is finalized (e.g. 'Entregado') to release vehicle?
@@ -576,13 +574,14 @@ class VehicleMaintenanceController extends Controller
                 'exit_date' => $workshop->exit_date ?? now(), // Keep existing if already set
                 'finalizer_user_id' => $workshop->finalizer_user_id ?? $request->user()->id,
             ];
-            
+
             $workshop->update($updateDataForFinalization);
             $workshop->vehicle->update(['status' => 'Operative']);
- 
+
             // Auto-resolve all linked issues and check off all tasks
             $workshop->issues()->update(['status' => 'Resolved']);
             $workshop->tasks()->update(['is_completed' => true]);
+            \App\Models\VehicleIssue::where('vehicle_maintenance_id', $workshop->id)->update(['is_stopped' => false]);
         }
 
         return redirect()->back()->with('success', 'Orden de trabajo actualizada.');

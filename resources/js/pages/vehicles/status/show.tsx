@@ -16,7 +16,6 @@ import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -24,9 +23,11 @@ import {
     CheckCircle2,
     ClipboardList,
     DollarSign,
+    Eye,
     FileText,
     Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Vehicle {
     id: number;
@@ -134,10 +135,14 @@ export default function VehicleShow({
         patch: patchDocs,
         processing: processingDocs,
         errors: docErrors,
-        reset: resetDocs
+        reset: resetDocs,
     } = useForm({
-        technical_review_expires_at: formatDateForInput(vehicle.technical_review_expires_at),
-        circulation_permit_expires_at: formatDateForInput(vehicle.circulation_permit_expires_at),
+        technical_review_expires_at: formatDateForInput(
+            vehicle.technical_review_expires_at,
+        ),
+        circulation_permit_expires_at: formatDateForInput(
+            vehicle.circulation_permit_expires_at,
+        ),
         insurance_expires_at: formatDateForInput(vehicle.insurance_expires_at),
     });
 
@@ -236,16 +241,28 @@ export default function VehicleShow({
 
                         {/* Documents Update Button (Permission Based) */}
                         {canEdit('vehicles.status') && (
-                            <Dialog open={docModalOpen} onOpenChange={(open) => {
-                                setDocModalOpen(open);
-                                if (open) {
-                                    setDocData({
-                                        technical_review_expires_at: formatDateForInput(vehicle.technical_review_expires_at),
-                                        circulation_permit_expires_at: formatDateForInput(vehicle.circulation_permit_expires_at),
-                                        insurance_expires_at: formatDateForInput(vehicle.insurance_expires_at),
-                                    });
-                                }
-                            }}>
+                            <Dialog
+                                open={docModalOpen}
+                                onOpenChange={(open) => {
+                                    setDocModalOpen(open);
+                                    if (open) {
+                                        setDocData({
+                                            technical_review_expires_at:
+                                                formatDateForInput(
+                                                    vehicle.technical_review_expires_at,
+                                                ),
+                                            circulation_permit_expires_at:
+                                                formatDateForInput(
+                                                    vehicle.circulation_permit_expires_at,
+                                                ),
+                                            insurance_expires_at:
+                                                formatDateForInput(
+                                                    vehicle.insurance_expires_at,
+                                                ),
+                                        });
+                                    }
+                                }}
+                            >
                                 <DialogTrigger asChild>
                                     <Button variant="secondary">
                                         <Calendar className="mr-2 h-4 w-4" />
@@ -699,9 +716,18 @@ export default function VehicleShow({
                                             <th className="p-2 py-3 font-medium">
                                                 Estado
                                             </th>
-                                            <th className="p-2 py-3 text-right font-medium">
-                                                Costo
-                                            </th>
+                                            {allProps.auth.user.company ===
+                                                'Comandancia' && (
+                                                <th className="p-2 py-3 font-medium">
+                                                    Costo
+                                                </th>
+                                            )}
+                                            {allProps.auth.user.role !==
+                                                'cuartelero' && (
+                                                <th className="p-2 py-3 font-medium">
+                                                    Ver
+                                                </th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -734,11 +760,30 @@ export default function VehicleShow({
                                                         {m.status}
                                                     </Badge>
                                                 </td>
-                                                <td className="p-2 py-3 text-right">
-                                                    {m.cost > 0
-                                                        ? `$${m.cost.toLocaleString('es-CL')}`
-                                                        : '-'}
-                                                </td>
+                                                {allProps.auth.user.company ===
+                                                    'Comandancia' && (
+                                                    <td className="p-2 py-3">
+                                                        {m.cost > 0
+                                                            ? `$${m.cost.toLocaleString('es-CL')}`
+                                                            : '-'}
+                                                    </td>
+                                                )}
+                                                {allProps.auth.user.role !==
+                                                    'cuartelero' && (
+                                                    <td className="p-2 py-3">
+                                                        <Link
+                                                            href={`/vehicles/workshop/${m.id}`}
+                                                        >
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="cursor-pointer"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>

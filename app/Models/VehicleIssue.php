@@ -32,6 +32,8 @@ class VehicleIssue extends Model
         'sent_to_hq' => 'boolean',
         'sent_to_workshop' => 'boolean',
         'is_stopped' => 'boolean',
+        'reported_to_commander' => 'boolean',
+        'commander_seen' => 'boolean',
     ];
 
     public function vehicle()

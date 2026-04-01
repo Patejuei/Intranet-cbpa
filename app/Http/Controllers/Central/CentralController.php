@@ -18,26 +18,26 @@ class CentralController extends Controller
         $query = DutyLog::with(['user', 'vehicle'])->whereNull('end_time');
 
         if ($user->role === 'capitan') {
-            $query->whereHas('vehicle', function($q) use ($user) {
+            $query->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
         } elseif ($user->role !== 'admin' && $user->role !== 'comandante' && $user->role !== 'central_operator' && $user->role !== 'inspector') {
-             if ($user->company && $user->company !== 'Comandancia') {
-                $query->whereHas('vehicle', function($q) use ($user) {
+            if ($user->company && $user->company !== 'Comandancia') {
+                $query->whereHas('vehicle', function ($q) use ($user) {
                     $q->where('company', $user->company);
                 });
             }
         }
 
         $activeDuties = $query->get();
-        
+
         $vehicleQuery = Vehicle::query()->where('status', '!=', 'Decommissioned');
         if ($user->role === 'capitan') {
             $vehicleQuery->where('company', $user->company);
         }
         $vehicles = $vehicleQuery->get();
 
-        $drivers = User::whereHas('driverVehicles')->with('driverVehicles:id,name')->get();
+        $drivers = User::where('role', '!=', 'cuartelero')->whereHas('driverVehicles')->with('driverVehicles:id,name')->get();
 
         return Inertia::render('central/duty-logs', [
             'activeDuties' => $activeDuties,
@@ -102,18 +102,18 @@ class CentralController extends Controller
             ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
-            $query->whereHas('vehicle', function($q) use ($user) {
+            $query->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
         }
 
         $logs = $query->orderBy('start_time', 'desc')->get();
 
-        $formattedData = $logs->map(function($log) {
+        $formattedData = $logs->map(function ($log) {
             $diffInSeconds = $log->start_time->diffInSeconds($log->end_time);
             $hours = floor($diffInSeconds / 3600);
             $minutes = floor(($diffInSeconds % 3600) / 60);
-            
+
             return [
                 'user_name' => $log->user->name,
                 'vehicle_name' => $log->vehicle->name,
@@ -145,7 +145,7 @@ class CentralController extends Controller
             ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
-            $query->whereHas('vehicle', function($q) use ($user) {
+            $query->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
         }
@@ -196,18 +196,18 @@ class CentralController extends Controller
             ->whereDate('end_time', '<=', $endDate);
 
         if ($user->role === 'capitan') {
-            $query->whereHas('vehicle', function($q) use ($user) {
+            $query->whereHas('vehicle', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
         }
 
         $logs = $query->orderBy('start_time', 'desc')->get();
 
-        $formattedData = $logs->map(function($log) {
+        $formattedData = $logs->map(function ($log) {
             $diffInSeconds = $log->start_time->diffInSeconds($log->end_time);
             $hours = floor($diffInSeconds / 3600);
             $minutes = floor(($diffInSeconds % 3600) / 60);
-            
+
             return [
                 'user_name' => $log->user->name,
                 'vehicle_name' => $log->vehicle->name,
