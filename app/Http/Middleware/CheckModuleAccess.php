@@ -15,11 +15,16 @@ class CheckModuleAccess
      */
     public function handle(Request $request, Closure $next, string $module): Response
     {
-        $user = $request->user();
+        // Global Check: Module must be enabled in config/modules.php
+        // We use the base module name (e.g., 'vehicles' even if 'vehicles.status' is requested)
+        $baseModule = explode('.', $module)[0];
+        $isEnabled = config("modules.enabled.{$baseModule}", true);
 
-        if (!$user) {
-            abort(403, 'Unauthorized.');
+        if (!$isEnabled) {
+            abort(403, 'Este módulo está temporalmente desactivado por el administrador.');
         }
+
+        $user = $request->user();
 
         // Admin and Capitan have access to everything
         // Admin, Capitan, and Comandante have access to everything

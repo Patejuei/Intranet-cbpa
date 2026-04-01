@@ -73,9 +73,18 @@ export default function Dashboard({
     const [recent, setRecent] = useState<ModuleDefinition[]>([]);
     const [showAllExpires, setShowAllExpires] = useState(false);
 
-    const { auth } = usePage<SharedData>().props;
+    const { auth, enabledModules = {} } = usePage<any>().props;
+
+    const isModuleEnabled = (permission?: string) => {
+        if (!permission) return true;
+        const baseModule = permission.split('.')[0];
+        // Special case for dashboard/profile or undefined
+        if (['dashboard', 'profile'].includes(baseModule)) return true;
+        return !!enabledModules[baseModule];
+    };
 
     const hasPermission = (module: ModuleDefinition) => {
+        if (!isModuleEnabled(module.permission)) return false;
         const user = auth.user;
         if (!user) return false;
 
@@ -328,7 +337,7 @@ export default function Dashboard({
                 )}
 
                 {/* Tickets Pendientes (Comandancia) */}
-                {pendingTickets.length > 0 && (
+                {isModuleEnabled('tickets') && pendingTickets.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -367,7 +376,7 @@ export default function Dashboard({
                 )}
 
                 {/* Tickets Respondidos (Compañías) */}
-                {respondedTickets.length > 0 && (
+                {isModuleEnabled('tickets') && respondedTickets.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-blue-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -636,7 +645,7 @@ export default function Dashboard({
                 )}
             </div>
 
-            {upcomingBatteries.length > 0 && (
+            {isModuleEnabled('batteries') && upcomingBatteries.length > 0 && (
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="mb-4 flex items-center gap-4">
                         <div className="rounded-lg bg-primary/10 p-3 text-primary">

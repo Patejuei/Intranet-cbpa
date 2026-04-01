@@ -1,5 +1,6 @@
 import AppLogo from '@/components/app-logo';
 import { NavUser } from '@/components/nav-user';
+import { usePage } from '@inertiajs/react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -207,7 +208,18 @@ const NAV_GROUPS = [
 ];
 
 export function AppSidebar({ user }: { user: any }) {
+    const { enabledModules = {} } = (usePage().props as any) as { enabledModules: Record<string, boolean> };
+
+    const isModuleEnabled = (permission?: string) => {
+        if (!permission) return true;
+        const baseModule = permission.split('.')[0];
+        // Special case for dashboard/profile or undefined
+        if (['dashboard', 'profile'].includes(baseModule)) return true;
+        return !!enabledModules[baseModule];
+    };
+
     const hasPermission = (module?: string) => {
+        if (!isModuleEnabled(module)) return false;
         if (!module) return true; // Public items
         if (!user) return false;
 
