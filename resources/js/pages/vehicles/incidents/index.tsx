@@ -20,12 +20,13 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Combobox } from '@/components/ui/combobox';
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { Eye, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { usePermissions } from '@/hooks/use-permissions';
 
 interface Vehicle {
     id: number;
@@ -154,7 +155,9 @@ export default function VehicleIncidents({
     const isWorkshop =
         auth.user.role === 'mechanic' || auth.user.role === 'admin';
     const isHQ =
-        (auth.user.role === 'inspector' && auth.user.department === 'Material Mayor') || auth.user.role === 'admin';
+        (auth.user.role === 'inspector' &&
+            auth.user.department === 'Material Mayor') ||
+        auth.user.role === 'admin';
 
     return (
         <AppLayout
@@ -198,26 +201,19 @@ export default function VehicleIncidents({
                                             <Label htmlFor="vehicle">
                                                 Vehículo
                                             </Label>
-                                            <Select
-                                                onValueChange={(value) =>
+                                            <Combobox
+                                                options={vehicles.map((v) => ({
+                                                    value: v.id.toString(),
+                                                    label: v.name,
+                                                }))}
+                                                value={data.vehicle_id}
+                                                onChange={(value) =>
                                                     setData('vehicle_id', value)
                                                 }
-                                                value={data.vehicle_id}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Seleccione unidad" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {vehicles.map((v) => (
-                                                        <SelectItem
-                                                            key={v.id}
-                                                            value={v.id.toString()}
-                                                        >
-                                                            {v.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                placeholder="Seleccione unidad"
+                                                searchPlaceholder="Buscar unidad..."
+                                                searchInDescription={false}
+                                            />
                                             {errors.vehicle_id && (
                                                 <p className="text-sm text-destructive">
                                                     {errors.vehicle_id}
@@ -243,7 +239,8 @@ export default function VehicleIncidents({
                                                         Baja (Observación)
                                                     </SelectItem>
                                                     <SelectItem value="Medium">
-                                                        Media (Reparación necesaria)
+                                                        Media (Reparación
+                                                        necesaria)
                                                     </SelectItem>
                                                     <SelectItem value="High">
                                                         Alta (Riesgo operativo)
@@ -263,7 +260,10 @@ export default function VehicleIncidents({
                                                 type="date"
                                                 value={data.date}
                                                 onChange={(e) =>
-                                                    setData('date', e.target.value)
+                                                    setData(
+                                                        'date',
+                                                        e.target.value,
+                                                    )
                                                 }
                                             />
                                         </div>
@@ -293,7 +293,10 @@ export default function VehicleIncidents({
                                         {/* is_stopped removed for generic input */}
                                     </div>
                                     <DialogFooter>
-                                        <Button type="submit" disabled={processing}>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
                                             Reportar
                                         </Button>
                                     </DialogFooter>
@@ -396,9 +399,14 @@ export default function VehicleIncidents({
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
                                                 id="reported_to_commander"
-                                                checked={reviewData.reported_to_commander}
+                                                checked={
+                                                    reviewData.reported_to_commander
+                                                }
                                                 onCheckedChange={(checked) =>
-                                                    setReviewData('reported_to_commander', checked as boolean)
+                                                    setReviewData(
+                                                        'reported_to_commander',
+                                                        checked as boolean,
+                                                    )
                                                 }
                                             />
                                             <Label htmlFor="reported_to_commander">
@@ -551,14 +559,16 @@ export default function VehicleIncidents({
                                                                         : 'Enviado Taller'}
                                                                 </Badge>
                                                             )}
-                                                            {issue.reported_to_commander && (
+                                                            {Boolean(
+                                                                issue.reported_to_commander,
+                                                            ) && (
                                                                 <Badge
                                                                     variant={
                                                                         issue.commander_seen
                                                                             ? 'secondary'
                                                                             : 'outline'
                                                                     }
-                                                                    className="w-fit text-xs border-orange-200"
+                                                                    className="w-fit border-orange-200 text-xs"
                                                                 >
                                                                     {issue.commander_seen
                                                                         ? 'Visto Cmdte.'

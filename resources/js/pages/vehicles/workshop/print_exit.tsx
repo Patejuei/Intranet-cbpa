@@ -394,18 +394,17 @@ export default function MaintenanceExitPrint({
                         {/* Description / Works */}
                         <div className="mt-6 min-h-[150px] rounded border border-slate-300 p-4">
                             <span className="mb-2 block text-sm font-bold text-slate-700 uppercase">
-                                Observaciones Finales
+                                Resumen de trabajos realizados
                             </span>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {maintenance.description ||
-                                    'Sin observaciones.'}
+                                {maintenance.description || 'Sin resumen.'}
                             </p>
                         </div>
 
                         {/* Signatures */}
                         <div className="mt-12 grid grid-cols-2 gap-16 pt-8">
-                            <div className="flex h-32 flex-col justify-between border-t border-slate-900 pt-2 text-center">
-                                <div className="flex flex-1 items-end justify-center pb-2">
+                            <div className="flex h-32 flex-col justify-between pt-2 text-center">
+                                <div className="flex flex-1 items-end justify-center border-b border-slate-900 pb-2">
                                     {maintenance.finalizer_user
                                         ?.signature_path ? (
                                         <img
@@ -417,16 +416,16 @@ export default function MaintenanceExitPrint({
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold uppercase">
-                                        Firma Mecánico Jefe
+                                        Firma Responsable Taller
                                     </p>
                                     <p className="text-xs text-slate-500">
                                         (Aceptación de Trabajos)
                                     </p>
                                 </div>
                             </div>
-                            <div className="border-t border-slate-900 pt-2 text-center">
-                                <p className="text-sm font-bold uppercase">
-                                    Firma Maquinista / Receptor
+                            <div className="flex h-32 flex-col justify-between pt-28 text-center">
+                                <p className="border-t border-slate-900 pb-2 text-sm font-bold uppercase">
+                                    Firma Maquinista / Conductor / A Cargo
                                 </p>
                                 <p className="text-xs text-slate-500">
                                     (Conformidad de Entrega)

@@ -150,20 +150,20 @@ export default function VehicleWorkshop() {
                         />
                     </div>
                     <Select
-                        defaultValue={filters.status || 'active'}
+                        defaultValue={filters.status || 'all'}
                         onValueChange={handleStatusChange}
                     >
                         <SelectTrigger className="w-full md:w-[200px]">
                             <SelectValue placeholder="Filtrar por estado" />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
                             <SelectItem value="active">
                                 Activos (En Taller)
                             </SelectItem>
                             <SelectItem value="history">
                                 Historial (Finalizados)
                             </SelectItem>
-                            <SelectItem value="all">Todos</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

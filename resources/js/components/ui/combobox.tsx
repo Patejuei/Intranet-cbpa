@@ -20,6 +20,7 @@ export interface ComboboxOption {
     value: string;
     label: string;
     description?: string; // For SKU or extra info
+    searchValue?: string; // Custom searchable text
 }
 
 interface ComboboxProps {
@@ -31,6 +32,7 @@ interface ComboboxProps {
     emptyText?: string;
     disabled?: boolean;
     className?: string;
+    searchInDescription?: boolean;
 }
 
 export function Combobox({
@@ -42,6 +44,7 @@ export function Combobox({
     emptyText = 'No se encontraron resultados.',
     disabled,
     className,
+    searchInDescription = true,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false);
 
@@ -81,10 +84,14 @@ export function Combobox({
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command
                     filter={(val, search) => {
-                        // Custom filter logic to match label AND description (e.g. SKU)
-                        // 'val' is the option.value usually, which might not be enough.
-                        // CommandItem 'value' prop should contain all searchable text.
-                        if (val.toLowerCase().includes(search.toLowerCase())) return 1;
+                        const normalize = (s: string) =>
+                            s
+                                .toLowerCase()
+                                .normalize('NFD') // remove accents
+                                .replace(/[\u0300-\u036f]/g, '')
+                                .replace(/[-\s]/g, ''); // strip hyphens and spaces
+
+                        if (normalize(val).includes(normalize(search))) return 1;
                         return 0;
                     }}
                 >
@@ -95,7 +102,10 @@ export function Combobox({
                             {options.map((option) => (
                                 <CommandItem
                                     key={option.value}
-                                    value={`${option.label} ${option.description || ''} ${option.value}`} // composite for search
+                                    value={
+                                        option.searchValue ||
+                                        `${option.label} ${searchInDescription ? option.description || '' : ''}`
+                                    }
                                     onSelect={() => {
                                         onChange(option.value);
                                         setOpen(false);
