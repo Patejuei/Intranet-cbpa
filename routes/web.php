@@ -44,9 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             if ($user->company === 'Comandancia') {
                 $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
-                    ->when($user->role !== 'admin' && $user->role !== 'inspector', function($q) {
+                    ->when($user->role !== 'admin' && $user->role !== 'inspector', function ($q) {
                         $q->where('reported_to_commander', true)
-                          ->where('commander_seen', false);
+                            ->where('commander_seen', false);
                     })
                     ->with('user')->take(5)->get();
             } else {
@@ -62,12 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
 
             if (
-                ($user->role === 'inspector' && $user->department === 'Material Mayor') ||
-                $user->role === 'comandante' ||
-                $user->role === 'admin' || // Optional: Admins usually see all, but if we want to test the flow
-                $user->company === 'Comandancia'
+                ($user->role === 'inspector' && $user->department === 'Material Mayor')
             ) {
-                // Inspector/Commander sees issues sent to HQ (Material Mayor)
                 $incidentQuery->where(
                     function ($q) {
                         $q->where('sent_to_hq', true)
@@ -82,13 +78,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         $q->where('company', $user->company);
                     }
                 );
+            } elseif ($user->role === 'mechanic') {
+                $incidentQuery->where('sent_to_workshop', true)->whereNull('workshop_read_at');
+            } elseif ($user->role === 'comandante') {
+                $incidentQuery->where('reported_to_commander', true)->whereNull('commander_seen');
             }
 
             $vehiclesStopped = $vehicleQuery->get();
             $pendingIncidents = $incidentQuery->take(5)->get();
 
             // Workshop Vehicles Logic (Vehicles in Workshop state, get active Maintenance)
-
+    
             $workshopQuery = \App\Models\Vehicle::query()
                 ->where('status', 'Workshop')
                 ->with([
@@ -108,11 +108,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->where('status', '!=', 'Decommissioned')
                 ->where(
                     function ($q) {
-                        $threshold = now()->addDays(30);
-                        $q->whereDate('technical_review_expires_at', '<=', $threshold)
-                            ->orWhereDate('circulation_permit_expires_at', '<=', $threshold)
-                            ->orWhereDate('insurance_expires_at', '<=', $threshold);
-                    }
+                    $threshold = now()->addDays(30);
+                    $q->whereDate('technical_review_expires_at', '<=', $threshold)
+                        ->orWhereDate('circulation_permit_expires_at', '<=', $threshold)
+                        ->orWhereDate('insurance_expires_at', '<=', $threshold);
+                }
                 );
 
             if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
@@ -126,7 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         if (!$date)
                             return;
                         $dateObj = \Carbon\Carbon::parse($date);
-                        $days = (int)now()->diffInDays($dateObj, false);
+                        $days = (int) now()->diffInDays($dateObj, false);
                         // If days is negative, it's expired.
                         if ($days <= 30) {
                             $status = $days <= 7 ? 'danger' : 'warning';
@@ -151,10 +151,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ];
                 }
             )->filter(
-                function ($v) {
-                    return count($v['alerts']) > 0;
-                }
-            )->values();
+                    function ($v) {
+                        return count($v['alerts']) > 0;
+                    }
+                )->values();
 
             // Petty Cash Notifications
             $pendingPettyCash = [];
@@ -223,8 +223,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     $checklistQuery->whereHas(
                         'vehicle',
                         function ($q) use ($user) {
-                            $q->where('company', $user->company);
-                        }
+                        $q->where('company', $user->company);
+                    }
                     );
 
                     $conditions = [];
@@ -312,7 +312,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('checklists', App\Http\Controllers\VehicleChecklistController::class)->names('vehicles.checklists');
 
             // Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
-
+    
             // Petty Cash Routes
             // Rendiciones (Ex-Petty Cash) Routes
             Route::post('renditions/export', [App\Http\Controllers\RenditionController::class, 'export'])->name('vehicles.renditions.export');
@@ -328,7 +328,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('duty', [CentralController::class, 'dutyIndex'])->name('central.duty.index');
         Route::post('duty/start', [CentralController::class, 'startDuty'])->name('central.duty.start');
         Route::post('duty/{duty}/end', [CentralController::class, 'endDuty'])->name('central.duty.end');
-        
+
         Route::get('reports', [CentralController::class, 'reportsIndex'])->name('central.reports.index');
         Route::get('reports/export-excel', [CentralController::class, 'exportReportsExcel'])->name('central.reports.export.excel');
         Route::get('reports/export-pdf', [CentralController::class, 'exportReportsPdf'])->name('central.reports.export.pdf');
