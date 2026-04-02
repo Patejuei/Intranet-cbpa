@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Database\Factories\WorkshopFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+#[UseFactory(WorkshopFactory::class)]
 class VehicleMaintenance extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'vehicle_id',
         'workshop_name',

@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
     DialogContent,
@@ -20,7 +21,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Combobox } from '@/components/ui/combobox';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -379,23 +379,31 @@ export default function VehicleIncidents({
                                                 Reportar a Material Mayor
                                             </Label>
                                         </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="sent_to_workshop"
-                                                checked={
-                                                    reviewData.sent_to_workshop
-                                                }
-                                                onCheckedChange={(checked) =>
-                                                    setReviewData(
-                                                        'sent_to_workshop',
-                                                        checked as boolean,
-                                                    )
-                                                }
-                                            />
-                                            <Label htmlFor="sent_to_workshop">
-                                                Reportar a Taller Mecánico
-                                            </Label>
-                                        </div>
+                                        {auth.user.role === 'admin' ||
+                                        (auth.user.role === 'inspector' &&
+                                            auth.user.departmet ===
+                                                'Material Mayor') ||
+                                        auth.user.role === 'comandante' ? (
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="sent_to_workshop"
+                                                    checked={
+                                                        reviewData.sent_to_workshop
+                                                    }
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        setReviewData(
+                                                            'sent_to_workshop',
+                                                            checked as boolean,
+                                                        )
+                                                    }
+                                                />
+                                                <Label htmlFor="sent_to_workshop">
+                                                    Reportar a Taller Mecánico
+                                                </Label>
+                                            </div>
+                                        ) : null}
                                         <div className="flex items-center space-x-2">
                                             <Checkbox
                                                 id="reported_to_commander"

@@ -51,8 +51,7 @@ class VehicleMaintenanceController extends Controller
 
         if ($search) {
             $query->whereHas('vehicle', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('plate', 'like', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%");
             });
         }
 
@@ -60,7 +59,7 @@ class VehicleMaintenanceController extends Controller
 
         return Inertia::render('vehicles/workshop/index', [
             'maintenances' => $maintenances,
-            'filters' => $request->only(['status', 'search'])
+            'filters' => $request->only(['status', 'search', 'page'])
         ]);
     }
 
