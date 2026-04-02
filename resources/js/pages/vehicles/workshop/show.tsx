@@ -233,8 +233,16 @@ export default function WorkshopShow({
                 'resolved_issue_ids',
                 current.filter((i) => i !== id),
             );
+            const issue = maintenance.issues.find((i) => i.id === id);
+            if (issue) {
+                issue.status = 'Pending';
+            }
         } else {
             setData('resolved_issue_ids', [...current, id]);
+            const issue = maintenance.issues.find((i) => i.id === id);
+            if (issue) {
+                issue.status = 'Resolved';
+            }
         }
     };
 
@@ -610,8 +618,7 @@ export default function WorkshopShow({
                                                     )
                                                 }
                                                 disabled={
-                                                    isContentLocked ||
-                                                    issue.status === 'Resolved'
+                                                    isContentLocked
                                                 }
                                                 onCheckedChange={() =>
                                                     toggleIssueResolution(

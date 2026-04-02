@@ -75,13 +75,16 @@ class VehicleMaintenanceController extends Controller
             ->when($user->role === 'capitan', function ($q) use ($user) {
                 $q->where('company', $user->company);
             })
-            ->with(['issues' => function ($q) {
-                $q->where('status', '!=', 'Resolved')
-                    ->where('sent_to_workshop', true)
-                    ->latest();
-            }, 'maintenances' => function ($q) {
-                $q->whereNull('exit_date')->latest();
-            }])
+            ->with([
+                'issues' => function ($q) {
+                    $q->where('status', '!=', 'Resolved')
+                        ->where('sent_to_workshop', true)
+                        ->latest();
+                },
+                'maintenances' => function ($q) {
+                    $q->whereNull('exit_date')->latest();
+                }
+            ])
             ->orderBy('name')
             ->get()
             ->map(function ($vehicle) {
@@ -92,7 +95,7 @@ class VehicleMaintenanceController extends Controller
 
         return Inertia::render('vehicles/workshop/create', [
             'vehicles' => $vehicles,
-            'defaultHourRate' => (int)(\App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0),
+            'defaultHourRate' => (int) (\App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0),
         ]);
     }
 
@@ -219,8 +222,8 @@ class VehicleMaintenanceController extends Controller
         ]);
 
         // Resolve issues
-        $maintenance->issues()->update(['status' => 'Resolved']);
-        $maintenance->tasks()->update(['is_completed' => true]);
+        // $maintenance->issues()->update(['status' => 'Resolved']);
+        // $maintenance->tasks()->update(['is_completed' => true]);
 
         return back()->with('success', 'Mantenimiento finalizado correctamente.');
     }
@@ -552,9 +555,12 @@ class VehicleMaintenanceController extends Controller
             // Delete removed extra works
             $worksToDelete = $workshop->externalWorks()->whereNotIn('id', $currentExternalWorkIds)->get();
             foreach ($worksToDelete as $workToDelete) {
-                if ($workToDelete->invoice_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->invoice_image_path);
-                if ($workToDelete->entry_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->entry_image_path);
-                if ($workToDelete->exit_image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->exit_image_path);
+                if ($workToDelete->invoice_image_path)
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->invoice_image_path);
+                if ($workToDelete->entry_image_path)
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->entry_image_path);
+                if ($workToDelete->exit_image_path)
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($workToDelete->exit_image_path);
                 $workToDelete->delete();
             }
         }
@@ -579,9 +585,9 @@ class VehicleMaintenanceController extends Controller
             $workshop->vehicle->update(['status' => 'Operative']);
 
             // Auto-resolve all linked issues and check off all tasks
-            $workshop->issues()->update(['status' => 'Resolved']);
-            $workshop->tasks()->update(['is_completed' => true]);
-            \App\Models\VehicleIssue::where('vehicle_maintenance_id', $workshop->id)->update(['is_stopped' => false]);
+            // $workshop->issues()->update(['status' => 'Resolved']);
+            // $workshop->tasks()->update(['is_completed' => true]);
+            // \App\Models\VehicleIssue::where('vehicle_maintenance_id', $workshop->id)->update(['is_stopped' => false]);
         }
 
         return redirect()->back()->with('success', 'Orden de trabajo actualizada.');
