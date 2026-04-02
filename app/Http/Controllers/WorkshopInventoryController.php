@@ -23,7 +23,7 @@ class WorkshopInventoryController extends Controller
     }
 
     $defaultHourRate = WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0;
-    
+
     return Inertia::render('vehicles/inventory/index', [
       'items' => $query->orderBy('name')->paginate(10),
       'filters' => $request->only(['search', 'category']),
@@ -106,40 +106,53 @@ class WorkshopInventoryController extends Controller
     $inventory->save();
 
     if (array_key_exists('stock', $changes)) {
-        $newStock = $inventory->stock;
-        $diff = $newStock - $oldStock;
+      $newStock = $inventory->stock;
+      $diff = $newStock - $oldStock;
 
-        if ($diff !== 0) {
-            \App\Models\WorkshopHistory::create([
-                'workshop_inventory_id' => $inventory->id,
-                'user_id' => $user->id,
-                'type' => $diff > 0 ? 'ADD' : 'REMOVE',
-                'quantity_change' => $diff,
-                'current_balance' => $newStock,
-                'description' => 'Ajuste manual de stock.',
-            ]);
-        }
-        unset($changes['stock']);
+      if ($diff !== 0) {
+        \App\Models\WorkshopHistory::create([
+          'workshop_inventory_id' => $inventory->id,
+          'user_id' => $user->id,
+          'type' => $diff > 0 ? 'ADD' : 'REMOVE',
+          'quantity_change' => $diff,
+          'current_balance' => $newStock,
+          'description' => 'Ajuste manual de stock.',
+        ]);
+      }
+      unset($changes['stock']);
     }
 
     if (!empty($changes)) {
-        unset($changes['updated_at']);
-        $descriptions = [];
-        foreach ($changes as $key => $newValue) {
-            $oldValue = $inventory->getOriginal($key);
-            $descriptions[] = "Campo '$key': '$oldValue' -> '$newValue'";
+      unset($changes['updated_at']);
+      $descriptions = [];
+      foreach ($changes as $key => $newValue) {
+        $oldValue = $inventory->getOriginal($key);
+        if ($key === 'compatibility') {
+          $newValue = str_replace('[', '', $newValue); // Remove [ from new value
+          $newValue = str_replace(']', '', $newValue); // Remove ] from new value
+          $newValue = explode(',', $newValue); // Explode the new value into an array
+          $oldValue = array_map(function ($v) {
+            return \App\Models\Vehicle::find($v)->name;
+          }, $oldValue); // Map the old value to the vehicle name
+          $newValue = array_map(function ($v) {
+            return \App\Models\Vehicle::find($v)->name;
+          }, $newValue); // Map the new value to the vehicle name
+          $oldValue = implode(', ', $oldValue); // Implode the old value into a string
+          $newValue = implode(', ', $newValue); // Implode the new value into a string
         }
+        $descriptions[] = "Campo '$key': '$oldValue' -> '$newValue'";
+      }
 
-        if (!empty($descriptions)) {
-            \App\Models\WorkshopHistory::create([
-                'workshop_inventory_id' => $inventory->id,
-                'user_id' => $user->id,
-                'type' => 'EDIT',
-                'quantity_change' => 0,
-                'current_balance' => $inventory->stock,
-                'description' => 'Modificación: ' . implode(' | ', $descriptions),
-            ]);
-        }
+      if (!empty($descriptions)) {
+        \App\Models\WorkshopHistory::create([
+          'workshop_inventory_id' => $inventory->id,
+          'user_id' => $user->id,
+          'type' => 'EDIT',
+          'quantity_change' => 0,
+          'current_balance' => $inventory->stock,
+          'description' => 'Modificación: ' . implode(' | ', $descriptions),
+        ]);
+      }
     }
 
     return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem actualizado correctamente.');
@@ -163,8 +176,7 @@ class WorkshopInventoryController extends Controller
     try {
       $inventory->delete();
       return redirect()->route('vehicles.inventory.index')->with('success', 'Ítem eliminado correctamente.');
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       return back()->withErrors(['error' => 'No se puede eliminar este ítem porque tiene registros asociados.']);
     }
   }
@@ -216,17 +228,17 @@ class WorkshopInventoryController extends Controller
   public function updateSetting(Request $request)
   {
     $settings = $request->except(['_token', '_method']);
-    
-    foreach ($settings as $key => $value) {
-        WorkshopSetting::updateOrCreate(
-          ['key' => $key],
-          ['value' => $value]
-        );
 
-        if ($key === 'default_hour_rate') {
-             \App\Models\VehicleMaintenance::whereNotIn('status', ['Finalizado', 'Entregado'])
-                ->update(['hour_rate' => $value]);
-        }
+    foreach ($settings as $key => $value) {
+      WorkshopSetting::updateOrCreate(
+        ['key' => $key],
+        ['value' => $value]
+      );
+
+      if ($key === 'default_hour_rate') {
+        \App\Models\VehicleMaintenance::whereNotIn('status', ['Finalizado', 'Entregado'])
+          ->update(['hour_rate' => $value]);
+      }
     }
 
     return back()->with('success', 'Configuraciones actualizadas correctamente.');

@@ -54,13 +54,14 @@ interface PageProps {
     filters: {
         status?: string;
         search?: string;
+        page?: number;
     };
 }
 
 export default function VehicleWorkshop() {
     const { maintenances, filters } = usePage<PageProps>().props;
     const { canCreate } = usePermissions(); // Use hook
-    const [search, setSearch] = useState(filters.search || '');
+    const [search, setSearch] = useState(filters.search);
     const [debouncedSearch, setDebouncedSearch] = useState(search);
 
     // Manual debounce implementation
@@ -89,7 +90,10 @@ export default function VehicleWorkshop() {
         if (debouncedSearch !== filters.search) {
             router.get(
                 '/vehicles/workshop',
-                { status: filters.status, search: debouncedSearch },
+                {
+                    status: filters.status,
+                    search: debouncedSearch,
+                },
                 { preserveState: true, replace: true },
             );
         }
@@ -99,10 +103,12 @@ export default function VehicleWorkshop() {
         switch (status) {
             case 'En Taller':
                 return 'bg-blue-500';
-            case 'Esperando Repuestos':
-                return 'bg-yellow-500';
-            case 'Listo para Retiro':
-                return 'bg-green-500';
+            case 'En Espera de Repuestos':
+                return 'bg-yellow-500 text-black';
+            case 'Finalizado':
+                return 'bg-green-500 text-black';
+            case 'Entregado':
+                return 'bg-green-500 text-black';
             default:
                 return 'bg-gray-500';
         }
@@ -282,21 +288,18 @@ export default function VehicleWorkshop() {
                                     asChild
                                 >
                                     <Link
-                                        href={link.url}
+                                        href={link.url.concat(
+                                            search ? `&search=${search}` : '',
+                                            filters.status
+                                                ? `&status=${filters.status}`
+                                                : '',
+                                        )}
                                         dangerouslySetInnerHTML={{
                                             __html: link.label,
                                         }}
                                     />
                                 </Button>
-                            ) : (
-                                <span
-                                    key={i}
-                                    className="px-2 text-sm text-muted-foreground"
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                />
-                            ),
+                            ) : null,
                         )}
                     </div>
                 )}

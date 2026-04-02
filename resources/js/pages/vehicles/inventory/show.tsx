@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Box, History, Package } from 'lucide-react';
+import { ArrowLeft, History, Package } from 'lucide-react';
 
 interface InventoryItem {
     id: number;
@@ -90,7 +90,7 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Categoría
                                 </h3>
                                 <Badge
@@ -102,59 +102,64 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         SKU
                                     </h3>
-                                    <p className="font-mono text-sm mt-0.5">
+                                    <p className="mt-0.5 font-mono text-sm">
                                         {item.sku || '-'}
                                     </p>
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Ubicación
                                     </h3>
-                                    <p className="text-sm mt-0.5">
+                                    <p className="mt-0.5 text-sm">
                                         {item.location || '-'}
                                     </p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Stock Actual
                                     </h3>
-                                    <div className="flex flex-col mt-0.5">
-                                        <span className={`text-sm font-bold ${item.stock <= item.min_stock ? 'text-red-500' : 'text-green-600'}`}>
-                                            {item.stock} {item.unit_of_measure || 'Unidades'}
+                                    <div className="mt-0.5 flex flex-col">
+                                        <span
+                                            className={`text-sm font-bold ${item.stock <= item.min_stock ? 'text-red-500' : 'text-green-600'}`}
+                                        >
+                                            {item.stock}{' '}
+                                            {item.unit_of_measure || 'Unidades'}
                                         </span>
                                         {item.stock <= item.min_stock && (
-                                            <span className="text-[10px] text-red-400 font-medium">Bajo Stock Crítico</span>
+                                            <span className="text-[10px] font-medium text-red-400">
+                                                Bajo Stock Crítico
+                                            </span>
                                         )}
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Stock Mínimo
                                     </h3>
-                                    <p className="text-sm mt-0.5">
+                                    <p className="mt-0.5 text-sm">
                                         {item.min_stock}
                                     </p>
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Costo Unitario
                                 </h3>
-                                <p className="text-sm font-medium mt-0.5">
+                                <p className="mt-0.5 text-sm font-medium">
                                     {formatCurrency(item.unit_cost)}
                                 </p>
                             </div>
                             {item.description && (
                                 <div>
-                                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Descripción
                                     </h3>
-                                    <p className="text-sm mt-0.5 whitespace-pre-line text-muted-foreground">
+                                    <p className="mt-0.5 text-sm whitespace-pre-line text-muted-foreground">
                                         {item.description}
                                     </p>
                                 </div>
@@ -170,21 +175,34 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                                 Historial de Cambios
                             </CardTitle>
                             <CardDescription>
-                                Registro cronológico de movimientos y modificaciones
+                                Registro cronológico de movimientos y
+                                modificaciones
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="rounded-md border overflow-hidden">
+                            <div className="overflow-hidden rounded-md border">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
-                                        <thead className="bg-muted/50 text-muted-foreground border-b">
+                                        <thead className="border-b bg-muted/50 text-muted-foreground">
                                             <tr>
-                                                <th className="p-3 font-medium">Fecha</th>
-                                                <th className="p-3 font-medium">Tipo</th>
-                                                <th className="p-3 font-medium text-right">Variación</th>
-                                                <th className="p-3 font-medium text-right">Saldo</th>
-                                                <th className="p-3 font-medium">Descripción</th>
-                                                <th className="p-3 font-medium text-right">Usuario</th>
+                                                <th className="p-3 font-medium">
+                                                    Fecha
+                                                </th>
+                                                <th className="p-3 font-medium">
+                                                    Tipo
+                                                </th>
+                                                <th className="p-3 text-right font-medium">
+                                                    Variación
+                                                </th>
+                                                <th className="p-3 text-right font-medium">
+                                                    Saldo
+                                                </th>
+                                                <th className="p-3 font-medium">
+                                                    Descripción
+                                                </th>
+                                                <th className="p-3 text-right font-medium">
+                                                    Usuario
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
@@ -192,28 +210,36 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                                                 history.map((record) => (
                                                     <tr
                                                         key={record.id}
-                                                        className="hover:bg-muted/30 transition-colors"
+                                                        className="transition-colors hover:bg-muted/30"
                                                     >
-                                                        <td className="p-3 text-muted-foreground whitespace-nowrap">
-                                                            {new Date(record.created_at).toLocaleString('es-CL', {
-                                                                day: '2-digit',
-                                                                month: '2-digit',
-                                                                year: 'numeric',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit'
-                                                            })}
+                                                        <td className="p-3 whitespace-nowrap text-muted-foreground">
+                                                            {new Date(
+                                                                record.created_at,
+                                                            ).toLocaleString(
+                                                                'es-CL',
+                                                                {
+                                                                    day: '2-digit',
+                                                                    month: '2-digit',
+                                                                    year: 'numeric',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                },
+                                                            )}
                                                         </td>
                                                         <td className="p-3">
                                                             <Badge
                                                                 variant="outline"
                                                                 className={
-                                                                    record.type === 'ALTA'
-                                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                                        : record.type === 'ADD'
-                                                                          ? 'bg-green-50 text-green-700 border-green-200'
-                                                                          : record.type === 'REMOVE'
-                                                                            ? 'bg-red-50 text-red-700 border-red-200'
-                                                                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                                                                    record.type ===
+                                                                    'ALTA'
+                                                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                                                        : record.type ===
+                                                                            'ADD'
+                                                                          ? 'border-green-200 bg-green-50 text-green-700'
+                                                                          : record.type ===
+                                                                              'REMOVE'
+                                                                            ? 'border-red-200 bg-red-50 text-red-700'
+                                                                            : 'border-slate-200 bg-slate-50 text-slate-700'
                                                                 }
                                                             >
                                                                 {record.type}
@@ -222,25 +248,41 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                                                         <td className="p-3 text-right font-medium">
                                                             <span
                                                                 className={
-                                                                    record.quantity_change > 0
+                                                                    record.quantity_change >
+                                                                    0
                                                                         ? 'text-green-600'
-                                                                        : record.quantity_change < 0
+                                                                        : record.quantity_change <
+                                                                            0
                                                                           ? 'text-red-600'
                                                                           : 'text-muted-foreground'
                                                                 }
                                                             >
-                                                                {record.quantity_change > 0 ? '+' : ''}
-                                                                {record.quantity_change}
+                                                                {record.quantity_change >
+                                                                0
+                                                                    ? '+'
+                                                                    : ''}
+                                                                {
+                                                                    record.quantity_change
+                                                                }
                                                             </span>
                                                         </td>
                                                         <td className="p-3 text-right font-mono text-xs">
-                                                            {record.current_balance}
+                                                            {
+                                                                record.current_balance
+                                                            }
                                                         </td>
-                                                        <td className="p-3 max-w-[250px] truncate" title={record.description}>
+                                                        <td
+                                                            className="max-w-[250px] p-3"
+                                                            title={
+                                                                record.description
+                                                            }
+                                                        >
                                                             {record.description}
                                                         </td>
-                                                        <td className="p-3 text-right text-muted-foreground text-xs">
-                                                            {record.user?.name || 'Sistema'}
+                                                        <td className="p-3 text-right text-xs text-muted-foreground">
+                                                            {record.user
+                                                                ?.name ||
+                                                                'Sistema'}
                                                         </td>
                                                     </tr>
                                                 ))
@@ -250,7 +292,8 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                                                         colSpan={6}
                                                         className="p-8 text-center text-muted-foreground italic"
                                                     >
-                                                        No se registra historial para este ítem.
+                                                        No se registra historial
+                                                        para este ítem.
                                                     </td>
                                                 </tr>
                                             )}
