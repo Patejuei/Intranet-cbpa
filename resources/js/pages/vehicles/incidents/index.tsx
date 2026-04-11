@@ -162,7 +162,7 @@ export default function VehicleIncidents({
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Incidencias', href: '/vehicles/incidents' },
             ]}
         >

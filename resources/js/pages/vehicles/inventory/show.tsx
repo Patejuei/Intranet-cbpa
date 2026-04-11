@@ -50,7 +50,7 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/status' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Bodega', href: '/vehicles/inventory' },
                 {
                     title: item.name,

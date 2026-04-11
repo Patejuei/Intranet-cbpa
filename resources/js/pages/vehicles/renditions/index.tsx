@@ -152,7 +152,7 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/status' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 {
                     title: 'Rendiciones',
                     href: '/vehicles/renditions',

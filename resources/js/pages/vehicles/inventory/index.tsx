@@ -117,7 +117,7 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
     return (
         <AuthenticatedLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/status' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 {
                     title: 'Bodega',
                     href: '/vehicles/inventory',

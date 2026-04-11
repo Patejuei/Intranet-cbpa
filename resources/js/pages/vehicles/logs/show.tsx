@@ -35,7 +35,7 @@ export default function VehicleLogShow({ log }: { log: Log }) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Bitácora', href: '/vehicles/logs' },
                 { title: `Detalle #${log.id}`, href: `/vehicles/logs/${log.id}` },
             ]}

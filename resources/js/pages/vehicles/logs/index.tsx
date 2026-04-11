@@ -104,7 +104,7 @@ export default function VehicleLogs({
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Material Mayor', href: '/vehicles/dashboard' },
+                { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Bitácora', href: '/vehicles/logs' },
             ]}
         >

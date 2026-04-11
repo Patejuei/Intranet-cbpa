@@ -70,6 +70,7 @@ export default function InventoryEdit({ item, vehicles = [] }: Props) {
     return (
         <AuthenticatedLayout
             breadcrumbs={[
+                { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Bodega', href: '/vehicles/inventory' },
                 { title: `Editar: ${item.name}`, href: '#' },
             ]}

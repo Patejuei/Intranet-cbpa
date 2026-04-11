@@ -118,7 +118,6 @@ export default function VehicleWorkshop() {
         <AppLayout
             breadcrumbs={[
                 { title: 'Panel Principal', href: '/dashboard' },
-                { title: 'Material Mayor', href: '/dashboard' },
                 { title: 'Taller Mecánico', href: '/vehicles/workshop' },
             ]}
         >

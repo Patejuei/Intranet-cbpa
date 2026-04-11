@@ -30,15 +30,15 @@ const companies = [
 
 const modules = [
     // Material Menor
-    { id: 'inventory', label: 'Inventario', category: 'Material Menor' },
-    { id: 'tickets', label: 'Ticketera', category: 'Material Menor' },
-    { id: 'batteries', label: 'Baterías', category: 'Material Menor' },
-    { id: 'deliveries', label: 'Actas de Entrega', category: 'Material Menor' },
-    {
-        id: 'reception',
-        label: 'Actas de Recepción',
-        category: 'Material Menor',
-    },
+    // { id: 'inventory', label: 'Inventario', category: 'Material Menor' },
+    // { id: 'tickets', label: 'Ticketera', category: 'Material Menor' },
+    // { id: 'batteries', label: 'Baterías', category: 'Material Menor' },
+    // { id: 'deliveries', label: 'Actas de Entrega', category: 'Material Menor' },
+    // {
+    //     id: 'reception',
+    //     label: 'Actas de Recepción',
+    //     category: 'Material Menor',
+    // },
     // Material Mayor
     {
         id: 'vehicles.status',
