@@ -25,9 +25,17 @@ class VehicleLogController extends Controller
             // Also Mechanic is typically focused on Maintenance, but if they have Read Only logs they might need to see all?
             // Let's stick to the specific request: Comandancia users see all.
             // If user is mechanic, they usually see all because they fix all cars.
-            if ($user->role !== 'mechanic') {
+            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+            if ($driverIds->isEmpty()) {
                 $logQuery->whereHas('vehicle', function ($q) use ($user) {
                     $q->where('company', $user->company);
+                });
+            } else {
+                $logQuery->whereHas('vehicle', function ($query) use ($driverIds, $user) {
+                    $query->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $driverIds);
+                    }
                 });
             }
         }

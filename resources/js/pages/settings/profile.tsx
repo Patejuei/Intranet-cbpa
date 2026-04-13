@@ -10,7 +10,6 @@ import {
     usePage,
 } from '@inertiajs/react';
 
-import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,7 @@ export default function Profile({
                 <div className="space-y-6">
                     <HeadingSmall
                         title="Información del perfil"
-                        description="Actualice su nombre y dirección de correo electrónico"
+                        description="Actualice su RUT"
                     />
 
                     <Form
@@ -69,25 +68,6 @@ export default function Profile({
                     >
                         {({ processing, recentlySuccessful, errors }) => (
                             <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="name">Nombre</Label>
-
-                                    <Input
-                                        id="name"
-                                        className="mt-1 block w-full"
-                                        defaultValue={auth.user.name}
-                                        name="name"
-                                        required
-                                        autoComplete="name"
-                                        placeholder="Nombre completo"
-                                    />
-
-                                    <InputError
-                                        className="mt-2"
-                                        message={errors.name}
-                                    />
-                                </div>
-
                                 <div className="grid gap-2">
                                     <Label htmlFor="rut">RUT</Label>
 
@@ -103,28 +83,6 @@ export default function Profile({
                                     <InputError
                                         className="mt-2"
                                         message={errors.rut}
-                                    />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">
-                                        Correo electrónico
-                                    </Label>
-
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        className="mt-1 block w-full"
-                                        defaultValue={auth.user.email}
-                                        name="email"
-                                        required
-                                        autoComplete="username"
-                                        placeholder="Correo electrónico"
-                                    />
-
-                                    <InputError
-                                        className="mt-2"
-                                        message={errors.email}
                                     />
                                 </div>
 
@@ -249,8 +207,6 @@ export default function Profile({
                         </form>
                     </div>
                 </div>
-
-                <DeleteUser />
             </SettingsLayout>
         </AppLayout>
     );

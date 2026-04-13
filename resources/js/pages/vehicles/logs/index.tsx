@@ -95,8 +95,17 @@ export default function VehicleLogs({
             setData((prev) => ({
                 ...prev,
                 vehicle_id: val,
-                start_km: selectedVehicle.last_mileage !== undefined && selectedVehicle.last_mileage !== null ? String(selectedVehicle.last_mileage) : prev.start_km,
-                fuel_coupon: prev.has_fuel && selectedVehicle.coupon_number ? selectedVehicle.coupon_number : (prev.has_fuel ? '' : prev.fuel_coupon),
+                start_km:
+                    selectedVehicle.last_mileage !== undefined &&
+                    selectedVehicle.last_mileage !== null
+                        ? String(selectedVehicle.last_mileage)
+                        : prev.start_km,
+                fuel_coupon:
+                    prev.has_fuel && selectedVehicle.coupon_number
+                        ? selectedVehicle.coupon_number
+                        : prev.has_fuel
+                          ? ''
+                          : prev.fuel_coupon,
             }));
         }
     };
@@ -207,7 +216,26 @@ export default function VehicleLogs({
                                                 )}
                                             </div>
                                         </div>
-
+                                        <div className="space-y-2">
+                                            <Label htmlFor="destination">
+                                                Dirección
+                                            </Label>
+                                            <Input
+                                                value={data.destination}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'destination',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Dirección o lugar de destino"
+                                            />
+                                            {errors.destination && (
+                                                <p className="text-sm text-destructive">
+                                                    {errors.destination}
+                                                </p>
+                                            )}
+                                        </div>
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div className="space-y-2">
                                                 <Label htmlFor="start_km">
@@ -255,7 +283,7 @@ export default function VehicleLogs({
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div className="space-y-2">
                                                 <Label htmlFor="departure_time">
-                                                    Hora Salida{' '}
+                                                    Hora de Salida{' '}
                                                     <span className="text-red-500">
                                                         *
                                                     </span>
@@ -274,7 +302,7 @@ export default function VehicleLogs({
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="arrival_time">
-                                                    Hora Llegada{' '}
+                                                    Hora de Regreso{' '}
                                                     <span className="text-red-500">
                                                         *
                                                     </span>
@@ -324,6 +352,10 @@ export default function VehicleLogs({
                                                     <SelectItem value="CargaCombustible">
                                                         Carga de Combustible
                                                     </SelectItem>
+                                                    <SelectItem value="RecuperacionMaterial">
+                                                        Recuperación de Material
+                                                        (6-15)
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             {errors.activity_type && (
@@ -338,12 +370,23 @@ export default function VehicleLogs({
                                                 <Switch
                                                     id="fuel-mode"
                                                     checked={data.has_fuel}
-                                                    onCheckedChange={(checked) => {
-                                                        const selectedVehicle = vehicles.find((v) => v.id.toString() === data.vehicle_id);
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) => {
+                                                        const selectedVehicle =
+                                                            vehicles.find(
+                                                                (v) =>
+                                                                    v.id.toString() ===
+                                                                    data.vehicle_id,
+                                                            );
                                                         setData((prev) => ({
                                                             ...prev,
                                                             has_fuel: checked,
-                                                            fuel_coupon: checked && selectedVehicle?.coupon_number ? selectedVehicle.coupon_number : prev.fuel_coupon,
+                                                            fuel_coupon:
+                                                                checked &&
+                                                                selectedVehicle?.coupon_number
+                                                                    ? selectedVehicle.coupon_number
+                                                                    : prev.fuel_coupon,
                                                         }));
                                                     }}
                                                 />
@@ -396,7 +439,11 @@ export default function VehicleLogs({
                                                             }
                                                             placeholder="Nº Documento"
                                                             disabled={
-                                                                !!vehicles.find((v) => v.id.toString() === data.vehicle_id)?.coupon_number
+                                                                !!vehicles.find(
+                                                                    (v) =>
+                                                                        v.id.toString() ===
+                                                                        data.vehicle_id,
+                                                                )?.coupon_number
                                                             }
                                                         />
                                                     </div>
@@ -422,27 +469,6 @@ export default function VehicleLogs({
                                                 </div>
                                             </div>
                                         )}
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="destination">
-                                                Destino / Detalle
-                                            </Label>
-                                            <Input
-                                                value={data.destination}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'destination',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Dirección o lugar de destino"
-                                            />
-                                            {errors.destination && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.destination}
-                                                </p>
-                                            )}
-                                        </div>
 
                                         <div className="space-y-2">
                                             <Label htmlFor="observations">

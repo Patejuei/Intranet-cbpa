@@ -44,4 +44,9 @@ class Vehicle extends Model
     {
         return $this->hasMany(VehicleMaintenance::class);
     }
+
+    public function drivers()
+    {
+        return $this->belongsToMany(User::class, 'driver_vehicle');
+    }
 }

@@ -14,10 +14,14 @@ class VehicleIssueController extends Controller
     {
         $user = request()->user();
         $query = \App\Models\VehicleIssue::with(['vehicle', 'reporter'])->latest();
+        $driverIds = $user->driverVehicles()->pluck('vehicles.id');
 
         if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
-            $query->whereHas('vehicle', function ($q) use ($user) {
-                $q->where('company', $user->company);
+            $query->whereHas('vehicle', function ($query) use ($user, $driverIds) {
+                $query->where('company', $user->company);
+                if ($driverIds->isNotEmpty()) {
+                    $query->orWhereIn('id', $driverIds);
+                }
             });
         }
         if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
@@ -32,9 +36,8 @@ class VehicleIssueController extends Controller
 
         return Inertia::render('vehicles/incidents/index', [
             'issues' => $query->paginate(10),
-            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user) {
+            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user, $driverIds) {
                 // Allow both Company vehicles AND Driver Assigned vehicles
-                $driverIds = $user->driverVehicles()->pluck('vehicles.id');
                 $q->where(function ($query) use ($driverIds, $user) {
                     $query->where('company', $user->company);
                     if ($driverIds->isNotEmpty()) {
