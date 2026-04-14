@@ -1,5 +1,8 @@
+import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -7,10 +10,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
-import { Head, usePage } from '@inertiajs/react';
-import { Activity, CreditCard, Shield, User as UserIcon } from 'lucide-react';
+import { type SharedData } from '@/types';
+import { Transition } from '@headlessui/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Settings, Signature, User as UserIcon } from 'lucide-react';
 
 interface Firefighter {
     id: number;
@@ -44,7 +51,21 @@ export default function MyProfileIndex({
     firefighter,
     assignedMaterials,
 }: Props) {
-    const user = usePage().props.auth.user;
+    const user = usePage<SharedData>().props.auth.user;
+
+    const { data, setData, post, processing, errors, recentlySuccessful } =
+        useForm({
+            _method: 'PATCH',
+            signature: null as File | null,
+        });
+
+    const submitSignature = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(ProfileController.update.url(), {
+            preserveScroll: true,
+            forceFormData: true,
+        });
+    };
 
     const getInitials = (name: string) => {
         return name
@@ -62,16 +83,16 @@ export default function MyProfileIndex({
             <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                 {/* Profile Header Card */}
                 <Card>
-                    <CardContent className="flex items-center gap-6 p-6">
+                    <CardContent className="relative flex flex-col items-center gap-6 p-6 text-center sm:flex-row sm:text-left">
                         <Avatar className="h-24 w-24">
                             {/* Initials fallback */}
                             <AvatarFallback className="text-2xl">
                                 {getInitials(user.name)}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="space-y-1">
+                        <div className="flex flex-col items-center space-y-1 sm:items-start">
                             <h2 className="text-2xl font-bold">{user.name}</h2>
-                            <div className="flex items-center gap-2 text-muted-foreground">
+                            <div className="flex flex-wrap items-center justify-center gap-2 text-muted-foreground sm:justify-start">
                                 <UserIcon className="h-4 w-4" />
                                 <span>
                                     {user.role
@@ -101,23 +122,112 @@ export default function MyProfileIndex({
                                 </Badge>
                             )}
                         </div>
+                        <div className="mt-4 w-full sm:absolute sm:top-6 sm:right-6 sm:mt-0 sm:w-auto">
+                            <Button
+                                variant="outline"
+                                asChild
+                                className="w-full sm:w-auto"
+                            >
+                                <Link href="/settings/profile">
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Configuración
+                                </Link>
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 
                 {/* Modules Tabs */}
-                <Tabs defaultValue="materials" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-                        <TabsTrigger value="materials">
+                <Tabs defaultValue="signature" className="w-full">
+                    <TabsList className="grid w-full grid-cols-1 lg:w-[400px]">
+                        <TabsTrigger value="signature">
+                            Firma Digital
+                        </TabsTrigger>
+                        {/* <TabsTrigger value="materials">
                             Prendas a Cargo
                         </TabsTrigger>
                         <TabsTrigger value="attendance">
                             Asistencias
                         </TabsTrigger>
-                        <TabsTrigger value="cootas">Cuotas</TabsTrigger>
+                        <TabsTrigger value="cootas">Cuotas</TabsTrigger> */}
                     </TabsList>
+                    <TabsContent value="signature" className="mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Signature className="h-5 w-5" />
+                                    Firma Digital
+                                </CardTitle>
+                                <CardDescription>
+                                    Configuración de firma digital.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form
+                                    onSubmit={submitSignature}
+                                    className="space-y-6"
+                                >
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="signature">
+                                            Subir nueva firma (Imagen)
+                                        </Label>
+                                        <Input
+                                            id="signature"
+                                            type="file"
+                                            className="mt-1 block w-full"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                if (
+                                                    e.target.files &&
+                                                    e.target.files[0]
+                                                ) {
+                                                    setData(
+                                                        'signature',
+                                                        e.target.files[0],
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                        {user.signature_path && (
+                                            <div className="mt-2">
+                                                <p className="text-sm text-gray-500">
+                                                    Firma actual:
+                                                </p>
+                                                <img
+                                                    src={`/${user.signature_path}?t=${Date.now()}`} // Cache buster
+                                                    alt="Firma actual"
+                                                    className="h-48 rounded border border-gray-200 bg-white object-contain p-1"
+                                                />
+                                            </div>
+                                        )}
+                                        <InputError
+                                            className="mt-2"
+                                            message={errors.signature}
+                                        />
+                                    </div>
 
-                    {/* PRENDAS A CARGO */}
-                    <TabsContent value="materials" className="mt-4">
+                                    <div className="flex items-center gap-4">
+                                        <Button disabled={processing}>
+                                            Guardar Firma
+                                        </Button>
+
+                                        <Transition
+                                            show={recentlySuccessful}
+                                            enter="transition ease-in-out"
+                                            enterFrom="opacity-0"
+                                            leave="transition ease-in-out"
+                                            leaveTo="opacity-0"
+                                        >
+                                            <p className="text-sm text-neutral-600">
+                                                Firma Guardada
+                                            </p>
+                                        </Transition>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    {/* <TabsContent value="materials" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -220,10 +330,9 @@ export default function MyProfileIndex({
                                 )}
                             </CardContent>
                         </Card>
-                    </TabsContent>
-
+                    </TabsContent> */}
                     {/* ASISTENCIAS */}
-                    <TabsContent value="attendance" className="mt-4">
+                    {/* <TabsContent value="attendance" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -246,10 +355,9 @@ export default function MyProfileIndex({
                                 </p>
                             </CardContent>
                         </Card>
-                    </TabsContent>
-
+                    </TabsContent> */}
                     {/* CUOTAS */}
-                    <TabsContent value="cootas" className="mt-4">
+                    {/* <TabsContent value="cootas" className="mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -272,7 +380,7 @@ export default function MyProfileIndex({
                                 </p>
                             </CardContent>
                         </Card>
-                    </TabsContent>
+                    </TabsContent> */}
                 </Tabs>
             </div>
         </AppLayout>

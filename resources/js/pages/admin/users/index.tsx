@@ -1,6 +1,6 @@
 import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
 
 interface User {
@@ -20,6 +20,10 @@ interface PageProps {
 }
 
 export default function UserIndex({ users }: PageProps) {
+    const { props } = usePage<SharedData>();
+    const user = props.auth.user;
+    const currentUserRole = user?.role || 'user';
+
     const handleDelete = (id: number) => {
         if (confirm('¿Estás seguro de eliminar este usuario?')) {
             router.delete(`/admin/users/${id}`);
@@ -130,12 +134,15 @@ export default function UserIndex({ users }: PageProps) {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex gap-2">
-                                                <Link
-                                                    href={`/admin/users/${user.id}/edit`}
-                                                    className="rounded p-1 text-blue-600 hover:bg-blue-100"
-                                                >
-                                                    <Pencil className="size-4" />
-                                                </Link>
+                                                {currentUserRole !==
+                                                'ayudante' ? (
+                                                    <Link
+                                                        href={`/admin/users/${user.id}/edit`}
+                                                        className="rounded p-1 text-blue-600 hover:bg-blue-100"
+                                                    >
+                                                        <Pencil className="size-4" />
+                                                    </Link>
+                                                ) : null}
                                                 {user.id !== 1 && ( // Prevent deleting main admin
                                                     <button
                                                         onClick={() =>

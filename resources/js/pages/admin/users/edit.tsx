@@ -80,12 +80,11 @@ const companies = [
     'Tercera Compañía',
     'Cuarta Compañía',
     'Quinta Compañía',
-    'Sexta Compañía',
     'Séptima Compañía',
     'Octava Compañía',
     'Novena Compañía',
     'Décima Compañía',
-    'Brigada Juvenil',
+    // 'Brigada Juvenil',
     'Comandancia',
 ];
 
@@ -98,8 +97,7 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'capitan', label: 'Capitán' },
         // { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
-        // { value: 'ayudante', label: 'Ayudante' },
-        // { value: 'ayudante', label: 'Ayudante' },
+        { value: 'ayudante', label: 'Ayudante' },
         { value: 'cuartelero', label: 'Cuartelero' },
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
@@ -107,7 +105,7 @@ const getFilteredRoles = (currentUserRole: string) => {
             value: 'secretaria_adquisiciones',
             label: 'Secretaria de Adquisiciones',
         },
-        { value: 'central_operator', label: 'Operador de Central' },
+        // { value: 'central_operator', label: 'Operador de Central' },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -444,20 +442,20 @@ export default function UserEdit({
                                             role: value,
                                             permissions:
                                                 value === 'admin' ||
-                                                    value === 'comandante' ||
-                                                    value === 'capitan' ||
-                                                    value === 'maquinista' ||
-                                                    value === 'inspector' ||
-                                                    value === 'mechanic' ||
-                                                    value ===
+                                                value === 'comandante' ||
+                                                value === 'capitan' ||
+                                                value === 'maquinista' ||
+                                                value === 'inspector' ||
+                                                value === 'mechanic' ||
+                                                value ===
                                                     'secretaria_adquisiciones' ||
-                                                    value === 'central_operator'
+                                                value === 'central_operator'
                                                     ? []
                                                     : prev.permissions,
                                             company:
                                                 value === 'comandante' ||
-                                                    value === 'inspector' ||
-                                                    value === 'central_operator'
+                                                value === 'inspector' ||
+                                                value === 'central_operator'
                                                     ? 'Comandancia'
                                                     : prev.company,
                                         }));
@@ -512,6 +510,7 @@ export default function UserEdit({
                                 data.role !== 'inspector' &&
                                 data.role !== 'mechanic' &&
                                 data.role !== 'cuartelero' &&
+                                data.role !== 'ayudante' &&
                                 data.role !== 'secretaria_adquisiciones' && ( // Admin/Comandante/Capitan/Maquinista/Inspector/Mechanic have implicit permissions
                                     <div>
                                         <label className="mb-3 block text-sm font-medium">
@@ -567,13 +566,14 @@ export default function UserEdit({
                                                                                                         'none',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                        'none'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'none'
                                                                                                         ? 'bg-background shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                    }`}
+                                                                                                }`}
                                                                                             >
                                                                                                 Ninguno
                                                                                             </button>
@@ -585,13 +585,14 @@ export default function UserEdit({
                                                                                                         'view',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                        'view'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'view'
                                                                                                         ? 'bg-blue-100 text-blue-700 shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                    }`}
+                                                                                                }`}
                                                                                             >
                                                                                                 Ver
                                                                                             </button>
@@ -603,39 +604,41 @@ export default function UserEdit({
                                                                                                         'edit',
                                                                                                     )
                                                                                                 }
-                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
-                                                                                                    module.id,
-                                                                                                ) ===
-                                                                                                        'edit'
+                                                                                                className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                    getPermissionValue(
+                                                                                                        module.id,
+                                                                                                    ) ===
+                                                                                                    'edit'
                                                                                                         ? 'bg-green-100 text-green-700 shadow-sm'
                                                                                                         : 'text-muted-foreground hover:bg-background/50'
-                                                                                                    }`}
+                                                                                                }`}
                                                                                             >
                                                                                                 Editar
                                                                                             </button>
                                                                                             {(module.id ===
                                                                                                 'vehicles' ||
                                                                                                 module.id ===
-                                                                                                'equipment') && (
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        onClick={() =>
-                                                                                                            handlePermissionChange(
-                                                                                                                module.id,
-                                                                                                                'full',
-                                                                                                            )
-                                                                                                        }
-                                                                                                        className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${getPermissionValue(
+                                                                                                    'equipment') && (
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() =>
+                                                                                                        handlePermissionChange(
+                                                                                                            module.id,
+                                                                                                            'full',
+                                                                                                        )
+                                                                                                    }
+                                                                                                    className={`flex-1 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                                                                                                        getPermissionValue(
                                                                                                             module.id,
                                                                                                         ) ===
-                                                                                                                'full'
-                                                                                                                ? 'bg-purple-100 text-purple-700 shadow-sm'
-                                                                                                                : 'text-muted-foreground hover:bg-background/50'
-                                                                                                            }`}
-                                                                                                    >
-                                                                                                        Total
-                                                                                                    </button>
-                                                                                                )}
+                                                                                                        'full'
+                                                                                                            ? 'bg-purple-100 text-purple-700 shadow-sm'
+                                                                                                            : 'text-muted-foreground hover:bg-background/50'
+                                                                                                    }`}
+                                                                                                >
+                                                                                                    Total
+                                                                                                </button>
+                                                                                            )}
                                                                                         </div>
                                                                                     </td>
                                                                                 </tr>

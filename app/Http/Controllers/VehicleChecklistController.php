@@ -23,11 +23,14 @@ class VehicleChecklistController extends Controller
             $query = \App\Models\Vehicle::query();
             $assignedVehicleIds = $user->driverVehicles()->pluck('vehicles.id');
 
-            if ($user->role === 'capitan' || $user->role === 'maquinista' || $user->role === 'cuartelero') {
+            if ($user->role === 'capitan' || $user->role === 'maquinista') {
                 $query->where(function ($q) use ($user, $assignedVehicleIds) {
                     $q->where('company', $user->company)
                         ->orWhereIn('id', $assignedVehicleIds);
                 });
+            } elseif ($user->role === 'cuartelero') {
+                $query->where('company', $user->company)
+                    ->orWhereIn('id', $assignedVehicleIds);
             } else {
                 // Regular users (Volunteers, etc) only see explicitly assigned vehicles
                 $query->whereIn('id', $assignedVehicleIds);
@@ -113,7 +116,7 @@ class VehicleChecklistController extends Controller
         $user = $request->user();
         // Check Bypass Roles
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector) {
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector && $user->role !== 'maquinista') {
             // Re-validate against restricted logic
             $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
             $companyAssignedIds = \App\Models\Vehicle::whereIn('id', $assignedIds)
@@ -138,19 +141,6 @@ class VehicleChecklistController extends Controller
 
             if (!$allowedIds->contains($validated['vehicle_id'])) {
                 abort(403, 'No tiene permiso para realizar checklist a este vehículo.');
-            }
-        }
-        // If Comandancia/Admin/Comandante/Inspector, we skip the rigorous check and rely on vehicle_id existing.
-        // Comandancia user check:
-        if ($user->company === 'Comandancia' && $user->role !== 'admin' && $user->role !== 'comandante' && !$isInspector) {
-            $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
-            // Comandancia users (regular) can check any Comandancia vehicle.
-            if ($vehicle->company !== 'Comandancia') {
-                // But wait, user said "Usuarios de Comandancia... podrán registrar... checklist de los vehículos asignados a Comandancia"
-                // Actually the new requirement "Comandante, Inspector...Admin... cualquier vehículo".
-                // So regular Comandancia user logic remains: 
-                // If standard Comandancia user:
-                abort(403, 'Solo puede registrar checklists para vehículos de Comandancia.');
             }
         }
 

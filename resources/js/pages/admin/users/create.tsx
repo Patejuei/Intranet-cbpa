@@ -19,12 +19,11 @@ const companies = [
     'Tercera Compañía',
     'Cuarta Compañía',
     'Quinta Compañía',
-    'Sexta Compañía',
     'Séptima Compañía',
     'Octava Compañía',
     'Novena Compañía',
     'Décima Compañía',
-    'Brigada Juvenil',
+    // 'Brigada Juvenil',
     'Comandancia',
 ];
 
@@ -85,7 +84,7 @@ const getFilteredRoles = (currentUserRole: string) => {
         { value: 'capitan', label: 'Capitán' },
         // { value: 'teniente', label: 'Teniente' },
         { value: 'maquinista', label: 'Maquinista' },
-        // { value: 'ayudante', label: 'Ayudante' },
+        { value: 'ayudante', label: 'Ayudante' },
         { value: 'cuartelero', label: 'Cuartelero' }, // Added missing ones from backend validation just in case
         { value: 'mechanic', label: 'Taller Mecánico' },
         { value: 'inspector', label: 'Inspector General' },
@@ -93,7 +92,7 @@ const getFilteredRoles = (currentUserRole: string) => {
             value: 'secretaria_adquisiciones',
             label: 'Secretaria de Adquisiciones',
         },
-        { value: 'central_operator', label: 'Operador de Central' },
+        // { value: 'central_operator', label: 'Operador de Central' },
     ];
 
     if (currentUserRole === 'capitan') {
@@ -500,6 +499,8 @@ export default function UserCreate({
                                 data.role !== 'maquinista' &&
                                 data.role !== 'inspector' &&
                                 data.role !== 'cuartelero' &&
+                                data.role !== 'ayudante' &&
+                                data.role !== 'mechanic' &&
                                 data.role !== 'secretaria_adquisiciones' && (
                                     // Admin/Capitan/Maquinista/Inspector/Secretaria have implicit permissions
                                     <div>

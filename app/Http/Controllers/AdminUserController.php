@@ -16,7 +16,12 @@ class AdminUserController extends Controller
         $query = \App\Models\User::query();
 
         if ($user->role === 'capitan') {
-            $query->where('company', $user->company);
+            $query->where('company', $user->company)
+                ->where('role', '!=', 'capitan');
+        }
+
+        if ($user->role === 'comandante') {
+            $query->where('role', '!=', 'admin');
         }
 
         return \Inertia\Inertia::render('admin/users/index', [
@@ -61,7 +66,6 @@ class AdminUserController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante'];
         $restrictedPermissions = [
             'vehicles.workshop',
             'vehicles.inventory', // Mayor modules
@@ -73,12 +77,13 @@ class AdminUserController extends Controller
         ];
 
         if ($user->role === 'capitan') {
+            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante', 'cuartelero'];
             // Force company to match captain's company regardless of input
             $validated['company'] = $user->company;
 
             // Restrict roles
             if (!in_array($validated['role'], $allowedRoles)) {
-                abort(403, 'Rol no permitido para su nivel de acceso.');
+                abort(403, 'Solo puede crear usuarios de su compañía.');
             }
 
             // Filter permissions
@@ -107,7 +112,14 @@ class AdminUserController extends Controller
                 }
                 $validated['permissions'] = $cleanPermissions;
             }
-        } elseif ($validated['role'] === 'comandante' || $validated['role'] === 'inspector' || $validated['role'] === 'central_operator') {
+        } elseif ($user->role === 'comandante') {
+            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante', 'comandante', 'inspector', 'central_operator'];
+            if (!in_array($validated['role'], $allowedRoles)) {
+                abort(403, 'Solo puede crear usuarios de su compañía.');
+            }
+        }
+
+        if ($validated['role'] === 'comandante' || $validated['role'] === 'inspector' || $validated['role'] === 'central_operator') {
             // Force Comandancia company for high rank roles
             $validated['company'] = 'Comandancia';
         }

@@ -99,7 +99,7 @@ export const MODULES: ModuleDefinition[] = [
     },
     {
         key: 'vehicles-status',
-        title: 'Estado Material Mayor',
+        title: 'Control de Unidades',
         description: 'Estado y ubicación de la flota',
         href: '/vehicles/status',
         pattern: /^\/vehicles\/status/,
@@ -144,7 +144,7 @@ export const MODULES: ModuleDefinition[] = [
     },
     {
         key: 'vehicles-checklist',
-        title: 'Checklist Preventivo',
+        title: 'Checklist',
         description: 'Revisiones periódicas',
         href: '/vehicles/checklists',
         pattern: /^\/vehicles\/checklists/,
