@@ -128,19 +128,14 @@ export default function VehicleLogs({
                     </p>
                 </div>
 
-                <Tabs
-                    defaultValue={
-                        canCreate('vehicles.logs') ? 'register' : 'history'
-                    }
-                    className="w-full"
-                >
+                <Tabs defaultValue="history" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+                        <TabsTrigger value="history">Bitácoras</TabsTrigger>
                         {canCreate('vehicles.logs') && (
                             <TabsTrigger value="register">
                                 Registrar Movimiento
                             </TabsTrigger>
                         )}
-                        <TabsTrigger value="history">Ver Bitácoras</TabsTrigger>
                     </TabsList>
 
                     {canCreate('vehicles.logs') && (
