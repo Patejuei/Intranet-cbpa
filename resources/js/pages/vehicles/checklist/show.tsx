@@ -1,11 +1,15 @@
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
+import ConfirmModal from '@/components/confirm-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useOtpAction } from '@/hooks/use-otp-action';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -54,6 +58,9 @@ interface Props {
 
 export default function ShowChecklist({ checklist, canReview }: Props) {
     const { auth } = usePage().props;
+    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } =
+        useOtpAction();
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     const groupedDetails = checklist.details.reduce(
         (acc, detail) => {
@@ -66,10 +73,14 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
     );
 
     const handleReview = () => {
-        if (confirm('¿Está seguro de visar este checklist?')) {
+        setIsConfirmOpen(true);
+    };
+
+    const doReview = () => {
+        performWithOtp(() => {
             // @ts-ignore
             router.post(`/vehicles/checklists/${checklist.id}/review`);
-        }
+        });
     };
 
     const getStatusBadge = (status: string) => {
@@ -328,6 +339,19 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                         ),
                     )}
                 </div>
+                <ConfirmModal
+                    isOpen={isConfirmOpen}
+                    onClose={() => setIsConfirmOpen(false)}
+                    onConfirm={doReview}
+                    title="Visar Checklist"
+                    description="¿Está seguro de visar este checklist? Esta acción quedará registrada con su nombre y fecha."
+                    confirmLabel="Sí, visar"
+                />
+                <ActionOtpVerificationModal
+                    isOpen={isOtpModalOpen}
+                    onClose={closeOtpModal}
+                    onVerified={handleVerified}
+                />
             </div>
         </AppLayout>
     );

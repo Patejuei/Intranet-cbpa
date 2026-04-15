@@ -16,10 +16,10 @@ interface ResetPasswordProps {
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
     return (
         <AuthLayout
-            title="Reset password"
-            description="Please enter your new password below"
+            title="Restablecer contraseña"
+            description="Por favor, ingrese su nueva contraseña a continuación"
         >
-            <Head title="Reset password" />
+            <Head title="Restablecer contraseña" />
 
             <Form
                 {...update.form()}

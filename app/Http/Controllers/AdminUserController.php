@@ -46,6 +46,8 @@ class AdminUserController extends Controller
 
     public function store(Request $request)
     {
+        $this->validateOtp($request);
+
         $user = request()->user();
         if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante') {
             abort(403);

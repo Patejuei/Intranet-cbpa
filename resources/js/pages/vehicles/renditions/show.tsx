@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AuthenticatedLayout from '@/layouts/app-layout';
+import { useOtpAction } from '@/hooks/use-otp-action';
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -61,15 +63,18 @@ export default function RenditionShow({ rendition }: Props) {
         rejection_reason: '',
     });
 
+    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
     const handleApprove = () => {
         if (
             confirm('¿Confirma que los datos son correctos y PROCEDE A RENDIR?')
         ) {
-            setData('action', 'validate');
-            post(`/vehicles/renditions/${rendition.id}/validate`, {
-                onSuccess: () => reset(),
+            performWithOtp(() => {
+                setData('action', 'validate');
+                post(`/vehicles/renditions/${rendition.id}/validate`, {
+                    onSuccess: () => reset(),
+                });
             });
         }
     };
@@ -441,6 +446,11 @@ export default function RenditionShow({ rendition }: Props) {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                <ActionOtpVerificationModal
+                    isOpen={isOtpModalOpen}
+                    onClose={closeOtpModal}
+                    onVerified={handleVerified}
+                />
             </div>
         </AuthenticatedLayout>
     );

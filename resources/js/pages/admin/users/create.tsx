@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData } from '@/types';
+import { useOtpAction } from '@/hooks/use-otp-action';
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Shield, Truck } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -125,6 +127,7 @@ export default function UserCreate({
     const { props } = usePage<SharedData>();
     const user = props.auth.user;
     const currentUserRole = user?.role || 'user';
+    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
 
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -157,7 +160,9 @@ export default function UserCreate({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post('/admin/users');
+        performWithOtp(() => {
+            post('/admin/users');
+        });
     };
 
     const handlePermissionChange = (moduleId: string, value: string) => {
@@ -705,6 +710,11 @@ export default function UserCreate({
                         </div>
                     </form>
                 </div>
+                <ActionOtpVerificationModal
+                    isOpen={isOtpModalOpen}
+                    onClose={closeOtpModal}
+                    onVerified={handleVerified}
+                />
             </div>
         </AppLayout>
     );

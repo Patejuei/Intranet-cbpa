@@ -221,6 +221,8 @@ class VehicleChecklistController extends Controller
 
     public function review(Request $request, \App\Models\VehicleChecklist $checklist)
     {
+        $this->validateOtp($request);
+
         $user = $request->user();
         $checklist->load('vehicle'); // Ensure vehicle is loaded
 

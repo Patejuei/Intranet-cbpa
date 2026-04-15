@@ -175,6 +175,8 @@ class RenditionController extends Controller
 
   public function validateRendition(Request $request, PettyCashRendition $rendition)
   {
+    $this->validateOtp($request);
+
     $request->validate([
       'action' => 'required|in:validate,reject',
       'rejection_reason' => 'nullable|required_if:action,reject|string',
@@ -211,6 +213,8 @@ class RenditionController extends Controller
 
   public function validateBatch(Request $request)
   {
+    $this->validateOtp($request);
+
     $request->validate([
       'ids' => 'required|array|min:1',
       'ids.*' => 'exists:petty_cash_renditions,id',

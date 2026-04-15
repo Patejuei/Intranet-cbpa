@@ -1,5 +1,4 @@
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
 
 interface LoginProps {
@@ -48,7 +46,7 @@ export default function Login({
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="[EMAIL_ADDRESS] o 12345678-9"
+                                    placeholder="eMail o RUT"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -56,7 +54,7 @@ export default function Login({
                             <div className="grid gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Contraseña</Label>
-                                    {canResetPassword && (
+                                    {/* {canResetPassword && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
@@ -64,7 +62,7 @@ export default function Login({
                                         >
                                             ¿Olvidaste tu contraseña?
                                         </TextLink>
-                                    )}
+                                    )} */}
                                 </div>
                                 <Input
                                     id="password"

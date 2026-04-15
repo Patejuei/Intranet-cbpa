@@ -76,6 +76,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'enabledModules' => config('modules.enabled', []),
+            'auth.otp_verified' => $request->user() ? (
+                $request->session()->has('otp_verified_at') && 
+                (now()->timestamp - $request->session()->get('otp_verified_at')) < 300
+            ) : false,
         ];
     }
 }

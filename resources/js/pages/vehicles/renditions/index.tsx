@@ -11,6 +11,8 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AuthenticatedLayout from '@/layouts/app-layout';
+import { useOtpAction } from '@/hooks/use-otp-action';
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Head, Link, router } from '@inertiajs/react';
 import { CheckCircle2, Download, Eye, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -39,6 +41,7 @@ interface Props {
 
 export default function RenditionIndex({ renditions, userRole }: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
@@ -94,18 +97,20 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
         )
             return;
 
-        router.post(
-            '/vehicles/renditions/validate-batch',
-            {
-                ids: selectedIds,
-                action: 'validate',
-            },
-            {
-                onSuccess: () => {
-                    setSelectedIds([]);
+        performWithOtp(() => {
+            router.post(
+                '/vehicles/renditions/validate-batch',
+                {
+                    ids: selectedIds,
+                    action: 'validate',
                 },
-            },
-        );
+                {
+                    onSuccess: () => {
+                        setSelectedIds([]);
+                    },
+                },
+            );
+        });
     };
 
     const formatCurrency = (amount: number) => {
@@ -320,6 +325,11 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
                         </Table>
                     </CardContent>
                 </Card>
+                <ActionOtpVerificationModal
+                    isOpen={isOtpModalOpen}
+                    onClose={closeOtpModal}
+                    onVerified={handleVerified}
+                />
             </div>
         </AuthenticatedLayout>
     );

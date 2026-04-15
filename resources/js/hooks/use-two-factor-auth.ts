@@ -1,5 +1,5 @@
 import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface TwoFactorSetupData {
     svg: string;
@@ -24,11 +24,22 @@ const fetchJson = async <T>(url: string): Promise<T> => {
     return response.json();
 };
 
-export const useTwoFactorAuth = () => {
-    const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null);
-    const [manualSetupKey, setManualSetupKey] = useState<string | null>(null);
+export const useTwoFactorAuth = (
+    initialQrCodeSvg: string | null = null,
+    initialManualSetupKey: string | null = null,
+) => {
+    const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(initialQrCodeSvg);
+    const [manualSetupKey, setManualSetupKey] = useState<string | null>(
+        initialManualSetupKey,
+    );
     const [recoveryCodesList, setRecoveryCodesList] = useState<string[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
+
+    // Sync with initial values when they change (e.g. after Enable/Disable via Inertia)
+    useEffect(() => {
+        if (initialQrCodeSvg) setQrCodeSvg(initialQrCodeSvg);
+        if (initialManualSetupKey) setManualSetupKey(initialManualSetupKey);
+    }, [initialQrCodeSvg, initialManualSetupKey]);
 
     const hasSetupData = useMemo<boolean>(
         () => qrCodeSvg !== null && manualSetupKey !== null,

@@ -71,18 +71,20 @@ function TwoFactorSetupStep({
             ) : (
                 <>
                     <div className="mx-auto flex max-w-md overflow-hidden">
-                        <div className="mx-auto aspect-square w-64 rounded-lg border border-border">
-                            <div className="z-10 flex h-full w-full items-center justify-center p-5">
-                                {qrCodeSvg ? (
-                                    <div
-                                        dangerouslySetInnerHTML={{
-                                            __html: qrCodeSvg,
-                                        }}
-                                    />
-                                ) : (
-                                    <Spinner />
-                                )}
-                            </div>
+                        <div className="mx-auto flex aspect-square w-64 items-center justify-center rounded-lg border border-border bg-white p-4 shadow-inner">
+                            {qrCodeSvg ? (
+                                <div
+                                    className="h-full w-full [&>svg]:h-full [&>svg]:w-full"
+                                    dangerouslySetInnerHTML={{
+                                        __html: qrCodeSvg.replace(
+                                            '<svg ',
+                                            '<svg class="text-black" ',
+                                        ),
+                                    }}
+                                />
+                            ) : (
+                                <Spinner />
+                            )}
                         </div>
                     </div>
 
@@ -94,8 +96,8 @@ function TwoFactorSetupStep({
 
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
+                        <span className="relative bg-card px-2 py-1 text-xs text-muted-foreground">
+                            O ingrese el código manualmente
                         </span>
                     </div>
 
@@ -200,7 +202,7 @@ function TwoFactorVerificationStep({
                                 onClick={onBack}
                                 disabled={processing}
                             >
-                                Back
+                                Volver
                             </Button>
                             <Button
                                 type="submit"
@@ -209,7 +211,7 @@ function TwoFactorVerificationStep({
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
-                                Confirm
+                                Confirmar
                             </Button>
                         </div>
                     </div>
@@ -252,27 +254,27 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-Factor Authentication Enabled',
+                title: 'Autenticación de Dos Factores Habilitada',
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    'La autenticación de dos factores ahora está habilitada. Escanee el código QR o ingrese la clave de configuración en su aplicación de autenticador.',
+                buttonText: 'Cerrar',
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify Authentication Code',
+                title: 'Verificar Código de Autenticación',
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    'Ingrese el código de 6 dígitos de su aplicación de autenticador',
+                buttonText: 'Continuar',
             };
         }
 
         return {
-            title: 'Enable Two-Factor Authentication',
+            title: 'Habilitar Autenticación de Dos Factores',
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                'Para terminar de habilitar la autenticación de dos factores, escanee el código QR o ingrese la clave de configuración en su aplicación de autenticador',
+            buttonText: 'Continuar',
         };
     }, [twoFactorEnabled, showVerificationStep]);
 

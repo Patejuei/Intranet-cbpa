@@ -117,6 +117,8 @@ class VehicleIssueController extends Controller
      */
     public function update(Request $request, \App\Models\VehicleIssue $incident) // Changed variable name to match route param if possible, or bind
     {
+        $this->validateOtp($request);
+
         // This is for Captain Review
         $user = $request->user();
         if (

@@ -13,6 +13,9 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
 
+Route::post('/otp/verify', [App\Http\Controllers\OtpVerificationController::class, 'verify'])->name('otp.verify');
+Route::get('/otp/check', [App\Http\Controllers\OtpVerificationController::class, 'check'])->name('otp.check');
+
 use App\Http\Controllers\BatteryLogController;
 use App\Http\Controllers\EquipmentLogController;
 use App\Http\Controllers\TicketController;

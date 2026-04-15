@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useOtpAction } from '@/hooks/use-otp-action';
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
@@ -63,6 +65,7 @@ export default function VehicleIncidents({
     const { auth } = usePage().props as any;
     const { canCreate, canEdit } = usePermissions();
     const [open, setOpen] = useState(false);
+    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
 
     // Review Modal State
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -102,12 +105,14 @@ export default function VehicleIncidents({
         e.preventDefault();
         if (!selectedIssue) return;
 
-        putReview(`/vehicles/incidents/${selectedIssue.id}`, {
-            onSuccess: () => {
-                setReviewOpen(false);
-                resetReview();
-                setSelectedIssue(null);
-            },
+        performWithOtp(() => {
+            putReview(`/vehicles/incidents/${selectedIssue.id}`, {
+                onSuccess: () => {
+                    setReviewOpen(false);
+                    resetReview();
+                    setSelectedIssue(null);
+                },
+            });
         });
     };
 
@@ -676,6 +681,11 @@ export default function VehicleIncidents({
                         </table>
                     </div>
                 </div>
+                <ActionOtpVerificationModal
+                    isOpen={isOtpModalOpen}
+                    onClose={closeOtpModal}
+                    onVerified={handleVerified}
+                />
             </div>
         </AppLayout>
     );
