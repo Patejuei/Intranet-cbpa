@@ -27,8 +27,9 @@ import ActionOtpVerificationModal from '@/components/action-otp-verification-mod
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { Eye, Plus } from 'lucide-react';
+import { Eye, Plus, FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
+import { ReportModal } from '@/components/report-modal';
 
 interface Vehicle {
     id: number;
@@ -66,6 +67,7 @@ export default function VehicleIncidents({
     const { canCreate, canEdit } = usePermissions();
     const [open, setOpen] = useState(false);
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
+    const [reportModalOpen, setReportModalOpen] = useState(false);
 
     // Review Modal State
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -309,6 +311,10 @@ export default function VehicleIncidents({
                             </DialogContent>
                         </Dialog>
                     )}
+                    <Button variant="outline" onClick={() => setReportModalOpen(true)}>
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        Reporte Excel
+                    </Button>
 
                     {/* Review Modal for Captains */}
                     <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
@@ -685,6 +691,14 @@ export default function VehicleIncidents({
                     isOpen={isOtpModalOpen}
                     onClose={closeOtpModal}
                     onVerified={handleVerified}
+                />
+
+                <ReportModal
+                    isOpen={reportModalOpen}
+                    onClose={() => setReportModalOpen(false)}
+                    title="Reporte de Incidencias"
+                    route="/vehicles/reports/incidents"
+                    type="excel"
                 />
             </div>
         </AppLayout>

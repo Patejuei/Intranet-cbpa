@@ -26,8 +26,10 @@ import {
     Eye,
     FileText,
     Wrench,
+    FileDown,
 } from 'lucide-react';
 import { useState } from 'react';
+import { ReportModal } from '@/components/report-modal';
 
 interface Vehicle {
     id: number;
@@ -123,6 +125,8 @@ export default function VehicleShow({
     };
 
     const [docModalOpen, setDocModalOpen] = useState(false);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [checklistReportModalOpen, setChecklistReportModalOpen] = useState(false);
 
     const formatDateForInput = (dateStr?: string) => {
         if (!dateStr) return '';
@@ -366,6 +370,16 @@ export default function VehicleShow({
                                 </DialogContent>
                             </Dialog>
                         )}
+
+                        <Button variant="outline" onClick={() => setReportModalOpen(true)}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Reporte Unidad
+                        </Button>
+
+                        <Button variant="outline" onClick={() => setChecklistReportModalOpen(true)}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Reporte Checklist
+                        </Button>
                     </div>
                 </div>
 
@@ -793,6 +807,30 @@ export default function VehicleShow({
                     </Card>
                 )}
             </div>
+            
+            <ReportModal
+                isOpen={reportModalOpen}
+                onClose={() => setReportModalOpen(false)}
+                title={`Reporte de Unidad: ${vehicle.name}`}
+                route={`/vehicles/${vehicle.id}/reports/vehicle`}
+                type="pdf"
+                includeOptions={[
+                    { id: 'main_data', label: 'Datos Principales' },
+                    { id: 'workshop', label: 'Trabajos en Taller' },
+                    { id: 'investment', label: 'Inversión Total' },
+                    { id: 'logs', label: 'Horas y Kilómetros' },
+                    { id: 'exits', label: 'Estadísticas de Salidas' },
+                    { id: 'drivers', label: 'Estadísticas de Conductores' },
+                ]}
+            />
+
+            <ReportModal
+                isOpen={checklistReportModalOpen}
+                onClose={() => setChecklistReportModalOpen(false)}
+                title={`Reporte de Checklist: ${vehicle.name}`}
+                route={`/vehicles/${vehicle.id}/reports/checklist`}
+                type="pdf"
+            />
         </AppLayout>
     );
 }

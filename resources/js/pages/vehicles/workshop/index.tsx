@@ -21,8 +21,9 @@ import { usePermissions } from '@/hooks/use-permissions'; // Added hook
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Eye, FileText, Plus, Search } from 'lucide-react';
+import { Eye, FileText, Plus, Search, FileSpreadsheet } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ReportModal } from '@/components/report-modal';
 
 interface Maintenance {
     id: number;
@@ -61,6 +62,7 @@ interface PageProps {
 export default function VehicleWorkshop() {
     const { maintenances, filters } = usePage<PageProps>().props;
     const { canCreate } = usePermissions(); // Use hook
+    const [reportModalOpen, setReportModalOpen] = useState(false);
     const [search, setSearch] = useState(filters.search);
     const [debouncedSearch, setDebouncedSearch] = useState(search);
 
@@ -140,6 +142,10 @@ export default function VehicleWorkshop() {
                                 </Link>
                             </Button>
                         )}
+                        <Button variant="outline" onClick={() => setReportModalOpen(true)}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Reporte Excel
+                        </Button>
                     </div>
                 </div>
 
@@ -303,6 +309,13 @@ export default function VehicleWorkshop() {
                     </div>
                 )}
             </div>
+            <ReportModal
+                isOpen={reportModalOpen}
+                onClose={() => setReportModalOpen(false)}
+                title="Reporte del Taller Mecánico"
+                route="/vehicles/reports/workshop"
+                type="excel"
+            />
         </AppLayout>
     );
 }

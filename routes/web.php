@@ -285,6 +285,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Material Mayor Routes
     Route::middleware('module:vehicles')->prefix('vehicles')->group(
         function () {
+            // Report Routes
+            Route::get('reports/incidents', [App\Http\Controllers\ReportController::class, 'incidentsReport'])->name('vehicles.reports.incidents');
+            Route::get('reports/workshop', [App\Http\Controllers\ReportController::class, 'workshopReport'])->name('vehicles.reports.workshop');
+            Route::get('reports/checklists', [App\Http\Controllers\ReportController::class, 'checklistsReport'])->name('vehicles.reports.checklists');
+            Route::get('{vehicle}/reports/vehicle', [App\Http\Controllers\ReportController::class, 'vehicleReport'])->name('vehicles.reports.vehicle');
+            Route::get('{vehicle}/reports/checklist', [App\Http\Controllers\ReportController::class, 'individualChecklistReport'])->name('vehicles.reports.individual_checklist');
+
             Route::get('create', [VehicleController::class, 'create'])->name('vehicles.create');
             Route::post('', [VehicleController::class, 'store'])->name('vehicles.store');
             Route::get('{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');

@@ -20,7 +20,9 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Plus, FileSpreadsheet } from 'lucide-react';
+import { useState } from 'react';
+import { ReportModal } from '@/components/report-modal';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -56,6 +58,7 @@ export default function IndexChecklist({
 }: Props) {
     const { auth } = usePage<any>().props;
     const { canCreate } = usePermissions();
+    const [reportModalOpen, setReportModalOpen] = useState(false);
 
     const handleFilterChange = (val: string) => {
         router.get(
@@ -112,6 +115,10 @@ export default function IndexChecklist({
                                 </Button>
                             </Link>
                         )}
+                        <Button variant="outline" onClick={() => setReportModalOpen(true)}>
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Reporte Excel
+                        </Button>
                     </div>
                 </div>
 
@@ -194,6 +201,13 @@ export default function IndexChecklist({
                         </Table>
                     </CardContent>
                 </Card>
+                <ReportModal
+                    isOpen={reportModalOpen}
+                    onClose={() => setReportModalOpen(false)}
+                    title="Reporte de Checklists"
+                    route="/vehicles/reports/checklists"
+                    type="excel"
+                />
             </div>
         </AppLayout>
     );
