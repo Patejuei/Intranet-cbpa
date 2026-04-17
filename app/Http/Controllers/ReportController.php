@@ -219,15 +219,54 @@ class ReportController extends Controller
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
+        
+        // Include options
+        $includeSummary = $request->query('include_summary') === '1';
+        $includeStatusStats = $request->query('include_status_stats') === '1';
+        $includeCharts = $request->query('include_charts') === '1';
+        $includeHistory = $request->query('include_history') === '1';
 
         $checklists = VehicleChecklist::where('vehicle_id', $vehicle->id)
             ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
             ->when($endDate, fn($q) => $q->where('created_at', '<=', $endDate))
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        // Statistics: number of checklists, common issues?
         $total = $checklists->count();
         $byStatus = $checklists->groupBy('status')->map(fn($g) => $g->count());
+
+        $maintenanceIssues = collect();
+        $urgentIssues = collect();
+
+        if ($includeCharts && $total > 0) {
+            $checklistIds = $checklists->pluck('id');
+            
+            // Aggregated data for maintenance items (next_maint)
+            $maintenanceIssues = \App\Models\VehicleChecklistDetail::whereIn('vehicle_checklist_id', $checklistIds)
+                ->where('status', 'next_maint')
+                ->with('item')
+                ->get()
+                ->groupBy('checklist_item_id')
+                ->map(fn($group) => [
+                    'name' => $group->first()->item->name ?? 'Ítem #' . $group->first()->checklist_item_id,
+                    'count' => $group->count()
+                ])
+                ->sortByDesc('count')
+                ->take(10);
+
+            // Aggregated data for urgent items (urgent)
+            $urgentIssues = \App\Models\VehicleChecklistDetail::whereIn('vehicle_checklist_id', $checklistIds)
+                ->where('status', 'urgent')
+                ->with('item')
+                ->get()
+                ->groupBy('checklist_item_id')
+                ->map(fn($group) => [
+                    'name' => $group->first()->item->name ?? 'Ítem #' . $group->first()->checklist_item_id,
+                    'count' => $group->count()
+                ])
+                ->sortByDesc('count')
+                ->take(10);
+        }
 
         $pdf = Pdf::loadView('pdf.individual_checklist_report', [
             'vehicle' => $vehicle,
@@ -236,6 +275,12 @@ class ReportController extends Controller
             'byStatus' => $byStatus,
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'maintenanceIssues' => $maintenanceIssues,
+            'urgentIssues' => $urgentIssues,
+            'includeSummary' => $includeSummary,
+            'includeStatusStats' => $includeStatusStats,
+            'includeCharts' => $includeCharts,
+            'includeHistory' => $includeHistory,
         ]);
 
         return $pdf->download("Checklist_{$vehicle->name}.pdf");

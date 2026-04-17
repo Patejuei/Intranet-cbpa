@@ -12,6 +12,13 @@
         th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
         th { background-color: #f9f9f9; }
         .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #777; }
+        
+        /* Bar chart styles */
+        .bar-container { width: 100%; background-color: #eee; margin-bottom: 3px; height: 18px; border-radius: 2px; overflow: hidden; }
+        .bar { height: 100%; background-color: #ce1212; text-align: right; padding-right: 5px; line-height: 18px; color: white; font-size: 10px; font-weight: bold; }
+        .bar-urgent { background-color: #333; }
+        .chart-item { margin-bottom: 10px; }
+        .chart-label { font-size: 11px; margin-bottom: 2px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -24,6 +31,7 @@
         @endif
     </div>
 
+    @if($includeSummary)
     <div class="section-title">RESUMEN GENERAL</div>
     <table>
         <tr>
@@ -31,7 +39,9 @@
             <td>{{ $total }}</td>
         </tr>
     </table>
+    @endif
 
+    @if($includeStatusStats)
     <div class="section-title">DESGLOSE POR ESTADO</div>
     <table>
         <thead>
@@ -46,14 +56,50 @@
             <tr>
                 <td>{{ $status }}</td>
                 <td>{{ $count }}</td>
-                <td>{{ number_format(($count / $total) * 100, 1) }}%</td>
+                <td>{{ $total > 0 ? number_format(($count / $total) * 100, 1) : 0 }}%</td>
             </tr>
             @empty
             <tr><td colspan="3">No hay registros en el periodo.</td></tr>
             @endforelse
         </tbody>
     </table>
+    @endif
 
+    @if($includeCharts)
+    <div class="section-title">ÍTEMS QUE REQUIEREN MANTENCIÓN (TOP 10)</div>
+    <p style="font-size: 10px; color: #666; margin-top: 5px;">Frecuencia de marca "Requiere Mantención" en el periodo seleccionado.</p>
+    @php $maxMaint = $maintenanceIssues->max('count') ?: 1; @endphp
+    <div style="margin-top: 10px;">
+        @forelse($maintenanceIssues as $issue)
+            <div class="chart-item">
+                <div class="chart-label">{{ $issue['name'] }} ({{ $issue['count'] }} veces)</div>
+                <div class="bar-container">
+                    <div class="bar" style="width: {{ ($issue['count'] / $maxMaint) * 100 }}%">{{ $issue['count'] }}</div>
+                </div>
+            </div>
+        @empty
+            <p>No se registran ítems con requerimiento de mantención en este periodo.</p>
+        @endforelse
+    </div>
+
+    <div class="section-title">ÍTEMS CON MANTENCIÓN URGENTE (TOP 10)</div>
+    <p style="font-size: 10px; color: #666; margin-top: 5px;">Frecuencia de marca "Urgente" en el periodo seleccionado.</p>
+    @php $maxUrgent = $urgentIssues->max('count') ?: 1; @endphp
+    <div style="margin-top: 10px;">
+        @forelse($urgentIssues as $issue)
+            <div class="chart-item">
+                <div class="chart-label">{{ $issue['name'] }} ({{ $issue['count'] }} veces)</div>
+                <div class="bar-container">
+                    <div class="bar bar-urgent" style="width: {{ ($issue['count'] / $maxUrgent) * 100 }}%">{{ $issue['count'] }}</div>
+                </div>
+            </div>
+        @empty
+            <p>No se registran ítems con mantención urgente en este periodo.</p>
+        @endforelse
+    </div>
+    @endif
+
+    @if($includeHistory)
     <div class="section-title">ÚLTIMOS CHECKLISTS</div>
     <table>
         <thead>
@@ -75,6 +121,7 @@
             @endforeach
         </tbody>
     </table>
+    @endif
 
     <div class="footer">
         Generado el {{ date('d/m/Y H:i') }} - Intranet CBPA

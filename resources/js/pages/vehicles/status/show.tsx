@@ -830,6 +830,12 @@ export default function VehicleShow({
                 title={`Reporte de Checklist: ${vehicle.name}`}
                 route={`/vehicles/${vehicle.id}/reports/checklist`}
                 type="pdf"
+                includeOptions={[
+                    { id: 'summary', label: 'Resumen General' },
+                    { id: 'status_stats', label: 'Estadísticas por Estado' },
+                    { id: 'charts', label: 'Gráficos de Problemas (Ítems)' },
+                    { id: 'history', label: 'Historial de Checklists' },
+                ]}
             />
         </AppLayout>
     );
