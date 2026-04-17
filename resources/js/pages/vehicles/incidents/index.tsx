@@ -1,6 +1,8 @@
+
+import { ReportModal } from '@/components/report-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { Combobox } from '@/components/ui/combobox';
 import {
     Dialog,
@@ -22,14 +24,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useOtpAction } from '@/hooks/use-otp-action';
-import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { Eye, Plus, FileSpreadsheet } from 'lucide-react';
+import { Eye, FileSpreadsheet, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { ReportModal } from '@/components/report-modal';
 
 interface Vehicle {
     id: number;
@@ -63,28 +62,9 @@ export default function VehicleIncidents({
     issues: any;
     vehicles: Vehicle[];
 }) {
-    const { auth } = usePage().props as any;
-    const { canCreate, canEdit } = usePermissions();
+    const { canCreate } = usePermissions();
     const [open, setOpen] = useState(false);
-    const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
     const [reportModalOpen, setReportModalOpen] = useState(false);
-
-    // Review Modal State
-    const [reviewOpen, setReviewOpen] = useState(false);
-    const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
-    const {
-        data: reviewData,
-        setData: setReviewData,
-        put: putReview,
-        processing: reviewProcessing,
-        reset: resetReview,
-    } = useForm({
-        is_stopped: false,
-        sent_to_hq: false,
-        sent_to_workshop: false,
-        reported_to_commander: false,
-        status: '',
-    });
 
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
@@ -103,68 +83,18 @@ export default function VehicleIncidents({
         });
     };
 
-    const handleReviewSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedIssue) return;
-
-        performWithOtp(() => {
-            putReview(`/vehicles/incidents/${selectedIssue.id}`, {
-                onSuccess: () => {
-                    setReviewOpen(false);
-                    resetReview();
-                    setSelectedIssue(null);
-                },
-            });
-        });
-    };
-
-    const openReview = (issue: Issue) => {
-        setSelectedIssue(issue);
-        setReviewData({
-            is_stopped: issue.is_stopped,
-            sent_to_hq: issue.sent_to_hq,
-            sent_to_workshop: issue.sent_to_workshop,
-            reported_to_commander: issue.reported_to_commander,
-            status: issue.status,
-        });
-        setReviewOpen(true);
-    };
-
-    const markAsRead = (issue: Issue) => {
-        router.patch(
-            `/vehicles/incidents/${issue.id}/mark-read`,
-            {},
-            {
-                preserveScroll: true,
-            },
-        );
-    };
-
     const getSeverityColor = (severity: string) => {
         switch (severity) {
             case 'Critical':
                 return 'destructive';
             case 'High':
-                return 'destructive'; // Or warning
+                return 'destructive';
             case 'Medium':
-                return 'secondary'; // Or yellow-ish
+                return 'secondary';
             default:
                 return 'outline';
         }
     };
-
-    const canReview =
-        auth.user.role === 'capitan' ||
-        auth.user.role === 'comandante' ||
-        auth.user.role === 'admin' ||
-        (auth.user.role === 'inspector' &&
-            auth.user.department === 'Material Mayor');
-    const isWorkshop =
-        auth.user.role === 'mechanic' || auth.user.role === 'admin';
-    const isHQ =
-        (auth.user.role === 'inspector' &&
-            auth.user.department === 'Material Mayor') ||
-        auth.user.role === 'admin';
 
     return (
         <AppLayout
@@ -184,267 +114,140 @@ export default function VehicleIncidents({
                             Reporte y seguimiento de problemas mecánicos.
                         </p>
                     </div>
-                    {canCreate('vehicles.incidents') && (
-                        <Dialog open={open} onOpenChange={setOpen}>
-                            <DialogTrigger asChild>
-                                <Button>
-                                    <Plus className="mr-2 h-4 w-4" /> Nueva
-                                    Incidencia
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[500px]">
-                                <form onSubmit={handleSubmit}>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Reportar Incidencia
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Ingrese los detalles del problema
-                                            detectado en la unidad.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="vehicle">
-                                                Vehículo
-                                            </Label>
-                                            <Combobox
-                                                options={vehicles.map((v) => ({
-                                                    value: v.id.toString(),
-                                                    label: v.name,
-                                                }))}
-                                                value={data.vehicle_id}
-                                                onChange={(value) =>
-                                                    setData('vehicle_id', value)
-                                                }
-                                                placeholder="Seleccione unidad"
-                                                searchPlaceholder="Buscar unidad..."
-                                                searchInDescription={false}
-                                            />
-                                            {errors.vehicle_id && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.vehicle_id}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="severity">
-                                                Severidad
-                                            </Label>
-                                            <Select
-                                                onValueChange={(value) =>
-                                                    setData('severity', value)
-                                                }
-                                                value={data.severity}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Nivel de Gravedad" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Low">
-                                                        Baja (Observación)
-                                                    </SelectItem>
-                                                    <SelectItem value="Medium">
-                                                        Media (Reparación
-                                                        necesaria)
-                                                    </SelectItem>
-                                                    <SelectItem value="High">
-                                                        Alta (Riesgo operativo)
-                                                    </SelectItem>
-                                                    <SelectItem value="Critical">
-                                                        Crítica (Inoperativo)
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="date">
-                                                Fecha Detección
-                                            </Label>
-                                            <Input
-                                                type="date"
-                                                value={data.date}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'date',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="description">
-                                                Descripción del Problema
-                                            </Label>
-                                            <Textarea
-                                                id="description"
-                                                value={data.description}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'description',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Detalle el problema, observaciones, etc."
-                                            />
-                                            {errors.description && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.description}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* is_stopped removed for generic input */}
-                                    </div>
-                                    <DialogFooter>
-                                        <Button
-                                            type="submit"
-                                            disabled={processing}
-                                        >
-                                            Reportar
-                                        </Button>
-                                    </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                    <Button variant="outline" onClick={() => setReportModalOpen(true)}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        Reporte Excel
-                    </Button>
-
-                    {/* Review Modal for Captains */}
-                    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-                        <DialogContent className="sm:max-w-[500px]">
-                            <form onSubmit={handleReviewSubmit}>
-                                <DialogHeader>
-                                    <DialogTitle>
-                                        Revisión de Incidencia
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                        Determinar acciones a seguir para{' '}
-                                        {selectedIssue?.vehicle.name}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="review_is_stopped"
-                                            checked={reviewData.is_stopped}
-                                            onCheckedChange={(checked) =>
-                                                setReviewData(
-                                                    'is_stopped',
-                                                    checked as boolean,
-                                                )
-                                            }
-                                        />
-                                        <Label
-                                            htmlFor="review_is_stopped"
-                                            className="font-bold text-destructive"
-                                        >
-                                            Material Fuera de Servicio
-                                        </Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="review_status"
-                                            checked={
-                                                reviewData.status === 'Resolved'
-                                            }
-                                            onCheckedChange={(checked) =>
-                                                setReviewData(
-                                                    'status',
-                                                    checked
-                                                        ? 'Resolved'
-                                                        : 'Open',
-                                                )
-                                            }
-                                        />
-                                        <Label
-                                            htmlFor="review_status"
-                                            className="font-bold text-green-600"
-                                        >
-                                            Incidencia Resuelta
-                                        </Label>
-                                    </div>
-
-                                    <div className="space-y-2 border-t pt-4">
-                                        <h4 className="text-sm font-medium">
-                                            Notificaciones
-                                        </h4>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="sent_to_hq"
-                                                checked={reviewData.sent_to_hq}
-                                                onCheckedChange={(checked) =>
-                                                    setReviewData(
-                                                        'sent_to_hq',
-                                                        checked as boolean,
-                                                    )
-                                                }
-                                            />
-                                            <Label htmlFor="sent_to_hq">
-                                                Reportar a Material Mayor
-                                            </Label>
-                                        </div>
-                                        {auth.user.role === 'admin' ||
-                                        (auth.user.role === 'inspector' &&
-                                            auth.user.departmet ===
-                                                'Material Mayor') ||
-                                        auth.user.role === 'comandante' ? (
-                                            <div className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id="sent_to_workshop"
-                                                    checked={
-                                                        reviewData.sent_to_workshop
+                    <div className="flex gap-2">
+                        {canCreate('vehicles.incidents') && (
+                            <Dialog open={open} onOpenChange={setOpen}>
+                                <DialogTrigger asChild>
+                                    <Button>
+                                        <Plus className="mr-2 h-4 w-4" /> Nueva
+                                        Incidencia
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[500px]">
+                                    <form onSubmit={handleSubmit}>
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Reportar Incidencia
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Ingrese los detalles del problema
+                                                detectado en la unidad.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="vehicle">
+                                                    Vehículo
+                                                </Label>
+                                                <Combobox
+                                                    options={vehicles.map((v) => ({
+                                                        value: v.id.toString(),
+                                                        label: v.name,
+                                                    }))}
+                                                    value={data.vehicle_id}
+                                                    onChange={(value) =>
+                                                        setData('vehicle_id', value)
                                                     }
-                                                    onCheckedChange={(
-                                                        checked,
-                                                    ) =>
-                                                        setReviewData(
-                                                            'sent_to_workshop',
-                                                            checked as boolean,
+                                                    placeholder="Seleccione unidad"
+                                                    searchPlaceholder="Buscar unidad..."
+                                                    searchInDescription={false}
+                                                />
+                                                {errors.vehicle_id && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.vehicle_id}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="severity">
+                                                    Severidad
+                                                </Label>
+                                                <Select
+                                                    onValueChange={(value) =>
+                                                        setData('severity', value)
+                                                    }
+                                                    value={data.severity}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Nivel de Gravedad" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Low">
+                                                            Baja (Observación)
+                                                        </SelectItem>
+                                                        <SelectItem value="Medium">
+                                                            Media (Reparación
+                                                            necesaria)
+                                                        </SelectItem>
+                                                        <SelectItem value="High">
+                                                            Alta (Riesgo operativo)
+                                                        </SelectItem>
+                                                        <SelectItem value="Critical">
+                                                            Crítica (Inoperativo)
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="date">
+                                                    Fecha Detección
+                                                </Label>
+                                                <Input
+                                                    type="date"
+                                                    value={data.date}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'date',
+                                                            e.target.value,
                                                         )
                                                     }
                                                 />
-                                                <Label htmlFor="sent_to_workshop">
-                                                    Reportar a Taller Mecánico
-                                                </Label>
                                             </div>
-                                        ) : null}
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="reported_to_commander"
-                                                checked={
-                                                    reviewData.reported_to_commander
-                                                }
-                                                onCheckedChange={(checked) =>
-                                                    setReviewData(
-                                                        'reported_to_commander',
-                                                        checked as boolean,
-                                                    )
-                                                }
-                                            />
-                                            <Label htmlFor="reported_to_commander">
-                                                Reportar a Comandante
-                                            </Label>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="description">
+                                                    Descripción del Problema
+                                                </Label>
+                                                <Textarea
+                                                    id="description"
+                                                    value={data.description}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'description',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Detalle el problema, observaciones, etc."
+                                                />
+                                                {errors.description && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.description}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button
-                                        type="submit"
-                                        disabled={reviewProcessing}
-                                    >
-                                        Guardar Revisión
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                                        <DialogFooter>
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                            >
+                                                Reportar
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        <Button
+                            variant="outline"
+                            onClick={() => setReportModalOpen(true)}
+                        >
+                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            Reporte Excel
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="rounded-md border">
@@ -503,99 +306,43 @@ export default function VehicleIncidents({
                                         </td>
                                         <td className="p-4 align-middle">
                                             <div className="flex flex-col gap-1">
-                                                {issue.is_stopped && (
-                                                    <Badge
-                                                        variant="destructive"
-                                                        className="w-fit"
-                                                    >
-                                                        Detenido
-                                                    </Badge>
-                                                )}
-                                                {issue.status ===
-                                                    'Resolved' && (
+                                                {issue.status === 'Resolved' ? (
                                                     <Badge
                                                         variant="outline"
                                                         className="w-fit border-green-500 bg-green-50 text-green-700"
                                                     >
                                                         Resuelto
                                                     </Badge>
-                                                )}
-                                                {issue.status ===
-                                                    'En Taller' && (
+                                                ) : issue.status === 'En Taller' ? (
                                                     <Badge
                                                         variant="secondary"
                                                         className="w-fit bg-blue-100 text-blue-700 hover:bg-blue-100/80"
                                                     >
                                                         En Taller
                                                     </Badge>
+                                                ) : !issue.reviewed_at ? (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-yellow-500 text-yellow-600"
+                                                    >
+                                                        Pendiente Revisión
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="w-fit border-blue-500 text-blue-600"
+                                                    >
+                                                        Revisado
+                                                    </Badge>
                                                 )}
-                                                {issue.status !== 'Resolved' &&
-                                                    issue.status !==
-                                                        'En Taller' && (
-                                                        <>
-                                                            {!issue.reviewed_at && (
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="w-fit border-yellow-500 text-yellow-600"
-                                                                >
-                                                                    Pendiente
-                                                                    Revisión
-                                                                </Badge>
-                                                            )}
-                                                            {issue.reviewed_at && (
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="w-fit border-blue-500 text-blue-600"
-                                                                >
-                                                                    Revisado
-                                                                </Badge>
-                                                            )}
-                                                            {issue.sent_to_hq && (
-                                                                <Badge
-                                                                    variant={
-                                                                        issue.hq_read_at
-                                                                            ? 'secondary'
-                                                                            : 'outline'
-                                                                    }
-                                                                    className="w-fit text-xs"
-                                                                >
-                                                                    {issue.hq_read_at
-                                                                        ? 'Visto M. Mayor'
-                                                                        : 'Enviado M. Mayor'}
-                                                                </Badge>
-                                                            )}
-                                                            {issue.sent_to_workshop && (
-                                                                <Badge
-                                                                    variant={
-                                                                        issue.workshop_read_at
-                                                                            ? 'secondary'
-                                                                            : 'outline'
-                                                                    }
-                                                                    className="w-fit text-xs"
-                                                                >
-                                                                    {issue.workshop_read_at
-                                                                        ? 'Visto Taller'
-                                                                        : 'Enviado Taller'}
-                                                                </Badge>
-                                                            )}
-                                                            {Boolean(
-                                                                issue.reported_to_commander,
-                                                            ) && (
-                                                                <Badge
-                                                                    variant={
-                                                                        issue.commander_seen
-                                                                            ? 'secondary'
-                                                                            : 'outline'
-                                                                    }
-                                                                    className="w-fit border-orange-200 text-xs"
-                                                                >
-                                                                    {issue.commander_seen
-                                                                        ? 'Visto Cmdte.'
-                                                                        : 'Reportado Cmdte.'}
-                                                                </Badge>
-                                                            )}
-                                                        </>
-                                                    )}
+                                                {issue.is_stopped && (
+                                                    <Badge
+                                                        variant="destructive"
+                                                        className="w-fit text-[10px]"
+                                                    >
+                                                        Detenido
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="p-4 align-middle">
@@ -603,73 +350,15 @@ export default function VehicleIncidents({
                                                 'Desconocido'}
                                         </td>
                                         <td className="p-4 align-middle">
-                                            <div className="flex gap-2">
-                                                {canReview && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() =>
-                                                            openReview(issue)
-                                                        }
-                                                    >
-                                                        Revisar
-                                                    </Button>
-                                                )}
-                                                {isWorkshop &&
-                                                    issue.sent_to_workshop &&
-                                                    !issue.workshop_read_at && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                markAsRead(
-                                                                    issue,
-                                                                )
-                                                            }
-                                                            title="Marcar como Visto"
-                                                        >
-                                                            <Eye className="mr-1 size-4" />{' '}
-                                                            Taller
-                                                        </Button>
-                                                    )}
-                                                {isHQ &&
-                                                    issue.sent_to_hq &&
-                                                    !issue.hq_read_at && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                markAsRead(
-                                                                    issue,
-                                                                )
-                                                            }
-                                                            title="Marcar como Visto"
-                                                        >
-                                                            <Eye className="mr-1 size-4" />{' '}
-                                                            M.Mayor
-                                                        </Button>
-                                                    )}
-                                                {/* Inspector / Material Mayor / Comandante View Button */}
-                                                {auth.user.role ===
-                                                    'comandante' &&
-                                                    issue.reported_to_commander &&
-                                                    !issue.commander_seen && (
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            onClick={() =>
-                                                                markAsRead(
-                                                                    issue,
-                                                                )
-                                                            }
-                                                            title="Marcar como Visto"
-                                                        >
-                                                            <Eye className="mr-1 size-4" />{' '}
-                                                            Cmdte
-                                                        </Button>
-                                                    )}
-                                                {/* Comandancia View Button - kept for backward compatibility if needed, or removed if migrated completely */}
-                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                asChild
+                                            >
+                                                <Link href={`/vehicles/incidents/${issue.id}`}>
+                                                    <Eye className="mr-2 size-4" /> Ver
+                                                </Link>
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
@@ -687,11 +376,26 @@ export default function VehicleIncidents({
                         </table>
                     </div>
                 </div>
-                <ActionOtpVerificationModal
-                    isOpen={isOtpModalOpen}
-                    onClose={closeOtpModal}
-                    onVerified={handleVerified}
-                />
+                <div className="flex justify-center gap-2">
+                    {issues.links.map((link: any, index: number) =>
+                        link.url ? (
+                            <Button
+                                key={index}
+                                variant={link.active ? 'default' : 'outline'}
+                                size="sm"
+                                asChild
+                            >
+                                <Link
+                                    href={link.url}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
+                                />
+                            </Button>
+                        ) : null,
+                    )}
+                </div>
+
 
                 <ReportModal
                     isOpen={reportModalOpen}

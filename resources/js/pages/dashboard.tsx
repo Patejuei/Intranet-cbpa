@@ -470,7 +470,7 @@ export default function Dashboard({
                             {pendingIncidents.map((incident) => (
                                 <Link
                                     key={incident.id}
-                                    href={`/vehicles/incidents`} // Ideally link to specific incident or filtered view
+                                    href={`/vehicles/incidents/${incident.id}`}
                                     className="block"
                                 >
                                     <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
