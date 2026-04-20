@@ -1,4 +1,5 @@
 import AppLogo from '@/components/app-logo';
+import { AppearanceToggle } from '@/components/appearance-toggle';
 import { NavUser } from '@/components/nav-user';
 import { usePage } from '@inertiajs/react';
 import {
@@ -425,6 +426,7 @@ export function AppSidebar({ user }: { user: any }) {
             </SidebarContent>
 
             <SidebarFooter>
+                <AppearanceToggle />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

@@ -99,9 +99,34 @@ class VehicleIssueController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(\App\Models\VehicleIssue $incident)
     {
-        //
+        $user = request()->user();
+        
+        // Basic check: if not admin/comandante, must either be from same company OR be the reporter OR be mechanic (if sent to workshop) OR be inspector (if sent to HQ)
+        $canView = $user->role === 'admin' || 
+                   $user->company === 'Comandancia' || 
+                   $incident->vehicle->company === $user->company ||
+                   $incident->reporter_id === $user->id;
+
+        if (!$canView) {
+            if ($user->role === 'mechanic' && $incident->sent_to_workshop) {
+                $canView = true;
+            }
+            if ($user->role === 'inspector' && $user->department === 'Material Mayor' && $incident->sent_to_hq) {
+                $canView = true;
+            }
+        }
+
+        if (!$canView) {
+            abort(403);
+        }
+
+        $incident->load(['vehicle', 'reporter', 'reviewer']);
+
+        return Inertia::render('vehicles/incidents/show', [
+            'incident' => $incident
+        ]);
     }
 
     /**
