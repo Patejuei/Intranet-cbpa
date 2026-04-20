@@ -7,9 +7,13 @@ export function usePermissions() {
     const hasPermission = (module: string) => {
         if (!user) return false;
 
-        // Capitan: Revoke Bodega (inventory)
-        if (user.role === 'capitan') {
+        // Ayudante: No access to users
+        if (user.role === 'ayudante' && module === 'users') return false;
+
+        // Capitan and Ayudante: Revoke Bodega (inventory)
+        if (user.role === 'capitan' || user.role === 'ayudante') {
             if (module === 'inventory') return false;
+            if (user.role === 'ayudante' && module === 'vehicles.workshop') return false;
             return true; // Default to true for everything else (legacy behavior)
         }
 
@@ -108,6 +112,14 @@ export function usePermissions() {
     const canEdit = (module: string) => {
         if (!user) return false;
 
+        // Ayudante restriction (cannot edit users, but can edit checklists/logs for his units/company)
+        if (user.role === 'ayudante') {
+            if (module === 'users') return false; // Cannot edit users
+            if (module === 'vehicles.workshop') return false;
+            if (module === 'vehicles.status') return false; // Fleet status is read-only
+            return true; 
+        }
+
         // Capitan: Read-Only for Workshop
         if (user.role === 'capitan') {
             if (module === 'vehicles.workshop') return false;
@@ -190,6 +202,12 @@ export function usePermissions() {
     const canCreate = (module: string) => {
         if (!user) return false;
 
+        if (user.role === 'ayudante') {
+            if (module === 'vehicles.incidents') return false;
+            // Allow creation for others (checklists, logs - if driver, users - limited list in controller)
+            return canEdit(module);
+        }
+
         if (user.role === 'capitan') {
             if (module === 'vehicles' || module === 'vehicles.status') {
                 return false;
@@ -201,6 +219,10 @@ export function usePermissions() {
 
     const canDelete = (module: string) => {
         if (!user) return false;
+
+        // Ayudante doesn't have delete permissions
+        if (user.role === 'ayudante') return false;
+
         if (
             user.role === 'admin' ||
             user.role === 'capitan' ||

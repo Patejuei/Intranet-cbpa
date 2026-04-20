@@ -16,7 +16,17 @@ export default function AppLayout({
     breadcrumbs,
     ...props
 }: AppLayoutProps) {
-    const { url } = usePage();
+    const { url, props: pageProps } = usePage<any>();
+
+    // Update CSRF token meta tag when it changes in Inertia props
+    useEffect(() => {
+        if (pageProps.csrf_token) {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) {
+                meta.setAttribute('content', pageProps.csrf_token);
+            }
+        }
+    }, [pageProps.csrf_token]);
 
     useEffect(() => {
         // Find matching module

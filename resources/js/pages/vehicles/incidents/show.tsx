@@ -115,6 +115,7 @@ export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
         auth.user.role === 'capitan' ||
         auth.user.role === 'comandante' ||
         auth.user.role === 'admin' ||
+        auth.user.role === 'ayudante' ||
         (auth.user.role === 'inspector' &&
             auth.user.department === 'Material Mayor');
 

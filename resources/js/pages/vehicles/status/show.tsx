@@ -11,6 +11,12 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
@@ -371,15 +377,24 @@ export default function VehicleShow({
                             </Dialog>
                         )}
 
-                        <Button variant="outline" onClick={() => setReportModalOpen(true)}>
-                            <FileDown className="mr-2 h-4 w-4" />
-                            Reporte Unidad
-                        </Button>
-
-                        <Button variant="outline" onClick={() => setChecklistReportModalOpen(true)}>
-                            <FileDown className="mr-2 h-4 w-4" />
-                            Reporte Checklist
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Reportes
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setReportModalOpen(true)}>
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Reporte Unidad
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setChecklistReportModalOpen(true)}>
+                                    <FileDown className="mr-2 h-4 w-4" />
+                                    Reporte Checklist
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

@@ -97,8 +97,8 @@ const getFilteredRoles = (currentUserRole: string) => {
         // { value: 'central_operator', label: 'Operador de Central' },
     ];
 
-    if (currentUserRole === 'capitan') {
-        const allowed = ['user', 'maquinista', 'cuartelero'];
+    if (currentUserRole === 'capitan' || currentUserRole === 'ayudante') {
+        const allowed = ['user','ayudante', 'maquinista', 'cuartelero'];
         return allRoles.filter((r) => allowed.includes(r.value));
     }
 

@@ -104,6 +104,13 @@ class VehicleLogController extends Controller
             }
         }
 
+        if ($user->role === 'ayudante') {
+            $isDriver = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+            if (!$isDriver) {
+                abort(403, 'Solo puede registrar movimientos para las unidades donde usted es conductor asignado.');
+            }
+        }
+
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
             $receiptPath = $request->file('receipt')->store('receipts', 'public');

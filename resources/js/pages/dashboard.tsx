@@ -91,12 +91,22 @@ export default function Dashboard({
         // Admin and Comandante have full access
         if (user.role === 'admin' || user.role === 'comandante') return true;
 
+        // Ayudante: No access to users
+        if (user.role === 'ayudante' && module.permission === 'users') return false;
+
         const moduleKey = module.permission;
 
-        // Capitan Restrictions
-        if (user.role === 'capitan') {
-            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
-            if (restricted.includes(moduleKey)) return false;
+        // Capitan and Ayudante Restrictions
+        if (user.role === 'capitan' || user.role === 'ayudante') {
+            const restricted = [
+                'vehicles.inventory', 
+                'vehicles.petty-cash',
+                'vehicles.workshop'
+            ];
+            
+            if (user.role === 'ayudante' && restricted.includes(moduleKey)) return false;
+            if (user.role === 'capitan' && (moduleKey === 'vehicles.inventory' || moduleKey === 'vehicles.petty-cash')) return false;
+
             return true;
         }
 

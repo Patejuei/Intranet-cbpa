@@ -120,14 +120,17 @@ class CheckModuleAccess
             }
         }
 
-        // Capitan default access
-        if ($user->role === 'capitan') {
+        // Capitan and Ayudante default access
+        if ($user->role === 'capitan' || $user->role === 'ayudante') {
+            if ($module === 'users' && $user->role === 'ayudante') {
+                abort(403, 'No tienes permiso para acceder al módulo de usuarios.');
+            }
             if ($module === 'central' || $module === 'inventory') {
                 // For 'central', we allow but filtering happens in controller
                 // Wait, if I return $next here, they get access.
                 return $next($request);
             }
-            return $next($request); // Capitan usually has broad access anyway
+            return $next($request); // Capitan and Ayudante usually have broad access anyway
         }
 
         // Check specific permission

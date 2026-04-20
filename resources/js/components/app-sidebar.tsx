@@ -227,6 +227,9 @@ export function AppSidebar({ user }: { user: any }) {
         // Admin and Comandante have full access
         if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
 
+        // Ayudante: No access to users
+        if (user.role === 'ayudante' && module === 'users') return false;
+
         if (user.role === 'secretaria_adquisiciones') {
             const allowed = [
                 'inventory',
@@ -240,13 +243,19 @@ export function AppSidebar({ user }: { user: any }) {
             if (allowed.includes(module)) return true;
         }
 
-        // Capitan Restrictions
-        if (user.role === 'capitan') {
+        // Capitan and Ayudante Restrictions
+        if (user.role === 'capitan' || user.role === 'ayudante') {
             const restricted = [
                 'vehicles.inventory',
                 'vehicles.petty-cash',
                 'vehicles.renditions',
             ];
+            
+            // Ayudante extra restriction: No Workshop
+            if (user.role === 'ayudante') {
+                restricted.push('vehicles.workshop');
+            }
+
             if (restricted.includes(module)) return false;
             return true;
         }

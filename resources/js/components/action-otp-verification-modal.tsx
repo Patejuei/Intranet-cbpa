@@ -30,7 +30,7 @@ export default function ActionOtpVerificationModal({
     onClose,
     onVerified,
 }: ActionOtpVerificationModalProps) {
-    const { auth } = usePage().props as any;
+    const { auth, csrf_token } = usePage().props as any;
     const [code, setCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
@@ -50,11 +50,13 @@ export default function ActionOtpVerificationModal({
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
                     'X-CSRF-TOKEN':
+                        csrf_token ||
                         (
                             document.querySelector(
                                 'meta[name="csrf-token"]',
                             ) as HTMLMetaElement
-                        )?.content || '',
+                        )?.content ||
+                        '',
                 },
                 body: JSON.stringify({ code }),
             });
