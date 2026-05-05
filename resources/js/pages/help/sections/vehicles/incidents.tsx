@@ -22,7 +22,7 @@ export function IncidentsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El módulo de <strong>Incidencias</strong> permite a cualquier usuario autorizado reportar anomalías, fallas mecánicas o problemas operativos detectados en los vehículos. Este reporte inicia un flujo de revisión oficial donde los mandos responsables (Capitán, Inspector MM o Comandancia) evalúan la gravedad y deciden si la unidad debe detenerse, enviarse a taller o simplemente mantenerse en observación.
+                            El módulo de <strong>Incidencias</strong> permite a cualquier usuario autorizado reportar anomalías, fallas mecánicas o problemas operativos detectados en los vehículos. Este reporte inicia un flujo de revisión oficial donde los mandos responsables (Capitán, Inspector MM o Comandante) evalúan la gravedad y deciden si la unidad debe detenerse, enviarse a taller o simplemente mantenerse en observación.
                         </p>
                         <div className="mt-4 rounded-lg border border-red-500/20 bg-red-50/50 p-4">
                             <h4 className="flex items-center gap-2 font-bold text-red-700 dark:text-red-500 text-sm">
@@ -203,7 +203,7 @@ export function IncidentsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            La vista detallada (Show) centraliza toda la información de un reporte. Aquí los usuarios leen la falla completa, y los oficiales (Comandancia/Inspectores) toman acción: pueden marcar "Fuera de Servicio", enviar al Taller, o notificar a otras áreas. Es el corazón resolutivo del módulo.
+                            La vista detallada centraliza toda la información de un reporte. Aquí los usuarios leen la falla completa, y los oficiales (Capitán/Comandante/Inspector) toman acción: pueden marcar "Fuera de Servicio", enviar al Taller, o notificar a otras áreas. Es el corazón resolutivo del módulo.
                         </p>
                     </section>
 
@@ -212,10 +212,10 @@ export function IncidentsSection() {
                         <h3 className="text-xl font-semibold">Quick Start</h3>
                         <ul className="ml-6 mt-4 list-decimal space-y-2 text-muted-foreground">
                             <li>
-                                <strong>Revisar Novedad:</strong> Si tienes permiso de Oficial/Inspector, usa el botón azul superior para abrir el formulario de revisión.
+                                <strong>Revisar Novedad:</strong> Si tienes rol de Capitán, Comandante o Inspector, usa el botón azul superior para abrir el formulario de revisión.
                             </li>
                             <li>
-                                <strong>Monitorear Notificaciones:</strong> En el panel lateral puedes ver si Taller, Material Mayor o Comandancia ya leyeron ("Visto") el reporte.
+                                <strong>Monitorear Notificaciones:</strong> En el panel lateral puedes ver si Taller, Material Mayor o Comandante ya leyeron ("Visto") el reporte.
                             </li>
                             <li>
                                 <strong>Detener la Unidad:</strong> Durante la revisión, puedes tildar "Material Fuera de Servicio". Esto se reflejará instantáneamente en el dashboard y en la vista general de la flota con una etiqueta roja.
@@ -527,7 +527,7 @@ export function IncidentsSection() {
                                     4
                                 </span>
                                 <span>
-                                    <strong>Confirmación Segura:</strong> Ciertas acciones críticas (como dar de baja) solicitarán confirmación por PIN (OTP) antes de guardarse.
+                                    <strong>Confirmación Segura:</strong> Guarda y notifica a Taller y/o Material Mayor para su revisión. Requiere confirmación por PIN (OTP) antes de guardarse.
                                 </span>
                             </div>
                         </div>

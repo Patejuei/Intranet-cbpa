@@ -391,9 +391,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // My Profile Module (Accessible to all auth users)
     Route::get('/my-profile', [\App\Http\Controllers\MyProfileController::class, 'show'])->name('my-profile.show');
-
-    // Help & Manual
-    Route::get('/help/{section?}/{submodule?}', [\App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
 });
+
+// Help & Manual (Publicly accessible)
+Route::get('/help/{section?}/{submodule?}', [\App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
 
 require __DIR__ . '/settings.php';

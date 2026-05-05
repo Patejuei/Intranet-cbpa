@@ -27,16 +27,25 @@ export function InventorySection() {
 
                     <section>
                         <h3 className="text-xl font-semibold">Detalle Visual</h3>
-                        <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-sm">
+                        <div className="relative mt-4 rounded-xl border bg-background shadow-sm">
                             <div className="border-b bg-muted/10 p-4 flex justify-between items-center">
                                 <div className="font-bold text-lg">Bodega Material Mayor</div>
                                 <div className="flex gap-2">
-                                    <div className="flex h-8 items-center rounded border px-3 text-xs font-medium">Descargar Excel</div>
-                                    <div className="flex h-8 items-center rounded bg-primary px-3 text-xs font-medium text-primary-foreground">+ Nuevo Ítem</div>
-                                    <div className="flex h-8 items-center rounded border px-3 text-xs font-medium bg-muted/50">⌚ Ajustes Taller</div>
-                                    <span className="absolute right-[110px] top-4 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                        1
-                                    </span>
+                                    <div className="relative">
+                                        <div className="flex h-8 items-center rounded border px-3 text-xs font-medium">Descargar Excel</div>
+                                        {/* Hotspot 3 */}
+                                        <span className="absolute -top-2 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="flex h-8 items-center rounded bg-primary px-3 text-xs font-medium text-primary-foreground">+ Nuevo Ítem</div>
+                                        {/* Hotspot 4 */}
+                                        <span className="absolute -top-2 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">4</span>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="flex h-8 items-center rounded border px-3 text-xs font-medium bg-muted/50">⌚ Ajustes Taller</div>
+                                        {/* Hotspot 1 */}
+                                        <span className="absolute -top-2 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="p-4 border-b bg-muted/5 flex gap-4 relative">
@@ -61,16 +70,19 @@ export function InventorySection() {
                                     <tbody>
                                         <tr className="border-t">
                                             <td className="p-3 font-mono text-xs text-muted-foreground">FIL-ACE-01</td>
-                                            <td className="p-3 font-medium text-blue-600">Filtro de Aceite Volvo</td>
+                                            <td className="p-3 font-medium text-blue-600 relative">
+                                                Filtro de Aceite Volvo
+                                                {/* Hotspot 5 */}
+                                                <span className="absolute left-0 top-1 flex h-4 w-4 -translate-x-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">5</span>
+                                            </td>
                                             <td className="p-3">
                                                 <span className="rounded-full bg-blue-100 text-blue-700 px-2 py-0.5 text-xs">Repuesto</span>
                                             </td>
                                             <td className="p-3 text-right relative">
                                                 <div className="font-bold text-red-600">2</div>
                                                 <div className="text-[10px] font-medium text-red-500">Bajo Stock</div>
-                                                <span className="absolute -left-2 top-[30%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                                    2
-                                                </span>
+                                                {/* Hotspot 2 */}
+                                                <span className="absolute -left-2 top-4 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
                                             </td>
                                             <td className="p-3 text-right text-muted-foreground">$ 45.000</td>
                                         </tr>
@@ -90,11 +102,23 @@ export function InventorySection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Ajustes Globales:</strong> Desde aquí se configura el "Valor de la Hora Hombre", que impacta automáticamente en el cálculo de costos de todas las órdenes del Taller Mecánico.</span>
+                                <span><strong>Tarificación de Taller:</strong> Permite configurar el valor de la Hora Hombre (HH) y parámetros de despacho. Este valor es el que usa el sistema para costear automáticamente la labor en todas las órdenes de trabajo.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Alertas de Stock:</strong> Si el stock actual es menor o igual al "Stock Mínimo" configurado para el producto, el sistema resaltará el número en rojo y agregará la etiqueta "Bajo Stock".</span>
+                                <span><strong>Control de Existencias Críticas:</strong> El sistema resalta en rojo los ítems que alcanzaron su nivel mínimo. Esto asegura que la comandancia pueda gestionar reposiciones antes de que se produzca un quiebre de stock.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                <span><strong>Reportería:</strong> Genera un archivo Excel con el listado completo, SKUs, ubicaciones físicas y valoración de inventario en tiempo real.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
+                                <span><strong>Ingreso de Mercadería:</strong> Permite crear nuevos registros definiendo no solo los datos básicos, sino también la compatibilidad técnica con los vehículos de la flota.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>
+                                <span><strong>Trazabilidad:</strong> El nombre del ítem funciona como un enlace al historial completo de movimientos, permitiendo auditar ingresos por compra y egresos por órdenes de trabajo.</span>
                             </div>
                         </div>
                     </section>
@@ -116,7 +140,7 @@ export function InventorySection() {
 
                     <section>
                         <h3 className="text-xl font-semibold">Detalle Visual</h3>
-                        <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-md max-w-4xl mx-auto p-6 space-y-6">
+                        <div className="relative mt-4 rounded-xl border bg-background shadow-md max-w-4xl mx-auto p-6 space-y-6">
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                                 <div className="space-y-1.5">
@@ -131,9 +155,11 @@ export function InventorySection() {
                                     <div className="text-sm font-medium">Categoría</div>
                                     <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Repuesto (Parte) <span>▼</span></div>
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-1.5 relative">
                                     <div className="text-sm font-medium">Unidad de Medida</div>
                                     <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Unidades <span>▼</span></div>
+                                    {/* Hotspot 3 */}
+                                    <span className="absolute -top-1 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                                 </div>
                                 <div className="space-y-1.5">
                                     <div className="text-sm font-medium">Ubicación en Bodega</div>
@@ -184,6 +210,10 @@ export function InventorySection() {
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
                                 <span><strong>Regla de Herramientas:</strong> Si la categoría seleccionada es "Herramienta", el sistema marcará por defecto la compatibilidad con "Todos los Vehículos", ya que una llave o gata aplica para cualquier carro.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                <span><strong>Relación de Magnitud:</strong> Es imperativo que el Stock y el Costo guarden relación directa con la Unidad de Medida (ej: si se mide en "Litros", el costo debe ser por litro), garantizando una valorización precisa ante consumos parciales.</span>
                             </div>
                         </div>
                     </section>

@@ -15,7 +15,6 @@ export function AppSidebarHeader({
     const getHelpSection = () => {
         if (url.startsWith('/vehicles')) return 'vehicles';
         if (url.startsWith('/my-profile') || url.startsWith('/settings')) return 'profile';
-        if (url.startsWith('/admin')) return 'admin';
         return 'general';
     };
 

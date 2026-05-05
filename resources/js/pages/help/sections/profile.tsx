@@ -106,7 +106,7 @@ export function ProfileSection() {
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Gestión de Firma:</strong> Sube una imagen (PNG/JPG) de tu firma manuscrita. Se usará para firmar visualmente documentos visados mediante OTP.</span>
+                                <span><strong>Gestión de Firma:</strong> Sube una imagen (PNG/JPG) de tu firma manuscrita. Se usará para firmar visualmente documentos.</span>
                             </div>
                         </div>
                     </section>
@@ -175,7 +175,7 @@ export function ProfileSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Navegación:</strong> Cambia entre las distintas pestañas de configuración. En "Apariencia" puedes activar el Modo Oscuro.</span>
+                                <span><strong>Navegación:</strong> Cambia entre las distintas pestañas de configuración.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>

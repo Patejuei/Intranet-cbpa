@@ -26,8 +26,12 @@ class CheckModuleAccess
 
         $user = $request->user();
 
-        // Admin and Capitan have access to everything
-        // Admin, Capitan, and Comandante have access to everything
+        // Admin User Management Restriction
+        if ($module === 'users' && $user->role !== 'admin') {
+            abort(403, 'Solo el Administrador del sistema puede acceder a este módulo.');
+        }
+
+        // Admin and Comandante have access to everything else
         if ($user->role === 'admin' || $user->role === 'comandante') {
             return $next($request);
         }
@@ -122,9 +126,6 @@ class CheckModuleAccess
 
         // Capitan and Ayudante default access
         if ($user->role === 'capitan' || $user->role === 'ayudante') {
-            if ($module === 'users' && $user->role === 'ayudante') {
-                abort(403, 'No tienes permiso para acceder al módulo de usuarios.');
-            }
             if ($module === 'central' || $module === 'inventory') {
                 // For 'central', we allow but filtering happens in controller
                 // Wait, if I return $next here, they get access.

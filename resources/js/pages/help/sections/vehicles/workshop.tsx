@@ -192,6 +192,27 @@ export function WorkshopSection() {
                                 <span className="absolute -left-3 top-6 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                             </div>
 
+                            {/* Vincular Incidencias */}
+                            <div className="rounded border p-4 bg-muted/5 relative">
+                                <div className="text-sm font-medium mb-3">Vincular Incidencias Pendientes</div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 rounded border bg-background p-2 text-xs">
+                                        <div className="h-4 w-4 rounded border border-primary bg-primary flex items-center justify-center text-[10px] text-white">✓</div>
+                                        <div className="flex-1">
+                                            <span className="font-bold">#1024</span> - Falla en sirena electrónica
+                                        </div>
+                                        <div className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">Crítica</div>
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded border bg-background p-2 text-xs opacity-50">
+                                        <div className="h-4 w-4 rounded border"></div>
+                                        <div className="flex-1">
+                                            <span className="font-bold">#1021</span> - Foco trasero trizado
+                                        </div>
+                                    </div>
+                                </div>
+                                <span className="absolute -left-3 top-6 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">5</span>
+                            </div>
+
                             {/* Trabajos a Realizar */}
                             <div className="space-y-2 relative">
                                 <div className="text-sm font-medium">Trabajos a Realizar</div>
@@ -216,7 +237,11 @@ export function WorkshopSection() {
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
-                                <span><strong>Automatización de Tareas:</strong> Las fallas detectadas en el checklist se inyectan como "Tareas a realizar" directamente, ahorrando tiempo de tipeo. Además puedes vincular Incidencias previas.</span>
+                                <span><strong>Automatización de Tareas:</strong> Las fallas detectadas en el checklist se inyectan como "Tareas a realizar" directamente, ahorrando tiempo de tipeo.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>
+                                <span><strong>Resolución de Incidencias:</strong> Permite adjuntar fallas reportadas previamente por las compañías a esta orden de trabajo. Al cerrar la orden, las incidencias vinculadas cambiarán su estado a "Reparado" automáticamente.</span>
                             </div>
                         </div>
                     </section>
@@ -278,7 +303,7 @@ export function WorkshopSection() {
                                     </div>
                                 </div>
 
-                                <div className="rounded border shadow-sm p-4">
+                                <div className="rounded border shadow-sm p-4 relative">
                                     <div className="font-bold border-b pb-2 text-sm">Incidencias Vinculadas</div>
                                     <div className="p-2 border rounded mt-2 flex gap-2 items-start bg-muted/5">
                                         <div className="h-4 w-4 rounded border bg-primary flex items-center justify-center text-[10px] text-white">✓</div>
@@ -287,6 +312,7 @@ export function WorkshopSection() {
                                             <div className="text-xs flex justify-between text-muted-foreground mt-1">2026-04-20 <span className="bg-primary text-white px-1.5 rounded">Marcado para Resolver</span></div>
                                         </div>
                                     </div>
+                                    <span className="absolute -left-3 top-10 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">5</span>
                                 </div>
                             </div>
 
@@ -327,7 +353,7 @@ export function WorkshopSection() {
                                     </table>
                                 </div>
 
-                                <div className="rounded border shadow-sm p-4 space-y-4">
+                                <div className="rounded border shadow-sm p-4 space-y-4 relative">
                                     <div className="font-bold border-b pb-2 text-sm flex justify-between">
                                         Listado de Trabajos <span className="bg-muted px-2 rounded-full text-xs flex items-center border">1/2 Completados</span>
                                     </div>
@@ -341,6 +367,7 @@ export function WorkshopSection() {
                                             <div className="text-sm">Cambio de aceite y filtro</div>
                                         </div>
                                     </div>
+                                    <span className="absolute -left-3 top-10 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">6</span>
                                 </div>
 
                                 <div className="rounded border shadow-sm p-4 space-y-4 relative">
@@ -390,7 +417,7 @@ export function WorkshopSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Máquina de Estados:</strong> Al cambiar el estado a "Entregado", se gatilla un modal de retiro donde se exige firma o RUT de quien retira físicamente la unidad.</span>
+                                <span><strong>Máquina de Estados:</strong> Al cambiar el estado a "Entregado", se gatilla un modal de retiro donde se exige el Nombre y RUT de quien retira físicamente la unidad.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
@@ -403,6 +430,14 @@ export function WorkshopSection() {
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
                                 <span><strong>Cierre y Automatización:</strong> Al finalizar la orden, se bloquean las ediciones, se suman horas de labor + repuestos + trabajos externos y las Incidencias marcadas pasan a estado "Resuelto" a nivel global en el sistema.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>
+                                <span><strong>Incidencias Vinculadas:</strong> Muestra las fallas reportadas previamente que se están resolviendo. Al finalizar la orden, estas incidencias se cierran automáticamente en el historial global.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">6</span>
+                                <span><strong>Control de Tareas:</strong> Listado granular de los trabajos realizados. Permite marcar avances individuales para mantener la trazabilidad de la reparación. Permite adicionar nuevas tareas en el transcurso de la mantención.</span>
                             </div>
                         </div>
                     </section>

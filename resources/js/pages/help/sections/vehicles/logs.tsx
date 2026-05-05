@@ -131,7 +131,7 @@ export function LogsSection() {
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Categorización:</strong> Permite analizar cuánto combustible se gasta en Emergencias vs Academias o Trámites.</span>
+                                <span><strong>Análisis de Consumo Operativo:</strong> Clasifica cada movimiento para entender la distribución del gasto energético entre salidas operativas y de apoyo institucional.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
@@ -190,7 +190,7 @@ export function LogsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            Esta pestaña es de uso constante por los maquinistas u operadores. El formulario es inteligente: al seleccionar un vehículo, autocompleta el Kilometraje de Inicio con el último registro conocido, minimizando errores de tipeo. Además, tiene un flujo dinámico para registros de combustible.
+                            Esta pestaña es de uso constante por los maquinistas o conductores. El formulario es inteligente: al seleccionar un vehículo, autocompleta el Kilometraje de Inicio con el último registro conocido, minimizando errores de tipeo. Además, tiene un flujo dinámico para registros de combustible.
                         </p>
                     </section>
 
@@ -226,7 +226,7 @@ export function LogsSection() {
 
                                 <div className="space-y-1.5">
                                     <div className="text-sm font-medium">Dirección / Destino</div>
-                                    <div className="flex h-9 items-center rounded border px-3 text-sm text-muted-foreground">Av. Concha y Toro 3349</div>
+                                    <div className="flex h-9 items-center rounded border px-3 text-sm text-muted-foreground">10-0-1 Av. Concha y Toro / Av. Los Toros</div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -292,7 +292,8 @@ export function LogsSection() {
 
                                 <div className="space-y-1.5">
                                     <div className="text-sm font-medium">Observaciones (Opcional)</div>
-                                    <div className="flex min-h-[80px] rounded border px-3 py-2 text-sm text-muted-foreground">Detalle cualquier novedad o incidencia...</div>
+                                    <div className="flex min-h-[80px] rounded border px-3 py-2 text-sm text-muted-foreground">- OBAC
+                                        - Detalle cualquier novedad o incidencia...</div>
                                 </div>
 
                                 <div className="flex justify-end pt-2">
@@ -317,7 +318,7 @@ export function LogsSection() {
                                     2
                                 </span>
                                 <span>
-                                    <strong>Kilometraje Pre-cargado:</strong> Para evitar errores, el Kilometraje de Inicio no se debe inventar; se autocompleta con la última llegada. Solo se puede alterar si el Inspector MM lo autoriza (corrigiendo el odómetro manualmente).
+                                    <strong>Kilometraje Pre-cargado:</strong> Para evitar errores, el Kilometraje de Inicio no se debe inventar; se autocompleta con la última llegada.
                                 </span>
                             </div>
                             <div className="flex items-start gap-2">
@@ -360,6 +361,11 @@ export function LogsSection() {
                                         <td className="p-3 text-blue-700">Solo su Compañía</td>
                                     </tr>
                                     <tr className="border-b">
+                                        <td className="p-3 font-medium">Conductor</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado</td>
+                                        <td className="p-3 text-blue-700">Solo las unidades que conduce</td>
+                                    </tr>
+                                    <tr className="border-b">
                                         <td className="p-3 font-medium">Otros Roles</td>
                                         <td className="p-3 text-red-600 italic">Deshabilitado</td>
                                         <td className="p-3 text-muted-foreground italic">Sin permisos de escritura</td>
@@ -380,7 +386,7 @@ export function LogsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            La vista de detalle permite auditar cada movimiento individual. Es especialmente importante para cruzar la información del odómetro y para fiscalizar las cargas de combustible, comprobando la boleta fotográfica y los litros ingresados contra los registros del servicentro.
+                            <strong>Fiscalización y Auditoría:</strong> Esta vista proporciona un registro detallado e inmutable de cada movimiento. Es fundamental para la validación de kilometrajes y la fiscalización de cargas de combustible, permitiendo contrastar la evidencia fotográfica con los litros reportados en el sistema.
                         </p>
                     </section>
 

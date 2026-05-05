@@ -19,9 +19,11 @@
 
 ## Administrador
 
-_Acceso Total_
+_Acceso Total (Incluye Módulo de Administración de Usuarios)_
 
 ## Comandante
+
+_Nota: No tiene acceso al módulo de Administración de Usuarios._
 
 | Módulo              | Permisos     | Observaciones                                               |
 | ------------------- | ------------ | ----------------------------------------------------------- |
@@ -70,6 +72,8 @@ _Acceso Total_
 | Rendiciones Taller  | Sin Permisos |
 
 ## Capitán
+
+_Nota: No tiene acceso al módulo de Administración de Usuarios._
 
 | Módulo              | Permisos     | Observaciones                                                                                  |
 | ------------------- | ------------ | ---------------------------------------------------------------------------------------------- |

@@ -9,20 +9,11 @@ class AdminUserController extends Controller
     public function index()
     {
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante') {
+        if ($user->role !== 'admin') {
             abort(403);
         }
 
         $query = \App\Models\User::query();
-
-        if ($user->role === 'capitan') {
-            $query->where('company', $user->company)
-                ->where('role', '!=', 'capitan');
-        }
-
-        if ($user->role === 'comandante') {
-            $query->where('role', '!=', 'admin');
-        }
 
         return \Inertia\Inertia::render('admin/users/index', [
             'users' => $query->paginate(10)
@@ -31,13 +22,11 @@ class AdminUserController extends Controller
 
     public function create()
     {
-        if (request()->user()->role !== 'admin' && request()->user()->role !== 'capitan' && request()->user()->role !== 'comandante') {
+        if (request()->user()->role !== 'admin') {
             abort(403);
         }
+        
         $vehicles = \App\Models\Vehicle::query();
-        if (request()->user()->role === 'capitan') {
-            $vehicles->where('company', request()->user()->company);
-        }
 
         return \Inertia\Inertia::render('admin/users/create', [
             'availableVehicles' => $vehicles->get()
@@ -49,7 +38,7 @@ class AdminUserController extends Controller
         $this->validateOtp($request);
 
         $user = request()->user();
-        if ($user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante') {
+        if ($user->role !== 'admin') {
             abort(403);
         }
 
@@ -61,65 +50,12 @@ class AdminUserController extends Controller
             'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante,secretaria_adquisiciones,central_operator',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string', // Validate contents
+            'permissions.*' => 'string',
             'driver_vehicles' => 'nullable|array',
             'driver_vehicles.*' => 'exists:vehicles,id',
             'is_enabled' => 'boolean',
             'password' => 'required|string|min:8',
         ]);
-
-        $restrictedPermissions = [
-            'vehicles.workshop',
-            'vehicles.inventory', // Mayor modules
-            'inventory',
-            'deliveries',
-            'reception', // Menor modules
-            'admin',
-            'firefighters' // Admin modules/logic
-        ];
-
-        if ($user->role === 'capitan') {
-            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante', 'cuartelero'];
-            // Force company to match captain's company regardless of input
-            $validated['company'] = $user->company;
-
-            // Restrict roles
-            if (!in_array($validated['role'], $allowedRoles)) {
-                abort(403, 'Solo puede crear usuarios de su compañía.');
-            }
-
-            // Filter permissions
-            $cleanPermissions = [];
-            if (isset($validated['permissions'])) {
-                foreach ($validated['permissions'] as $perm) {
-                    // Check if permission starts with restricted prefixes
-                    $isRestricted = false;
-
-                    // Block specific full permissions explicitly if needed
-                    if ($perm === 'vehicles.full' || $perm === 'equipment.full') {
-                        $isRestricted = true;
-                    }
-
-                    // Block module groups
-                    foreach ($restrictedPermissions as $restricted) {
-                        if (str_starts_with($perm, $restricted)) {
-                            $isRestricted = true;
-                            break;
-                        }
-                    }
-
-                    if (!$isRestricted) {
-                        $cleanPermissions[] = $perm;
-                    }
-                }
-                $validated['permissions'] = $cleanPermissions;
-            }
-        } elseif ($user->role === 'comandante') {
-            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante', 'comandante', 'inspector', 'central_operator'];
-            if (!in_array($validated['role'], $allowedRoles)) {
-                abort(403, 'Solo puede crear usuarios de su compañía.');
-            }
-        }
 
         if ($validated['role'] === 'comandante' || $validated['role'] === 'inspector' || $validated['role'] === 'central_operator') {
             // Force Comandancia company for high rank roles
@@ -148,18 +84,11 @@ class AdminUserController extends Controller
     public function edit(\App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
-            abort(403);
-        }
-        if ($currentUser->role === 'capitan' && $user->company !== $currentUser->company) {
+        if ($currentUser->role !== 'admin') {
             abort(403);
         }
 
         $vehicles = \App\Models\Vehicle::query();
-        if ($currentUser->role === 'capitan') {
-            $vehicles->where('company', $currentUser->company);
-        }
-
         $user->load('driverVehicles');
 
         return \Inertia\Inertia::render('admin/users/edit', [
@@ -171,11 +100,7 @@ class AdminUserController extends Controller
     public function update(Request $request, \App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
-            abort(403);
-        }
-
-        if ($currentUser->role === 'capitan' && $user->company !== $currentUser->company) {
+        if ($currentUser->role !== 'admin') {
             abort(403);
         }
 
@@ -193,46 +118,7 @@ class AdminUserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if ($currentUser->role === 'capitan') {
-            // Force company
-            $validated['company'] = $currentUser->company;
-
-            $allowedRoles = ['user', 'teniente', 'maquinista', 'ayudante'];
-            if (!in_array($validated['role'], $allowedRoles)) {
-                abort(403, 'Rol no permitido para su nivel de acceso.');
-            }
-
-            // Re-filter permissions (copy logic from store or reuse)
-            $restrictedPermissions = [
-                'vehicles.workshop',
-                'vehicles.inventory',
-                'inventory',
-                'deliveries',
-                'reception',
-                'admin',
-                'firefighters'
-            ];
-
-            $cleanPermissions = [];
-            if (isset($validated['permissions'])) {
-                foreach ($validated['permissions'] as $perm) {
-                    $isRestricted = false;
-                    if ($perm === 'vehicles.full' || $perm === 'equipment.full') {
-                        $isRestricted = true;
-                    }
-                    foreach ($restrictedPermissions as $restricted) {
-                        if (str_starts_with($perm, $restricted)) {
-                            $isRestricted = true;
-                            break;
-                        }
-                    }
-                    if (!$isRestricted) {
-                        $cleanPermissions[] = $perm;
-                    }
-                }
-                $validated['permissions'] = $cleanPermissions;
-            }
-        } elseif ($validated['role'] === 'comandante' || $validated['role'] === 'inspector' || $validated['role'] === 'central_operator') {
+        if ($validated['role'] === 'comandante' || $validated['role'] === 'inspector' || $validated['role'] === 'central_operator') {
             // Force Comandancia company for high rank roles
             $validated['company'] = 'Comandancia';
         }
@@ -259,22 +145,19 @@ class AdminUserController extends Controller
         }
 
         return redirect()->route('users.index');
-        // Based on previous code: route('users.index') was used in store. I will stick to that or check routes.
     }
 
     public function destroy(\App\Models\User $user)
     {
         $currentUser = request()->user();
-        if ($currentUser->role !== 'admin' && $currentUser->role !== 'capitan' && $currentUser->role !== 'comandante') {
-            abort(403);
-        }
-        if ($currentUser->role === 'capitan' && $user->company !== $currentUser->company) {
+        if ($currentUser->role !== 'admin') {
             abort(403);
         }
 
         $user->delete();
         return redirect()->back();
     }
+
     private function normalizeRut($rut)
     {
         if (!$rut) return null;

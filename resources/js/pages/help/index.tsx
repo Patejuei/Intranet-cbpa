@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, ClipboardList, Info, Package, Truck, User, Users } from 'lucide-react';
-import { AdminSection } from './sections/admin';
 import { CentralDutySection } from './sections/central/duty';
 import { CentralLanding } from './sections/central/index';
 import { CentralReportsSection } from './sections/central/reports';
@@ -83,11 +82,6 @@ const SECTIONS = [
         submodules: CENTRAL_SUBMODULES,
         hidden: true, // Hidden: Future integration
     },
-    {
-        id: 'admin',
-        title: 'Administración',
-        icon: Users,
-    },
 ];
 
 interface HelpPageProps {
@@ -163,10 +157,9 @@ export default function HelpIndex({
                 <main className="flex-1 overflow-y-auto rounded-xl border bg-card text-card-foreground shadow-sm">
                     <ScrollArea className="h-full">
                         <div className="mx-auto max-w-4xl p-8 lg:p-12">
-                            {/* General/Profile/Admin Sections */}
+                            {/* General/Profile Sections */}
                             {activeSection === 'general' && <GeneralSection />}
                             {activeSection === 'profile' && <ProfileSection />}
-                            {activeSection === 'admin' && <AdminSection />}
 
                             {/* Vehicles Section */}
                             {activeSection === 'vehicles' && (

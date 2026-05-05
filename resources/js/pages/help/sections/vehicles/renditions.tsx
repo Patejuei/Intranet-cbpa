@@ -9,6 +9,8 @@ export function RenditionsSection() {
                 icon={FileText}
                 roles={['Admin', 'Comandancia', 'Secretaría Adquisiciones']}
             />
+
+            <h1 className="p-3 italic text-red-600 font-bold text-center"> *** PENDIENTE REVISIÓN CON TESORERO GENERAL *** </h1>
             
             <div className="space-y-16">
                 {/* --- 1. Panel General --- */}

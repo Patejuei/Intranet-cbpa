@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/login';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 
 interface LoginProps {
     status?: string;
@@ -95,6 +95,15 @@ export default function Login({
                                 {processing && <Spinner />}
                                 Iniciar sesión
                             </Button>
+
+                            <div className="text-center text-sm text-muted-foreground mt-2">
+                                <Link
+                                    href="/help"
+                                    className="underline underline-offset-4 hover:text-primary"
+                                >
+                                    Ver Manual de Usuario
+                                </Link>
+                            </div>
                         </div>
 
                         {/* {canRegister && (
