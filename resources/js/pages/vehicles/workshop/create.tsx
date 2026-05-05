@@ -393,7 +393,7 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                                     >
                                                         {opt}
                                                     </button>
-                                                ),
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -426,6 +426,7 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                                     {opt}
                                                 </button>
                                             ))}
+                                        </div>
                                     </div>
                                 </div>
 
