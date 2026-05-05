@@ -3,8 +3,18 @@ import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Info, Truck, User, Users } from 'lucide-react';
+import { ChevronRight, ClipboardList, Info, Package, Truck, User, Users } from 'lucide-react';
 import { AdminSection } from './sections/admin';
+import { CentralDutySection } from './sections/central/duty';
+import { CentralLanding } from './sections/central/index';
+import { CentralReportsSection } from './sections/central/reports';
+import { EqBatteriesSection } from './sections/equipment/batteries';
+import { EqCertificatesSection } from './sections/equipment/certificates';
+import { EquipmentLanding } from './sections/equipment/index';
+import { EqInventorySection } from './sections/equipment/inventory';
+import { EqMaterialSection } from './sections/equipment/material';
+import { EqRepairsSection } from './sections/equipment/repairs';
+import { EqTicketsSection } from './sections/equipment/tickets';
 import { GeneralSection } from './sections/general';
 import { ProfileSection } from './sections/profile';
 import { ChecklistsSection } from './sections/vehicles/checklists';
@@ -28,6 +38,20 @@ const VEHICLE_SUBMODULES = [
     { id: 'renditions', title: 'Rendiciones' },
 ];
 
+const EQUIPMENT_SUBMODULES = [
+    { id: 'inventory', title: 'Inventario General' },
+    { id: 'equipment', title: 'Material Menor' },
+    { id: 'repairs', title: 'Reparaciones' },
+    { id: 'certificates', title: 'Actas y Certificados' },
+    { id: 'tickets', title: 'Ticketera de Soporte' },
+    { id: 'batteries', title: 'Control de Baterías' },
+];
+
+const CENTRAL_SUBMODULES = [
+    { id: 'duty', title: 'Puestas en Servicio' },
+    { id: 'reports', title: 'Reportes Central' },
+];
+
 const SECTIONS = [
     {
         id: 'general',
@@ -46,6 +70,20 @@ const SECTIONS = [
         submodules: VEHICLE_SUBMODULES,
     },
     {
+        id: 'equipment',
+        title: 'Material Menor',
+        icon: Package,
+        submodules: EQUIPMENT_SUBMODULES,
+        hidden: true, // Hidden: Future integration
+    },
+    {
+        id: 'central',
+        title: 'Central de Alarmas',
+        icon: ClipboardList,
+        submodules: CENTRAL_SUBMODULES,
+        hidden: true, // Hidden: Future integration
+    },
+    {
         id: 'admin',
         title: 'Administración',
         icon: Users,
@@ -61,6 +99,8 @@ export default function HelpIndex({
     activeSection = 'general',
     activeSubmodule,
 }: HelpPageProps) {
+    const visibleSections = SECTIONS.filter(s => !s.hidden || activeSection === s.id);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Centro de Ayuda" />
@@ -73,7 +113,7 @@ export default function HelpIndex({
                     </h2>
                     <ScrollArea className="flex-1">
                         <div className="flex flex-col gap-1 pr-4">
-                            {SECTIONS.map((section) => (
+                            {visibleSections.map((section) => (
                                 <div key={section.id} className="flex flex-col gap-1">
                                     <Link
                                         href={`/help/${section.id}`}
@@ -102,9 +142,9 @@ export default function HelpIndex({
                                                     key={sub.id}
                                                     href={`/help/${section.id}/${sub.id}`}
                                                     className={cn(
-                                                        'rounded-md px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                                                        'rounded-md px-3 py-1.5 text-xs transition-colors hover:text-foreground',
                                                         activeSubmodule === sub.id
-                                                            ? 'bg-accent/50 text-accent-foreground'
+                                                            ? 'bg-accent/50 font-semibold text-foreground'
                                                             : 'text-muted-foreground',
                                                     )}
                                                 >
@@ -128,7 +168,7 @@ export default function HelpIndex({
                             {activeSection === 'profile' && <ProfileSection />}
                             {activeSection === 'admin' && <AdminSection />}
 
-                            {/* Vehicles Section with Submodule Logic */}
+                            {/* Vehicles Section */}
                             {activeSection === 'vehicles' && (
                                 <>
                                     {!activeSubmodule && <VehiclesLanding />}
@@ -139,6 +179,28 @@ export default function HelpIndex({
                                     {activeSubmodule === 'checklists' && <ChecklistsSection />}
                                     {activeSubmodule === 'inventory' && <InventorySection />}
                                     {activeSubmodule === 'renditions' && <RenditionsSection />}
+                                </>
+                            )}
+
+                            {/* Equipment Section */}
+                            {activeSection === 'equipment' && (
+                                <>
+                                    {!activeSubmodule && <EquipmentLanding />}
+                                    {activeSubmodule === 'inventory' && <EqInventorySection />}
+                                    {activeSubmodule === 'equipment' && <EqMaterialSection />}
+                                    {activeSubmodule === 'repairs' && <EqRepairsSection />}
+                                    {activeSubmodule === 'certificates' && <EqCertificatesSection />}
+                                    {activeSubmodule === 'tickets' && <EqTicketsSection />}
+                                    {activeSubmodule === 'batteries' && <EqBatteriesSection />}
+                                </>
+                            )}
+
+                            {/* Central Section */}
+                            {activeSection === 'central' && (
+                                <>
+                                    {!activeSubmodule && <CentralLanding />}
+                                    {activeSubmodule === 'duty' && <CentralDutySection />}
+                                    {activeSubmodule === 'reports' && <CentralReportsSection />}
                                 </>
                             )}
                         </div>

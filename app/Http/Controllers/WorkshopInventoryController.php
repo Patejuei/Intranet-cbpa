@@ -22,7 +22,7 @@ class WorkshopInventoryController extends Controller
       $query->where('category', $request->category);
     }
 
-    $defaultHourRate = WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0;
+    $defaultHourRate = WorkshopSetting::getDefaultHourRate();
 
     return Inertia::render('vehicles/inventory/index', [
       'items' => $query->orderBy('name')->paginate(10),
@@ -227,6 +227,15 @@ class WorkshopInventoryController extends Controller
 
   public function updateSetting(Request $request)
   {
+    $user = $request->user();
+    $isAuthorized = $user->role === 'admin' || 
+                   $user->role === 'comandante' || 
+                   ($user->role === 'inspector' && trim($user->department) === 'Material Mayor');
+
+    if (!$isAuthorized) {
+      abort(403, 'No tiene permisos para modificar la configuración de HH.');
+    }
+
     $settings = $request->except(['_token', '_method']);
 
     foreach ($settings as $key => $value) {

@@ -7,7 +7,7 @@ export function InventorySection() {
             <SectionHeader
                 title="Bodega Material Mayor"
                 icon={Package}
-                roles={['Inspector MM', 'Comandancia', 'Administración']}
+                roles={['Inspector MM', 'Comandancia', 'Mecánico', 'Administración']}
             />
             
             <div className="space-y-16">
@@ -278,11 +278,11 @@ export function InventorySection() {
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">4. Permisos y Roles</h2>
+                    <h2 className="text-xl font-semibold">4. Matriz de Responsabilidades</h2>
                     <p className="text-sm text-muted-foreground mb-4">
-                        A diferencia de otros módulos, la bodega de Material Mayor está estrictamente restringida al personal de Taller e Inspectoría. Las compañías regulares no tienen acceso a esta sección.
+                        El acceso a la bodega está restringido al personal técnico y de mando. Los usuarios de compañía no tienen visibilidad sobre este módulo.
                     </p>
                     <div className="overflow-x-auto rounded-xl border">
                         <table className="w-full text-sm text-left">
@@ -290,26 +290,26 @@ export function InventorySection() {
                                 <tr>
                                     <th className="p-3">Rol</th>
                                     <th className="p-3">Acceso a Bodega</th>
-                                    <th className="p-3">Crear/Editar Productos</th>
-                                    <th className="p-3">Ajustes Taller (HH)</th>
+                                    <th className="p-3">Crear Ítems / Stock</th>
+                                    <th className="p-3">Ajustes de Valor (HH)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Bombero / Capitán</td>
-                                    <td className="p-3 text-red-600">Sin Acceso</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 font-medium">Inspector MM / Comandante</td>
+                                    <td className="p-3 text-green-700 font-bold">Total</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado</td>
                                 </tr>
                                 <tr className="border-t bg-muted/10">
-                                    <td className="p-3 font-medium text-primary">Inspector MM / Mecánico</td>
+                                    <td className="p-3 font-medium text-primary">Mecánico / Taller</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-red-600 italic">Solo Lectura</td>
+                                    <td className="p-3 text-red-600">No</td>
                                 </tr>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium text-primary">Comandancia</td>
-                                    <td className="p-3 text-green-600 font-bold">Solo Lectura</td>
+                                    <td className="p-3 font-medium">Capitán / Maquinista</td>
+                                    <td className="p-3 text-red-600">Sin Acceso</td>
                                     <td className="p-3 text-red-600">No</td>
                                     <td className="p-3 text-red-600">No</td>
                                 </tr>

@@ -7,7 +7,7 @@ export function WorkshopSection() {
             <SectionHeader
                 title="Taller Mecánico"
                 icon={Wrench}
-                roles={['Inspector MM', 'Comandancia', 'Administración']}
+                roles={['Inspector MM', 'Comandancia', 'Mecánico', 'Administración']}
             />
             
             <div className="space-y-16">
@@ -127,7 +127,7 @@ export function WorkshopSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            Es el formulario más completo del sistema. Permite abrir la orden de trabajo recabando datos técnicos del vehículo, estimaciones de mano de obra, vincular incidencias preexistentes y generar un Checklist visual que alimenta automáticamente las tareas del taller.
+                            Es el punto de inicio para cualquier reparación. Permite abrir la orden de trabajo capturando datos técnicos (Kms, Horas), vincular incidencias reportadas por las compañías y generar un <strong>Checklist de Recepción</strong> que define el alcance del trabajo.
                         </p>
                     </section>
 
@@ -379,8 +379,9 @@ export function WorkshopSection() {
                                 </div>
                                 
                                 <div className="flex justify-end gap-2 pt-2 relative">
-                                    <div className="h-9 px-4 rounded bg-primary text-white text-sm font-medium flex items-center shadow-sm">Guardar Cambios</div>
-                                    <div className="h-9 px-4 rounded bg-red-600 text-white text-sm font-medium flex items-center shadow-sm">Finalizar</div>
+                                    <div className="h-9 px-4 rounded border text-sm font-medium flex items-center shadow-sm">Imprimir Ingreso</div>
+                                    <div className="h-9 px-4 rounded bg-primary text-white text-sm font-medium flex items-center shadow-sm">Guardar</div>
+                                    <div className="h-9 px-4 rounded bg-red-600 text-white text-sm font-medium flex items-center shadow-sm">Finalizar y Entregar</div>
                                     <span className="absolute -top-3 right-6 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">4</span>
                                 </div>
                             </div>
@@ -407,9 +408,9 @@ export function WorkshopSection() {
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">Permisos y Roles</h2>
+                    <h2 className="text-xl font-semibold">Matriz de Responsabilidades</h2>
                     <div className="overflow-x-auto rounded-xl border">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50">
@@ -418,30 +419,37 @@ export function WorkshopSection() {
                                     <th className="p-3">Ver Órdenes</th>
                                     <th className="p-3">Crear/Editar</th>
                                     <th className="p-3">Finalizar Orden</th>
-                                    <th className="p-3">Comentarios Adicionales</th>
+                                    <th className="p-3">Alcance Territorial</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Bombero / Maquinista</td>
+                                    <td className="p-3 font-medium">Capitán / Maquinista / Cuartelero</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-red-600">No</td>
                                     <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-muted-foreground">Solo pueden ver o reportar Incidencias o Checklists en sus módulos correspondientes.</td>
-                                </tr>
-                                <tr className="border-t">
-                                    <td className="p-3 font-medium">Capitán</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-muted-foreground">Puede ver el estado de reparación de las máquinas de su propia compañía.</td>
+                                    <td className="p-3 text-muted-foreground">Solo unidades de su propia Compañía.</td>
                                 </tr>
                                 <tr className="border-t bg-muted/10">
-                                    <td className="p-3 font-medium text-primary">Inspector MM / Comandancia</td>
-                                    <td className="p-3 text-green-600 font-bold">Todas</td>
+                                    <td className="p-3 font-medium text-primary">Mecánico / Personal de Taller</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-muted-foreground">Control total. Pueden manipular costos, repuestos de inventario y dar salida a los vehículos.</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-muted-foreground">Todas las Unidades del Cuerpo.</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Inspector MM / Comandancia</td>
+                                    <td className="p-3 text-green-700 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-muted-foreground">Control total y supervisión económica de la flota.</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Usuarios / Voluntarios</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-muted-foreground">Módulo oculto para personal no autorizado.</td>
                                 </tr>
                             </tbody>
                         </table>

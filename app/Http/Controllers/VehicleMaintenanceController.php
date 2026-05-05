@@ -94,7 +94,7 @@ class VehicleMaintenanceController extends Controller
 
         return Inertia::render('vehicles/workshop/create', [
             'vehicles' => $vehicles,
-            'defaultHourRate' => (int) (\App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0),
+            'defaultHourRate' => \App\Models\WorkshopSetting::getDefaultHourRate(),
         ]);
     }
 
@@ -132,7 +132,7 @@ class VehicleMaintenanceController extends Controller
             'hour_rate' => 'nullable|integer|min:0',
         ]);
 
-        $defaultRate = \App\Models\WorkshopSetting::where('key', 'default_hour_rate')->first()?->value ?? 0;
+        $defaultRate = \App\Models\WorkshopSetting::getDefaultHourRate();
 
         $maintenance = \App\Models\VehicleMaintenance::create([
             'vehicle_id' => $validated['vehicle_id'],
@@ -429,13 +429,28 @@ class VehicleMaintenanceController extends Controller
             'hour_rate' => 'nullable|integer|min:0',
         ]);
 
+        $user = $request->user();
+        $canConfigureHH = $user->role === 'admin' || 
+                         $user->role === 'comandante' || 
+                         ($user->role === 'inspector' && trim($user->department) === 'Material Mayor');
+        
+        $canEditWorkingHours = $canConfigureHH || $user->role === 'mechanic';
+
         $updateData = [
             'status' => $validated['status'],
             'tentative_exit_date' => $validated['tentative_exit_date'],
             'description' => $validated['description'] ?? $workshop->description,
-            'working_hours' => $validated['working_hours'] ?? $workshop->working_hours,
-            'hour_rate' => $validated['hour_rate'] ?? $workshop->hour_rate,
         ];
+
+        // Authorized users can update working hours
+        if ($canEditWorkingHours) {
+            $updateData['working_hours'] = $validated['working_hours'] ?? $workshop->working_hours;
+        }
+
+        // Only command/admin can update the hourly rate
+        if ($canConfigureHH) {
+            $updateData['hour_rate'] = $validated['hour_rate'] ?? $workshop->hour_rate;
+        }
 
         if ($validated['status'] === 'Entregado') {
             $updateData['withdrawal_responsible_name'] = $validated['withdrawal_responsible_name'] ?? null;

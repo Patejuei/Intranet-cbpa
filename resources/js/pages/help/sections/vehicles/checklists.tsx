@@ -7,7 +7,7 @@ export function ChecklistsSection() {
             <SectionHeader
                 title="Checklists Preventivos"
                 icon={ClipboardCheck}
-                roles={['Maquinista', 'Capitán', 'Inspector MM', 'Comandancia']}
+                roles={['Maquinista', 'Capitán', 'Inspector MM', 'Comandancia', 'Cuartelero', 'Taller Mecánico']}
             />
             
             <div className="space-y-16">
@@ -21,7 +21,7 @@ export function ChecklistsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El historial de checklists funciona como el archivo oficial de las revisiones rutinarias de las unidades. Permite auditar qué maquinista realizó la revisión, la fecha, y si se identificaron elementos urgentes o para próxima mantención.
+                            El <strong>Checklist Preventivo</strong> es la herramienta principal para asegurar la operatividad del Material Mayor. No es solo un formulario; es un registro legal de quién revisó el carro y en qué estado lo encontró. Permite detectar fallas mecánicas antes de que se conviertan en reparaciones costosas o dejen a la unidad fuera de servicio en una emergencia.
                         </p>
                     </section>
 
@@ -44,7 +44,7 @@ export function ChecklistsSection() {
                                 </div>
                             </div>
                             <div className="p-0">
-                                <table className="w-full text-sm text-left">
+                                <table className="w-full text-sm text-left overflow-x-auto">
                                     <thead className="bg-muted/30">
                                         <tr>
                                             <th className="p-3">ID</th>
@@ -245,51 +245,57 @@ export function ChecklistsSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Flujos Diferenciados:</strong> Si el vehículo es de Compañía, debe ser visado por el Capitán y Teniente de Máquinas. Si es de Comandancia, lo visa el Comandante y el Inspector MM.</span>
+                                <span><strong>Responsabilidad de Mando:</strong> Si el vehículo es de Compañía, debe ser visado por el Capitán y Maquinista. Si es de Comandancia, lo visa el Comandante y el Inspector MM.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Visación con 2FA:</strong> El botón "Visar Checklist" lanza el modal de Autenticación de Dos Factores (Código al correo) garantizando que la firma electrónica sea estrictamente personal.</span>
+                                <span><strong>Firma Digital (OTP):</strong> Al visar, el sistema envía un código de 6 dígitos a tu correo. Esto garantiza que la revisión es verídica e intransferible.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
-                                <span><strong>Detalle Resumido:</strong> Los resultados del formulario se exponen de forma visual con colores rojo/amarillo/verde, priorizando que los mandos vean rápido qué está fallando.</span>
+                                <span><strong>Semaforización:</strong> Los estados Rojo (Urgente) y Amarillo (Próx. Mant.) generan alertas visuales inmediatas para el Taller Mecánico y la Comandancia.</span>
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">Permisos y Roles</h2>
+                    <h2 className="text-xl font-semibold">Matriz de Responsabilidades</h2>
                     <div className="overflow-x-auto rounded-xl border">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50">
                                 <tr>
                                     <th className="p-3">Rol</th>
                                     <th className="p-3">Ver Historial</th>
-                                    <th className="p-3">Crear Checklist</th>
-                                    <th className="p-3">Visar (Firma Digital)</th>
+                                    <th className="p-3">Registrar Nuevo</th>
+                                    <th className="p-3">Visar (Firma Electrónica)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Bombero / Maquinista</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 font-medium">Maquinista / Cuartelero</td>
+                                    <td className="p-3 text-blue-700">Compañía / Asignados</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
+                                    <td className="p-3 font-bold text-blue-600">Solo Maquinista (Cía)</td>
                                 </tr>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Capitán / Tte. de Máquinas</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí (Vehículos de su Cía)</td>
+                                    <td className="p-3 font-medium">Capitán / Ayudante Maq.</td>
+                                    <td className="p-3 text-blue-700">Compañía / Asignados</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
                                 </tr>
-                                <tr className="border-t bg-muted/10">
-                                    <td className="p-3 font-medium text-primary">Inspector MM / Comandancia</td>
-                                    <td className="p-3 text-green-600 font-bold">Todas las Cías</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí (Vehículos de Comandancia)</td>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Inspector MM / Comandante</td>
+                                    <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 text-green-600 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 text-green-600 font-bold">Solo Unidades Comandancia</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Mecánico</td>
+                                    <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 italic text-red-600">Solo Lectura</td>
+                                    <td className="p-3 text-red-600">No Habilitado</td>
                                 </tr>
                             </tbody>
                         </table>

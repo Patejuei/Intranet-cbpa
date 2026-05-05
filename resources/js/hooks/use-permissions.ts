@@ -237,5 +237,27 @@ export function usePermissions() {
         return permissions.includes(`${module}.full`);
     };
 
-    return { hasPermission, canEdit, canCreate, canDelete, user };
+    const canConfigureHH = () => {
+        if (!user) return false;
+        if (user.role === 'admin' || user.role === 'comandante') return true;
+        if (
+            user.role === 'inspector' &&
+            (user.department || '').trim() === 'Material Mayor'
+        )
+            return true;
+        return false;
+    };
+
+    const canEditWorkingHours = () => {
+        if (!user) return false;
+        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'mechanic') return true;
+        if (
+            user.role === 'inspector' &&
+            (user.department || '').trim() === 'Material Mayor'
+        )
+            return true;
+        return false;
+    };
+
+    return { hasPermission, canEdit, canCreate, canDelete, canConfigureHH, canEditWorkingHours, user };
 }
