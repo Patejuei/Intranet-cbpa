@@ -391,15 +391,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // My Profile Module (Accessible to all auth users)
     Route::get('/my-profile', [\App\Http\Controllers\MyProfileController::class, 'show'])->name('my-profile.show');
-<<<<<<< HEAD
 
     // Help & Manual
     Route::get('/help/{section?}/{submodule?}', [\App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
 
     // Changelog
     Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog');
-=======
->>>>>>> 147d0fbebd807bdf4f3e24af984f7a8a2ddcd06a
 });
 
 // Help & Manual (Publicly accessible)

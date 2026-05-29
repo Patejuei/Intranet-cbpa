@@ -68,28 +68,11 @@ const SECTIONS = [
         icon: Truck,
         submodules: VEHICLE_SUBMODULES,
     },
-<<<<<<< HEAD
     // {
     //     id: 'admin',
     //     title: 'Administración',
     //     icon: Users,
     // },
-=======
-    {
-        id: 'equipment',
-        title: 'Material Menor',
-        icon: Package,
-        submodules: EQUIPMENT_SUBMODULES,
-        hidden: true, // Hidden: Future integration
-    },
-    {
-        id: 'central',
-        title: 'Central de Alarmas',
-        icon: ClipboardList,
-        submodules: CENTRAL_SUBMODULES,
-        hidden: true, // Hidden: Future integration
-    },
->>>>>>> 147d0fbebd807bdf4f3e24af984f7a8a2ddcd06a
 ];
 
 interface HelpPageProps {
@@ -101,7 +84,7 @@ export default function HelpIndex({
     activeSection = 'general',
     activeSubmodule,
 }: HelpPageProps) {
-    const visibleSections = SECTIONS.filter(s => !s.hidden || activeSection === s.id);
+    const visibleSections = SECTIONS.filter(s =>  activeSection === s.id);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -207,17 +190,10 @@ export default function HelpIndex({
                 </aside>
 
                 {/* Content Area */}
-<<<<<<< HEAD
                 <main className="flex-1 overflow-auto rounded-xl border bg-card text-card-foreground shadow-sm">
                     <div className="h-full min-w-[768px] lg:min-w-0">
                         <div className="mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
                             {/* General/Profile/Admin Sections */}
-=======
-                <main className="flex-1 overflow-y-auto rounded-xl border bg-card text-card-foreground shadow-sm">
-                    <ScrollArea className="h-full">
-                        <div className="mx-auto max-w-4xl p-8 lg:p-12">
-                            {/* General/Profile Sections */}
->>>>>>> 147d0fbebd807bdf4f3e24af984f7a8a2ddcd06a
                             {activeSection === 'general' && <GeneralSection />}
                             {activeSection === 'profile' && <ProfileSection />}
 

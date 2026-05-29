@@ -443,16 +443,12 @@ export function AppSidebar({ user }: { user: any }) {
             )}
 
             <SidebarFooter>
-<<<<<<< HEAD
                 <div className="flex items-center justify-between px-2 py-1">
                     <AppearanceToggle />
                     <Link href="/changelog" className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors group-data-[collapsible=icon]:hidden">
                         {appVersion}
                     </Link>
                 </div>
-                <NavUser />
-=======
-                <AppearanceToggle />
                 {user ? (
                     <NavUser />
                 ) : (
@@ -467,7 +463,6 @@ export function AppSidebar({ user }: { user: any }) {
                         </SidebarMenuItem>
                     </SidebarMenu>
                 )}
->>>>>>> 147d0fbebd807bdf4f3e24af984f7a8a2ddcd06a
             </SidebarFooter>
         </Sidebar>
     );
