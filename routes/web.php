@@ -394,6 +394,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Help & Manual
     Route::get('/help/{section?}/{submodule?}', [\App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
+
+    // Changelog
+    Route::get('/changelog', [\App\Http\Controllers\ChangelogController::class, 'index'])->name('changelog');
 });
 
 require __DIR__ . '/settings.php';

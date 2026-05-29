@@ -8,11 +8,25 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useAppearance } from '@/hooks/use-appearance';
 import { Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function AppearanceToggle() {
     const { appearance, updateAppearance } = useAppearance();
     const { state } = useSidebar();
-    const isDark = appearance === 'dark';
+    
+    const [isSystemDark, setIsSystemDark] = useState(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        setIsSystemDark(media.matches);
+
+        const listener = (e: MediaQueryListEvent) => setIsSystemDark(e.matches);
+        media.addEventListener('change', listener);
+        return () => media.removeEventListener('change', listener);
+    }, []);
+
+    const isDark = appearance === 'dark' || (appearance === 'system' && isSystemDark);
 
     const toggleAppearance = () => {
         updateAppearance(isDark ? 'light' : 'dark');

@@ -481,8 +481,12 @@ class VehicleMaintenanceController extends Controller
                     $currentTaskIds[] = $newTask->id;
                 }
             }
-            // Optional: Delete tasks not in the list? User didn't ask for deletion explicitly but editing specific tasks implies list management.
-            // For now, let's keep it additive/update unless we implement delete in frontend.
+            // Delete tasks not in the list
+            if (empty($currentTaskIds)) {
+                $workshop->tasks()->delete();
+            } else {
+                $workshop->tasks()->whereNotIn('id', $currentTaskIds)->delete();
+            }
         }
 
         // Handle External Works

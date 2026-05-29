@@ -175,6 +175,23 @@ export default function WorkshopShow({
             {
                 forceFormData: true,
                 preserveScroll: true,
+                onSuccess: (page) => {
+                    const props = page.props as any;
+                    if (props.maintenance) {
+                        const updated = props.maintenance;
+                        setData((prev) => ({
+                            ...prev,
+                            tasks: updated.tasks.map((t: any) => ({
+                                ...t,
+                                cost: t.cost ? Number(t.cost) : null,
+                            })),
+                            external_works: (updated.external_works || []).map((w: any) => ({
+                                ...w,
+                                cost: w.cost ? Number(w.cost) : '',
+                            })),
+                        }));
+                    }
+                }
             },
         );
     };
@@ -195,10 +212,26 @@ export default function WorkshopShow({
                 {
                     forceFormData: true,
                     preserveScroll: true,
+                    onSuccess: (page) => {
+                        const props = page.props as any;
+                        if (props.maintenance) {
+                            const updated = props.maintenance;
+                            setData((prev) => ({
+                                ...prev,
+                                status: updated.status,
+                                tasks: updated.tasks.map((t: any) => ({
+                                    ...t,
+                                    cost: t.cost ? Number(t.cost) : null,
+                                })),
+                                external_works: (updated.external_works || []).map((w: any) => ({
+                                    ...w,
+                                    cost: w.cost ? Number(w.cost) : '',
+                                })),
+                            }));
+                        }
+                    }
                 },
             );
-            setData('status', 'Finalizado');
-            router.reload();
         }
     };
 
@@ -262,6 +295,7 @@ export default function WorkshopShow({
                 },
                 onError: () => setIsAddingItem(false),
                 preserveScroll: true,
+                preserveState: true,
             },
         );
     };
@@ -270,7 +304,7 @@ export default function WorkshopShow({
         if (confirm('¿Eliminar este ítem de la orden?')) {
             router.delete(
                 `/vehicles/workshop/${maintenance.id}/items/${itemId}`,
-                { preserveScroll: true },
+                { preserveScroll: true, preserveState: true },
             );
         }
     };

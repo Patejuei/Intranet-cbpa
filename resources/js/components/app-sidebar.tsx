@@ -209,7 +209,10 @@ const NAV_GROUPS = [
 ];
 
 export function AppSidebar({ user }: { user: any }) {
-    const { enabledModules = {} } = (usePage().props as any) as { enabledModules: Record<string, boolean> };
+    const { enabledModules = {}, appVersion = 'v1.0.0' } = (usePage().props as any) as { 
+        enabledModules: Record<string, boolean>;
+        appVersion: string;
+    };
 
     const isModuleEnabled = (permission?: string) => {
         if (!permission) return true;
@@ -435,7 +438,12 @@ export function AppSidebar({ user }: { user: any }) {
             </SidebarContent>
 
             <SidebarFooter>
-                <AppearanceToggle />
+                <div className="flex items-center justify-between px-2 py-1">
+                    <AppearanceToggle />
+                    <Link href="/changelog" className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors group-data-[collapsible=icon]:hidden">
+                        {appVersion}
+                    </Link>
+                </div>
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

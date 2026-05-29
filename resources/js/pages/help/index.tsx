@@ -45,11 +45,11 @@ const SECTIONS = [
         icon: Truck,
         submodules: VEHICLE_SUBMODULES,
     },
-    {
-        id: 'admin',
-        title: 'Administración',
-        icon: Users,
-    },
+    // {
+    //     id: 'admin',
+    //     title: 'Administración',
+    //     icon: Users,
+    // },
 ];
 
 interface HelpPageProps {
@@ -65,9 +65,54 @@ export default function HelpIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Centro de Ayuda" />
 
-            <div className="flex h-[calc(100vh-8rem)] gap-6 p-4 md:p-6">
-                {/* Manual Sidebar */}
-                <aside className="hidden w-64 flex-col gap-2 md:flex">
+            <div className="flex flex-col md:flex-row h-[calc(100vh-8rem)] gap-4 md:gap-6 p-4 md:p-6">
+                {/* Mobile Navigation */}
+                <div className="flex flex-col gap-2 md:hidden">
+                    <div className="w-full overflow-x-auto overflow-y-hidden touch-pan-x no-scrollbar pb-2">
+                        <div className="flex w-max space-x-2 p-1">
+                            {SECTIONS.map((section) => (
+                                <Link
+                                    key={section.id}
+                                    href={`/help/${section.id}`}
+                                    className={cn(
+                                        'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors border',
+                                        activeSection === section.id
+                                            ? 'bg-primary text-primary-foreground border-primary'
+                                            : 'bg-background hover:bg-accent text-muted-foreground'
+                                    )}
+                                >
+                                    <section.icon className="h-4 w-4" />
+                                    <span>{section.title}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Submodules Mobile */}
+                    {SECTIONS.find(s => s.id === activeSection)?.submodules && (
+                        <div className="w-full overflow-x-auto overflow-y-hidden touch-pan-x no-scrollbar pb-2">
+                            <div className="flex w-max space-x-2 p-1">
+                                {SECTIONS.find(s => s.id === activeSection)?.submodules?.map((sub) => (
+                                    <Link
+                                        key={sub.id}
+                                        href={`/help/${activeSection}/${sub.id}`}
+                                        className={cn(
+                                            'rounded-full px-3 py-1.5 text-xs font-medium transition-colors border',
+                                            activeSubmodule === sub.id
+                                                ? 'bg-accent text-accent-foreground border-accent-foreground/20'
+                                                : 'bg-background hover:bg-accent text-muted-foreground'
+                                        )}
+                                    >
+                                        {sub.title}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Manual Sidebar (Desktop) */}
+                <aside className="hidden w-64 shrink-0 flex-col gap-2 md:flex">
                     <h2 className="mb-4 px-2 text-lg font-semibold">
                         Manual de Usuario
                     </h2>
@@ -120,9 +165,9 @@ export default function HelpIndex({
                 </aside>
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-y-auto rounded-xl border bg-card text-card-foreground shadow-sm">
-                    <ScrollArea className="h-full">
-                        <div className="mx-auto max-w-4xl p-8 lg:p-12">
+                <main className="flex-1 overflow-auto rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div className="h-full min-w-[768px] lg:min-w-0">
+                        <div className="mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
                             {/* General/Profile/Admin Sections */}
                             {activeSection === 'general' && <GeneralSection />}
                             {activeSection === 'profile' && <ProfileSection />}
@@ -142,7 +187,7 @@ export default function HelpIndex({
                                 </>
                             )}
                         </div>
-                    </ScrollArea>
+                    </div>
                 </main>
             </div>
         </AppLayout>
