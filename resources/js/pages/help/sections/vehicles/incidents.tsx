@@ -7,7 +7,7 @@ export function IncidentsSection() {
             <SectionHeader
                 title="Incidencias (Reportes de Falla)"
                 icon={AlertTriangle}
-                roles={['Todos', 'Mecánico', 'Inspector MM']}
+                roles={['Comandante', 'Inspector MM', 'Taller Mecánico', 'Capitán', 'Maquinista', 'Cuartelero']}
             />
             
             <div className="space-y-16">
@@ -22,14 +22,14 @@ export function IncidentsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El módulo de <strong>Incidencias</strong> permite a cualquier usuario autorizado reportar anomalías o fallas detectadas en los vehículos. Esto inicia un flujo de revisión oficial donde el Inspector de Material Mayor evalúa la gravedad y decide si la unidad debe detenerse, enviarse a taller o simplemente mantener la falla en observación.
+                            El módulo de <strong>Incidencias</strong> permite a cualquier usuario autorizado reportar anomalías, fallas mecánicas o problemas operativos detectados en los vehículos. Este reporte inicia un flujo de revisión oficial donde los mandos responsables (Capitán, Inspector MM o Comandante) evalúan la gravedad y deciden si la unidad debe detenerse, enviarse a taller o simplemente mantenerse en observación.
                         </p>
-                        <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-50/50 p-4">
-                            <h4 className="flex items-center gap-2 font-bold text-yellow-700 dark:text-yellow-500">
-                                <AlertTriangle className="h-4 w-4" /> Importante
+                        <div className="mt-4 rounded-lg border border-red-500/20 bg-red-50/50 p-4">
+                            <h4 className="flex items-center gap-2 font-bold text-red-700 dark:text-red-500 text-sm">
+                                <AlertTriangle className="h-4 w-4" /> Crucial para la Operatividad
                             </h4>
-                            <p className="mt-1 text-sm text-yellow-900/80 dark:text-yellow-200/80">
-                                Un reporte de incidencia NO pone automáticamente a la unidad "Fuera de Servicio". Esa decisión es exclusiva del Inspector MM tras evaluar la gravedad del reporte.
+                            <p className="mt-1 text-xs text-red-900/80 dark:text-red-200/80">
+                                Una incidencia bien reportada permite prevenir fallas catastróficas. El sistema permite adjuntar gravedad y estado de inmovilización para alertar a toda la institución en tiempo real.
                             </p>
                         </div>
                     </section>
@@ -78,36 +78,29 @@ export function IncidentsSection() {
                                 <div className="flex border-b bg-muted/50 px-6 py-3 text-xs font-medium text-muted-foreground">
                                     <div className="w-24">Fecha</div>
                                     <div className="w-24">Unidad</div>
-                                    <div className="w-32">Gravedad</div>
+                                    <div className="w-24 text-center">Gravedad</div>
                                     <div className="flex-1">Descripción</div>
-                                    <div className="w-40">Estado</div>
-                                    <div className="w-24">Acciones</div>
+                                    <div className="w-32">Estado</div>
+                                    <div className="w-32">Reportado Por</div>
+                                    <div className="w-20">Acciones</div>
                                 </div>
                                 {/* Row 1 */}
                                 <div className="flex border-b px-6 py-4 text-sm hover:bg-muted/30 items-center">
                                     <div className="w-24 text-muted-foreground">2026-04-20</div>
                                     <div className="w-24 font-bold">B-1</div>
-                                    <div className="w-32 relative">
-                                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">Alta</span>
-                                        {/* Hotspot 2 */}
-                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                            2
-                                        </span>
+                                    <div className="w-24 flex justify-center relative">
+                                        <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-800 border border-red-200 uppercase">Alta</span>
+                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
                                     </div>
                                     <div className="flex-1 text-muted-foreground truncate pr-4">Falla en bomba centrífuga al succionar...</div>
-                                    <div className="w-40 relative flex flex-col gap-1">
-                                        <span className="rounded border border-yellow-500 px-2 py-0.5 text-xs text-yellow-600 w-fit">Pendiente Revisión</span>
-                                        {/* Hotspot 3 */}
-                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                            3
-                                        </span>
+                                    <div className="w-32 relative flex flex-col gap-1">
+                                        <span className="rounded border border-yellow-500 px-2 py-0.5 text-[10px] font-bold text-yellow-600 w-fit">Pendiente</span>
+                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                                     </div>
-                                    <div className="w-24 relative">
-                                        <div className="flex h-7 w-16 items-center justify-center rounded border text-xs">Ver</div>
-                                        {/* Hotspot 4 */}
-                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                            4
-                                        </span>
+                                    <div className="w-32 text-xs truncate pr-2">Juan Pérez (M-1)</div>
+                                    <div className="w-20 relative">
+                                        <div className="flex h-7 w-12 items-center justify-center rounded border text-[10px] font-bold">Ver</div>
+                                        <span className="absolute -left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">4</span>
                                     </div>
                                 </div>
                                 {/* Row 2 */}
@@ -129,76 +122,69 @@ export function IncidentsSection() {
                         </div>
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    1
-                                </span>
-                                <span>
-                                    <strong>Reportar Incidencia:</strong> Abre el formulario para registrar un nuevo problema. Requiere seleccionar unidad y gravedad.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
+                                <span><strong>Nueva Incidencia:</strong> Abre el formulario de reporte. Disponible para Capitanes, Maquinistas y roles administrativos.</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    2
-                                </span>
-                                <span>
-                                    <strong>Nivel de Gravedad:</strong> Clasificación de Baja a Crítica que ayuda a priorizar la atención mecánica.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
+                                <span><strong>Nivel de Gravedad:</strong> Clasificación (Baja, Media, Alta, Crítica) que define la prioridad de atención mecánica.</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    3
-                                </span>
-                                <span>
-                                    <strong>Estado de Revisión:</strong> Indica en qué etapa se encuentra (Pendiente, Revisado, En Taller o Resuelto). También marca si el vehículo fue detenido por este motivo.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                <span><strong>Estado y Vistos:</strong> Indica si el reporte fue leído por Taller o Material Mayor, y si el carro está detenido.</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    4
-                                </span>
-                                <span>
-                                    <strong>Ver Detalle:</strong> Entra a la vista individual para ver respuestas oficiales y flujo de trabajo.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
+                                <span><strong>Acceso al Detalle:</strong> Botón "Ver" para entrar a la ficha técnica de la incidencia y realizar la revisión oficial.</span>
                             </div>
                         </div>
                     </section>
 
-                    {/* Tabla de Roles */}
+                    {/* Tabla de Roles General */}
                     <section>
-                        <h3 className="text-xl font-semibold">Permisos en Registro</h3>
+                        <h3 className="text-xl font-semibold">Permisos en el Listado</h3>
                         <p className="mb-4 mt-2 text-muted-foreground">
-                            Resumen de accesos para interactuar con la tabla general de incidencias.
+                            El acceso a los reportes está filtrado estrictamente por compañía y departamento.
                         </p>
                         <div className="rounded-md border">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">
                                         <th className="p-3 text-left font-medium">Rol</th>
-                                        <th className="p-3 text-left font-medium">Acceso</th>
-                                        <th className="p-3 text-left font-medium">Observaciones</th>
+                                        <th className="p-3 text-left font-medium">Lectura</th>
+                                        <th className="p-3 text-left font-medium">Escritura (Crear)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Bombero / Todos</td>
-                                        <td className="p-3">Reportar</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            Pueden crear incidencias pero no pueden cambiar su estado ni revisarlas oficialmente.
-                                        </td>
+                                        <td className="p-3 font-medium">Comandante</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Incidencias</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Incidencias</td>
                                     </tr>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Inspector MM / Comandancia</td>
-                                        <td className="p-3">Gestión Total</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            Pueden revisar, derivar a taller, resolver incidencias y detener máquinas.
-                                        </td>
+                                        <td className="p-3 font-medium">Inspector MM</td>
+                                        <td className="p-3 font-medium text-blue-700">Solo con selecc. "Reportar a Mat. Mayor"</td>
+                                        <td className="p-3 font-bold text-blue-600">Crear / Revisar (Mat. Mayor)</td>
                                     </tr>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Taller / Mecánico</td>
-                                        <td className="p-3">Lectura y Resolución</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            Pueden ver las fallas derivadas a taller y marcarlas como reparadas.
-                                        </td>
+                                        <td className="p-3 font-medium">Mecánico</td>
+                                        <td className="p-3 font-medium text-blue-700">Solo con selecc. "Reportar a Taller"</td>
+                                        <td className="p-3 font-bold text-blue-600">Crear / Revisar (Taller)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Capitán</td>
+                                        <td className="p-3">Unidades de su Compañía</td>
+                                        <td className="p-3 font-bold text-blue-600">Crear y Revisar (Compañía)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Maquinista</td>
+                                        <td className="p-3">Unidades de su Compañía</td>
+                                        <td className="p-3 font-bold text-blue-600">Solo Crear (Compañía)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Cuartelero / Usuarios Hab.</td>
+                                        <td className="p-3">Unidades de su Compañía</td>
+                                        <td className="p-3 italic text-red-600">Solo Lectura</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -217,7 +203,7 @@ export function IncidentsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            La vista detallada (Show) centraliza toda la información de un reporte. Aquí los usuarios leen la falla completa, y los oficiales (Comandancia/Inspectores) toman acción: pueden marcar "Fuera de Servicio", enviar al Taller, o notificar a otras áreas. Es el corazón resolutivo del módulo.
+                            La vista detallada centraliza toda la información de un reporte. Aquí los usuarios leen la falla completa, y los oficiales (Capitán/Comandante/Inspector) toman acción: pueden marcar "Fuera de Servicio", enviar al Taller, o notificar a otras áreas. Es el corazón resolutivo del módulo.
                         </p>
                     </section>
 
@@ -226,10 +212,10 @@ export function IncidentsSection() {
                         <h3 className="text-xl font-semibold">Quick Start</h3>
                         <ul className="ml-6 mt-4 list-decimal space-y-2 text-muted-foreground">
                             <li>
-                                <strong>Revisar Novedad:</strong> Si tienes permiso de Oficial/Inspector, usa el botón azul superior para abrir el formulario de revisión.
+                                <strong>Revisar Novedad:</strong> Si tienes rol de Capitán, Comandante o Inspector, usa el botón azul superior para abrir el formulario de revisión.
                             </li>
                             <li>
-                                <strong>Monitorear Notificaciones:</strong> En el panel lateral puedes ver si Taller, Material Mayor o Comandancia ya leyeron ("Visto") el reporte.
+                                <strong>Monitorear Notificaciones:</strong> En el panel lateral puedes ver si Taller, Material Mayor o Comandante ya leyeron ("Visto") el reporte.
                             </li>
                             <li>
                                 <strong>Detener la Unidad:</strong> Durante la revisión, puedes tildar "Material Fuera de Servicio". Esto se reflejará instantáneamente en el dashboard y en la vista general de la flota con una etiqueta roja.
@@ -279,19 +265,24 @@ export function IncidentsSection() {
                                             
                                             <div className="grid grid-cols-2 gap-6 mb-6">
                                                 <div>
-                                                    <div className="text-xs font-medium text-muted-foreground uppercase">Reportado Por</div>
-                                                    <div className="text-sm font-bold mt-1">Juan Pérez (Maquinista)</div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground uppercase">Fecha Detección</div>
+                                                    <div className="text-sm font-semibold">20 de Abril, 2026</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs font-medium text-muted-foreground uppercase">Estado Actual</div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground uppercase">Reportado Por</div>
+                                                    <div className="text-sm font-semibold">Juan Pérez (Maquinista)</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground uppercase">Fecha Registro</div>
+                                                    <div className="text-sm text-muted-foreground">20-04-2026 14:30</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground uppercase">Estado Actual</div>
                                                     <div className="mt-1 flex gap-2 relative">
-                                                        <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-200">
+                                                        <span className="rounded bg-yellow-50 px-2 py-0.5 text-[10px] font-bold text-yellow-700 border border-yellow-200 uppercase">
                                                             PENDIENTE REVISIÓN
                                                         </span>
-                                                        {/* Hotspot 2 */}
-                                                        <span className="absolute -right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
-                                                            2
-                                                        </span>
+                                                        <span className="absolute -right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -365,34 +356,46 @@ export function IncidentsSection() {
 
                     {/* Tabla de Roles Revisión */}
                     <section>
-                        <h3 className="text-xl font-semibold">Permisos en Detalle de Incidencia</h3>
-                        <p className="mb-4 mt-2 text-muted-foreground">
-                            Qué pueden ver y hacer los diferentes usuarios al entrar al reporte.
-                        </p>
-                        <div className="rounded-md border">
+                        <h3 className="text-xl font-semibold">Matriz de Permisos Detallada</h3>
+                        <div className="mt-4 overflow-x-auto rounded-md border">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">
                                         <th className="p-3 text-left font-medium">Rol</th>
-                                        <th className="p-3 text-left font-medium">Acciones Restringidas</th>
-                                        <th className="p-3 text-left font-medium">Paneles Visibles</th>
+                                        <th className="p-3 text-left font-medium">Visualización</th>
+                                        <th className="p-3 text-left font-medium">Acciones (Escritura/Revisión)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Bombero / Reportador</td>
-                                        <td className="p-3 text-muted-foreground">Ninguna (Solo lectura del estado).</td>
-                                        <td className="p-3 text-muted-foreground">Detalle del Reporte.</td>
+                                        <td className="p-3 font-medium">Comandante</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Incidencias</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Incidencias</td>
                                     </tr>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Inspector MM / Comandancia</td>
-                                        <td className="p-3 font-bold text-blue-600">Botón "Revisar Novedad" y Marcar Visto.</td>
-                                        <td className="p-3 text-muted-foreground">Detalles, Vistos y Panel de Revisión.</td>
+                                        <td className="p-3 font-medium">Inspector MM</td>
+                                        <td className="p-3">Selecc. "Reportar a Mat. Mayor"</td>
+                                        <td className="p-3 text-blue-700 font-bold">Todas con selecc. "Mat. Mayor"</td>
                                     </tr>
                                     <tr className="border-b">
                                         <td className="p-3 font-medium">Mecánico</td>
-                                        <td className="p-3 text-muted-foreground">Marcar como Visto (Taller).</td>
-                                        <td className="p-3 text-muted-foreground">Detalles y Vistos.</td>
+                                        <td className="p-3">Selecc. "Reportar a Taller Mecánico"</td>
+                                        <td className="p-3 text-blue-700 font-bold">Todas con selecc. "Taller Mecánico"</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Capitán</td>
+                                        <td className="p-3">Carros de su Compañía</td>
+                                        <td className="p-3 text-blue-700 font-bold">Crear y Revisar (Compañía)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Maquinista</td>
+                                        <td className="p-3 italic text-muted-foreground">Carros de su Compañía</td>
+                                        <td className="p-3 text-blue-700 font-bold">Solo Crear</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Cuartelero / Usuarios Hab.</td>
+                                        <td className="p-3 italic text-muted-foreground">Carros de su Compañía</td>
+                                        <td className="p-3 italic text-red-600">Sin Permisos</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -524,7 +527,7 @@ export function IncidentsSection() {
                                     4
                                 </span>
                                 <span>
-                                    <strong>Confirmación Segura:</strong> Ciertas acciones críticas (como dar de baja) solicitarán confirmación por PIN (OTP) antes de guardarse.
+                                    <strong>Confirmación Segura:</strong> Guarda y notifica a Taller y/o Material Mayor para su revisión. Requiere confirmación por PIN (OTP) antes de guardarse.
                                 </span>
                             </div>
                         </div>

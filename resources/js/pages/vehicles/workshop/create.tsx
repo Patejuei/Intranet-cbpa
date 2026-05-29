@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { ClipboardCheck, Pencil, Trash2 } from 'lucide-react';
@@ -40,6 +41,7 @@ interface Vehicle {
 }
 
 export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles: Vehicle[], defaultHourRate: number }) {
+    const { canEditWorkingHours } = usePermissions();
     const checklistItems = [
         'Sistema de frenos (Incluye ABS)',
         'Sistema Eléctrico y luces de emergencia',
@@ -391,7 +393,7 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                                     >
                                                         {opt}
                                                     </button>
-                                                ),
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -429,42 +431,26 @@ export default function WorkshopCreate({ vehicles, defaultHourRate }: { vehicles
                                 </div>
 
                                 {/* Labor Section */}
-                                <div className="rounded-lg border bg-muted/30 p-4">
-                                    <h3 className="mb-4 font-medium">Mano de Obra (Estimada/Inicial)</h3>
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label>Horas de Trabajo (HH)</Label>
-                                            <Input
-                                                type="number"
-                                                step="0.5"
-                                                value={data.working_hours}
-                                                onChange={(e) => setData('working_hours', Number(e.target.value))}
-                                                placeholder="0.0"
-                                            />
-                                            {errors.working_hours && (
-                                                <p className="text-sm text-destructive">{errors.working_hours}</p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Precio por Hora</Label>
-                                            <Input
-                                                type="number"
-                                                value={data.hour_rate}
-                                                onChange={(e) => setData('hour_rate', Number(e.target.value))}
-                                                placeholder="0"
-                                            />
-                                            {errors.hour_rate && (
-                                                <p className="text-sm text-destructive">{errors.hour_rate}</p>
-                                            )}
+                                {canEditWorkingHours() && (
+                                    <div className="rounded-lg border bg-muted/30 p-4">
+                                        <h3 className="mb-4 font-medium">Mano de Obra (Horas)</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Horas de Trabajo (HH)</Label>
+                                                <Input
+                                                    type="number"
+                                                    step="0.5"
+                                                    value={data.working_hours}
+                                                    onChange={(e) => setData('working_hours', Number(e.target.value))}
+                                                    placeholder="0.0"
+                                                />
+                                                {errors.working_hours && (
+                                                    <p className="text-sm text-destructive">{errors.working_hours}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-right">
-                                        <span className="text-sm text-muted-foreground">Subtotal Mano de Obra:</span>
-                                        <span className="ml-2 font-bold">
-                                            ${(Number(data.working_hours) * Number(data.hour_rate)).toLocaleString('es-CL')}
-                                        </span>
-                                    </div>
-                                </div>
+                                )}
 
                                 {/* Entry Checklist */}
                                 <div className="rounded-lg border p-4">

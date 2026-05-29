@@ -59,7 +59,7 @@ interface Props {
 }
 
 export default function InventoryIndex({ items, filters, defaultHourRate }: Props) {
-    const { canCreate, canEdit, hasPermission } = usePermissions();
+    const { canCreate, canEdit, hasPermission, canConfigureHH } = usePermissions();
     const [search, setSearch] = useState(filters.search || '');
     const [category, setCategory] = useState(filters.category || 'all');
     const [hourRate, setHourRate] = useState(defaultHourRate);
@@ -151,7 +151,7 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                                 </Link>
                             </Button>
                         )}
-                        {hasPermission('vehicles.inventory.edit') && (
+                        {canConfigureHH() && (
                             <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
                                 <Clock className="mr-2 h-4 w-4" />
                                 Ajustes Taller

@@ -7,7 +7,7 @@ export function WorkshopSection() {
             <SectionHeader
                 title="Taller Mecánico"
                 icon={Wrench}
-                roles={['Inspector MM', 'Comandancia', 'Administración']}
+                roles={['Inspector MM', 'Comandancia', 'Mecánico', 'Administración']}
             />
             
             <div className="space-y-16">
@@ -127,7 +127,7 @@ export function WorkshopSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            Es el formulario más completo del sistema. Permite abrir la orden de trabajo recabando datos técnicos del vehículo, estimaciones de mano de obra, vincular incidencias preexistentes y generar un Checklist visual que alimenta automáticamente las tareas del taller.
+                            Es el punto de inicio para cualquier reparación. Permite abrir la orden de trabajo capturando datos técnicos (Kms, Horas), vincular incidencias reportadas por las compañías y generar un <strong>Checklist de Recepción</strong> que define el alcance del trabajo.
                         </p>
                     </section>
 
@@ -192,6 +192,27 @@ export function WorkshopSection() {
                                 <span className="absolute -left-3 top-6 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                             </div>
 
+                            {/* Vincular Incidencias */}
+                            <div className="rounded border p-4 bg-muted/5 relative">
+                                <div className="text-sm font-medium mb-3">Vincular Incidencias Pendientes</div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 rounded border bg-background p-2 text-xs">
+                                        <div className="h-4 w-4 rounded border border-primary bg-primary flex items-center justify-center text-[10px] text-white">✓</div>
+                                        <div className="flex-1">
+                                            <span className="font-bold">#1024</span> - Falla en sirena electrónica
+                                        </div>
+                                        <div className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">Crítica</div>
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded border bg-background p-2 text-xs opacity-50">
+                                        <div className="h-4 w-4 rounded border"></div>
+                                        <div className="flex-1">
+                                            <span className="font-bold">#1021</span> - Foco trasero trizado
+                                        </div>
+                                    </div>
+                                </div>
+                                <span className="absolute -left-3 top-6 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">5</span>
+                            </div>
+
                             {/* Trabajos a Realizar */}
                             <div className="space-y-2 relative">
                                 <div className="text-sm font-medium">Trabajos a Realizar</div>
@@ -216,7 +237,11 @@ export function WorkshopSection() {
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
-                                <span><strong>Automatización de Tareas:</strong> Las fallas detectadas en el checklist se inyectan como "Tareas a realizar" directamente, ahorrando tiempo de tipeo. Además puedes vincular Incidencias previas.</span>
+                                <span><strong>Automatización de Tareas:</strong> Las fallas detectadas en el checklist se inyectan como "Tareas a realizar" directamente, ahorrando tiempo de tipeo.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>
+                                <span><strong>Resolución de Incidencias:</strong> Permite adjuntar fallas reportadas previamente por las compañías a esta orden de trabajo. Al cerrar la orden, las incidencias vinculadas cambiarán su estado a "Reparado" automáticamente.</span>
                             </div>
                         </div>
                     </section>
@@ -278,7 +303,7 @@ export function WorkshopSection() {
                                     </div>
                                 </div>
 
-                                <div className="rounded border shadow-sm p-4">
+                                <div className="rounded border shadow-sm p-4 relative">
                                     <div className="font-bold border-b pb-2 text-sm">Incidencias Vinculadas</div>
                                     <div className="p-2 border rounded mt-2 flex gap-2 items-start bg-muted/5">
                                         <div className="h-4 w-4 rounded border bg-primary flex items-center justify-center text-[10px] text-white">✓</div>
@@ -287,6 +312,7 @@ export function WorkshopSection() {
                                             <div className="text-xs flex justify-between text-muted-foreground mt-1">2026-04-20 <span className="bg-primary text-white px-1.5 rounded">Marcado para Resolver</span></div>
                                         </div>
                                     </div>
+                                    <span className="absolute -left-3 top-10 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">5</span>
                                 </div>
                             </div>
 
@@ -327,7 +353,7 @@ export function WorkshopSection() {
                                     </table>
                                 </div>
 
-                                <div className="rounded border shadow-sm p-4 space-y-4">
+                                <div className="rounded border shadow-sm p-4 space-y-4 relative">
                                     <div className="font-bold border-b pb-2 text-sm flex justify-between">
                                         Listado de Trabajos <span className="bg-muted px-2 rounded-full text-xs flex items-center border">1/2 Completados</span>
                                     </div>
@@ -341,6 +367,7 @@ export function WorkshopSection() {
                                             <div className="text-sm">Cambio de aceite y filtro</div>
                                         </div>
                                     </div>
+                                    <span className="absolute -left-3 top-10 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">6</span>
                                 </div>
 
                                 <div className="rounded border shadow-sm p-4 space-y-4 relative">
@@ -379,8 +406,9 @@ export function WorkshopSection() {
                                 </div>
                                 
                                 <div className="flex justify-end gap-2 pt-2 relative">
-                                    <div className="h-9 px-4 rounded bg-primary text-white text-sm font-medium flex items-center shadow-sm">Guardar Cambios</div>
-                                    <div className="h-9 px-4 rounded bg-red-600 text-white text-sm font-medium flex items-center shadow-sm">Finalizar</div>
+                                    <div className="h-9 px-4 rounded border text-sm font-medium flex items-center shadow-sm">Imprimir Ingreso</div>
+                                    <div className="h-9 px-4 rounded bg-primary text-white text-sm font-medium flex items-center shadow-sm">Guardar</div>
+                                    <div className="h-9 px-4 rounded bg-red-600 text-white text-sm font-medium flex items-center shadow-sm">Finalizar y Entregar</div>
                                     <span className="absolute -top-3 right-6 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">4</span>
                                 </div>
                             </div>
@@ -389,7 +417,7 @@ export function WorkshopSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Máquina de Estados:</strong> Al cambiar el estado a "Entregado", se gatilla un modal de retiro donde se exige firma o RUT de quien retira físicamente la unidad.</span>
+                                <span><strong>Máquina de Estados:</strong> Al cambiar el estado a "Entregado", se gatilla un modal de retiro donde se exige el Nombre y RUT de quien retira físicamente la unidad.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
@@ -403,13 +431,21 @@ export function WorkshopSection() {
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
                                 <span><strong>Cierre y Automatización:</strong> Al finalizar la orden, se bloquean las ediciones, se suman horas de labor + repuestos + trabajos externos y las Incidencias marcadas pasan a estado "Resuelto" a nivel global en el sistema.</span>
                             </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>
+                                <span><strong>Incidencias Vinculadas:</strong> Muestra las fallas reportadas previamente que se están resolviendo. Al finalizar la orden, estas incidencias se cierran automáticamente en el historial global.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">6</span>
+                                <span><strong>Control de Tareas:</strong> Listado granular de los trabajos realizados. Permite marcar avances individuales para mantener la trazabilidad de la reparación. Permite adicionar nuevas tareas en el transcurso de la mantención.</span>
+                            </div>
                         </div>
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">Permisos y Roles</h2>
+                    <h2 className="text-xl font-semibold">Matriz de Responsabilidades</h2>
                     <div className="overflow-x-auto rounded-xl border">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50">
@@ -418,30 +454,37 @@ export function WorkshopSection() {
                                     <th className="p-3">Ver Órdenes</th>
                                     <th className="p-3">Crear/Editar</th>
                                     <th className="p-3">Finalizar Orden</th>
-                                    <th className="p-3">Comentarios Adicionales</th>
+                                    <th className="p-3">Alcance Territorial</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Bombero / Maquinista</td>
+                                    <td className="p-3 font-medium">Capitán / Maquinista / Cuartelero</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-red-600">No</td>
                                     <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-muted-foreground">Solo pueden ver o reportar Incidencias o Checklists en sus módulos correspondientes.</td>
-                                </tr>
-                                <tr className="border-t">
-                                    <td className="p-3 font-medium">Capitán</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-red-600">No</td>
-                                    <td className="p-3 text-muted-foreground">Puede ver el estado de reparación de las máquinas de su propia compañía.</td>
+                                    <td className="p-3 text-muted-foreground">Solo unidades de su propia Compañía.</td>
                                 </tr>
                                 <tr className="border-t bg-muted/10">
-                                    <td className="p-3 font-medium text-primary">Inspector MM / Comandancia</td>
-                                    <td className="p-3 text-green-600 font-bold">Todas</td>
+                                    <td className="p-3 font-medium text-primary">Mecánico / Personal de Taller</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-muted-foreground">Control total. Pueden manipular costos, repuestos de inventario y dar salida a los vehículos.</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-muted-foreground">Todas las Unidades del Cuerpo.</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Inspector MM / Comandancia</td>
+                                    <td className="p-3 text-green-700 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-muted-foreground">Control total y supervisión económica de la flota.</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Usuarios / Voluntarios</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-muted-foreground">Módulo oculto para personal no autorizado.</td>
                                 </tr>
                             </tbody>
                         </table>

@@ -7,7 +7,7 @@ export function ChecklistsSection() {
             <SectionHeader
                 title="Checklists Preventivos"
                 icon={ClipboardCheck}
-                roles={['Maquinista', 'Capitán', 'Inspector MM', 'Comandancia']}
+                roles={['Maquinista', 'Capitán', 'Inspector MM', 'Comandancia', 'Cuartelero', 'Taller Mecánico']}
             />
             
             <div className="space-y-16">
@@ -21,7 +21,7 @@ export function ChecklistsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El historial de checklists funciona como el archivo oficial de las revisiones rutinarias de las unidades. Permite auditar qué maquinista realizó la revisión, la fecha, y si se identificaron elementos urgentes o para próxima mantención.
+                            El <strong>Checklist Preventivo</strong> es la herramienta principal para asegurar la operatividad del Material Mayor. No es solo un formulario; es un registro legal de quién revisó el carro y en qué estado lo encontró. Permite detectar fallas mecánicas antes de que se conviertan en reparaciones costosas o dejen a la unidad fuera de servicio en una emergencia.
                         </p>
                     </section>
 
@@ -44,7 +44,7 @@ export function ChecklistsSection() {
                                 </div>
                             </div>
                             <div className="p-0">
-                                <table className="w-full text-sm text-left">
+                                <table className="w-full text-sm text-left overflow-x-auto">
                                     <thead className="bg-muted/30">
                                         <tr>
                                             <th className="p-3">ID</th>
@@ -105,7 +105,7 @@ export function ChecklistsSection() {
 
                     <section>
                         <h3 className="text-xl font-semibold">Detalle Visual</h3>
-                        <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-md max-w-3xl mx-auto p-6 space-y-6">
+                        <div className="relative mt-4 rounded-xl border bg-background shadow-md max-w-3xl mx-auto p-6 space-y-6">
                             
                             <div className="space-y-1.5 relative">
                                 <div className="text-sm font-medium">Vehículo</div>
@@ -121,14 +121,16 @@ export function ChecklistsSection() {
                                 <div className="p-4 grid grid-cols-[1fr_auto_1fr] gap-4 items-center border-b last:border-0 relative">
                                     <div className="font-medium text-sm">Luces de emergencia (Balizas)</div>
                                     
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-4 relative">
                                         <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border-4 border-green-600"></div><span className="text-xs font-bold text-green-700">OK</span></div>
                                         <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground"></div><span className="text-xs font-bold text-yellow-700">Próx. Mant.</span></div>
                                         <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground"></div><span className="text-xs font-bold text-red-700">Urgente</span></div>
+                                        
+                                        {/* Hotspot 1 */}
+                                        <span className="absolute -top-4 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
                                     </div>
                                     
                                     <div><div className="h-8 rounded border flex items-center px-2 text-xs text-muted-foreground bg-muted/5">Observaciones (opcional)</div></div>
-                                    <span className="absolute -left-3 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
                                 </div>
 
                                 <div className="p-4 grid grid-cols-[1fr_auto_1fr] gap-4 items-center relative">
@@ -140,8 +142,11 @@ export function ChecklistsSection() {
                                         <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border-4 border-red-600"></div><span className="text-xs font-bold text-red-700">Urgente</span></div>
                                     </div>
                                     
-                                    <div><div className="h-8 rounded border flex items-center px-2 text-xs">Foco lateral derecho quemado</div></div>
-                                    <span className="absolute -left-3 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
+                                    <div className="relative">
+                                        <div className="h-8 rounded border flex items-center px-2 text-xs">Foco lateral derecho quemado</div>
+                                        {/* Hotspot 2 */}
+                                        <span className="absolute -top-3 -right-1 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -150,19 +155,25 @@ export function ChecklistsSection() {
                                 <div className="h-20 rounded border bg-muted/5 p-2 text-sm text-muted-foreground">Comentarios generales sobre el estado del vehículo...</div>
                             </div>
 
-                            <div className="flex justify-end pt-4">
+                            <div className="flex justify-end pt-4 relative">
                                 <div className="h-9 px-6 rounded bg-primary text-white text-sm font-medium flex items-center shadow-sm">Registrar Checklist</div>
+                                {/* Hotspot 3 */}
+                                <span className="absolute -top-1 -right-2 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                             </div>
                         </div>
 
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Evaluación Obligatoria:</strong> Cada ítem de la lista debe tener marcado al menos su estado. Por defecto se inicializa en "OK".</span>
+                                <span><strong>Evaluación de Estado:</strong> Cada componente debe ser calificado obligatoriamente. El sistema valida que no queden ítems sin revisar antes de permitir el guardado.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Observaciones Específicas:</strong> Si se marca "Urgente" o "Próx. Mant.", es una buena práctica (y exigido por el mando) colocar un detalle textual de qué es lo que falló exactamente en ese componente.</span>
+                                <span><strong>Justificación de Fallas:</strong> Al marcar "Urgente" o "Próx. Mant.", es obligatorio detallar el hallazgo para que el equipo de material mayor tenga claridad del problema.</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                <span><strong>Cierre y Notificación:</strong> El registro bloquea el checklist y dispara alertas automáticas a los inspectores si se detectan fallas críticas que comprometan la operatividad.</span>
                             </div>
                         </div>
                     </section>
@@ -171,7 +182,7 @@ export function ChecklistsSection() {
                 {/* --- 3. Detalle y Visación --- */}
                 <div className="space-y-8 pt-8 border-t">
                     <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
-                        3. Detalle y Flujo de Visación (Show)
+                        3. Detalle y Flujo de Visación
                     </h2>
 
                     <section>
@@ -245,51 +256,63 @@ export function ChecklistsSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Flujos Diferenciados:</strong> Si el vehículo es de Compañía, debe ser visado por el Capitán y Teniente de Máquinas. Si es de Comandancia, lo visa el Comandante y el Inspector MM.</span>
+                                <span><strong>Responsabilidad de Mando:</strong> Si el vehículo es de Compañía, debe ser visado por el Capitán y Maquinista. Si es de Comandancia, lo visa el Comandante y el Inspector MM.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Visación con 2FA:</strong> El botón "Visar Checklist" lanza el modal de Autenticación de Dos Factores (Código al correo) garantizando que la firma electrónica sea estrictamente personal.</span>
+                                <span><strong>Visado (OTP):</strong> Al visar, el sistema envía un código de 6 dígitos para garantizar que la revisión es verídica e intransferible.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
-                                <span><strong>Detalle Resumido:</strong> Los resultados del formulario se exponen de forma visual con colores rojo/amarillo/verde, priorizando que los mandos vean rápido qué está fallando.</span>
+                                <span><strong>Semaforización:</strong> Los estados Rojo (Urgente) y Amarillo (Próx. Mant.) generan alertas visuales inmediatas para el Taller Mecánico y la Comandancia.</span>
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">Permisos y Roles</h2>
+                    <h2 className="text-xl font-semibold">Matriz de Responsabilidades</h2>
                     <div className="overflow-x-auto rounded-xl border">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50">
                                 <tr>
                                     <th className="p-3">Rol</th>
                                     <th className="p-3">Ver Historial</th>
-                                    <th className="p-3">Crear Checklist</th>
-                                    <th className="p-3">Visar (Firma Digital)</th>
+                                    <th className="p-3">Registrar Nuevo</th>
+                                    <th className="p-3">Visar (Firma Electrónica)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Bombero / Maquinista</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 font-medium">Maquinista / Cuartelero</td>
+                                    <td className="p-3 text-blue-700">Compañía / Asignados</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
+                                    <td className="p-3 font-bold text-blue-600">Solo Maquinista (Cía)</td>
                                 </tr>
                                 <tr className="border-t">
-                                    <td className="p-3 font-medium">Capitán / Tte. de Máquinas</td>
-                                    <td className="p-3 text-green-600">Solo su Cía</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí (Vehículos de su Cía)</td>
+                                    <td className="p-3 font-medium">Capitán</td>
+                                    <td className="p-3 text-blue-700">Compañía / Asignados</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Cía)</td>
                                 </tr>
-                                <tr className="border-t bg-muted/10">
-                                    <td className="p-3 font-medium text-primary">Inspector MM / Comandancia</td>
-                                    <td className="p-3 text-green-600 font-bold">Todas las Cías</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí (Vehículos de Comandancia)</td>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Conductor</td>
+                                    <td className="p-3 italic text-blue-700">Asignados</td>
+                                    <td className="p-3 italic text-blue-600">Asignados</td>
+                                    <td className="p-3 text-red-600 font-bold">No Habilitado</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Inspector MM / Comandante</td>
+                                    <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 text-green-600 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 text-green-600 font-bold">Solo Unidades Comandancia</td>
+                                </tr>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Mecánico</td>
+                                    <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                    <td className="p-3 text-red-600">No Habilitado</td>
+                                    <td className="p-3 text-red-600">No Habilitado</td>
                                 </tr>
                             </tbody>
                         </table>

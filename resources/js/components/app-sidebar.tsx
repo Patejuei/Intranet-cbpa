@@ -30,6 +30,7 @@ import {
     FileText,
     Hammer,
     LayoutGrid,
+    LogOut,
     Package,
     Shield,
     Ticket,
@@ -227,11 +228,11 @@ export function AppSidebar({ user }: { user: any }) {
         if (!module) return true; // Public items
         if (!user) return false;
 
-        // Admin and Comandante have full access
-        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
+        // Special restriction for Users Administration
+        if (module === 'users') return user.role === 'admin';
 
-        // Ayudante: No access to users
-        if (user.role === 'ayudante' && module === 'users') return false;
+        // Admin and Comandante have full access to everything else
+        if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
 
         if (user.role === 'secretaria_adquisiciones') {
             const allowed = [
@@ -357,62 +358,31 @@ export function AppSidebar({ user }: { user: any }) {
 
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+            {user && (
+                <SidebarHeader>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link href={dashboard()} prefetch>
+                                    <AppLogo />
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarHeader>
+            )}
 
-            <SidebarContent>
-                {filteredGroups.map((group) => {
-                    const isSingleItem = group.items.length === 1;
+            {user && (
+                <SidebarContent>
+                    {filteredGroups.map((group) => {
+                        const isSingleItem = group.items.length === 1;
 
-                    if (isSingleItem) {
-                        return (
-                            <SidebarGroup key={group.title}>
-                                <SidebarGroupLabel>
-                                    {group.title}
-                                </SidebarGroupLabel>
-                                <SidebarMenu>
-                                    {group.items.map((item) => (
-                                        <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton
-                                                asChild
-                                                tooltip={item.tooltip}
-                                            >
-                                                <Link href={item.url}>
-                                                    <item.icon />
-                                                    <span>{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroup>
-                        );
-                    }
-
-                    return (
-                        <Collapsible
-                            key={group.title}
-                            asChild
-                            defaultOpen
-                            className="group/collapsible"
-                        >
-                            <SidebarGroup>
-                                <SidebarGroupLabel asChild>
-                                    <CollapsibleTrigger>
+                        if (isSingleItem) {
+                            return (
+                                <SidebarGroup key={group.title}>
+                                    <SidebarGroupLabel>
                                         {group.title}
-                                        <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                                    </CollapsibleTrigger>
-                                </SidebarGroupLabel>
-                                <CollapsibleContent>
+                                    </SidebarGroupLabel>
                                     <SidebarMenu>
                                         {group.items.map((item) => (
                                             <SidebarMenuItem key={item.title}>
@@ -422,22 +392,58 @@ export function AppSidebar({ user }: { user: any }) {
                                                 >
                                                     <Link href={item.url}>
                                                         <item.icon />
-                                                        <span>
-                                                            {item.title}
-                                                        </span>
+                                                        <span>{item.title}</span>
                                                     </Link>
                                                 </SidebarMenuButton>
                                             </SidebarMenuItem>
                                         ))}
                                     </SidebarMenu>
-                                </CollapsibleContent>
-                            </SidebarGroup>
-                        </Collapsible>
-                    );
-                })}
-            </SidebarContent>
+                                </SidebarGroup>
+                            );
+                        }
+
+                        return (
+                            <Collapsible
+                                key={group.title}
+                                asChild
+                                defaultOpen
+                                className="group/collapsible"
+                            >
+                                <SidebarGroup>
+                                    <SidebarGroupLabel asChild>
+                                        <CollapsibleTrigger>
+                                            {group.title}
+                                            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                                        </CollapsibleTrigger>
+                                    </SidebarGroupLabel>
+                                    <CollapsibleContent>
+                                        <SidebarMenu>
+                                            {group.items.map((item) => (
+                                                <SidebarMenuItem key={item.title}>
+                                                    <SidebarMenuButton
+                                                        asChild
+                                                        tooltip={item.tooltip}
+                                                    >
+                                                        <Link href={item.url}>
+                                                            <item.icon />
+                                                            <span>
+                                                                {item.title}
+                                                            </span>
+                                                        </Link>
+                                                    </SidebarMenuButton>
+                                                </SidebarMenuItem>
+                                            ))}
+                                        </SidebarMenu>
+                                    </CollapsibleContent>
+                                </SidebarGroup>
+                            </Collapsible>
+                        );
+                    })}
+                </SidebarContent>
+            )}
 
             <SidebarFooter>
+<<<<<<< HEAD
                 <div className="flex items-center justify-between px-2 py-1">
                     <AppearanceToggle />
                     <Link href="/changelog" className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors group-data-[collapsible=icon]:hidden">
@@ -445,6 +451,23 @@ export function AppSidebar({ user }: { user: any }) {
                     </Link>
                 </div>
                 <NavUser />
+=======
+                <AppearanceToggle />
+                {user ? (
+                    <NavUser />
+                ) : (
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <Link href="/login">
+                                    <LogOut className="mr-2 h-4 w-4 rotate-180" />
+                                    <span>Iniciar Sesión</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                )}
+>>>>>>> 147d0fbebd807bdf4f3e24af984f7a8a2ddcd06a
             </SidebarFooter>
         </Sidebar>
     );

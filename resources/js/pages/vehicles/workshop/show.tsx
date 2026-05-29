@@ -326,7 +326,7 @@ export default function WorkshopShow({
 
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
 
-    const { canEdit: canEditPermission } = usePermissions();
+    const { canEdit: canEditPermission, canConfigureHH, canEditWorkingHours } = usePermissions();
     const canEdit = canEditPermission('vehicles.workshop');
     const isLocked =
         maintenance.status === 'Finalizado' ||
@@ -579,12 +579,12 @@ export default function WorkshopShow({
                                                     )
                                                 }
                                                 disabled={
-                                                    isReadOnly ||
+                                                    !canEditWorkingHours() ||
                                                     data.status ===
                                                         'Entregado' ||
                                                     data.status === 'Finalizado'
                                                 }
-                                                className="h-8 text-sm"
+                                                className={`h-8 text-sm ${!canEditWorkingHours() ? 'bg-muted' : ''}`}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -601,12 +601,12 @@ export default function WorkshopShow({
                                                     )
                                                 }
                                                 disabled={
-                                                    isReadOnly ||
+                                                    !canConfigureHH() ||
                                                     data.status ===
                                                         'Entregado' ||
                                                     data.status === 'Finalizado'
                                                 }
-                                                className="h-8 text-sm"
+                                                className={`h-8 text-sm ${!canConfigureHH() ? 'bg-muted' : ''}`}
                                             />
                                         </div>
                                     </div>

@@ -1,36 +1,41 @@
-# Skill Registry - Intranet CBPA
+# Project Skill Registry - Intranet-cbpa
 
-## Compact Rules
+## Core Stack
+- **Framework**: Laravel 12 (PHP 8.2+)
+- **Frontend**: Inertia.js, React 19
+- **Build Tool**: Vite 7
+- **CSS**: Tailwind 4
+- **Testing**: Pest (PHP), No frontend test framework detected in package.json (likely manual/E2E only or rely on Laravel tests).
 
-### Project Standards (Laravel/React/Inertia)
-- **Language**: Spanish (Spanish) for UI and docs.
-- **Routing**: Group by module (`prefix('vehicles')`, `module:vehicles`).
-- **Controllers**: Use Inertia for views, JSON for auxiliary APIs. Namespace by module.
-- **Frontend**: One-to-one mapping between `Inertia::render` and `resources/js/pages/`.
-- **UI**: Reuse shadcn/Radix components in `resources/js/components/ui/`.
-- **Permissions**: Use `use-permissions` hook and `module:*` middleware.
-- **Multi-company**: Always filter queries by user's company unless global admin.
+## Compact Rules (auto-injected)
 
-### Testing
-- **Backend**: Use Pest for PHP tests (`php artisan test`).
-- **Frontend**: No dedicated runner detected yet.
+### Laravel Specialist
+- Use `Inertia::render()` for views.
+- Models in `app/Models`, Controllers in `app/Http/Controllers` (namespaced by module).
+- Always filter by `company` (multi-tenant).
+- Use `CompanyScopeTrait` when available.
+- Routes in `routes/web.php` and `routes/settings.php`.
+- Permissions enforced via `module:*` middleware and `CheckModuleAccess`.
 
-## Registered User Skills
+### React Best Practices
+- Components in `resources/js/components`.
+- Pages in `resources/js/pages`.
+- Use `use-permissions` hook for UI-level access control.
+- Spanish language for all UI text.
+- Use `shadcn/ui` components from `resources/js/components/ui`.
+- Use persistent layouts (`app-layout`, `app-sidebar-layout`).
 
-| Skill | Trigger | Description |
-|-------|---------|-------------|
-| sdd-explore | `/sdd-explore <topic>` | Explore and investigate ideas before committing to a change. |
-| sdd-propose | `/sdd-propose` | Create a change proposal with intent, scope, and approach. |
-| sdd-spec | `/sdd-spec` | Write specifications with requirements and scenarios (delta specs). |
-| sdd-design | `/sdd-design` | Create technical design document with architecture decisions. |
-| sdd-tasks | `/sdd-tasks` | Break down a change into an implementation task checklist. |
-| sdd-apply | `/sdd-apply` | Implement tasks from the change following specs and design. |
-| sdd-verify | `/sdd-verify` | Validate implementation matches specs, design, and tasks. |
-| sdd-archive | `/sdd-archive` | Sync delta specs to main specs and archive change. |
-| laravel-specialist | Laravel models, controllers | Specialist rules for Laravel 10+ |
-| shadcn-ui | shadcn components, Radix | Guide for accessible React components |
-| responsive-design | Building layouts | Modern responsive design patterns |
-| vercel-react-best-practices | React components | Performance optimization for React |
+## User Skills
 
-## Project Instructions
-Include context from: [AGENTS.md](file:///c:/xampp/htdocs/intranet-cbpa/AGENTS.md)
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| laravel-specialist | `.php`, `app/`, `routes/`, `database/` | Backend logic, models, controllers |
+| responsive-design | `.tsx`, `resources/js/` | Responsive UI implementation |
+| shadcn-ui | `.tsx`, `resources/js/components/ui/` | UI component usage |
+| vercel-react-best-practices | `.tsx`, `resources/js/` | React performance and architecture |
+
+## Project Instructions (from AGENTS.MD)
+- **Permissions**: Multi-company and multi-role. Non-admin users see only their company's data.
+- **Language**: Spanish only.
+- **Critical Flows**: Vehicle checklists, material bajas, petty cash renditions, support tickets.
+- **PDFs**: Generated via Blade templates in `resources/views/pdf/` + DOMPDF.

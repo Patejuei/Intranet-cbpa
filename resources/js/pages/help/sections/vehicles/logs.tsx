@@ -7,7 +7,7 @@ export function LogsSection() {
             <SectionHeader
                 title="Bitácoras de Material Mayor"
                 icon={BookOpen}
-                roles={['Todos (Maquinistas)', 'Inspector MM']}
+                roles={['Comandante', 'Inspector MM', 'Capitán', 'Maquinista', 'Cuartelero']}
             />
             
             <div className="space-y-16">
@@ -29,15 +29,15 @@ export function LogsSection() {
                     {/* Quick Start */}
                     <section>
                         <h3 className="text-xl font-semibold">Quick Start</h3>
-                        <ul className="ml-6 mt-4 list-decimal space-y-2 text-muted-foreground">
+                        <ul className="ml-6 mt-4 list-decimal space-y-2 text-muted-foreground text-sm">
                             <li>
-                                <strong>Consultar Movimientos:</strong> Usa el selector superior para filtrar por vehículo y ver su historial de salidas.
+                                <strong>Registrar Salida:</strong> En la pestaña "Registrar Movimiento", selecciona el vehículo. El sistema cargará automáticamente el último kilometraje.
                             </li>
                             <li>
-                                <strong>Exportar a Excel:</strong> Si necesitas un reporte formal de kilómetros recorridos, haz clic en el botón de exportación ubicado arriba a la derecha de la tabla.
+                                <strong>Control de Combustible:</strong> Si cargaste combustible, activa el switch correspondiente para adjuntar el vale y la foto de la boleta.
                             </li>
                             <li>
-                                <strong>Ver Detalle:</strong> Presiona el botón "Ver" para examinar si hubo carga de combustible o se adjuntaron boletas en esa salida.
+                                <strong>Consultar Historial:</strong> Usa los filtros por unidad para auditar los movimientos y exportar reportes en Excel para rendiciones de cuenta.
                             </li>
                         </ul>
                     </section>
@@ -126,29 +126,55 @@ export function LogsSection() {
                         </div>
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    1
-                                </span>
-                                <span>
-                                    <strong>Filtros y Reportes:</strong> Útiles para auditorías. Comandancia o Inspectores pueden cruzar datos de Excel con el GPS de los vehículos.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
+                                <span><strong>Filtros y Reportes:</strong> Útiles para auditorías. Comandancia o Inspectores pueden cruzar datos de Excel con el GPS de los vehículos.</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    2
-                                </span>
-                                <span>
-                                    <strong>Categorización de Actividad:</strong> Clasifica las salidas (Academia, Emergencia, Carga de Combustible) para análisis de consumo.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
+                                <span><strong>Análisis de Consumo Operativo:</strong> Clasifica cada movimiento para entender la distribución del gasto energético entre salidas operativas y de apoyo institucional.</span>
                             </div>
                             <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
-                                    3
-                                </span>
-                                <span>
-                                    <strong>Odómetro Continuo:</strong> El sistema pre-carga el último kilometraje registrado (Llegada anterior) en la siguiente Salida.
-                                </span>
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                <span><strong>Odómetro Continuo:</strong> El sistema pre-carga el último kilometraje registrado para mantener la coherencia del historial.</span>
                             </div>
+                        </div>
+                    </section>
+
+                    {/* Tabla de Roles General */}
+                    <section>
+                        <h3 className="text-xl font-semibold">Permisos de Acceso</h3>
+                        <div className="mt-4 overflow-x-auto rounded-md border text-sm">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/50">
+                                        <th className="p-3 text-left font-medium">Rol</th>
+                                        <th className="p-3 text-left font-medium">Lectura</th>
+                                        <th className="p-3 text-left font-medium">Registro / Escritura</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Comandante / Admin</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                        <td className="p-3 text-green-700 font-bold">Habilitado (Todas)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Inspector MM / Mecánico</td>
+                                        <td className="p-3 text-green-700 font-bold">Todas las Unidades</td>
+                                        <td className="p-3 text-red-600 italic">Solo Lectura</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Capitán / Maquinista / Cuartelero</td>
+                                        <td className="p-3 text-blue-700 font-medium">Solo su Compañía</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado (Compañía)</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Usuario (Conductor)</td>
+                                        <td className="p-3 italic">Solo Unidades Asignadas</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado (Asignadas)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </section>
                 </div>
@@ -164,7 +190,7 @@ export function LogsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            Esta pestaña es de uso constante por los maquinistas u operadores. El formulario es inteligente: al seleccionar un vehículo, autocompleta el Kilometraje de Inicio con el último registro conocido, minimizando errores de tipeo. Además, tiene un flujo dinámico para registros de combustible.
+                            Esta pestaña es de uso constante por los maquinistas o conductores. El formulario es inteligente: al seleccionar un vehículo, autocompleta el Kilometraje de Inicio con el último registro conocido, minimizando errores de tipeo. Además, tiene un flujo dinámico para registros de combustible.
                         </p>
                     </section>
 
@@ -200,7 +226,7 @@ export function LogsSection() {
 
                                 <div className="space-y-1.5">
                                     <div className="text-sm font-medium">Dirección / Destino</div>
-                                    <div className="flex h-9 items-center rounded border px-3 text-sm text-muted-foreground">Av. Concha y Toro 3349</div>
+                                    <div className="flex h-9 items-center rounded border px-3 text-sm text-muted-foreground">10-0-1 Av. Concha y Toro / Av. Los Toros</div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -266,7 +292,8 @@ export function LogsSection() {
 
                                 <div className="space-y-1.5">
                                     <div className="text-sm font-medium">Observaciones (Opcional)</div>
-                                    <div className="flex min-h-[80px] rounded border px-3 py-2 text-sm text-muted-foreground">Detalle cualquier novedad o incidencia...</div>
+                                    <div className="flex min-h-[80px] rounded border px-3 py-2 text-sm text-muted-foreground">- OBAC
+                                        - Detalle cualquier novedad o incidencia...</div>
                                 </div>
 
                                 <div className="flex justify-end pt-2">
@@ -291,7 +318,7 @@ export function LogsSection() {
                                     2
                                 </span>
                                 <span>
-                                    <strong>Kilometraje Pre-cargado:</strong> Para evitar errores, el Kilometraje de Inicio no se debe inventar; se autocompleta con la última llegada. Solo se puede alterar si el Inspector MM lo autoriza (corrigiendo el odómetro manualmente).
+                                    <strong>Kilometraje Pre-cargado:</strong> Para evitar errores, el Kilometraje de Inicio no se debe inventar; se autocompleta con la última llegada.
                                 </span>
                             </div>
                             <div className="flex items-start gap-2">
@@ -307,40 +334,41 @@ export function LogsSection() {
 
                     {/* Tabla de Roles Generales */}
                     <section>
-                        <h3 className="text-xl font-semibold">Permisos en Módulo Bitácoras</h3>
-                        <p className="mb-4 mt-2 text-muted-foreground">
-                            Qué pueden hacer los usuarios dentro de esta sección:
-                        </p>
-                        <div className="rounded-md border">
+                        <h3 className="text-xl font-semibold">Permisos de Registro</h3>
+                        <div className="mt-4 overflow-x-auto rounded-md border">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b bg-muted/50">
                                         <th className="p-3 text-left font-medium">Rol</th>
-                                        <th className="p-3 text-left font-medium">Acceso</th>
-                                        <th className="p-3 text-left font-medium">Capacidades</th>
+                                        <th className="p-3 text-left font-medium">Registro (Escritura)</th>
+                                        <th className="p-3 text-left font-medium">Alcance</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Maquinista Autorizado</td>
-                                        <td className="p-3 font-bold text-blue-600">Crear y Leer</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            Puede registrar bitácoras de su compañía y ver el historial de los vehículos a los que tiene acceso.
-                                        </td>
+                                        <td className="p-3 font-medium">Comandante / Inspector MM</td>
+                                        <td className="p-3 text-green-700 font-bold">Habilitado</td>
+                                        <td className="p-3 text-green-700">Todas las Unidades</td>
                                     </tr>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Inspector MM / Comandancia</td>
-                                        <td className="p-3 font-bold text-blue-600">Gestión Total</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            Ven el historial de todo el Cuerpo, exportan reportes globales y pueden editar kilometrajes en caso de desfase (se hace desde Control de Unidades).
-                                        </td>
+                                        <td className="p-3 font-medium">Maquinista / Cuartelero</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado</td>
+                                        <td className="p-3 text-blue-700">Solo su Compañía</td>
                                     </tr>
                                     <tr className="border-b">
-                                        <td className="p-3 font-medium">Bombero Estandar</td>
-                                        <td className="p-3 text-muted-foreground text-red-600">Sin Acceso</td>
-                                        <td className="p-3 text-muted-foreground">
-                                            La bitácora es una responsabilidad exclusiva de quien conduce. No es visible para personal no autorizado.
-                                        </td>
+                                        <td className="p-3 font-medium">Capitán</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado</td>
+                                        <td className="p-3 text-blue-700">Solo su Compañía</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Conductor</td>
+                                        <td className="p-3 text-blue-700 font-bold">Habilitado</td>
+                                        <td className="p-3 text-blue-700">Solo las unidades que conduce</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-medium">Otros Roles</td>
+                                        <td className="p-3 text-red-600 italic">Deshabilitado</td>
+                                        <td className="p-3 text-muted-foreground italic">Sin permisos de escritura</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -358,7 +386,7 @@ export function LogsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            La vista de detalle permite auditar cada movimiento individual. Es especialmente importante para cruzar la información del odómetro y para fiscalizar las cargas de combustible, comprobando la boleta fotográfica y los litros ingresados contra los registros del servicentro.
+                            <strong>Fiscalización y Auditoría:</strong> Esta vista proporciona un registro detallado e inmutable de cada movimiento. Es fundamental para la validación de kilometrajes y la fiscalización de cargas de combustible, permitiendo contrastar la evidencia fotográfica con los litros reportados en el sistema.
                         </p>
                     </section>
 

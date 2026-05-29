@@ -1,20 +1,20 @@
-import React from 'react';
+import { FileText } from 'lucide-react';
+import { SectionHeader } from '../../components/section-header';
 
 export function RenditionsSection() {
     return (
-        <div className="space-y-12">
-            <div className="space-y-4">
-                <h1 className="text-3xl font-bold tracking-tight">
-                    Rendiciones y Gastos
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                    Guía para el registro de facturas, boletas y la integración automática de compras con el inventario del Taller Mecánico.
-                </p>
-            </div>
+        <div>
+            <SectionHeader
+                title="Rendiciones y Gastos"
+                icon={FileText}
+                roles={['Admin', 'Comandancia', 'Secretaría Adquisiciones']}
+            />
 
-            <div className="space-y-8">
+            <h1 className="p-3 italic text-red-600 font-bold text-center"> *** PENDIENTE REVISIÓN CON TESORERO GENERAL *** </h1>
+            
+            <div className="space-y-16">
                 {/* --- 1. Panel General --- */}
-                <div className="space-y-8 pt-8 border-t">
+                <div className="space-y-8">
                     <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
                         1. Panel de Rendiciones
                     </h2>
@@ -22,81 +22,83 @@ export function RenditionsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            Este panel agrupa todas las compras asociadas a reparaciones o insumos del Taller. Permite la validación masiva y exportación a Excel.
+                            Este panel agrupa todas las compras asociadas a reparaciones o insumos del Taller Mecánico. Centraliza el flujo de caja, permitiendo la validación masiva de gastos y la exportación de planillas para rendiciones institucionales.
                         </p>
                     </section>
 
                     <section>
                         <h3 className="text-xl font-semibold">Detalle Visual</h3>
-                        <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-md max-w-4xl mx-auto p-6 space-y-4">
-                            
-                            <div className="flex justify-between items-center relative">
-                                <div className="space-y-1">
-                                    <h4 className="text-lg font-bold">Rendiciones y Gastos</h4>
-                                </div>
+                        <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-sm">
+                            <div className="border-b bg-muted/10 p-4 flex justify-between items-center">
+                                <div className="font-bold text-lg">Rendiciones y Gastos</div>
                                 <div className="flex gap-2">
-                                    <div className="h-9 px-4 rounded bg-green-600 text-white text-sm font-medium flex items-center shadow-sm gap-2">
-                                        <div className="h-4 w-4 rounded-full border-2 border-white"></div> Validar (2)
-                                    </div>
-                                    <div className="h-9 px-4 rounded border text-sm font-medium flex items-center shadow-sm">
-                                        Exportar Excel (2)
-                                    </div>
+                                    <div className="flex h-8 items-center rounded bg-green-600 px-3 text-xs font-medium text-white">+ Validar (2)</div>
+                                    <div className="flex h-8 items-center rounded border px-3 text-xs font-medium">Exportar Excel</div>
+                                    <span className="absolute right-32 top-4 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
+                                        1
+                                    </span>
                                 </div>
-                                <span className="absolute right-36 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
                             </div>
-
-                            <div className="rounded-md border relative">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-muted/50 text-muted-foreground">
+                            <div className="p-0">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-muted/30">
                                         <tr>
-                                            <th className="p-3 text-left w-[50px]"><input type="checkbox" checked readOnly /></th>
-                                            <th className="p-3 text-left">Nº Doc</th>
-                                            <th className="p-3 text-left">Concepto</th>
-                                            <th className="p-3 text-left">Estado</th>
+                                            <th className="p-3 w-10"><input type="checkbox" checked readOnly /></th>
+                                            <th className="p-3">Nº Doc</th>
+                                            <th className="p-3">Concepto</th>
+                                            <th className="p-3 text-right">Monto</th>
+                                            <th className="p-3 text-right">Estado</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y">
-                                        <tr>
+                                    <tbody>
+                                        <tr className="border-t">
                                             <td className="p-3"><input type="checkbox" checked readOnly /></td>
-                                            <td className="p-3">78441</td>
-                                            <td className="p-3">Pastillas de Freno B-1</td>
-                                            <td className="p-3"><span className="text-xs px-2 py-1 border border-orange-200 text-orange-600 rounded-full">Pendiente Validación</span></td>
+                                            <td className="p-3 font-mono text-xs text-muted-foreground">78441</td>
+                                            <td className="p-3 font-medium text-blue-600">Pastillas de Freno B-1</td>
+                                            <td className="p-3 text-right">$ 85.000</td>
+                                            <td className="p-3 text-right relative">
+                                                <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs">Pendiente</span>
+                                                <span className="absolute -left-2 top-[30%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
+                                                    2
+                                                </span>
+                                            </td>
                                         </tr>
-                                        <tr>
+                                        <tr className="border-t bg-muted/5">
                                             <td className="p-3"><input type="checkbox" checked readOnly /></td>
-                                            <td className="p-3">12040</td>
-                                            <td className="p-3">Llave de Torque</td>
-                                            <td className="p-3"><span className="text-xs px-2 py-1 border border-orange-200 text-orange-600 rounded-full">Pendiente Validación</span></td>
+                                            <td className="p-3 font-mono text-xs text-muted-foreground">12040</td>
+                                            <td className="p-3 font-medium text-blue-600">Llave de Torque</td>
+                                            <td className="p-3 text-right">$ 45.990</td>
+                                            <td className="p-3 text-right">
+                                                <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs">Pendiente</span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <span className="absolute -left-2 top-[60%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
                             </div>
                         </div>
-
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Validación Masiva:</strong> Aprobación en bloque (batch) de las rendiciones seleccionadas. Requiere validación OTP para garantizar autoría.</span>
+                                <span><strong>Validación Masiva:</strong> Permite aprobar múltiples gastos de una sola vez. Al validar, el sistema solicita un código OTP para firmar digitalmente la aprobación.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Selección Múltiple:</strong> Las casillas permiten seleccionar qué registros específicos validar o exportar a la vez.</span>
+                                <span><strong>Flujo de Auditoría:</strong> Cada gasto nace como "Pendiente" y solo pasa a "Validado" cuando Adquisiciones o Comandancia lo revisan.</span>
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* --- 2. Integración con Bodega --- */}
+                {/* --- 2. Ingreso e Integración --- */}
                 <div className="space-y-8 pt-8 border-t">
                     <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
-                        2. Nueva Rendición e Integración
+                        2. Nueva Rendición e Integración con Bodega
                     </h2>
 
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El registro de una factura permite inyectar el ítem comprado directamente a los inventarios (Bodega MM o Bodega Menor), evitando doble digitación.
+                            El registro de una factura permite inyectar el ítem comprado directamente a los inventarios (Bodega MM o Bodega Menor), automatizando la entrada de stock y el cálculo de costos medios.
                         </p>
                     </section>
 
@@ -104,160 +106,107 @@ export function RenditionsSection() {
                         <h3 className="text-xl font-semibold">Detalle Visual</h3>
                         <div className="relative mt-4 overflow-hidden rounded-xl border bg-background shadow-md max-w-4xl mx-auto p-6 space-y-6">
                             
-                            {/* Bloque Facturación */}
-                            <div className="rounded border p-4 space-y-4">
-                                <div className="font-semibold border-b pb-2">Detalles de la Facturación</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">RUT Proveedor</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">76.123.456-K</div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Fecha Factura</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">22/04/2026</div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Nº Factura / Boleta</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">123456</div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Monto Total (CLP)</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">$ 50.000</div>
-                                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg relative">
+                                <div className="space-y-1.5">
+                                    <div className="text-sm font-medium">Nº Factura / Boleta</div>
+                                    <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">123456</div>
                                 </div>
+                                <div className="space-y-1.5">
+                                    <div className="text-sm font-medium">Monto Total</div>
+                                    <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">$ 150.000</div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <div className="text-sm font-medium">Tipo de Gasto</div>
+                                    <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Insumos Taller <span>▼</span></div>
+                                </div>
+                                <span className="absolute -left-3 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
                             </div>
 
-                            {/* Bloque Gasto */}
-                            <div className="rounded border p-4 space-y-4">
-                                <div className="font-semibold border-b pb-2">Detalles del Gasto</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                                    <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Unidad / Carro</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">B-1 (XX-YY-11) <span>▼</span></div>
-                                    </div>
-                                    <div className="space-y-1.5 relative">
-                                        <div className="text-sm font-medium">Tipo de Gasto</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Insumos por Reparación <span>▼</span></div>
-                                        <span className="absolute -right-3 top-[50%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">1</span>
-                                    </div>
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <div className="text-sm font-medium">Concepto / Descripción</div>
-                                        <div className="h-16 rounded border p-2 text-sm text-muted-foreground bg-background">Filtros de Aire y Cambio de Aceite</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Bloque Comprobantes */}
-                            <div className="rounded border p-4 space-y-4">
-                                <div className="font-semibold border-b pb-2">Comprobantes</div>
-                                <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground bg-muted/20">
-                                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center mb-2">☁️</div>
-                                    <span className="text-sm font-medium text-foreground">Haga clic para subir archivos</span>
-                                    <span className="text-xs">Adjunte imagen de la factura/boleta enviada por Taller.</span>
-                                </div>
-                                <span className="absolute -left-2 top-[60%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
-                            </div>
-
-                            {/* Bloque Bodega */}
-                            <div className="rounded border p-4 bg-muted/10 space-y-4 relative">
-                                <div className="font-semibold border-b pb-2">Integración con Bodega (Opcional)</div>
+                            <div className="rounded border p-4 bg-primary/5 space-y-4 relative">
                                 <div className="flex items-center gap-2">
                                     <div className="h-5 w-8 rounded-full bg-primary flex items-center px-0.5 justify-end"><div className="h-4 w-4 bg-white rounded-full"></div></div>
-                                    <span className="text-sm font-medium">Nuevo Ingreso a Bodega</span>
+                                    <span className="text-sm font-medium">Generar Alta en Bodega</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Cantidad Inicial</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background text-muted-foreground">10</div>
+                                        <div className="text-sm font-medium">Cantidad Ingresada</div>
+                                        <div className="h-9 rounded border px-3 text-sm flex items-center bg-background">10</div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <div className="text-sm font-medium">Unidad de Medida</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">UNIDAD <span>▼</span></div>
+                                        <div className="text-sm font-medium">Destino Stock</div>
+                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Bodega Material Menor <span>▼</span></div>
                                     </div>
                                 </div>
-                                <span className="absolute -left-3 top-[50%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
+                                <span className="absolute -left-3 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
                             </div>
 
-                            <div className="rounded border p-4 bg-amber-50 dark:bg-amber-900/20 space-y-2 relative">
-                                <div className="text-sm text-amber-700 dark:text-amber-300">
-                                    Este ítem se ingresará automáticamente al inventario de <strong>Material Menor</strong>.
-                                </div>
-                                <ul className="list-disc list-inside text-sm text-amber-700/80 dark:text-amber-300/80">
-                                    <li>Compañía: Comandancia</li>
-                                    <li>Dependencia: Taller Mecánico</li>
-                                </ul>
-                                <span className="absolute -right-2 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">4</span>
+                            <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground bg-muted/5 relative">
+                                <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center mb-2">📄</div>
+                                <span className="text-sm font-medium text-foreground">Subir Respaldo Digital</span>
+                                <span className="text-xs">Adjunte PDF de Factura o foto de la Boleta.</span>
+                                <span className="absolute -right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">3</span>
                             </div>
-
                         </div>
 
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Regla de Tipos:</strong> El tipo de gasto define el destino en el sistema. "Repuestos/Insumos" apuntan a la Bodega MM. "Herramientas" apuntan a Material Menor.</span>
+                                <span><strong>Clasificación:</strong> El tipo de gasto determina si el sistema sugerirá el ingreso a Bodega MM (Repuestos) o Bodega Menor (Herramientas).</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Comprobantes Obligatorios:</strong> Toda rendición exige subir el respaldo digital de la compra (Factura o Boleta).</span>
+                                <span><strong>Sincronización:</strong> Si activas el switch, el ítem se creará automáticamente en el inventario correspondiente con el costo unitario derivado de la factura.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
-                                <span><strong>Alta o Reabastecimiento:</strong> El switch permite decidir si el repuesto comprado ya existía (se suma stock al Kárdex) o si se creará una ficha de ítem completamente nueva.</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
-                                <span><strong>Desvío a Material Menor:</strong> Cuando se compran "Herramientas", el sistema asume que no son repuestos consumibles y delega el activo al módulo de Material Menor, asignándolo a la dependencia "Taller Mecánico" bajo "Comandancia".</span>
+                                <span><strong>Trazabilidad:</strong> Es obligatorio subir el documento físico digitalizado para que la rendición pueda ser validada por Comandancia.</span>
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* --- Permisos --- */}
+                {/* Permisos */}
                 <div className="space-y-4 pt-8 border-t">
-                    <h2 className="text-xl font-semibold">3. Permisos y Roles</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
-                        El acceso financiero es delicado. Solo roles administrativos pueden ingresar compras, y la validación requiere altos privilegios.
-                    </p>
-                    <div className="overflow-hidden rounded-lg border">
-                        <table className="w-full text-sm">
+                    <h2 className="text-xl font-semibold">3. Matriz de Responsabilidades</h2>
+                    <div className="overflow-x-auto rounded-xl border">
+                        <table className="w-full text-sm text-left">
                             <thead className="bg-muted/50">
                                 <tr>
-                                    <th className="p-3 text-left font-medium">Rol</th>
-                                    <th className="p-3 text-center font-medium">Ver Historial</th>
-                                    <th className="p-3 text-center font-medium">Crear Rendición</th>
-                                    <th className="p-3 text-center font-medium">Validar (Aprobar)</th>
+                                    <th className="p-3">Rol</th>
+                                    <th className="p-3">Ver Gastos</th>
+                                    <th className="p-3">Ingresar Facturas</th>
+                                    <th className="p-3">Validar (Firma OTP)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y bg-background">
-                                <tr>
-                                    <td className="p-3 font-medium">Admin / Comandancia</td>
-                                    <td className="p-3 text-center text-green-600">✓</td>
-                                    <td className="p-3 text-center text-green-600">✓</td>
-                                    <td className="p-3 text-center text-green-600">✓ (Con OTP)</td>
+                            <tbody>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Comandancia / Admin</td>
+                                    <td className="p-3 text-green-700 font-bold">Total</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado</td>
                                 </tr>
-                                <tr>
-                                    <td className="p-3 font-medium">Secretaría Adquisiciones / Compras</td>
-                                    <td className="p-3 text-center text-green-600">✓</td>
-                                    <td className="p-3 text-center text-green-600">✓</td>
-                                    <td className="p-3 text-center text-green-600">✓ (Con OTP)</td>
+                                <tr className="border-t bg-muted/10">
+                                    <td className="p-3 font-medium text-primary">Secretaría Adquisiciones</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado</td>
                                 </tr>
-                                <tr>
-                                    <td className="p-3 font-medium">Inspectoría MM / Mecánico</td>
-                                    <td className="p-3 text-center text-green-600">✓</td>
-                                    <td className="p-3 text-center text-red-500">✗</td>
-                                    <td className="p-3 text-center text-red-500">✗</td>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Inspectoría MM</td>
+                                    <td className="p-3 text-blue-700">Solo Lectura</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
                                 </tr>
-                                <tr>
-                                    <td className="p-3 font-medium">Bomberos / Oficiales Cía</td>
-                                    <td className="p-3 text-center text-red-500">✗ (Sin acceso)</td>
-                                    <td className="p-3 text-center text-red-500">✗</td>
-                                    <td className="p-3 text-center text-red-500">✗</td>
+                                <tr className="border-t">
+                                    <td className="p-3 font-medium">Capitán / Compañía</td>
+                                    <td className="p-3 text-red-600">Sin Acceso</td>
+                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-red-600">No</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     );
