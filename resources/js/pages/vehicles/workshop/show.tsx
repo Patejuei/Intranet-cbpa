@@ -38,6 +38,7 @@ import {
     Trash2,
     Wrench,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useState } from 'react';
 
 import ExternalWorkModal, {
@@ -190,6 +191,7 @@ export default function WorkshopShow({
                                 cost: w.cost ? Number(w.cost) : '',
                             })),
                         }));
+                        toast.success('Cambios guardados exitosamente');
                     }
                 }
             },
@@ -228,6 +230,7 @@ export default function WorkshopShow({
                                     cost: w.cost ? Number(w.cost) : '',
                                 })),
                             }));
+                            toast.success('Orden finalizada correctamente');
                         }
                     }
                 },
