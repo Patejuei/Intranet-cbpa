@@ -255,17 +255,17 @@ export default function Dashboard({
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
                                 <Receipt className="size-5 text-blue-600" />
-                                Rendiciones de Caja Chica
+                                Rendiciones Pendientes
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Solicitudes pendientes de visación o aprobación.
+                                Rendiciones pendientes de revisión o validación.
                             </p>
                         </div>
                         <div className="space-y-3">
                             {pendingPettyCash.map((item) => (
                                 <Link
                                     key={item.id}
-                                    href={`/vehicles/petty-cash/${item.id}`}
+                                    href={`/vehicles/renditions/${item.id}`}
                                     className="block"
                                 >
                                     <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">

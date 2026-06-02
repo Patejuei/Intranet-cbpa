@@ -3,6 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
     Table,
     TableBody,
     TableCell,
@@ -24,7 +31,7 @@ interface Rendition {
     invoice_number: string;
     supplier_rut: string;
     expense_type: string;
-    status: 'pending_validation' | 'rendido' | 'rejected';
+    status: 'pending_inspector' | 'pending_secretary' | 'approved' | 'rejected';
     created_at: string;
     invoice_date: string;
     user: { name: string };
@@ -37,10 +44,12 @@ interface Props {
         links: any[];
     };
     userRole: string;
+    userDepartment: string;
 }
 
-export default function RenditionIndex({ renditions, userRole }: Props) {
+export default function RenditionIndex({ renditions, userRole, userDepartment }: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [expenseFilter, setExpenseFilter] = useState('all');
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
 
     const handleSelectAll = (checked: boolean) => {
@@ -60,7 +69,6 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
     };
 
     const handleExport = () => {
-        if (selectedIds.length === 0) return;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/vehicles/renditions/export';
@@ -76,13 +84,26 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
             form.appendChild(input);
         }
 
-        selectedIds.forEach((id) => {
+        // Add expense type filter
+        if (expenseFilter !== 'all') {
             const input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'ids[]';
-            input.value = id.toString();
+            input.name = 'expense_type';
+            input.value = expenseFilter;
             form.appendChild(input);
-        });
+        }
+
+        // Add selected IDs if any
+        if (selectedIds.length > 0) {
+            selectedIds.forEach((id) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id.toString();
+                form.appendChild(input);
+            });
+        }
+
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
@@ -92,17 +113,17 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
         if (selectedIds.length === 0) return;
         if (
             !confirm(
-                `¿Está seguro de validar ${selectedIds.length} rendiciones seleccionadas? Esto las marcará como Rendidas.`,
+                `¿Está seguro de aprobar ${selectedIds.length} rendiciones seleccionadas?`,
             )
         )
             return;
 
         performWithOtp(() => {
             router.post(
-                '/vehicles/renditions/validate-batch',
+                '/vehicles/renditions/review-batch',
                 {
                     ids: selectedIds,
-                    action: 'validate',
+                    action: 'approve',
                 },
                 {
                     onSuccess: () => {
@@ -122,19 +143,28 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'rendido':
-                return (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                        Rendido
-                    </Badge>
-                );
-            case 'pending_validation':
+            case 'pending_inspector':
                 return (
                     <Badge
                         variant="outline"
                         className="border-orange-200 text-orange-600"
                     >
-                        Pendiente Validación
+                        Pendiente Inspector
+                    </Badge>
+                );
+            case 'pending_secretary':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-blue-200 text-blue-600"
+                    >
+                        Pendiente Secretaria
+                    </Badge>
+                );
+            case 'approved':
+                return (
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                        Aprobado
                     </Badge>
                 );
             case 'rejected':
@@ -152,6 +182,18 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
             other_tools: 'Otras Herramientas',
         };
         return map[type] || type;
+    };
+
+    const canBatchApprove =
+        userRole === 'admin' ||
+        (userRole === 'inspector' && (userDepartment || '').trim() === 'Material Mayor') ||
+        userRole === 'secretaria_adquisiciones';
+
+    const getBatchButtonLabel = () => {
+        if (userRole === 'secretaria_adquisiciones') {
+            return 'Validar Seleccionados';
+        }
+        return 'Aprobar Seleccionados';
     };
 
     return (
@@ -177,7 +219,7 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
                             taller.
                         </p>
                     </div>
-                    {(userRole === 'secretaria_adquisiciones' ||
+                    {(userRole === 'mechanic' ||
                         userRole === 'admin') && (
                         <Button asChild>
                             <Link href="/vehicles/renditions/create">
@@ -189,24 +231,37 @@ export default function RenditionIndex({ renditions, userRole }: Props) {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                    {(userRole === 'secretaria_compras' ||
-                        userRole === 'admin') && (
+                    {canBatchApprove && (
                         <Button
                             className="bg-green-600 hover:bg-green-700"
                             onClick={handleBatchValidate}
                             disabled={selectedIds.length === 0}
                         >
                             <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Validar ({selectedIds.length})
+                            {getBatchButtonLabel()} ({selectedIds.length})
                         </Button>
                     )}
+                    <Select
+                        value={expenseFilter}
+                        onValueChange={setExpenseFilter}
+                    >
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Tipo de Gasto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="repair_supplies">Insumos Reparación</SelectItem>
+                            <SelectItem value="spare_parts">Repuestos</SelectItem>
+                            <SelectItem value="tools">Herramientas</SelectItem>
+                            <SelectItem value="other_tools">Otras Herramientas</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Button
                         variant="outline"
                         onClick={handleExport}
-                        disabled={selectedIds.length === 0}
                     >
                         <Download className="mr-2 h-4 w-4" />
-                        Exportar Excel ({selectedIds.length})
+                        Exportar Excel {selectedIds.length > 0 ? `(${selectedIds.length})` : '(Todos)'}
                     </Button>
                 </div>
 

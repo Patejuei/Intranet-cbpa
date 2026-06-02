@@ -20,6 +20,7 @@ import {
     ArrowLeft,
     CheckCircle2,
     Clock,
+    Download,
     FileText,
     User,
     XCircle,
@@ -31,6 +32,15 @@ interface Attachment {
     file_path: string;
     file_name: string;
     mime_type: string;
+}
+
+interface Review {
+    id: number;
+    action: 'approved' | 'rejected';
+    step: 'inspector' | 'secretary';
+    comment: string | null;
+    created_at: string;
+    user: { name: string };
 }
 
 interface Rendition {
@@ -47,32 +57,40 @@ interface Rendition {
     vehicle?: { name: string; company: string };
     inspector?: { name: string };
     inspector_vised_at?: string;
+    secretary?: { name: string };
+    secretary_vised_at?: string;
     rejected_by?: { name: string };
     rejection_reason?: string;
     rejected_at?: string;
     attachments: Attachment[];
+    reviews?: Review[];
 }
 
 interface Props {
     rendition: Rendition;
+    canReview: boolean;
+    userRole: string;
+    userDepartment: string;
 }
 
-export default function RenditionShow({ rendition }: Props) {
+export default function RenditionShow({ rendition, canReview, userRole, userDepartment }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         action: '',
-        rejection_reason: '',
+        comment: '',
     });
 
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
     const handleApprove = () => {
-        if (
-            confirm('¿Confirma que los datos son correctos y PROCEDE A RENDIR?')
-        ) {
+        const confirmMsg = rendition.status === 'pending_inspector'
+            ? '¿Confirma aprobar esta rendición y pasarla a Secretaría de Adquisiciones?'
+            : '¿Confirma validar y aprobar esta rendición?';
+
+        if (confirm(confirmMsg)) {
             performWithOtp(() => {
-                setData('action', 'validate');
-                post(`/vehicles/renditions/${rendition.id}/validate`, {
+                post(`/vehicles/renditions/${rendition.id}/review`, {
+                    data: { action: 'approve', comment: '' },
                     onSuccess: () => reset(),
                 });
             });
@@ -80,12 +98,13 @@ export default function RenditionShow({ rendition }: Props) {
     };
 
     const handleReject = () => {
-        setData('action', 'reject');
-        post(`/vehicles/renditions/${rendition.id}/validate`, {
-            onSuccess: () => {
-                setIsRejectDialogOpen(false);
-                reset();
-            },
+        performWithOtp(() => {
+            post(`/vehicles/renditions/${rendition.id}/review`, {
+                onSuccess: () => {
+                    setIsRejectDialogOpen(false);
+                    reset();
+                },
+            });
         });
     };
 
@@ -105,6 +124,71 @@ export default function RenditionShow({ rendition }: Props) {
         };
         return map[type] || type;
     };
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'pending_inspector':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-orange-200 text-orange-600"
+                    >
+                        Pendiente Inspector
+                    </Badge>
+                );
+            case 'pending_secretary':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-blue-200 text-blue-600"
+                    >
+                        Pendiente Secretaria
+                    </Badge>
+                );
+            case 'approved':
+                return (
+                    <Badge className="bg-green-100 text-green-700">
+                        Aprobado
+                    </Badge>
+                );
+            case 'rejected':
+                return <Badge variant="destructive">Rechazado</Badge>;
+            default:
+                return <Badge variant="secondary">{status}</Badge>;
+        }
+    };
+
+    const getReviewCardTitle = () => {
+        if (rendition.status === 'pending_inspector') {
+            return 'Revisión Inspector Material Mayor';
+        }
+        if (rendition.status === 'pending_secretary') {
+            return 'Validación Secretaria Adquisiciones';
+        }
+        return 'Revisión';
+    };
+
+    const getApproveButtonLabel = () => {
+        if (rendition.status === 'pending_inspector') {
+            return 'Aprobar y Pasar a Secretaría';
+        }
+        if (rendition.status === 'pending_secretary') {
+            return 'Validar y Aprobar';
+        }
+        return 'Aprobar';
+    };
+
+    const getStepLabel = (step: string) => {
+        return step === 'inspector' ? 'Inspector' : 'Secretaria';
+    };
+
+    const getActionLabel = (action: string) => {
+        return action === 'approved' ? 'Aprobado' : 'Rechazado';
+    };
+
+    const sortedReviews = [...(rendition.reviews || [])].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
 
     return (
         <AuthenticatedLayout
@@ -153,26 +237,7 @@ export default function RenditionShow({ rendition }: Props) {
                                             Estado
                                         </Label>
                                         <div>
-                                            {rendition.status === 'rendido' && (
-                                                <Badge className="bg-green-100 text-green-700">
-                                                    Rendido / OK
-                                                </Badge>
-                                            )}
-                                            {rendition.status ===
-                                                'pending_validation' && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="border-orange-200 text-orange-600"
-                                                >
-                                                    Pendiente Validación
-                                                </Badge>
-                                            )}
-                                            {rendition.status ===
-                                                'rejected' && (
-                                                <Badge variant="destructive">
-                                                    Rechazado
-                                                </Badge>
-                                            )}
+                                            {getStatusBadge(rendition.status)}
                                         </div>
                                     </div>
                                     <div className="space-y-1">
@@ -260,28 +325,40 @@ export default function RenditionShow({ rendition }: Props) {
                                     </Label>
                                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                         {rendition.attachments.map((file) => (
-                                            <a
+                                            <div
                                                 key={file.id}
-                                                href={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="group relative aspect-square overflow-hidden rounded-lg border bg-muted transition-all hover:ring-2 hover:ring-primary"
+                                                className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
                                             >
-                                                {file.mime_type?.startsWith(
-                                                    'image/',
-                                                ) ? (
-                                                    <img
-                                                        src={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
-                                                        alt={file.file_name}
-                                                        className="h-full w-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-full flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
-                                                        <FileText className="mb-2 h-8 w-8" />
-                                                        {file.file_name}
-                                                    </div>
-                                                )}
-                                            </a>
+                                                <a
+                                                    href={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="block h-full w-full transition-all hover:ring-2 hover:ring-primary"
+                                                >
+                                                    {file.mime_type?.startsWith(
+                                                        'image/',
+                                                    ) ? (
+                                                        <img
+                                                            src={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
+                                                            alt={file.file_name}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
+                                                            <FileText className="mb-2 h-8 w-8" />
+                                                            {file.file_name}
+                                                        </div>
+                                                    )}
+                                                </a>
+                                                <a
+                                                    href={`/vehicles/renditions/${rendition.id}/attachments/${file.id}?download=1`}
+                                                    download={file.file_name}
+                                                    className="absolute bottom-2 right-2 rounded-md bg-background/80 p-1.5 text-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-background group-hover:opacity-100"
+                                                    title="Descargar"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </a>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -290,28 +367,32 @@ export default function RenditionShow({ rendition }: Props) {
                     </div>
 
                     <div className="space-y-6">
-                        {rendition.status === 'pending_validation' && (
+                        {canReview && (
                             <Card className="border-blue-100 bg-blue-50/50">
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        Validación
+                                        {getReviewCardTitle()}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="flex flex-col gap-2">
                                     <Button
                                         className="w-full bg-green-600 hover:bg-green-700"
-                                        onClick={handleApprove}
+                                        onClick={() => {
+                                            setData('action', 'approve');
+                                            handleApprove();
+                                        }}
                                         disabled={processing}
                                     >
                                         <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        Validar y Rendir
+                                        {getApproveButtonLabel()}
                                     </Button>
                                     <Button
                                         variant="destructive"
                                         className="w-full"
-                                        onClick={() =>
-                                            setIsRejectDialogOpen(true)
-                                        }
+                                        onClick={() => {
+                                            setData('action', 'reject');
+                                            setIsRejectDialogOpen(true);
+                                        }}
                                         disabled={processing}
                                     >
                                         <XCircle className="mr-2 h-4 w-4" />
@@ -329,6 +410,7 @@ export default function RenditionShow({ rendition }: Props) {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-6 border-l-2 border-muted pl-4">
+                                    {/* Entry: Ingresado */}
                                     <div className="relative">
                                         <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-primary ring-4 ring-background" />
                                         <p className="text-sm font-medium">
@@ -345,56 +427,67 @@ export default function RenditionShow({ rendition }: Props) {
                                             ).toLocaleString()}
                                         </div>
                                     </div>
-                                    {(rendition.status === 'rendido' ||
-                                        rendition.status === 'rejected') && (
-                                        <div className="relative">
+
+                                    {/* Dynamic reviews */}
+                                    {sortedReviews.map((review) => (
+                                        <div key={review.id} className="relative">
                                             <div
-                                                className={`absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-background ${rendition.status === 'rendido' ? 'bg-green-500' : 'bg-red-500'}`}
+                                                className={`absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-background ${review.action === 'approved' ? 'bg-green-500' : 'bg-red-500'}`}
                                             />
                                             <p className="text-sm font-medium">
-                                                {rendition.status === 'rendido'
-                                                    ? 'Validado / Rendido'
-                                                    : 'Rechazado'}
+                                                {getStepLabel(review.step)} — {getActionLabel(review.action)}
                                             </p>
-                                            {rendition.inspector ? (
-                                                <>
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <User className="h-3 w-3" />{' '}
-                                                        {
-                                                            rendition.inspector
-                                                                .name
-                                                        }
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <Clock className="h-3 w-3" />{' '}
-                                                        {new Date(
-                                                            rendition.inspector_vised_at!,
-                                                        ).toLocaleString()}
-                                                    </div>
-                                                </>
-                                            ) : rendition.rejected_by ? (
-                                                <>
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <User className="h-3 w-3" />{' '}
-                                                        {
-                                                            rendition
-                                                                .rejected_by
-                                                                .name
-                                                        }
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-xs text-red-500">
-                                                        {
-                                                            rendition.rejection_reason
-                                                        }
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <Clock className="h-3 w-3" />{' '}
-                                                        {new Date(
-                                                            rendition.rejected_at!,
-                                                        ).toLocaleString()}
-                                                    </div>
-                                                </>
-                                            ) : null}
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <User className="h-3 w-3" />{' '}
+                                                {review.user.name}
+                                            </div>
+                                            {review.comment && (
+                                                <div className="flex items-center gap-1 text-xs text-red-500">
+                                                    {review.comment}
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                <Clock className="h-3 w-3" />{' '}
+                                                {new Date(
+                                                    review.created_at,
+                                                ).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Pending steps */}
+                                    {rendition.status === 'pending_inspector' && (
+                                        <>
+                                            <div className="relative">
+                                                <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
+                                                <p className="text-sm font-medium text-muted-foreground">
+                                                    Revisión Inspector
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Esperando...
+                                                </p>
+                                            </div>
+                                            <div className="relative">
+                                                <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
+                                                <p className="text-sm font-medium text-muted-foreground">
+                                                    Validación Secretaria
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Esperando...
+                                                </p>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {rendition.status === 'pending_secretary' && (
+                                        <div className="relative">
+                                            <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
+                                            <p className="text-sm font-medium text-muted-foreground">
+                                                Validación Secretaria
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Esperando...
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -417,15 +510,15 @@ export default function RenditionShow({ rendition }: Props) {
                         <div className="space-y-2">
                             <Label>Motivo</Label>
                             <Textarea
-                                value={data.rejection_reason}
+                                value={data.comment}
                                 onChange={(e) =>
-                                    setData('rejection_reason', e.target.value)
+                                    setData('comment', e.target.value)
                                 }
                                 placeholder="Ej: Falta información..."
                             />
-                            {errors.rejection_reason && (
+                            {errors.comment && (
                                 <p className="text-sm text-red-500">
-                                    {errors.rejection_reason}
+                                    {errors.comment}
                                 </p>
                             )}
                         </div>

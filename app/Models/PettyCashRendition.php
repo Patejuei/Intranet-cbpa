@@ -14,7 +14,7 @@ class PettyCashRendition extends Model
     'user_id',
     'amount',
     'description',
-    'status', // draft, pending_inspector, pending_comandante, approved, rejected, pending_validation, rendido
+    'status', // pending_inspector, pending_secretary, approved, rejected
     'supplier_rut',
     'expense_type',
     'invoice_number',
@@ -23,8 +23,8 @@ class PettyCashRendition extends Model
     'stock_item_id',
     'inspector_id',
     'inspector_vised_at',
-    'comandante_id',
-    'comandante_vised_at',
+    'secretary_id',
+    'secretary_vised_at',
     'rejected_by',
     'rejection_reason',
     'rejected_at',
@@ -32,7 +32,7 @@ class PettyCashRendition extends Model
 
   protected $casts = [
     'inspector_vised_at' => 'datetime',
-    'comandante_vised_at' => 'datetime',
+    'secretary_vised_at' => 'datetime',
     'rejected_at' => 'datetime',
     'date' => 'date',
     'invoice_date' => 'date',
@@ -54,9 +54,9 @@ class PettyCashRendition extends Model
     return $this->belongsTo(User::class, 'inspector_id');
   }
 
-  public function comandante()
+  public function secretary()
   {
-    return $this->belongsTo(User::class, 'comandante_id');
+    return $this->belongsTo(User::class, 'secretary_id');
   }
 
   public function rejectedBy()
@@ -67,5 +67,10 @@ class PettyCashRendition extends Model
   public function attachments()
   {
     return $this->hasMany(PettyCashAttachment::class, 'rendition_id');
+  }
+
+  public function reviews()
+  {
+    return $this->hasMany(RenditionReview::class, 'rendition_id');
   }
 }

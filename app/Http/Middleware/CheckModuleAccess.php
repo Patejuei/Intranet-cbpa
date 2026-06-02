@@ -69,10 +69,9 @@ class CheckModuleAccess
                 'vehicles.status',
                 'vehicles.checklist',
                 'vehicles.logs',
-                'vehicles.logs',
-                'vehicles.logs',
                 'vehicles.inventory',
                 'vehicles.petty-cash',
+                'vehicles.renditions',
             ];
             if (in_array($module, $mechanicModules)) {
                 return $next($request);
@@ -96,9 +95,9 @@ class CheckModuleAccess
                     'vehicles.inventory',
                     'vehicles.workshop',
                     'vehicles.checklist',
-                    'vehicles.checklist',
                     'vehicles.logs',
                     'vehicles.petty-cash',
+                    'vehicles.renditions',
                 ];
 
                 // Allow if module is in the list.

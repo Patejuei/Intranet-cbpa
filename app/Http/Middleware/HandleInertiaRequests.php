@@ -41,7 +41,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'appVersion' => config('app.version', 'v1.0.2'),
+            'appVersion' => \App\Http\Controllers\ChangelogController::getAppVersion(),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user() ? tap($request->user(), function ($user) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PettyCashRendition;
 use App\Models\PettyCashAttachment;
+use App\Models\RenditionReview;
 use App\Models\Vehicle;
 use App\Models\WorkshopInventory;
 use Illuminate\Http\Request;
@@ -18,21 +19,31 @@ class RenditionController extends Controller
   public function index(Request $request)
   {
     $user = $request->user();
+    $userDepartment = trim($user->department ?? '');
 
-    // Authorization: Secretary (primary), Admin, or maybe Inspector/Comandante for history?
-    // User said "Secretaria... validará...". Taller is offline.
-    // We'll allow Admin and Secretary for now.
-
-    if ($user->role !== 'secretaria_adquisiciones' && $user->role !== 'admin') {
-      // Should we allow read-only for others? For now, abort.
-      // abort(403);
+    // Role-based access
+    if ($user->role === 'mechanic') {
+      $query = PettyCashRendition::where('user_id', $user->id);
+    } elseif ($user->role === 'inspector' && $userDepartment === 'Material Mayor') {
+      $query = PettyCashRendition::query();
+    } elseif ($user->role === 'secretaria_adquisiciones') {
+      $query = PettyCashRendition::query();
+    } elseif (in_array($user->role, ['admin', 'comandante'])) {
+      $query = PettyCashRendition::query();
+    } else {
+      abort(403, 'No tienes permiso para acceder a este módulo.');
     }
 
-    $query = PettyCashRendition::with(['user', 'vehicle', 'attachments'])->latest();
+    $query->with(['user', 'vehicle', 'attachments'])->latest();
 
-    // Filters?
+    // Status filter
     if ($request->has('status') && $request->status !== 'all') {
       $query->where('status', $request->status);
+    }
+
+    // Expense type filter
+    if ($request->has('expense_type') && $request->expense_type !== 'all') {
+      $query->where('expense_type', $request->expense_type);
     }
 
     $renditions = $query->paginate(15);
@@ -40,11 +51,18 @@ class RenditionController extends Controller
     return Inertia::render('vehicles/renditions/index', [
       'renditions' => $renditions,
       'userRole' => $user->role,
+      'userDepartment' => $userDepartment,
     ]);
   }
 
   public function create()
   {
+    $user = request()->user();
+
+    if (!in_array($user->role, ['mechanic', 'admin'])) {
+      abort(403, 'Solo mecánicos y administradores pueden crear rendiciones.');
+    }
+
     return Inertia::render('vehicles/renditions/create', [
       'vehicles' => Vehicle::whereNull('deleted_at')->select('id', 'name', 'company')->orderBy('company')->get(),
       'inventoryItems' => WorkshopInventory::select('id', 'name', 'sku', 'stock as current_stock')->orderBy('name')->get(),
@@ -86,7 +104,7 @@ class RenditionController extends Controller
         'description' => $request->description, // Concepto
         'amount' => $request->amount,
         'stock_item_id' => $request->stock_item_id,
-        'status' => 'pending_validation',
+        'status' => 'pending_inspector',
       ]);
 
       // Logic for Workshop Inventory (Supplies / Spare Parts)
@@ -108,8 +126,7 @@ class RenditionController extends Controller
             'description' => 'Ingresado por Rendición #' . $request->invoice_number,
           ]);
 
-          // Link the rendition to this new item? 
-          // The table has stock_item_id, we should update it.
+          // Link the rendition to this new item
           $rendition->update(['stock_item_id' => $newItem->id]);
         } else {
           // Existing Item Logic
@@ -127,24 +144,16 @@ class RenditionController extends Controller
         // Verify we have a quantity
         $qty = $request->stock_quantity ?? 1;
 
-        // Create Material (Material Mayor / Menor logic implies this is Material Menor generally)
-        // User asked: "si es Herramienta u otra herramienta, que se agregue además al Inventario de Comandancia como dependencia Taller Mecánico"
-
-        // We need to generate a code? MaterialController does it. We can try to replicate or leave null.
-        // Material model allows null code.
-
         \App\Models\Material::create([
           'product_name' => $request->description,
           'stock_quantity' => $qty,
           'company' => 'Comandancia',
           'dependency' => 'Taller Mecánico',
-          'category' => 'Otro', // Default for tools/other unless we map 'Herramientas' specific category if exists
+          'category' => 'Otro',
           'brand' => null,
           'model' => null,
           'serial_number' => null,
           'document_path' => null,
-          // 'code' => ... // Leave null for now or auto-generate implies logic duplication. 
-          // Better to leave null and let Admin assign later or leave as is.
         ]);
       }
 
@@ -166,71 +175,182 @@ class RenditionController extends Controller
 
   public function show(PettyCashRendition $rendition)
   {
-    $rendition->load(['user', 'vehicle', 'attachments']);
+    $user = request()->user();
+    $userDepartment = trim($user->department ?? '');
+
+    $rendition->load(['user', 'vehicle', 'attachments', 'reviews.user', 'inspector', 'secretary', 'rejectedBy']);
+
+    // Determine if current user can review this rendition
+    $canReview = false;
+    if ($rendition->status === 'pending_inspector' && ($user->role === 'admin' || ($user->role === 'inspector' && $userDepartment === 'Material Mayor'))) {
+      $canReview = true;
+    } elseif ($rendition->status === 'pending_secretary' && ($user->role === 'admin' || $user->role === 'secretaria_adquisiciones')) {
+      $canReview = true;
+    }
 
     return Inertia::render('vehicles/renditions/show', [
       'rendition' => $rendition,
+      'userRole' => $user->role,
+      'userDepartment' => $userDepartment,
+      'canReview' => $canReview,
     ]);
   }
 
-  public function validateRendition(Request $request, PettyCashRendition $rendition)
+  public function reviewRendition(Request $request, PettyCashRendition $rendition)
   {
     $this->validateOtp($request);
 
     $request->validate([
-      'action' => 'required|in:validate,reject',
-      'rejection_reason' => 'nullable|required_if:action,reject|string',
+      'action' => 'required|in:approve,reject',
+      'comment' => 'nullable|required_if:action,reject|string',
     ]);
 
-    if ($request->action === 'reject') {
-      $rendition->update([
-        'status' => 'rejected',
-        'rejected_by' => $request->user()->id,
-        'rejected_at' => now(),
-        'rejection_reason' => $request->rejection_reason,
-      ]);
-      return back()->with('success', 'Rendición rechazada.');
+    $user = $request->user();
+    $userDepartment = trim($user->department ?? '');
+    $originalStatus = $rendition->status;
+
+    // Verify the user has the correct role for the current step
+    if ($originalStatus === 'pending_inspector') {
+      if ($user->role !== 'admin' && !($user->role === 'inspector' && $userDepartment === 'Material Mayor')) {
+        abort(403, 'No tienes permiso para revisar esta rendición en este paso.');
+      }
+    } elseif ($originalStatus === 'pending_secretary') {
+      if ($user->role !== 'admin' && $user->role !== 'secretaria_adquisiciones') {
+        abort(403, 'No tienes permiso para revisar esta rendición en este paso.');
+      }
+    } else {
+      abort(403, 'Esta rendición no está pendiente de revisión.');
     }
 
-    $rendition->update([
-      'status' => 'rendido',
-      'inspector_id' => $request->user()->id, // Acting as Validator
-      'inspector_vised_at' => now(),
+    if ($request->action === 'approve') {
+      if ($originalStatus === 'pending_inspector') {
+        $rendition->update([
+          'status' => 'pending_secretary',
+          'inspector_id' => $user->id,
+          'inspector_vised_at' => now(),
+        ]);
+      } elseif ($originalStatus === 'pending_secretary') {
+        $rendition->update([
+          'status' => 'approved',
+          'secretary_id' => $user->id,
+          'secretary_vised_at' => now(),
+        ]);
+      }
+    } else {
+      $rendition->update([
+        'status' => 'rejected',
+        'rejected_by' => $user->id,
+        'rejected_at' => now(),
+        'rejection_reason' => $request->comment,
+      ]);
+    }
+
+    // Create audit review record
+    RenditionReview::create([
+      'rendition_id' => $rendition->id,
+      'user_id' => $user->id,
+      'action' => $request->action === 'approve' ? 'approved' : 'rejected',
+      'step' => $originalStatus === 'pending_inspector' ? 'inspector' : 'secretary',
+      'comment' => $request->comment,
     ]);
 
-    return back()->with('success', 'Rendición validada (Rendida).');
+    $message = $request->action === 'approve' ? 'Rendición aprobada correctamente.' : 'Rendición rechazada.';
+
+    return back()->with('success', $message);
   }
 
-  public function viewAttachment(PettyCashRendition $rendition, PettyCashAttachment $attachment)
-  {
-    if ($attachment->rendition_id !== $rendition->id) abort(404);
-
-    $path = $attachment->file_path;
-    if (!Storage::disk('public')->exists($path)) abort(404);
-
-    return response()->file(Storage::disk('public')->path($path));
-  }
-
-  public function validateBatch(Request $request)
+  public function reviewBatch(Request $request)
   {
     $this->validateOtp($request);
 
     $request->validate([
       'ids' => 'required|array|min:1',
       'ids.*' => 'exists:petty_cash_renditions,id',
-      'action' => 'required|in:validate', // Only validation for now as requested
+      'action' => 'required|in:approve',
     ]);
 
-    // Update all selected renditions
-    PettyCashRendition::whereIn('id', $request->ids)
-      ->where('status', 'pending_validation') // Only validatable ones
-      ->update([
-        'status' => 'rendido',
-        'inspector_id' => $request->user()->id,
-        'inspector_vised_at' => now(),
-      ]);
+    $user = $request->user();
+    $userDepartment = trim($user->department ?? '');
 
-    return back()->with('success', 'Rendiciones seleccionadas han sido validadas correctamente.');
+    // Determine which status to filter and transition based on user role
+    if ($user->role === 'inspector' && $userDepartment === 'Material Mayor') {
+      $filterStatus = 'pending_inspector';
+      $newStatus = 'pending_secretary';
+      $updateFields = [
+        'status' => $newStatus,
+        'inspector_id' => $user->id,
+        'inspector_vised_at' => now(),
+      ];
+      $step = 'inspector';
+    } elseif ($user->role === 'secretaria_adquisiciones') {
+      $filterStatus = 'pending_secretary';
+      $newStatus = 'approved';
+      $updateFields = [
+        'status' => $newStatus,
+        'secretary_id' => $user->id,
+        'secretary_vised_at' => now(),
+      ];
+      $step = 'secretary';
+    } elseif ($user->role === 'admin') {
+      // Admin defaults to pending_inspector unless target_status is specified
+      $targetStatus = $request->input('target_status', 'pending_inspector');
+      if ($targetStatus === 'pending_secretary') {
+        $filterStatus = 'pending_secretary';
+        $newStatus = 'approved';
+        $updateFields = [
+          'status' => $newStatus,
+          'secretary_id' => $user->id,
+          'secretary_vised_at' => now(),
+        ];
+        $step = 'secretary';
+      } else {
+        $filterStatus = 'pending_inspector';
+        $newStatus = 'pending_secretary';
+        $updateFields = [
+          'status' => $newStatus,
+          'inspector_id' => $user->id,
+          'inspector_vised_at' => now(),
+        ];
+        $step = 'inspector';
+      }
+    } else {
+      abort(403, 'No tienes permiso para realizar esta acción.');
+    }
+
+    // Get matching renditions
+    $renditions = PettyCashRendition::whereIn('id', $request->ids)
+      ->where('status', $filterStatus)
+      ->get();
+
+    // Bulk update
+    PettyCashRendition::whereIn('id', $renditions->pluck('id'))
+      ->update($updateFields);
+
+    // Create audit records
+    foreach ($renditions as $rendition) {
+      RenditionReview::create([
+        'rendition_id' => $rendition->id,
+        'user_id' => $user->id,
+        'action' => 'approved',
+        'step' => $step,
+        'comment' => null,
+      ]);
+    }
+
+    return back()->with('success', 'Rendiciones seleccionadas han sido aprobadas correctamente.');
+  }
+
+  public function downloadAttachment(PettyCashRendition $rendition, PettyCashAttachment $attachment)
+  {
+    if ($attachment->rendition_id !== $rendition->id) abort(404);
+
+    $path = $attachment->file_path;
+    if (!Storage::disk('public')->exists($path)) abort(404);
+
+    return response()->file(
+      Storage::disk('public')->path($path),
+      ['Content-Disposition' => 'attachment; filename="' . $attachment->file_name . '"']
+    );
   }
 
   public function export(Request $request)
@@ -243,17 +363,20 @@ class RenditionController extends Controller
       $query->whereIn('id', $ids);
     }
 
+    // Expense type filter
+    if ($request->has('expense_type') && $request->expense_type !== 'all') {
+      $query->where('expense_type', $request->expense_type);
+    }
+
     $renditions = $query->latest()->get();
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
-    // Headers requested:
-    // Concepto, Fecha Gasto, Proveedor, Dependencia, Tipo Gasto, Nº Boleta, Valor
-    $headers = ['Concepto', 'Fecha Gasto', 'Proveedor', 'Dependencia', 'Tipo Gasto', 'Nº Boleta', 'Valor'];
-    // Bold Headers
+    // Headers with Estado column added
+    $headers = ['Concepto', 'Fecha Gasto', 'Proveedor', 'Dependencia', 'Tipo Gasto', 'Nº Boleta', 'Valor', 'Estado'];
     $sheet->fromArray($headers, NULL, 'A1');
-    $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+    $sheet->getStyle('A1:H1')->getFont()->setBold(true);
 
     // Data
     $row = 2;
@@ -278,6 +401,16 @@ class RenditionController extends Controller
       $sheet->setCellValue('F' . $row, $r->invoice_number);
       $sheet->setCellValue('G' . $row, $r->amount);
 
+      // Translate Status
+      $statusLabel = match ($r->status) {
+        'pending_inspector' => 'Pendiente Inspector',
+        'pending_secretary' => 'Pendiente Secretaria',
+        'approved' => 'Aprobada',
+        'rejected' => 'Rechazada',
+        default => $r->status
+      };
+      $sheet->setCellValue('H' . $row, $statusLabel);
+
       $total += $r->amount;
       $row++;
     }
@@ -288,7 +421,7 @@ class RenditionController extends Controller
     $sheet->getStyle('F' . $row . ':G' . $row)->getFont()->setBold(true);
 
     // Auto size
-    foreach (range('A', 'G') as $columnID) {
+    foreach (range('A', 'H') as $columnID) {
       $sheet->getColumnDimension($columnID)->setAutoSize(true);
     }
 

@@ -282,7 +282,7 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.checklist',
                 'vehicles.logs',
                 'vehicles.inventory',
-                // 'vehicles.renditions', // Mechanic removed from system flow
+                'vehicles.renditions',
             ];
             if (mechanicModules.includes(module)) return true;
         }
@@ -307,6 +307,7 @@ export function AppSidebar({ user }: { user: any }) {
                     'vehicles.logs',
                     'vehicles.workshop',
                     'vehicles.checklist',
+                    'vehicles.renditions',
                     'vehicles',
                 ];
                 // Check if likely match

@@ -8,11 +8,20 @@ use Inertia\Inertia;
 class ChangelogController extends Controller
 {
     /**
-     * Display the changelog.
+     * Get all changelog entries.
      */
-    public function index()
+    public static function getEntries(): array
     {
-        $changelogEntries = [
+        return [
+            [
+                'version' => 'v1.0.3',
+                'date' => '02-06-2026',
+                'changes' => [
+                    'Reestructuración del módulo de Rendiciones',
+                    'Mecánico e Inspector de Material Mayor inciden en el módulo de Rendiciones',
+                    'Modificación del Manual de Usuario para reflejar los cambios en el módulo de Rendiciones',
+                ],
+            ],
             [
                 'version' => 'v1.0.2',
                 'date' => '28-05-2026',
@@ -43,9 +52,25 @@ class ChangelogController extends Controller
                 ],
             ],
         ];
+    }
 
+    /**
+     * Get the current application version.
+     */
+    public static function getAppVersion(): string
+    {
+        $entries = self::getEntries();
+        return !empty($entries) ? $entries[0]['version'] : 'v1.0.0';
+    }
+
+    /**
+     * Display the changelog.
+     */
+    public function index()
+    {
         return Inertia::render('changelog', [
-            'changelogEntries' => $changelogEntries,
+            'changelogEntries' => self::getEntries(),
         ]);
     }
 }
+

@@ -159,15 +159,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     }
                 )->values();
 
-            // Petty Cash Notifications
+            // Rendiciones Notifications
             $pendingPettyCash = [];
-            if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
+            if ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') {
                 $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_inspector')
                     ->with('user')
                     ->take(5)
                     ->get();
-            } elseif ($user->role === 'comandante' || $user->role === 'admin') {
-                $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_comandante')
+            } elseif ($user->role === 'secretaria_adquisiciones') {
+                $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_secretary')
+                    ->with('user')
+                    ->take(5)
+                    ->get();
+            } elseif ($user->role === 'admin' || $user->role === 'comandante') {
+                $pendingPettyCash = \App\Models\PettyCashRendition::whereIn('status', ['pending_inspector', 'pending_secretary'])
                     ->with('user')
                     ->take(5)
                     ->get();
@@ -323,12 +328,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Route::resource('checklist-items', App\Http\Controllers\ChecklistItemController::class)->only(['index', 'store', 'destroy'])->names('vehicles.checklist-items');
     
-            // Petty Cash Routes
-            // Rendiciones (Ex-Petty Cash) Routes
+            // Rendiciones Routes
             Route::post('renditions/export', [App\Http\Controllers\RenditionController::class, 'export'])->name('vehicles.renditions.export');
-            Route::get('renditions/{rendition}/attachments/{attachment}', [App\Http\Controllers\RenditionController::class, 'viewAttachment'])->name('vehicles.renditions.attachment');
-            Route::post('renditions/validate-batch', [App\Http\Controllers\RenditionController::class, 'validateBatch'])->name('vehicles.renditions.validate_batch');
-            Route::post('renditions/{rendition}/validate', [App\Http\Controllers\RenditionController::class, 'validateRendition'])->name('vehicles.renditions.validate');
+            Route::get('renditions/{rendition}/attachments/{attachment}', [App\Http\Controllers\RenditionController::class, 'downloadAttachment'])->name('vehicles.renditions.attachment');
+            Route::post('renditions/review-batch', [App\Http\Controllers\RenditionController::class, 'reviewBatch'])->name('vehicles.renditions.review_batch');
+            Route::post('renditions/{rendition}/review', [App\Http\Controllers\RenditionController::class, 'reviewRendition'])->name('vehicles.renditions.review');
             Route::resource('renditions', App\Http\Controllers\RenditionController::class)->names('vehicles.renditions');
         }
     );

@@ -7,7 +7,7 @@ export function RenditionsSection() {
             <SectionHeader
                 title="Rendiciones y Gastos"
                 icon={FileText}
-                roles={['Admin', 'Comandancia', 'Secretaría Adquisiciones']}
+                roles={['Admin', 'Comandancia', 'Secretaría Adquisiciones', 'Inspectoría MM', 'Mecánico']}
             />
 
             <h1 className="p-3 italic text-red-600 font-bold text-center"> *** PENDIENTE REVISIÓN CON TESORERO GENERAL *** </h1>
@@ -32,9 +32,9 @@ export function RenditionsSection() {
                             <div className="border-b bg-muted/10 p-4 flex justify-between items-center">
                                 <div className="font-bold text-lg">Rendiciones y Gastos</div>
                                 <div className="flex gap-2">
-                                    <div className="flex h-8 items-center rounded bg-green-600 px-3 text-xs font-medium text-white">+ Validar (2)</div>
+                                    <div className="flex h-8 items-center rounded bg-green-600 px-3 text-xs font-medium text-white">+ Aprobar Seleccionados (2)</div>
                                     <div className="flex h-8 items-center rounded border px-3 text-xs font-medium">Exportar Excel</div>
-                                    <span className="absolute right-32 top-4 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
+                                    <span className="absolute right-40 top-4 flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
                                         1
                                     </span>
                                 </div>
@@ -57,7 +57,7 @@ export function RenditionsSection() {
                                             <td className="p-3 font-medium text-blue-600">Pastillas de Freno B-1</td>
                                             <td className="p-3 text-right">$ 85.000</td>
                                             <td className="p-3 text-right relative">
-                                                <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs">Pendiente</span>
+                                                <span className="rounded-full border border-orange-500/30 bg-orange-50 text-orange-700 px-2 py-0.5 text-xs">Pendiente Inspector</span>
                                                 <span className="absolute -left-2 top-[30%] flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">
                                                     2
                                                 </span>
@@ -69,7 +69,7 @@ export function RenditionsSection() {
                                             <td className="p-3 font-medium text-blue-600">Llave de Torque</td>
                                             <td className="p-3 text-right">$ 45.990</td>
                                             <td className="p-3 text-right">
-                                                <span className="rounded-full bg-orange-100 text-orange-700 px-2 py-0.5 text-xs">Pendiente</span>
+                                                <span className="rounded-full border border-blue-500/30 bg-blue-50 text-blue-700 px-2 py-0.5 text-xs">Pendiente Secretaria</span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -79,11 +79,11 @@ export function RenditionsSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Validación Masiva:</strong> Permite aprobar múltiples gastos de una sola vez. Al validar, el sistema solicita un código OTP para firmar digitalmente la aprobación.</span>
+                                <span><strong>Validación Masiva:</strong> Permite aprobar múltiples gastos de una sola vez según el rol. Al aprobar, el sistema solicita un código OTP para firmar digitalmente la acción.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Flujo de Auditoría:</strong> Cada gasto nace como "Pendiente" y solo pasa a "Validado" cuando Adquisiciones o Comandancia lo revisan.</span>
+                                <span><strong>Flujo de Auditoría:</strong> Cada gasto nace como "Pendiente Inspector", luego pasa a "Pendiente Secretaria" tras la revisión del Inspector MM, y finalmente a "Aprobado" tras la revisión de Secretaría.</span>
                             </div>
                         </div>
                     </section>
@@ -183,18 +183,24 @@ export function RenditionsSection() {
                                     <td className="p-3 font-medium">Comandancia / Admin</td>
                                     <td className="p-3 text-green-700 font-bold">Total</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Habilitado</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Todos)</td>
                                 </tr>
                                 <tr className="border-t bg-muted/10">
                                     <td className="p-3 font-medium text-primary">Secretaría Adquisiciones</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-green-600 font-bold">Habilitado</td>
+                                    <td className="p-3 text-red-600 font-bold">No</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Paso 2)</td>
                                 </tr>
                                 <tr className="border-t">
                                     <td className="p-3 font-medium">Inspectoría MM</td>
-                                    <td className="p-3 text-blue-700">Solo Lectura</td>
-                                    <td className="p-3 text-red-600">No</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
+                                    <td className="p-3 text-red-600 font-bold">No</td>
+                                    <td className="p-3 text-green-600 font-bold">Habilitado (Paso 1)</td>
+                                </tr>
+                                <tr className="border-t bg-muted/10">
+                                    <td className="p-3 font-medium text-primary">Mecánico (Taller)</td>
+                                    <td className="p-3 text-blue-700 font-bold">Propias</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-red-600">No</td>
                                 </tr>
                                 <tr className="border-t">
