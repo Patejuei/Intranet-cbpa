@@ -45,6 +45,11 @@ class VehicleLogController extends Controller
             $logQuery->where('vehicle_id', request()->vehicle_id);
         }
 
+        // Movement Key Filter
+        if (request()->has('movement_key') && request()->movement_key) {
+            $logQuery->where('movement_key', 'like', '%' . request()->movement_key . '%');
+        }
+
         return Inertia::render('vehicles/logs/index', [
             'logs' => $logQuery->paginate(15)->appends(request()->all()),
             'vehicles' => \App\Models\Vehicle::query()
@@ -64,7 +69,7 @@ class VehicleLogController extends Controller
                         ->limit(1)
                 ])
                 ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.coupon_number', 'last_mileage']),
-            'filters' => request()->only(['vehicle_id']),
+            'filters' => request()->only(['vehicle_id', 'movement_key']),
         ]);
     }
 
@@ -87,6 +92,7 @@ class VehicleLogController extends Controller
             'end_km' => 'nullable|integer|gte:start_km',
             'activity_type' => 'required|string',
             'destination' => 'required|string',
+            'movement_key' => 'nullable|string|max:20',
             'date' => 'required|date',
             'fuel_liters' => 'nullable|numeric',
             'fuel_coupon' => 'nullable|string',
@@ -190,15 +196,20 @@ class VehicleLogController extends Controller
             $logQuery->where('vehicle_id', $request->vehicle_id);
         }
 
+        // Movement Key Filter
+        if ($request->has('movement_key') && $request->movement_key) {
+            $logQuery->where('movement_key', 'like', '%' . $request->movement_key . '%');
+        }
+
         $logs = $logQuery->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header Row
-        $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Lts. Combust.', 'Nº Cupón Comb.', 'Destino', 'Obs'];
+        $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Lts. Combust.', 'Nº Cupón Comb.', 'Destino', 'Clave', 'Obs'];
         $sheet->fromArray($columns, NULL, 'A1');
-        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:P1')->getFont()->setBold(true);
 
         // Data Rows
         $row = 2;
@@ -217,12 +228,13 @@ class VehicleLogController extends Controller
             $sheet->setCellValue('L' . $row, $log->fuel_liters ?? 'N/A');
             $sheet->setCellValue('M' . $row, $log->fuel_coupon ?? 'N/A');
             $sheet->setCellValue('N' . $row, $log->destination);
-            $sheet->setCellValue('O' . $row, $log->observations);
+            $sheet->setCellValue('O' . $row, $log->movement_key ?? 'N/A');
+            $sheet->setCellValue('P' . $row, $log->observations);
             $row++;
         }
 
         // Auto size columns
-        foreach (range('A', 'O') as $columnID) {
+        foreach (range('A', 'P') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 

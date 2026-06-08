@@ -16,6 +16,7 @@ class VehicleLog extends Model
         'arrival_time',
         'activity_type',
         'destination',
+        'movement_key',
         'fuel_liters',
         'fuel_coupon',
         'receipt_path',

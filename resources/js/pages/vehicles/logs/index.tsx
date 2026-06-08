@@ -1,3 +1,5 @@
+import * as React from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +41,7 @@ interface Log {
     end_km: number;
     activity_type: string;
     destination: string;
+    movement_key?: string;
     date: string;
     departure_time?: string;
     arrival_time?: string;
@@ -53,9 +56,10 @@ export default function VehicleLogs({
 }: {
     logs: any;
     vehicles: Vehicle[];
-    filters: { vehicle_id?: string };
+    filters: { vehicle_id?: string; movement_key?: string };
 }) {
     const { canCreate } = usePermissions();
+    const [searchKey, setSearchKey] = useState(filters?.movement_key || '');
 
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
@@ -65,6 +69,7 @@ export default function VehicleLogs({
         arrival_time: '',
         activity_type: '',
         destination: '',
+        movement_key: '',
         date: format(new Date(), 'yyyy-MM-dd'),
         fuel_liters: '',
         fuel_coupon: '',
@@ -211,25 +216,47 @@ export default function VehicleLogs({
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="destination">
-                                                Dirección
-                                            </Label>
-                                            <Input
-                                                value={data.destination}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'destination',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                placeholder="Dirección o lugar de destino"
-                                            />
-                                            {errors.destination && (
-                                                <p className="text-sm text-destructive">
-                                                    {errors.destination}
-                                                </p>
-                                            )}
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <div className="space-y-2 md:col-span-2">
+                                                <Label htmlFor="destination">
+                                                    Dirección
+                                                </Label>
+                                                <Input
+                                                    value={data.destination}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'destination',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Dirección o lugar de destino"
+                                                />
+                                                {errors.destination && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.destination}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="movement_key">
+                                                    Clave
+                                                </Label>
+                                                <Input
+                                                    value={data.movement_key}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'movement_key',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Ej: 10-0-5"
+                                                />
+                                                {errors.movement_key && (
+                                                    <p className="text-sm text-destructive">
+                                                        {errors.movement_key}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div className="space-y-2">
@@ -500,14 +527,23 @@ export default function VehicleLogs({
 
                     <TabsContent value="history">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
+                            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                 <CardTitle>Historial de Bitácoras</CardTitle>
-                                <div className="flex w-[400px] items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <Select
                                         value={filters?.vehicle_id || 'all'}
-                                        onValueChange={handleFilterChange}
+                                        onValueChange={(val) => {
+                                            router.get(
+                                                '/vehicles/logs',
+                                                {
+                                                    vehicle_id: val === 'all' ? undefined : val,
+                                                    movement_key: searchKey || undefined,
+                                                },
+                                                { preserveState: true, preserveScroll: true, replace: true }
+                                            );
+                                        }}
                                     >
-                                        <SelectTrigger className="w-[200px]">
+                                        <SelectTrigger className="w-[180px]">
                                             <SelectValue placeholder="Filtrar por Vehículo" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -524,13 +560,47 @@ export default function VehicleLogs({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <Input
+                                        className="w-[150px]"
+                                        placeholder="Buscar Clave..."
+                                        value={searchKey}
+                                        onChange={(e) => setSearchKey(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                router.get(
+                                                    '/vehicles/logs',
+                                                    {
+                                                        vehicle_id: filters?.vehicle_id || undefined,
+                                                        movement_key: searchKey || undefined,
+                                                    },
+                                                    { preserveState: true, preserveScroll: true, replace: true }
+                                                );
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                            router.get(
+                                                '/vehicles/logs',
+                                                {
+                                                    vehicle_id: filters?.vehicle_id || undefined,
+                                                    movement_key: searchKey || undefined,
+                                                },
+                                                { preserveState: true, preserveScroll: true, replace: true }
+                                            );
+                                        }}
+                                    >
+                                        Filtrar
+                                    </Button>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => {
-                                            const vehicleId =
-                                                filters.vehicle_id || 'all';
-                                            window.location.href = `/vehicles/logs/export?vehicle_id=${vehicleId}`;
+                                            const vehicleId = filters.vehicle_id || 'all';
+                                            const movementKey = filters.movement_key || '';
+                                            window.location.href = `/vehicles/logs/export?vehicle_id=${vehicleId}&movement_key=${movementKey}`;
                                         }}
                                     >
                                         Exportar Excel
@@ -556,6 +626,9 @@ export default function VehicleLogs({
                                                 </th>
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Destino
+                                                </th>
+                                                <th className="h-12 px-4 text-left font-medium">
+                                                    Clave
                                                 </th>
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Km Salida
@@ -605,6 +678,9 @@ export default function VehicleLogs({
                                                     <td className="p-4">
                                                         {log.destination}
                                                     </td>
+                                                    <td className="p-4 font-mono text-xs">
+                                                        {log.movement_key || '-'}
+                                                    </td>
                                                     <td className="p-4">
                                                         {log.start_km}
                                                     </td>
@@ -632,7 +708,7 @@ export default function VehicleLogs({
                                             {logs.data.length === 0 && (
                                                 <tr>
                                                     <td
-                                                        colSpan={8}
+                                                        colSpan={9}
                                                         className="p-4 text-center text-muted-foreground"
                                                     >
                                                         No hay registros.

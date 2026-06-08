@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Clock, Download, ExternalLink, Fuel, Gauge, MapPin, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, ExternalLink, Fuel, Gauge, Hash, MapPin, User as UserIcon } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -20,6 +20,7 @@ interface Log {
     end_km: number | null;
     activity_type: string;
     destination: string;
+    movement_key: string | null;
     date: string;
     departure_time: string;
     arrival_time: string;
@@ -97,6 +98,15 @@ export default function VehicleLogShow({ log }: { log: Log }) {
                                             <p className="font-semibold">{log.destination}</p>
                                         </div>
                                     </div>
+                                    {log.movement_key && (
+                                        <div className="flex items-start gap-3">
+                                            <Hash className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                                            <div>
+                                                <p className="text-xs font-medium uppercase text-muted-foreground">Clave</p>
+                                                <p className="font-semibold font-mono text-sm">{log.movement_key}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-4">

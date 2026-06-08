@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.0.4',
+                'date' => '08-06-2026',
+                'changes' => [
+                    'Implementación del campo "Clave" en la bitácora de vehículos.',
+                    'Filtros por clave en el historial y exportaciones a Excel.',
+                ],
+            ],
+            [
                 'version' => 'v1.0.3',
                 'date' => '02-06-2026',
                 'changes' => [
