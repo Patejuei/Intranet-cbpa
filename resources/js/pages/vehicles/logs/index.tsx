@@ -404,11 +404,11 @@ export default function VehicleLogs({
                                                         setData((prev) => ({
                                                             ...prev,
                                                             has_fuel: checked,
-                                                            fuel_coupon:
-                                                                checked &&
-                                                                selectedVehicle?.coupon_number
-                                                                    ? selectedVehicle.coupon_number
-                                                                    : prev.fuel_coupon,
+                                                            fuel_coupon: checked
+                                                                ? (selectedVehicle?.coupon_number || '')
+                                                                : '',
+                                                            fuel_liters: checked ? prev.fuel_liters : '',
+                                                            receipt: checked ? prev.receipt : null,
                                                         }));
                                                     }}
                                                 />
@@ -416,81 +416,92 @@ export default function VehicleLogs({
                                                     ¿Fue a Cargar Combustible?
                                                 </Label>
                                             </div>
+                                            {data.has_fuel && (
+                                                <div className="space-y-4 rounded-lg border p-4">
+                                                    <h3 className="font-semibold">
+                                                        Detalle de Carga
+                                                    </h3>
+                                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="fuel_liters">
+                                                                Litros Cargados
+                                                            </Label>
+                                                            <Input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={
+                                                                    data.fuel_liters
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setData(
+                                                                        'fuel_liters',
+                                                                        e.target.value,
+                                                                    )
+                                                                }
+                                                                placeholder="0.0"
+                                                            />
+                                                            {errors.fuel_liters && (
+                                                                <p className="text-sm text-destructive">
+                                                                    {errors.fuel_liters}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="fuel_coupon">
+                                                                Nº Cupón / Vale
+                                                            </Label>
+                                                            <Input
+                                                                value={
+                                                                    data.fuel_coupon
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setData(
+                                                                        'fuel_coupon',
+                                                                        e.target.value,
+                                                                    )
+                                                                }
+                                                                placeholder="Nº Documento"
+                                                                disabled={
+                                                                    !!vehicles.find(
+                                                                        (v) =>
+                                                                            v.id.toString() ===
+                                                                            data.vehicle_id,
+                                                                    )?.coupon_number
+                                                                }
+                                                            />
+                                                            {errors.fuel_coupon && (
+                                                                <p className="text-sm text-destructive">
+                                                                    {errors.fuel_coupon}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="receipt">
+                                                            Fotografía Boleta/Vale
+                                                        </Label>
+                                                        <Input
+                                                            id="receipt"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'receipt',
+                                                                    e.target.files
+                                                                        ? e.target.files[0]
+                                                                        : null,
+                                                                )
+                                                            }
+                                                        />
+                                                        {errors.receipt && (
+                                                            <p className="text-sm text-destructive">
+                                                                {errors.receipt}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-
-                                        {data.has_fuel && (
-                                            <div className="space-y-4 rounded-lg border p-4">
-                                                <h3 className="font-semibold">
-                                                    Detalle de Carga
-                                                </h3>
-                                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="fuel_liters">
-                                                            Litros Cargados
-                                                        </Label>
-                                                        <Input
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={
-                                                                data.fuel_liters
-                                                            }
-                                                            onChange={(e) =>
-                                                                setData(
-                                                                    'fuel_liters',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            placeholder="0.0"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="fuel_coupon">
-                                                            Nº Cupón / Vale
-                                                        </Label>
-                                                        <Input
-                                                            value={
-                                                                data.fuel_coupon
-                                                            }
-                                                            onChange={(e) =>
-                                                                setData(
-                                                                    'fuel_coupon',
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            placeholder="Nº Documento"
-                                                            disabled={
-                                                                !!vehicles.find(
-                                                                    (v) =>
-                                                                        v.id.toString() ===
-                                                                        data.vehicle_id,
-                                                                )?.coupon_number
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="receipt">
-                                                        Fotografía Boleta/Vale
-                                                    </Label>
-                                                    <Input
-                                                        id="receipt"
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) =>
-                                                            setData(
-                                                                'receipt',
-                                                                e.target.files
-                                                                    ? e.target
-                                                                          .files[0]
-                                                                    : null,
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
 
                                         <div className="space-y-2">
                                             <Label htmlFor="observations">

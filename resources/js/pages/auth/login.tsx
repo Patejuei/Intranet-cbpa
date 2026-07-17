@@ -95,15 +95,6 @@ export default function Login({
                                 {processing && <Spinner />}
                                 Iniciar sesión
                             </Button>
-
-                            <div className="text-center text-sm text-muted-foreground mt-2">
-                                <Link
-                                    href="/help"
-                                    className="underline underline-offset-4 hover:text-primary"
-                                >
-                                    Ver Manual de Usuario
-                                </Link>
-                            </div>
                         </div>
 
                         {/* {canRegister && (

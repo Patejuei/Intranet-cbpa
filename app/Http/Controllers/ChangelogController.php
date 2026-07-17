@@ -14,6 +14,16 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.0.5',
+                'date' => '17-07-2026',
+                'changes' => [
+                    'Corrección de bug en el formulario de bitácoras que impedía guardar el registro al activar y luego desactivar el switch de combustible.',
+                    'Sanitización y validación robusta de datos de combustible en el servidor.',
+                    'Mensajes de error de validación visibles en el formulario de combustible para evitar fallos silenciosos.',
+                    'Eliminación del enlace al Manual de Usuario de la pantalla de LogIn.',
+                ],
+            ],
+            [
                 'version' => 'v1.0.4',
                 'date' => '08-06-2026',
                 'changes' => [
