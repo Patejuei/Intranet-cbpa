@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagramas de Procedimientos — Intranet CBPA</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --rojo-bomberos: #C0392B;
+      --rojo-claro: #E74C3C;
+      --rojo-muy-claro: #FDEDEC;
+      --gris-oscuro: #1A1A2E;
+      --gris-medio: #4A4A6A;
+      --gris-claro: #F4F4F8;
+      --gris-borde: #DCDCE8;
+      --verde: #27AE60;
+      --verde-claro: #EAFAF1;
+      --amarillo: #F39C12;
+      --amarillo-claro: #FEF9E7;
+      --azul: #2980B9;
+      --azul-claro: #EBF5FB;
+      --naranja: #E67E22;
+      --naranja-claro: #FDF2E9;
+      --morado: #8E44AD;
+      --morado-claro: #F4ECF7;
+      --cyan: #17A589;
+      --cyan-claro: #E8F8F5;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #E5E7EB;
+      color: var(--gris-oscuro);
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 20px 0;
+    }
+
+    /* ====== CONTENEDOR DE PÁGINA A4 ====== */
+    .pdf-page {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto 30px;
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* ====== PORTADA ====== */
+    .cover {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #C0392B 0%, #1A1A2E 60%, #0D0D1A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px 40px;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 40%, rgba(192,57,43,0.35) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .cover-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 50px;
+      padding: 8px 24px;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    .cover-emblem {
+      font-size: 90px;
+      margin-bottom: 25px;
+      filter: drop-shadow(0 6px 20px rgba(0,0,0,0.5));
+    }
+
+    .cover-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .cover-subtitle {
+      font-size: 19px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 40px;
+      letter-spacing: 1px;
+    }
+
+    .cover-divider {
+      width: 80px;
+      height: 4px;
+      background: var(--rojo-claro);
+      margin: 0 auto 50px;
+      border-radius: 2px;
+    }
+
+    .cover-meta {
+      display: flex;
+      gap: 50px;
+      justify-content: center;
+      margin-bottom: 50px;
+    }
+
+    .cover-meta-item {
+      text-align: center;
+    }
+
+    .cover-meta-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .cover-meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .cover-modules {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cover-module-chip {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .cover-module-chip .module-icon {
+      font-size: 16px;
+      margin-right: 6px;
+    }
+
+    /* ====== CONTENIDO INTERNO ====== */
+    .page-content {
+      padding: 20mm 18mm 15mm;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* ====== CABECERAS ====== */
+    .toc-header {
+      border-bottom: 3px solid var(--rojo-bomberos);
+      padding-bottom: 16px;
+      margin-bottom: 30px;
+    }
+
+    .toc-header h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--gris-oscuro);
+      letter-spacing: -0.5px;
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border-bottom: 2px solid var(--gris-borde);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .module-icon-big {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      flex-shrink: 0;
+      background: var(--gris-claro);
+    }
+
+    .module-title-block h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gris-oscuro);
+      line-height: 1.1;
+    }
+
+    .module-title-block p {
+      font-size: 10px;
+      color: var(--gris-medio);
+      margin-top: 4px;
+    }
+
+    .module-tags {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 9px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+
+    /* ====== ÍNDICE ====== */
+    .toc-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 0;
+      border-bottom: 1px dashed var(--gris-borde);
+    }
+
+    .toc-num {
+      width: 36px;
+      height: 36px;
+      background: var(--rojo-bomberos);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .toc-text {
+      flex: 1;
+    }
+
+    .toc-text h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gris-oscuro);
+    }
+
+    .toc-text p {
+      font-size: 10px;
+      color: var(--gris-medio);
+      margin-top: 3px;
+    }
+
+    .toc-dot {
+      flex: 1;
+      height: 1px;
+      border-bottom: 1px dotted var(--gris-borde);
+    }
+
+    .legend-box {
+      margin-top: auto;
+      padding: 22px;
+      background: var(--gris-claro);
+      border-radius: 12px;
+      border: 1px solid var(--gris-borde);
+    }
+
+    .legend-box h4 {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--gris-oscuro);
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      color: var(--gris-medio);
+    }
+
+    .legend-symbol {
+      width: 32px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .ls-start { background: var(--gris-oscuro); color: white; border-radius: 50px; }
+    .ls-action { background: var(--azul-claro); border: 1.5px solid var(--azul); border-radius: 4px; color: var(--azul); }
+    .ls-decision { background: var(--amarillo-claro); border: 1.5px solid var(--amarillo); color: var(--amarillo); border-radius: 4px; }
+    .ls-state { background: var(--verde-claro); border: 1.5px solid var(--verde); border-radius: 50px; color: var(--verde); }
+    .ls-alert { background: var(--rojo-muy-claro); border: 1.5px solid var(--rojo-bomberos); border-radius: 4px; color: var(--rojo-bomberos); }
+    .ls-doc { background: var(--morado-claro); border: 1.5px solid var(--morado); border-radius: 4px; color: var(--morado); }
+
+    /* ====== SWIMLANE (DIAGRAMA DE CARRILES) ====== */
+    .swimlane {
+      border: 1px solid var(--gris-borde);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+      background: white;
+    }
+
+    .swimlane-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .lane-row {
+      border-bottom: 1.5px solid var(--gris-borde);
+    }
+
+    .lane-row:last-child {
+      border-bottom: none;
+    }
+
+    .lane-header {
+      width: 110px;
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-right: 2px solid var(--gris-borde);
+      vertical-align: middle;
+    }
+
+    .lane-body {
+      padding: 16px 12px;
+      vertical-align: middle;
+      background: white;
+    }
+
+    /* ====== NODOS ====== */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .node {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 600;
+      border: 1.5px solid;
+      max-width: 210px;
+      line-height: 1.3;
+    }
+
+    .node-icon { font-size: 11px; flex-shrink: 0; }
+
+    .node-start, .node-end {
+      background: var(--gris-oscuro);
+      color: white;
+      border-color: var(--gris-oscuro);
+      border-radius: 50px;
+      font-weight: 700;
+    }
+
+    .node-action {
+      background: var(--azul-claro);
+      color: #1b4f72;
+      border-color: #2980B9;
+    }
+
+    .node-decision {
+      background: var(--amarillo-claro);
+      color: #7e5109;
+      border-color: var(--amarillo);
+      border-style: dashed;
+    }
+
+    .node-state-ok {
+      background: var(--verde-claro);
+      color: #196f3d;
+      border-color: var(--verde);
+      border-radius: 50px;
+    }
+
+    .node-state-warn {
+      background: var(--naranja-claro);
+      color: #7e5109;
+      border-color: var(--naranja);
+      border-radius: 50px;
+    }
+
+    .node-state-error {
+      background: var(--rojo-muy-claro);
+      color: #78281f;
+      border-color: var(--rojo-bomberos);
+      border-radius: 50px;
+    }
+
+    .node-doc {
+      background: var(--morado-claro);
+      color: #512e5f;
+      border-color: var(--morado);
+    }
+
+    .node-alert {
+      background: var(--rojo-muy-claro);
+      color: #78281f;
+      border-color: var(--rojo-claro);
+    }
+
+    .node-special {
+      background: var(--cyan-claro);
+      color: #0e6251;
+      border-color: var(--cyan);
+    }
+
+    .arrow {
+      display: inline-flex;
+      align-items: center;
+      color: var(--gris-medio);
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 1px;
+    }
+
+    .branch {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      padding-left: 15px;
+      border-left: 2px dashed var(--gris-borde);
+    }
+
+    .branch-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .branch-label {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .branch-label-si { background: var(--verde); color: white; }
+    .branch-label-no { background: var(--rojo-bomberos); color: white; }
+
+    /* ====== ETIQUETAS DE ESTADOS ====== */
+    .states-box {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .state-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      border: 1px solid;
+    }
+
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ====== TABLA DE ACTORES ====== */
+    .actors-table {
+      border: 1px solid var(--gris-borde);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .actors-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .actors-table thead {
+      background: var(--gris-oscuro);
+      color: white;
+    }
+
+    .actors-table th {
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 9px;
+    }
+
+    .actors-table td {
+      padding: 8px 12px;
+      border-top: 1px solid var(--gris-borde);
+      color: var(--gris-oscuro);
+    }
+
+    .actors-table tr:nth-child(odd) td {
+      background: var(--gris-claro);
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    /* ====== SECCIONES Y NOTAS ====== */
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--gris-oscuro);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 15px 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gris-borde);
+    }
+
+    .sub-note {
+      font-size: 10px;
+      color: var(--gris-medio);
+      margin-bottom: 12px;
+    }
+
+    .info-note {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 9.5px;
+      line-height: 1.5;
+      border-left: 4px solid;
+      margin-top: 10px;
+    }
+
+    .info-note-blue { background: var(--azul-claro); border-color: var(--azul); color: #1b4f72; }
+    .info-note-green { background: var(--verde-claro); border-color: var(--verde); color: #196f3d; }
+    .info-note-red { background: var(--rojo-muy-claro); border-color: var(--rojo-bomberos); color: #78281f; }
+    .info-note-orange { background: var(--naranja-claro); border-color: var(--naranja); color: #7e5109; }
+
+    /* ====== PIE DE PÁGINA ====== */
+    .page-footer {
+      height: 12mm;
+      border-top: 1px solid var(--gris-borde);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 18mm;
+      font-size: 9px;
+      color: var(--gris-medio);
+      background: var(--gris-claro);
+      box-sizing: border-box;
+    }
+
+    /* ====== COLORES POR MODULO ====== */
+    .mod-checklist .module-header { border-top: 5px solid #2980B9; }
+    .mod-checklist .lane-header { background: #2980B9; color: white; border-right-color: #1f618d; }
+    .mod-checklist .module-icon-big { background: var(--azul-claro); color: var(--azul); }
+
+    .mod-incidencias .module-header { border-top: 5px solid var(--naranja); }
+    .mod-incidencias .lane-header { background: var(--naranja); color: white; border-right-color: #d35400; }
+    .mod-incidencias .module-icon-big { background: var(--naranja-claro); color: var(--naranja); }
+
+    .mod-taller .module-header { border-top: 5px solid var(--morado); }
+    .mod-taller .lane-header { background: var(--morado); color: white; border-right-color: #763393; }
+    .mod-taller .module-icon-big { background: var(--morado-claro); color: var(--morado); }
+
+    .mod-rendiciones .module-header { border-top: 5px solid var(--verde); }
+    .mod-rendiciones .lane-header { background: var(--verde); color: white; border-right-color: #1e8449; }
+    .mod-rendiciones .module-icon-big { background: var(--verde-claro); color: var(--verde); }
+
+    /* ========================================== */
+    /* CONFIGURACIÓN EXCLUSIVA PARA IMPRESIÓN PDF */
+    /* ========================================== */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+      }
+      .pdf-page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        page-break-inside: avoid;
+        height: 297mm;
+        width: 210mm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0; /* Controlamos los márgenes por CSS interno de cada contenedor */
+    }
+  </style>
+</head>
+<body>
+
+<!-- PÁGINA 1: PORTADA -->
+<div class="pdf-page">
+  <div class="cover">
+    <div class="cover-badge">Documento Oficial — Intranet CBPA</div>
+    <div class="cover-emblem">🚒</div>
+    <h1 class="cover-title">Diagramas de<br/>Procedimientos</h1>
+    <p class="cover-subtitle">Guía de Flujos del Módulo de Material Mayor</p>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Versión</div>
+        <div class="cover-meta-value">1.0.6</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Fecha</div>
+        <div class="cover-meta-value">Julio 2026</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Institución</div>
+        <div class="cover-meta-value">CB Puente Alto</div>
+      </div>
+    </div>
+    <div class="cover-modules">
+      <div class="cover-module-chip"><span class="module-icon">☑️</span> Checklist Diario</div>
+      <div class="cover-module-chip"><span class="module-icon">⚠️</span> Incidencias</div>
+      <div class="cover-module-chip"><span class="module-icon">🔧</span> Taller Mecánico</div>
+      <div class="cover-module-chip"><span class="module-icon">💰</span> Rendiciones de Taller</div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 1</span>
+  </div>
+</div>
+
+<!-- PÁGINA 2: ÍNDICE Y LEYENDAS -->
+<div class="pdf-page">
+  <div class="page-content">
+    <div class="toc-header">
+      <h2>Índice de Contenidos</h2>
+    </div>
+
+    <div class="toc-item">
+      <div class="toc-num">1</div>
+      <div class="toc-text">
+        <h3>Módulo 1: Checklist de Vehículos</h3>
+        <p>Inspección diaria. Flujos de visación específicos para Compañías (Maquinista + Capitán) y Comandancia (Comandante + Inspector).</p>
+      </div>
+      <div class="toc-dot"></div>
+      <span style="font-size:12px;">Págs. 3-4</span>
+    </div>
+
+    <div class="toc-item">
+      <div class="toc-num">2</div>
+      <div class="toc-text">
+        <h3>Módulo 2: Incidencias de Vehículos</h3>
+        <p>Reporte de fallas en servicio. Roles del Capitán y Cuartelero. Derivaciones a Taller Mecánico o Comandancia.</p>
+      </div>
+      <div class="toc-dot"></div>
+      <span style="font-size:12px;">Pág. 5</span>
+    </div>
+
+    <div class="toc-item">
+      <div class="toc-num">3</div>
+      <div class="toc-text">
+        <h3>Módulo 3: Taller Mecánico</h3>
+        <p>Ingreso a taller, registro de tareas y consumos de inventario (descuento automático de stock), salida y egreso de unidades.</p>
+      </div>
+      <div class="toc-dot"></div>
+      <span style="font-size:12px;">Págs. 6-7</span>
+    </div>
+
+    <div class="toc-item">
+      <div class="toc-num">4</div>
+      <div class="toc-text">
+        <h3>Módulo 4: Rendiciones de Taller</h3>
+        <p>Proceso de Caja Chica. Visación técnica del Inspector de Material Mayor y aprobación financiera de Adquisiciones.</p>
+      </div>
+      <div class="toc-dot"></div>
+      <span style="font-size:12px;">Pág. 8</span>
+    </div>
+
+    <div class="legend-box">
+      <h4>🗺️ Leyenda de Símbolos en los Diagramas</h4>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-symbol ls-start">●</div><span>Inicio / Fin</span></div>
+        <div class="legend-item"><div class="legend-symbol ls-action">▬</div><span>Acción / Paso</span></div>
+        <div class="legend-item"><div class="legend-symbol ls-decision">?</div><span>Decisión</span></div>
+        <div class="legend-item"><div class="legend-symbol ls-state">✓</div><span>Estado en Sistema</span></div>
+        <div class="legend-item"><div class="legend-symbol ls-doc">📄</div><span>Documento / PDF</span></div>
+        <div class="legend-item"><div class="legend-symbol ls-alert">!</div><span>Regla / Bloqueo</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 2</span>
+  </div>
+</div>
+
+<!-- PÁGINA 3: MODULO 1 — CHECKLIST DE VEHÍCULOS (FLUJO A: COMPAÑÍA) -->
+<div class="pdf-page mod-checklist">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">☑️</div>
+      <div class="module-title-block">
+        <h1>Módulo 1 — Checklist de Vehículos</h1>
+        <p>Flujo A: Vehículos pertenecientes a Compañías (Firma de Maquinista y Capitán)</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--azul-claro); border-color:var(--azul); color:#1a5276;">Checklist</span>
+        <span class="tag" style="background:#EAFAF1; border-color:#27AE60; color:#1a5632;">Compañías</span>
+      </div>
+    </div>
+
+    <div class="states-box">
+      <div class="state-chip" style="background:#FEF9E7; border-color:#F39C12; color:#784212;"><div class="state-dot" style="background:#F39C12;"></div>Pending — Sin firmas</div>
+      <div class="state-chip" style="background:#EBF5FB; border-color:#2980B9; color:#1a5276;"><div class="state-dot" style="background:#2980B9;"></div>Partially Reviewed — 1 Firma (Falta la otra)</div>
+      <div class="state-chip" style="background:#EAFAF1; border-color:#27AE60; color:#1a5632;"><div class="state-dot" style="background:#27AE60;"></div>Completed — Firmado por ambos</div>
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- MAQUINISTA / CUARTELERO -->
+        <tr class="lane-row">
+          <td class="lane-header">🚒 Conductor /<br/>Cuartelero</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-start">● Puesta en Servicio</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">📝 Completa checklist del carro</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">💾 Envía a revisión</span>
+            </div>
+            <div class="info-note info-note-blue" style="margin-top:6px; padding:6px 10px; font-size:8.5px;">
+              <b>Acceso:</b> Solo puede realizar checklist de carros de su propia compañía o carros en los que sea conductor asignado.
+            </div>
+          </td>
+        </tr>
+        <!-- MAQUINISTA FIRMANTE -->
+        <tr class="lane-row">
+          <td class="lane-header">🔑 Maquinista</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Revisa novedades</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔐 Valida con OTP</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-warn">✓ Firma Maquinista</span>
+            </div>
+          </td>
+        </tr>
+        <!-- CAPITÁN -->
+        <tr class="lane-row">
+          <td class="lane-header">👨‍✈️ Capitán </td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Revisa novedades</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔐 Valida con OTP</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-ok">✓ Firma Capitán</span>
+            </div>
+          </td>
+        </tr>
+        <!-- SISTEMA -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">🖥️ Sistema</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-decision">¿Ambos firmaron?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-ok">✓ Estado a Completed</span>
+                <span class="arrow">→</span>
+                <span class="node node-alert">⚠️ Genera incidencias de fallas (Open)</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-warn">✓ Estado: Partially Reviewed / Pending</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 3</span>
+  </div>
+</div>
+
+<!-- PÁGINA 4: MODULO 1 — CHECKLIST DE VEHÍCULOS (FLUJO B: COMANDANCIA) -->
+<div class="pdf-page mod-checklist">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">☑️</div>
+      <div class="module-title-block">
+        <h1>Módulo 1 — Checklist de Vehículos</h1>
+        <p>Flujo B: Vehículos de Comandancia (Firma de Comandante e Inspector de Material Mayor)</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--azul-claro); border-color:var(--azul); color:#1a5276;">Checklist</span>
+        <span class="tag" style="background:var(--rojo-muy-claro); border-color:var(--rojo-bomberos); color:var(--rojo-bomberos);">Comandancia</span>
+      </div>
+    </div>
+
+    <div class="sub-note" style="margin-bottom:15px;">
+      Este flujo rige de forma exclusiva para los vehículos cuyo campo "compañía" esté registrado bajo <b>Comandancia</b>.
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- OPERADOR -->
+        <tr class="lane-row">
+          <td class="lane-header">🚒 Conductor Habilitado</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-start">● Puesta en Servicio</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">📝 Realiza e ingresa checklist del carro</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-warn">✓ Estado: Pending</span>
+            </div>
+          </td>
+        </tr>
+        <!-- COMANDANTE -->
+        <tr class="lane-row">
+          <td class="lane-header">⭐ Comandante</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Revisa novedades</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔐 Valida con OTP</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-warn">✓ Firma Comandante</span>
+            </div>
+          </td>
+        </tr>
+        <!-- INSPECTOR -->
+        <tr class="lane-row">
+          <td class="lane-header">🔎 Inspector Material Mayor</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Revisa novedades</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔐 Valida con OTP</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-warn">✓ Firma Inspector MM</span>
+            </div>
+          </td>
+        </tr>
+        <!-- SISTEMA -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">🖥️ Sistema</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-decision">¿Ambas firmas listas?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-ok">✓ Estado a Completed</span>
+                <span class="arrow">→</span>
+                <span class="node node-alert">⚠️ Genera incidencias (Open)</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-warn">✓ Estado: Partially Reviewed</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="info-note info-note-orange">
+      <b>⚠️ Generación de Incidencias:</b> A diferencia de la versión preliminar, el sistema <b>únicamente</b> genera incidencias en base a ítems reportados con fallas una vez que el checklist alcanza el estado definitivo de <b>Completed</b> (con ambas firmas).
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 4</span>
+  </div>
+</div>
+
+<!-- PÁGINA 5: MODULO 2 — INCIDENCIAS DE VEHÍCULOS -->
+<div class="pdf-page mod-incidencias">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">⚠️</div>
+      <div class="module-title-block">
+        <h1>Módulo 2 — Incidencias de Vehículos</h1>
+        <p>Reporte de fallas, visación del Capitán y asignaciones a talleres mecánicos</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--naranja-claro); border-color:var(--naranja); color:#784212;">Incidencias</span>
+        <span class="tag" style="background:var(--rojo-muy-claro); border-color:var(--rojo-bomberos); color:var(--rojo-bomberos);">Revisión</span>
+      </div>
+    </div>
+
+    <div class="actors-table">
+      <table style="font-size: 8.5px;">
+        <thead>
+          <tr>
+            <th>Rol</th>
+            <th>¿Reporta?</th>
+            <th>¿Revisa/Edita?</th>
+            <th>¿Puede Detener Carro?</th>
+            <th>Acceso a Incidencias</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Maquinista</td>
+            <td>✅ Sí (su Compañía)</td>
+            <td>❌ No</td>
+            <td>❌ No (requiere Capitán)</td>
+            <td>Vehículos de su Compañía</td>
+          </tr>
+          <tr>
+            <td>Capitán</td>
+            <td>✅ Sí (su Compañía)</td>
+            <td>✅ Sí</td>
+            <td>✅ Sí (marca fuera de servicio)</td>
+            <td>Vehículos de su Compañía</td>
+          </tr>
+          <tr>
+            <td> Mecánico</td>
+            <td>❌ No</td>
+            <td>✅ Solo marcar leído</td>
+            <td>✅ Sí</td>
+            <td>Solo derivadas a Taller</td>
+          </tr>
+          <tr>
+            <td>Comandante / Inspector MM</td>
+            <td>✅ Sí</td>
+            <td>✅ Sí</td>
+            <td>✅ Sí</td>
+            <td>Todas (acceso global)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- REPORTANTE -->
+        <tr class="lane-row">
+          <td class="lane-header">🚒 Reportante</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-start">● Falla Detectada</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">📝 Ingresa carro, severidad y descripción</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-error">✓ Estado: Open</span>
+            </div>
+          </td>
+        </tr>
+        <!-- CAPITÁN -->
+        <tr class="lane-row">
+          <td class="lane-header">👨‍✈️ Capitán /<br/>Revisor</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Analiza criticidad</span>
+              <span class="arrow">→</span>
+              <span class="node node-decision">¿Debe detenerse?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-alert">🚨 Marca "Fuera de Servicio" (Vehículo: Fuera de Servicio)</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-ok">🟢 Continúa Operativo</span>
+              </div>
+            </div>
+            <div style="margin-top:6px;" class="flow">
+              <span class="node node-action">🔐 Valida con OTP</span>
+              <span class="arrow">→</span>
+              <span class="node node-decision">¿A quién deriva?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">TALLER</span>
+                <span class="arrow">→</span>
+                <span class="node node-special">🔧 Notifica a Taller Mecánico</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">Material Mayor</span>
+                <span class="arrow">→</span>
+                <span class="node node-doc">🔎 Notifica a Inspector MMayor</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- DESTINATARIO -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">🛠️ Destinatario</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔧 Taller: Marca como Leido / Habilita selección en OT</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔎 Inspector: Marca como Leido</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 5</span>
+  </div>
+</div>
+
+<!-- PÁGINA 6: MODULO 3 — TALLER MECÁNICO (INGRESO E INVENTARIO) -->
+<div class="pdf-page mod-taller">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">🔧</div>
+      <div class="module-title-block">
+        <h1>Módulo 3 — Taller Mecánico (Fase de Ingreso)</h1>
+        <p>Apertura de orden de trabajo, vinculación de incidencias y control de materiales</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--morado-claro); border-color:var(--morado); color:#4a235a;">Taller</span>
+        <span class="tag" style="background:var(--azul-claro); border-color:var(--azul); color:#1a5276;">Ingresos</span>
+      </div>
+    </div>
+
+    <div class="sub-note">
+      Los Capitanes no tienen permisos para crear ni editar órdenes de mantención en el taller. Solo visualizan las de su propia Compañía.
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- BODEGA / TALLER -->
+        <tr class="lane-row">
+          <td class="lane-header">🔎 Mecánico /<br/>Inspector MMayor</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-start">● Vehículo en Taller</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">📋 Abre Orden: Datos de Ingreso, HH, Trabajos Externos, Resumen del Trabajo</span>
+              <span class="arrow">→</span>
+              <span class="node node-decision">¿Existen incidencias?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-special">🔗 Vincula incidencias a la orden (su estado cambia a 'En Taller')</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-action">Apertura estándar</span>
+              </div>
+            </div>
+            <div class="flow" style="margin-top:8px;">
+              <span class="node node-action">📋 Realiza Checklist de Entrada de seguridad</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">✍️ Define tareas a ejecutar</span>
+            </div>
+          </td>
+        </tr>
+        <!-- SISTEMA -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">🖥️ Sistema</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-state-warn">✓ Orden: En Taller</span>
+              <span class="arrow">→</span>
+              <span class="node node-alert">🚨 Estado de Vehículo: Workshop (Fuera de Servicio)</span>
+            <br/>
+              <span class="node node-action">📄 Genera Orden de Ingreso (PDF)</span>
+            </div>
+            <div class="info-note info-note-blue" style="margin-top:8px; padding:6px 10px; font-size:8.5px;">
+              <b>Integración de Bodega:</b> Al asociar repuestos e insumos a la orden de mantención, el sistema descuenta las cantidades directamente de la bodega general del taller. Si no hay stock suficiente, el sistema bloquea la acción y solicita ingreso de una rendición de compras.
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 6</span>
+  </div>
+</div>
+
+<!-- PÁGINA 7: MODULO 3 — TALLER MECÁNICO (GESTIÓN Y EGRESO) -->
+<div class="pdf-page mod-taller">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">🔧</div>
+      <div class="module-title-block">
+        <h1>Módulo 3 — Taller Mecánico (Gestión y Cierre)</h1>
+        <p>Trabajos externos, cálculo final de costos y egreso del vehículo</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--morado-claro); border-color:var(--morado); color:#4a235a;">Taller</span>
+        <span class="tag" style="background:#EAFAF1; border-color:#27AE60; color:#1a5632;">Egreso</span>
+      </div>
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- MECÁNICO -->
+        <tr class="lane-row">
+          <td class="lane-header">🔧 Mecánico /<br/>Inspector MM</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">⏱️ Registra Horas Trabajadas</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🔩 Registra Trabajos Externos (costos, boleta de terceros)</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">✔️ Completa tareas</span>
+            </div>
+            <div class="info-note info-note-blue" style="margin-top:6px; padding:6px 10px; font-size:8.5px;">
+              <b>Fórmula del Costo:</b> Costo total = Trabajos Externos + Insumos de Bodega + (Horas × Valor Hora del Taller asignado).
+            </div>
+          </td>
+        </tr>
+        <!-- SISTEMA -->
+        <tr class="lane-row">
+          <td class="lane-header">🖥️ Sistema</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🏁 Clic en "Finalizar"</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-ok">✓ Orden cambia a Finalizado</span>
+              <span class="arrow">→</span>
+              <span class="node node-doc">📄 Genera Acta de Egreso (PDF)</span>
+            </div>
+          </td>
+        </tr>
+        <!-- ENTREGA -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">🚒 Retiro del<br/>Vehículo</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">📋 Registra Nombre y RUT de quien retira el carro</span>
+              <span class="arrow">→</span>
+              <span class="node node-state-ok">🟢 Estado de Vehículo: Active (Disponible)</span>
+              <span class="arrow">→</span>
+              <span class="node node-end">● Fin de Proceso</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 7</span>
+  </div>
+</div>
+
+<!-- PÁGINA 8: MODULO 4 — RENDICIONES DE TALLER -->
+<div class="pdf-page mod-rendiciones">
+  <div class="page-content">
+    <div class="module-header">
+      <div class="module-icon-big">💰</div>
+      <div class="module-title-block">
+        <h1>Módulo 4 — Rendiciones de Taller</h1>
+        <p>Caja Chica del Taller, visación por Inspector y aprobación de Adquisiciones</p>
+      </div>
+      <div class="module-tags">
+        <span class="tag" style="background:var(--verde-claro); border-color:var(--verde); color:#1a5632;">Rendiciones</span>
+        <span class="tag" style="background:var(--rojo-muy-claro); border-color:var(--rojo-bomberos); color:var(--rojo-bomberos);">Caja Chica</span>
+      </div>
+    </div>
+
+    <div class="states-box">
+      <div class="state-chip" style="background:#FEF9E7; border-color:#F39C12; color:#784212;"><div class="state-dot" style="background:#F39C12;"></div>pending_inspector — A revisión por Inspector</div>
+      <div class="state-chip" style="background:#EBF5FB; border-color:#2980B9; color:#1a5276;"><div class="state-dot" style="background:#2980B9;"></div>pending_secretary — Aprobada por Inspector, pasa a Adquisiciones</div>
+      <div class="state-chip" style="background:#EAFAF1; border-color:#27AE60; color:#1a5632;"><div class="state-dot" style="background:#27AE60;"></div>approved — Gasto visado y pagado</div>
+      <div class="state-chip" style="background:#FDEDEC; border-color:#E74C3C; color:#78281f;"><div class="state-dot" style="background:#E74C3C;"></div>rejected — Rechazada con observaciones</div>
+    </div>
+
+    <div class="swimlane">
+      <table class="swimlane-table">
+        <!-- MECÁNICO -->
+        <tr class="lane-row">
+          <td class="lane-header">🔧 Mecánico </td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-start">● Compra Efectuada</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">📝 Registra Proveedor, Boleta, Monto, Tipo de Gasto</span>
+              <span class="arrow">→</span>
+              <span class="node node-action">🖼️ Adjunta documento obligatorio (PDF/Foto)</span>
+            </div>
+            <div class="info-note info-note-blue" style="margin-top:6px; padding:6px 10px; font-size:8px;">
+              Si es <b>Insumo o Repuesto</b>, se asigna al inventario de Bodega para ingreso automático de stock.
+            </div>
+          </td>
+        </tr>
+        <!-- INSPECTOR -->
+        <tr class="lane-row">
+          <td class="lane-header">🔎 Inspector Material Mayor</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Valida boleta y coherencia del gasto</span>
+              <span class="arrow">→</span>
+              <span class="node node-decision">¿Aprobar?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-action">🔐 OTP + Firma</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-warn">✓ Pendiente Secretaria</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-error">✓ Rechazado (se ingresa motivo)</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- SECRETARIA -->
+        <tr class="lane-row">
+          <td class="lane-header">📁 Secretaria Adquisiciones</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-action">🔍 Control de presupuesto y boletas</span>
+              <span class="arrow">→</span>
+              <span class="node node-decision">¿Aprobar?</span>
+            </div>
+            <div class="branch">
+              <div class="branch-line">
+                <span class="branch-label branch-label-si">SÍ</span>
+                <span class="arrow">→</span>
+                <span class="node node-action">🔐 OTP + Firma</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-ok">✓ Aprobado</span>
+              </div>
+              <div class="branch-line">
+                <span class="branch-label branch-label-no">NO</span>
+                <span class="arrow">→</span>
+                <span class="node node-state-error">✓ Rechazado (se ingresa motivo)</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- AUDITORÍA -->
+        <tr class="lane-row">
+          <td class="lane-header" style="border-right-color:#DCDCE8;">📊 Auditoría</td>
+          <td class="lane-body">
+            <div class="flow">
+              <span class="node node-doc">📄 Historial de revisiones completo</span>
+              <span class="arrow">→</span>
+              <span class="node node-special">📊 Disponible para exportar a Excel</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="page-footer">
+    <span>Intranet CBPA — Módulo de Material Mayor</span>
+    <span>Página 8</span>
+  </div>
+</div>
+
+</body>
+</html>
