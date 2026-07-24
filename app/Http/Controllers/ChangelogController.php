@@ -14,10 +14,20 @@ class ChangelogController extends Controller
     {
         return [
             [
+<<<<<<< HEAD
                 'version' => 'v1.0.6',
                 'date' => '19-07-2026',
                 'changes' => [
                     'Paginación agregada al listado general de Bitácoras del Material Mayor para la navegación entre registros.',
+=======
+                'version' => 'v1.0.5',
+                'date' => '17-07-2026',
+                'changes' => [
+                    'Corrección de bug en el formulario de bitácoras que impedía guardar el registro al activar y luego desactivar el switch de combustible.',
+                    'Sanitización y validación robusta de datos de combustible en el servidor.',
+                    'Mensajes de error de validación visibles en el formulario de combustible para evitar fallos silenciosos.',
+                    'Eliminación del enlace al Manual de Usuario de la pantalla de LogIn.',
+>>>>>>> 387bd4cb841f7856fee9fc0e18784412544edf32
                 ],
             ],
             [

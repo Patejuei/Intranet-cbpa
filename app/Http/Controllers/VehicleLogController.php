@@ -94,6 +94,7 @@ class VehicleLogController extends Controller
             'destination' => 'required|string',
             'movement_key' => 'nullable|string|max:20',
             'date' => 'required|date',
+            'has_fuel' => 'nullable|boolean',
             'fuel_liters' => 'nullable|numeric',
             'fuel_coupon' => 'nullable|string',
             'observations' => 'nullable|string',
@@ -117,10 +118,19 @@ class VehicleLogController extends Controller
             }
         }
 
-        $receiptPath = null;
-        if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('receipts', 'public');
+        // Sanitización si no se cargó combustible
+        if (!($validated['has_fuel'] ?? false)) {
+            $validated['fuel_liters'] = null;
+            $validated['fuel_coupon'] = null;
+            $receiptPath = null;
+        } else {
+            $receiptPath = null;
+            if ($request->hasFile('receipt')) {
+                $receiptPath = $request->file('receipt')->store('receipts', 'public');
+            }
         }
+
+        unset($validated['has_fuel']);
 
         \App\Models\VehicleLog::create([
             ...$validated,
