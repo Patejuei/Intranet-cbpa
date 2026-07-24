@@ -14,6 +14,13 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.0.6',
+                'date' => '19-07-2026',
+                'changes' => [
+                    'Paginación agregada al listado general de Bitácoras del Material Mayor para la navegación entre registros.',
+                ],
+            ],
+            [
                 'version' => 'v1.0.4',
                 'date' => '08-06-2026',
                 'changes' => [

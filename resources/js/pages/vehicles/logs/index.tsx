@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import Pagination from '@/components/Pagination';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
@@ -718,6 +719,7 @@ export default function VehicleLogs({
                                         </tbody>
                                     </table>
                                 </div>
+                                <Pagination links={logs.links} />
                             </CardContent>
                         </Card>
                     </TabsContent>
