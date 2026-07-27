@@ -89,7 +89,7 @@ class VehicleLogController extends Controller
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'start_km' => 'required|integer',
-            'end_km' => 'nullable|integer|gte:start_km',
+            'end_km' => 'required|integer|gte:start_km',
             'activity_type' => 'required|string',
             'destination' => 'required|string',
             'movement_key' => 'nullable|string|max:20',

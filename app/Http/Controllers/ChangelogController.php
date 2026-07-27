@@ -14,12 +14,22 @@ class ChangelogController extends Controller
     {
         return [
             [
-<<<<<<< HEAD
+                'version' => 'v1.0.7',
+                'date' => '26-07-2026',
+                'changes' => [
+                    'Corrección en el formulario de creación de usuarios para permitir la autogeneración consecutiva de contraseñas por el navegador sin requerir recarga manual.',
+                    'Optimización en la verificación de seguridad OTP con estimación y cálculo dinámico de expiración en el frontend, previniendo errores HTTP 403 innecesarios.',
+                    'Kilometraje de término establecido como campo obligatorio en el registro de bitácoras de vehículos.',
+                ],
+            ],
+            [
                 'version' => 'v1.0.6',
                 'date' => '19-07-2026',
                 'changes' => [
                     'Paginación agregada al listado general de Bitácoras del Material Mayor para la navegación entre registros.',
-=======
+                ],
+            ],
+            [
                 'version' => 'v1.0.5',
                 'date' => '17-07-2026',
                 'changes' => [
@@ -27,7 +37,6 @@ class ChangelogController extends Controller
                     'Sanitización y validación robusta de datos de combustible en el servidor.',
                     'Mensajes de error de validación visibles en el formulario de combustible para evitar fallos silenciosos.',
                     'Eliminación del enlace al Manual de Usuario de la pantalla de LogIn.',
->>>>>>> 387bd4cb841f7856fee9fc0e18784412544edf32
                 ],
             ],
             [

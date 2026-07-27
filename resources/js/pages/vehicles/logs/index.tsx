@@ -283,7 +283,10 @@ export default function VehicleLogs({
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="end_km">
-                                                    Kilometraje Fin (Opcional)
+                                                    Kilometraje Fin{' '}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
                                                 </Label>
                                                 <Input
                                                     type="number"

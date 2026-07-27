@@ -13,7 +13,7 @@ import { useOtpAction } from '@/hooks/use-otp-action';
 import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Shield, Truck } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 const companies = [
     'Primera Compañía',
@@ -128,6 +128,7 @@ export default function UserCreate({
     const user = props.auth.user;
     const currentUserRole = user?.role || 'user';
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
+    const [formKey] = useState(() => 'user-create-' + Math.random().toString(36).substring(2, 9));
 
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -266,7 +267,7 @@ export default function UserCreate({
                         </p>
                     </div>
 
-                    <form onSubmit={submit} className="space-y-6">
+                    <form key={formKey} onSubmit={submit} className="space-y-6">
                         {/* Datos Básicos */}
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -333,7 +334,10 @@ export default function UserCreate({
                                         Contraseña
                                     </label>
                                     <input
+                                        id="password"
+                                        name="password"
                                         type="password"
+                                        autoComplete="new-password"
                                         value={data.password}
                                         onChange={(e) =>
                                             setData('password', e.target.value)
@@ -351,7 +355,10 @@ export default function UserCreate({
                                         Confirmar Contraseña
                                     </label>
                                     <input
+                                        id="password_confirmation"
+                                        name="password_confirmation"
                                         type="password"
+                                        autoComplete="new-password"
                                         value={data.password_confirmation}
                                         onChange={(e) =>
                                             setData(

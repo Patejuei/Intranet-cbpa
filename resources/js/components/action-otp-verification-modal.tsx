@@ -65,6 +65,9 @@ export default function ActionOtpVerificationModal({
 
             if (response.ok) {
                 // Success: just proceed
+                if (typeof window !== 'undefined') {
+                    (window as any).__last_otp_verified_at = Date.now() / 1000;
+                }
                 onVerified();
                 onClose();
                 setCode('');
