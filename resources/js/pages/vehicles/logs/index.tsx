@@ -491,6 +491,7 @@ export default function VehicleLogs({
                                                             id="receipt"
                                                             type="file"
                                                             accept="image/*"
+                                                            capture="environment"
                                                             onChange={(e) =>
                                                                 setData(
                                                                     'receipt',

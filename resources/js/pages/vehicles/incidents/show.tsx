@@ -974,6 +974,7 @@ export default function VehicleIncidentShow({
                                         id="image_file"
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
+                                        capture="environment"
                                         onChange={handleFileChange}
                                         className="cursor-pointer"
                                     />

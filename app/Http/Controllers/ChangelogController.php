@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.2',
+                'date' => '27-07-2026',
+                'changes' => [
+                    'Captura directa desde la cámara del dispositivo al añadir imágenes en el módulo de Incidencias.',
+                    'Captura directa desde la cámara del dispositivo al añadir fotografía de boleta/vale en el módulo de Bitácoras.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.1',
                 'date' => '26-07-2026',
                 'changes' => [
