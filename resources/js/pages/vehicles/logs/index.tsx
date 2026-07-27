@@ -26,6 +26,7 @@ import Pagination from '@/components/Pagination';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
+import { Check, X } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -46,6 +47,8 @@ interface Log {
     date: string;
     departure_time?: string;
     arrival_time?: string;
+    fuel_liters?: number | null;
+    fuel_coupon?: string | null;
 }
 
 import { usePermissions } from '@/hooks/use-permissions';
@@ -645,6 +648,9 @@ export default function VehicleLogs({
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Clave
                                                 </th>
+                                                <th className="h-12 px-4 text-center font-medium">
+                                                    Combustible
+                                                </th>
                                                 <th className="h-12 px-4 text-left font-medium">
                                                     Km Salida
                                                 </th>
@@ -696,6 +702,17 @@ export default function VehicleLogs({
                                                     <td className="p-4 font-mono text-xs">
                                                         {log.movement_key || '-'}
                                                     </td>
+                                                    <td className="p-4 text-center">
+                                                        {log.fuel_liters || log.fuel_coupon ? (
+                                                            <span className="inline-flex items-center justify-center rounded-full bg-green-50 p-1 text-green-600 dark:bg-green-950/20 dark:text-green-400">
+                                                                <Check className="h-4 w-4" />
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center justify-center rounded-full bg-red-50 p-1 text-red-600 dark:bg-red-950/20 dark:text-red-400">
+                                                                <X className="h-4 w-4" />
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td className="p-4">
                                                         {log.start_km}
                                                     </td>
@@ -723,7 +740,7 @@ export default function VehicleLogs({
                                             {logs.data.length === 0 && (
                                                 <tr>
                                                     <td
-                                                        colSpan={9}
+                                                        colSpan={11}
                                                         className="p-4 text-center text-muted-foreground"
                                                     >
                                                         No hay registros.

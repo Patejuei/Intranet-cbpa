@@ -255,7 +255,10 @@ class VehicleIssueController extends Controller
         }
 
         if ($user->role === 'comandante' || $user->role === 'admin') {
-            $incident->update(['commander_seen' => true]);
+            $incident->update([
+                'commander_seen' => true,
+                'commander_seen_at' => now(),
+            ]);
         }
 
 
@@ -267,7 +270,10 @@ class VehicleIssueController extends Controller
         $user = $request->user();
 
         if ($user->role === 'comandante' || $user->role === 'admin') {
-            $incident->update(['commander_seen' => true]);
+            $incident->update([
+                'commander_seen' => true,
+                'commander_seen_at' => now(),
+            ]);
         }
 
         return redirect()->back();

@@ -76,6 +76,7 @@ interface Issue {
     hq_read_at?: string;
     reported_to_commander: boolean;
     commander_seen: boolean;
+    commander_seen_at?: string;
     images?: VehicleIssueImage[];
 }
 
@@ -204,6 +205,61 @@ export default function VehicleIncidentShow({
             default:
                 return 'outline';
         }
+    };
+
+    const getSeverityDetails = (severity: string) => {
+        switch (severity) {
+            case 'Critical':
+                return {
+                    label: 'Crítica',
+                    description: 'La unidad queda inoperativa de forma inmediata y requiere atención mecánica urgente.',
+                    colorClass: 'text-red-700 bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900',
+                    badgeColor: 'bg-red-500 hover:bg-red-500/90 text-white',
+                    icon: AlertCircle,
+                };
+            case 'High':
+                return {
+                    label: 'Alta',
+                    description: 'Existe un riesgo operativo significativo. Se requiere inspección y reparación prioritaria.',
+                    colorClass: 'text-orange-700 bg-orange-50/50 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900',
+                    badgeColor: 'bg-orange-500 hover:bg-orange-500/90 text-white',
+                    icon: ShieldAlert,
+                };
+            case 'Medium':
+                return {
+                    label: 'Media',
+                    description: 'Se detecta una anomalía que requiere reparación, pero no impide el funcionamiento básico.',
+                    colorClass: 'text-amber-700 bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900',
+                    badgeColor: 'bg-amber-500 hover:bg-amber-500/90 text-white',
+                    icon: AlertCircle,
+                };
+            case 'Low':
+            default:
+                return {
+                    label: 'Baja',
+                    description: 'Observación menor o detalle estético. Se registrará para futuros mantenimientos.',
+                    colorClass: 'text-slate-700 bg-slate-50/50 border-slate-200 dark:bg-slate-950/20 dark:text-slate-400 dark:border-slate-800',
+                    badgeColor: 'bg-slate-500 hover:bg-slate-500/90 text-white',
+                    icon: Eye,
+                };
+        }
+    };
+
+    const formatDateTime = (dateString: string | null | undefined): string => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        
+        const d = date.toLocaleDateString('es-CL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        });
+        const t = date.toLocaleTimeString('es-CL', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        return `${d} ${t}`;
     };
 
     const canReview =
@@ -572,6 +628,40 @@ export default function VehicleIncidentShow({
                     </div>
 
                     <div className="space-y-6">
+                        {/* Recuadro de Gravedad Reportada */}
+                        <Card className="overflow-hidden border-none shadow-md ring-1 ring-border">
+                            <CardHeader className="bg-muted/30">
+                                <CardTitle className="flex items-center gap-2">
+                                    <ShieldAlert className="h-5 w-5 text-primary" />
+                                    Gravedad Reportada
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                {(() => {
+                                    const details = getSeverityDetails(incident.severity);
+                                    const SeverityIcon = details.icon;
+                                    return (
+                                        <div className={`flex flex-col gap-4 rounded-xl border p-4 ${details.colorClass}`}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <SeverityIcon className="h-5 w-5" />
+                                                    <span className="text-sm font-semibold uppercase tracking-wider">
+                                                        Nivel de Riesgo
+                                                    </span>
+                                                </div>
+                                                <Badge className={`px-2.5 py-0.5 text-xs font-bold uppercase ${details.badgeColor}`}>
+                                                    {details.label}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-sm font-medium leading-relaxed">
+                                                {details.description}
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
+                            </CardContent>
+                        </Card>
+
                         <Card className="overflow-hidden border-none shadow-md ring-1 ring-border">
                             <CardHeader className="bg-muted/30">
                                 <CardTitle className="flex items-center gap-2">
@@ -592,12 +682,17 @@ export default function VehicleIncidentShow({
                                         </div>
                                         {incident.sent_to_hq ? (
                                             incident.hq_read_at ? (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="border-green-200 bg-green-50 text-green-700"
-                                                >
-                                                    VISTO
-                                                </Badge>
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-green-200 bg-green-50 text-green-700"
+                                                    >
+                                                        VISTO
+                                                    </Badge>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                                        {formatDateTime(incident.hq_read_at)}
+                                                    </span>
+                                                </div>
                                             ) : (
                                                 <Badge
                                                     variant="outline"
@@ -624,12 +719,17 @@ export default function VehicleIncidentShow({
                                         </div>
                                         {incident.sent_to_workshop ? (
                                             incident.workshop_read_at ? (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="border-green-200 bg-green-50 text-green-700"
-                                                >
-                                                    VISTO
-                                                </Badge>
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-green-200 bg-green-50 text-green-700"
+                                                    >
+                                                        VISTO
+                                                    </Badge>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                                        {formatDateTime(incident.workshop_read_at)}
+                                                    </span>
+                                                </div>
                                             ) : (
                                                 <Badge
                                                     variant="outline"
@@ -656,12 +756,19 @@ export default function VehicleIncidentShow({
                                         </div>
                                         {incident.reported_to_commander ? (
                                             incident.commander_seen ? (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="border-green-200 bg-green-50 text-green-700"
-                                                >
-                                                    VISTO
-                                                </Badge>
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-green-200 bg-green-50 text-green-700"
+                                                    >
+                                                        VISTO
+                                                    </Badge>
+                                                    {incident.commander_seen_at && (
+                                                        <span className="text-[10px] text-muted-foreground font-medium">
+                                                            {formatDateTime(incident.commander_seen_at)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             ) : (
                                                 <Badge
                                                     variant="outline"

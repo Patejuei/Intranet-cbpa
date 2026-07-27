@@ -22,7 +22,8 @@ class VehicleIssue extends Model
         'workshop_read_at',
         'hq_read_at',
         'reported_to_commander',
-        'commander_seen'
+        'commander_seen',
+        'commander_seen_at'
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class VehicleIssue extends Model
         'is_stopped' => 'boolean',
         'reported_to_commander' => 'boolean',
         'commander_seen' => 'boolean',
+        'commander_seen_at' => 'datetime',
     ];
 
     public function vehicle()

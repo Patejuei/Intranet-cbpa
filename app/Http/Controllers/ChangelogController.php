@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.1',
+                'date' => '26-07-2026',
+                'changes' => [
+                    'Columna de combustible añadida al listado de bitácoras con check verde y cruz roja para identificar rápidamente las cargas.',
+                    'Recuadro de Gravedad Reportada agregado en el detalle de las incidencias sobre el panel de notificaciones.',
+                    'Registro e indicación visual de la fecha y hora exacta en la que un usuario notificado (Material Mayor, Taller Mecánico, Comandancia) visualizó la incidencia en el panel de notificaciones.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.0',
                 'date' => '26-07-2026',
                 'changes' => [

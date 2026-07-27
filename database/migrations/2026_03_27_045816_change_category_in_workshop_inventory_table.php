@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE workshop_inventory MODIFY COLUMN category ENUM('insumo', 'repuesto', 'herramienta') NOT NULL DEFAULT 'repuesto'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE workshop_inventory MODIFY COLUMN category ENUM('insumo', 'repuesto', 'herramienta') NOT NULL DEFAULT 'repuesto'");
+        }
     }
 
     /**
@@ -19,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE workshop_inventory MODIFY COLUMN category ENUM('insumo', 'repuesto') NOT NULL DEFAULT 'repuesto'");
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE workshop_inventory MODIFY COLUMN category ENUM('insumo', 'repuesto') NOT NULL DEFAULT 'repuesto'");
+        }
     }
 };
