@@ -60,6 +60,13 @@ const SUBMODULES = [
         icon: FileText,
         color: 'text-rose-500',
     },
+    {
+        id: 'reports',
+        title: 'Reportes',
+        description: 'Generación de documentos PDF e informes del material mayor.',
+        icon: FileText,
+        color: 'text-orange-500',
+    },
 ];
 
 export function VehiclesLanding() {

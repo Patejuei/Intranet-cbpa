@@ -20,8 +20,6 @@ import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save, Trash2, UploadCloud } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
-
-// Ziggy route helper
 import { Combobox } from '@/components/ui/combobox';
 import { Switch } from '@/components/ui/switch';
 

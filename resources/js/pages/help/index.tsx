@@ -24,6 +24,7 @@ import { LogsSection } from './sections/vehicles/logs';
 import { RenditionsSection } from './sections/vehicles/renditions';
 import { StatusSection } from './sections/vehicles/status';
 import { WorkshopSection } from './sections/vehicles/workshop';
+import { ReportsSection } from './sections/vehicles/reports';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Ayuda', href: '/help' }];
 
@@ -35,6 +36,7 @@ const VEHICLE_SUBMODULES = [
     { id: 'checklists', title: 'Checklists' },
     { id: 'inventory', title: 'Bodega MM' },
     { id: 'renditions', title: 'Rendiciones' },
+    { id: 'reports', title: 'Reportes' },
 ];
 
 const EQUIPMENT_SUBMODULES = [
@@ -208,6 +210,7 @@ export default function HelpIndex({
                                     {activeSubmodule === 'checklists' && <ChecklistsSection />}
                                     {activeSubmodule === 'inventory' && <InventorySection />}
                                     {activeSubmodule === 'renditions' && <RenditionsSection />}
+                                    {activeSubmodule === 'reports' && <ReportsSection />}
                                 </>
                             )}
 

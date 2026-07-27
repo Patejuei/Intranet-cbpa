@@ -429,7 +429,7 @@ export function WorkshopSection() {
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">4</span>
-                                <span><strong>Cierre y Automatización:</strong> Al finalizar la orden, se bloquean las ediciones, se suman horas de labor + repuestos + trabajos externos y las Incidencias marcadas pasan a estado "Resuelto" a nivel global en el sistema.</span>
+                                <span><strong>Impresión y Cierre de Orden:</strong> Permite generar e imprimir la <strong>Hoja de Ingreso</strong> (checklist de entrada y fallas descritas) y el <strong>Acta de Egreso / Salida</strong> (detalle final de repuestos, mano de obra y costos). Al presionar "Finalizar y Entregar" se bloquea la orden de forma permanente.</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">5</span>

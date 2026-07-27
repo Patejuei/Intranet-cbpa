@@ -63,7 +63,7 @@ export function ChecklistsSection() {
                                             </td>
                                             <td className="p-3">Juan Maquinista</td>
                                             <td className="p-3 relative">
-                                                <span className="rounded-full bg-green-500/10 text-green-700 border border-green-500/20 px-2 py-0.5 text-xs">Completed</span>
+                                                <span className="rounded-full bg-green-500/10 text-green-700 border border-green-500/20 px-2 py-0.5 text-xs">Completado</span>
                                             </td>
                                             <td className="p-3 text-right">
                                                 <div className="inline-flex h-7 px-2 rounded border items-center justify-center text-xs font-medium text-muted-foreground">Ver Detalles</div>
@@ -200,7 +200,7 @@ export function ChecklistsSection() {
                             <div className="space-y-6 relative">
                                 <div>
                                     <h1 className="flex items-center gap-2 text-2xl font-bold">
-                                        Checklist #1024 <span className="bg-primary px-2 py-0.5 rounded text-xs text-white">Completed</span>
+                                        Checklist #1024 <span className="bg-primary px-2 py-0.5 rounded text-xs text-white">Completado</span>
                                     </h1>
                                     <p className="text-muted-foreground text-sm mt-1">2026-04-20 - Realizado por Juan Maquinista</p>
                                 </div>
@@ -254,19 +254,19 @@ export function ChecklistsSection() {
                         </div>
 
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
-                            <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Responsabilidad de Mando:</strong> Si el vehículo es de Compañía, debe ser visado por el Capitán y Maquinista. Si es de Comandancia, lo visa el Comandante y el Inspector MM.</span>
+                                <div className="flex items-start gap-2">
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
+                                    <span><strong>Flujo de Visación (Doble Firma):</strong> Las unidades de Compañía requieren la visación del Capitán y el Maquinista de su respectiva Cía. Las unidades de Comandancia requieren la visación del Comandante y el Inspector de Material Mayor.</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
+                                    <span><strong>Firma Digital (OTP):</strong> Al visar, se requiere el ingreso de un código OTP para validar e inscribir la firma del revisor, garantizando autenticidad y trazabilidad.</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
+                                    <span><strong>Auto-creación de Incidencias:</strong> Al completarse el proceso de visación (ambas firmas), el sistema procesará los ítems reportados con fallas (Urgente o Próx. Mant.) y generará automáticamente registros en el módulo de <strong>Incidencias</strong>.</span>
+                                </div>
                             </div>
-                            <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
-                                <span><strong>Visado (OTP):</strong> Al visar, el sistema envía un código de 6 dígitos para garantizar que la revisión es verídica e intransferible.</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">3</span>
-                                <span><strong>Semaforización:</strong> Los estados Rojo (Urgente) y Amarillo (Próx. Mant.) generan alertas visuales inmediatas para el Taller Mecánico y la Comandancia.</span>
-                            </div>
-                        </div>
                     </section>
                 </div>
 

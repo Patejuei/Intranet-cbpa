@@ -515,6 +515,24 @@ export function LogsSection() {
                         </div>
                     </section>
                 </div>
+
+                {/* --- 4. Inmutabilidad de los Registros --- */}
+                <div className="space-y-8 pt-8 border-t">
+                    <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
+                        4. Inmutabilidad de los Registros
+                    </h2>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Seguridad y Auditoría</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Una vez que se registra una bitácora de movimiento, esta se convierte en un registro **inmutable**. Esto significa que:
+                        </p>
+                        <ul className="mt-2 list-disc ml-6 space-y-1 text-sm text-muted-foreground">
+                            <li><strong>Sin Modificaciones:</strong> Ningún usuario (incluyendo oficiales, maquinistas o administradores) puede editar los datos del movimiento (como odómetro, combustible o conductor) posterior a su guardado.</li>
+                            <li><strong>Sin Eliminaciones:</strong> No existe la opción de borrar registros de bitácora. En caso de error de digitación, se debe ingresar un nuevo movimiento rectificativo y agregar las aclaraciones pertinentes en la sección de observaciones.</li>
+                        </ul>
+                    </section>
+                </div>
             </div>
         </div>
     );

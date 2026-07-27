@@ -418,6 +418,53 @@ export function StatusSection() {
                         </div>
                     </section>
                 </div>
+
+                {/* --- 4. Unidades Dadas de Baja --- */}
+                <div className="space-y-8 pt-8 border-t">
+                    <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
+                        4. Unidades Dadas de Baja
+                    </h2>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Contexto</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Cuando un vehículo es dado de baja mediante el botón "Dar de Baja" en el formulario de edición, no se elimina físicamente de la base de datos (Soft Delete). Pasa al registro histórico de unidades fuera de servicio.
+                        </p>
+                    </section>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Administración y Recuperación</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Los administradores y la Comandancia pueden acceder a la vista de <strong>Unidades Dadas de Baja</strong> desde el menú superior. En esta vista especial se listan los vehículos inactivos y se permite:
+                        </p>
+                        <ul className="mt-2 list-disc ml-6 space-y-1 text-sm text-muted-foreground">
+                            <li><strong>Ver Ficha Histórica:</strong> Consultar la bitácora y registros de la máquina previos a su retiro.</li>
+                            <li><strong>Reincorporar Unidad:</strong> Restaurar el vehículo al servicio activo con un solo clic (botón "Reincorporar"), lo cual reactivará su visibilidad en el mapa general y listados de despacho.</li>
+                        </ul>
+                    </section>
+                </div>
+
+                {/* --- 5. Actualización Rápida de Documentos --- */}
+                <div className="space-y-8 pt-8 border-t">
+                    <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
+                        5. Actualización de Documentación Legal
+                    </h2>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Flujo de Renovación</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Para evitar tener que editar la ficha completa del vehículo, los inspectores y administradores disponen de un acceso directo para **Actualizar Vencimientos** de documentos de control. Al presionar este botón, se despliega un panel lateral o ventana modal donde se pueden renovar las fechas de expiración de:
+                        </p>
+                        <ul className="mt-2 list-disc ml-6 space-y-1 text-sm text-muted-foreground">
+                            <li><strong>Revisión Técnica (RT)</strong></li>
+                            <li><strong>Permiso de Circulación (PC)</strong></li>
+                            <li><strong>Seguro Obligatorio (SOAP)</strong></li>
+                        </ul>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Al guardar las nuevas fechas, las alarmas y avisos preventivos en el Dashboard y la Ficha Técnica se reajustarán o apagarán automáticamente.
+                        </p>
+                    </section>
+                </div>
             </div>
     );
 }

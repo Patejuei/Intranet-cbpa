@@ -9,8 +9,6 @@ export function RenditionsSection() {
                 icon={FileText}
                 roles={['Admin', 'Comandancia', 'Secretaría Adquisiciones', 'Inspectoría MM', 'Mecánico']}
             />
-
-            <h1 className="p-3 italic text-red-600 font-bold text-center"> *** PENDIENTE REVISIÓN CON TESORERO GENERAL *** </h1>
             
             <div className="space-y-16">
                 {/* --- 1. Panel General --- */}
@@ -98,7 +96,7 @@ export function RenditionsSection() {
                     <section>
                         <h3 className="text-xl font-semibold">Contexto</h3>
                         <p className="mt-2 text-muted-foreground">
-                            El registro de una factura permite inyectar el ítem comprado directamente a los inventarios (Bodega MM o Bodega Menor), automatizando la entrada de stock y el cálculo de costos medios.
+                            El registro de una factura permite inyectar el ítem comprado directamente al inventario de Bodega Material Mayor, automatizando la entrada de stock y el cálculo de costos medios.
                         </p>
                     </section>
 
@@ -134,7 +132,7 @@ export function RenditionsSection() {
                                     </div>
                                     <div className="space-y-1.5">
                                         <div className="text-sm font-medium">Destino Stock</div>
-                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Bodega Material Menor <span>▼</span></div>
+                                        <div className="h-9 rounded border px-3 text-sm flex items-center justify-between bg-background">Bodega Material Mayor <span>▼</span></div>
                                     </div>
                                 </div>
                                 <span className="absolute -left-3 top-[50%] flex h-4 w-4 -translate-y-1/2 cursor-help items-center justify-center rounded-full bg-blue-500 text-[10px] text-white shadow ring-2 ring-background">2</span>
@@ -151,7 +149,7 @@ export function RenditionsSection() {
                         <div className="mt-4 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">1</span>
-                                <span><strong>Clasificación:</strong> El tipo de gasto determina si el sistema sugerirá el ingreso a Bodega MM (Repuestos) o Bodega Menor (Herramientas).</span>
+                                <span><strong>Clasificación:</strong> El tipo de gasto determina si el sistema sugerirá el ingreso a Bodega Material Mayor (Repuestos e Insumos).</span>
                             </div>
                             <div className="flex items-start gap-2">
                                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">2</span>
@@ -194,7 +192,7 @@ export function RenditionsSection() {
                                 <tr className="border-t">
                                     <td className="p-3 font-medium">Inspectoría MM</td>
                                     <td className="p-3 text-green-600 font-bold">Sí</td>
-                                    <td className="p-3 text-red-600 font-bold">No</td>
+                                    <td className="p-3 text-green-600 font-bold">Sí</td>
                                     <td className="p-3 text-green-600 font-bold">Habilitado (Paso 1)</td>
                                 </tr>
                                 <tr className="border-t bg-muted/10">

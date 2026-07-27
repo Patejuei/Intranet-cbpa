@@ -184,7 +184,7 @@ export function IncidentsSection() {
                                     <tr className="border-b">
                                         <td className="p-3 font-medium">Cuartelero / Usuarios Hab.</td>
                                         <td className="p-3">Unidades de su Compañía</td>
-                                        <td className="p-3 italic text-red-600">Solo Lectura</td>
+                                        <td className="p-3 font-bold text-blue-600">Solo Reportar (Crear)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -395,7 +395,7 @@ export function IncidentsSection() {
                                     <tr className="border-b">
                                         <td className="p-3 font-medium">Cuartelero / Usuarios Hab.</td>
                                         <td className="p-3 italic text-muted-foreground">Carros de su Compañía</td>
-                                        <td className="p-3 italic text-red-600">Sin Permisos</td>
+                                        <td className="p-3 text-blue-700 font-bold">Solo Reportar (Crear)</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -531,6 +531,43 @@ export function IncidentsSection() {
                                 </span>
                             </div>
                         </div>
+                    </section>
+                </div>
+
+                {/* --- 4. Respaldos Fotográficos --- */}
+                <div className="space-y-8 pt-8 border-t">
+                    <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
+                        4. Adjuntar Respaldos Fotográficos
+                    </h2>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Trazabilidad Visual</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Al registrar o editar una incidencia, se permite adjuntar imágenes como evidencia física de la falla reportada. Esto facilita la pre-evaluación del mecánico antes de mover la máquina al taller.
+                        </p>
+                        <ul className="mt-2 list-disc ml-6 space-y-1 text-sm text-muted-foreground">
+                            <li><strong>Límite de Carga:</strong> Se permite subir un máximo de <strong>3 imágenes</strong> por incidencia.</li>
+                            <li><strong>Gestión de Fotos:</strong> Solo el usuario que reportó la falla (o un Administrador) puede eliminar o agregar nuevas imágenes antes de que la incidencia sea revisada oficialmente.</li>
+                            <li><strong>Formatos Soportados:</strong> Imágenes de tipo JPG, PNG o JPEG.</li>
+                        </ul>
+                    </section>
+                </div>
+
+                {/* --- 5. Edición de Incidencias --- */}
+                <div className="space-y-8 pt-8 border-t">
+                    <h2 className="border-b pb-2 text-2xl font-bold tracking-tight">
+                        5. Modificación del Reporte
+                    </h2>
+
+                    <section>
+                        <h3 className="text-xl font-semibold">Reglas de Edición</h3>
+                        <p className="mt-2 text-muted-foreground">
+                            Para resguardar el registro histórico y la auditoría, la descripción y detalles de una incidencia solo pueden ser modificados bajo las siguientes condiciones:
+                        </p>
+                        <ul className="mt-2 list-disc ml-6 space-y-1 text-sm text-muted-foreground">
+                            <li><strong>Creador del Reporte:</strong> Solo el usuario que inició el reporte puede corregir la descripción o fecha de detección.</li>
+                            <li><strong>Estado Pendiente:</strong> La edición solo está disponible mientras la incidencia permanezca en estado "Pendiente de Revisión". Una vez que un Oficial o Inspector realiza la revisión (visación), los datos quedan congelados de forma permanente.</li>
+                        </ul>
                     </section>
                 </div>
             </div>
