@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.0',
+                'date' => '26-07-2026',
+                'changes' => [
+                    'Edición de severidad de incidencias del Material Mayor por el autor antes de la revisión y por el Inspector/Comandante después de la revisión.',
+                    'Subida de hasta 3 imágenes de hasta 5MB por incidencia con capacidad de descarga y eliminación por el autor.',
+                    'Limpieza automática de imágenes adjuntas 7 días después de haberse resuelto la incidencia.',
+                ],
+            ],
+            [
                 'version' => 'v1.0.7',
                 'date' => '26-07-2026',
                 'changes' => [

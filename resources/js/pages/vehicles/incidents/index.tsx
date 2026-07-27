@@ -27,7 +27,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
-import { Eye, FileSpreadsheet, Plus } from 'lucide-react';
+import { Eye, FileSpreadsheet, Plus, Image as ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 
 interface Vehicle {
@@ -53,6 +53,7 @@ interface Issue {
     hq_read_at?: string;
     reported_to_commander: boolean;
     commander_seen: boolean;
+    images_count?: number;
 }
 
 export default function VehicleIncidents({
@@ -301,8 +302,16 @@ export default function VehicleIncidents({
                                                 {issue.severity}
                                             </Badge>
                                         </td>
-                                        <td className="min-w-[300px] p-4 align-middle whitespace-pre-line">
-                                            {issue.description}
+                                        <td className="min-w-[300px] p-4 align-middle">
+                                            <div className="flex flex-col gap-1 whitespace-pre-line">
+                                                <span>{issue.description}</span>
+                                                {issue.images_count ? issue.images_count > 0 ? (
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                        <ImageIcon className="h-3.5 w-3.5" />
+                                                        <span>{issue.images_count} {issue.images_count === 1 ? 'imagen' : 'imágenes'}</span>
+                                                    </div>
+                                                ) : null : null}
+                                            </div>
                                         </td>
                                         <td className="p-4 align-middle">
                                             <div className="flex flex-col gap-1">

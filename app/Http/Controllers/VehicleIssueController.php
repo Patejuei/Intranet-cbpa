@@ -13,19 +13,18 @@ class VehicleIssueController extends Controller
     public function index()
     {
         $user = request()->user();
-        $query = \App\Models\VehicleIssue::with(['vehicle', 'reporter'])->latest();
+        $query = \App\Models\VehicleIssue::with(['vehicle', 'reporter'])->withCount('images')->latest();
         $driverIds = $user->driverVehicles()->pluck('vehicles.id');
 
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
+        $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
+
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM) {
             $query->whereHas('vehicle', function ($query) use ($user, $driverIds) {
                 $query->where('company', $user->company);
                 if ($driverIds->isNotEmpty()) {
                     $query->orWhereIn('id', $driverIds);
                 }
             });
-        }
-        if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
-            $query->where('sent_to_hq', '=', 1);
         }
         if ($user->role === 'mechanic') {
             $query->where('sent_to_workshop', '=', 1);
@@ -36,7 +35,7 @@ class VehicleIssueController extends Controller
 
         return Inertia::render('vehicles/incidents/index', [
             'issues' => $query->paginate(10),
-            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin', function ($q) use ($user, $driverIds) {
+            'vehicles' => \App\Models\Vehicle::when($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM, function ($q) use ($user, $driverIds) {
                 // Allow both Company vehicles AND Driver Assigned vehicles
                 $q->where(function ($query) use ($driverIds, $user) {
                     $query->where('company', $user->company);
@@ -117,7 +116,7 @@ class VehicleIssueController extends Controller
             if ($user->role === 'mechanic' && $incident->sent_to_workshop) {
                 $canView = true;
             }
-            if ($user->role === 'inspector' && $user->department === 'Material Mayor' && $incident->sent_to_hq) {
+            if ($user->role === 'inspector' && $user->department === 'Material Mayor') {
                 $canView = true;
             }
         }
@@ -126,20 +125,50 @@ class VehicleIssueController extends Controller
             abort(403);
         }
 
-        $incident->load(['vehicle', 'reporter', 'reviewer']);
+        $incident->load(['vehicle', 'reporter', 'reviewer', 'images.uploader']);
 
         return Inertia::render('vehicles/incidents/show', [
-            'incident' => $incident
+            'incident' => $incident,
+            'canEdit' => $incident->canBeEditedBy($user),
+            'canDeleteImages' => $incident->canDeleteImagesBy($user),
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(\App\Models\VehicleIssue $incident)
     {
-        //
+        if (!$incident->canBeEditedBy(request()->user())) {
+            abort(403, 'No tiene permisos para editar esta incidencia.');
+        }
+
+        $incident->load(['vehicle', 'reporter', 'images.uploader']);
+
+        return Inertia::render('vehicles/incidents/edit', [
+            'incident' => $incident,
+        ]);
     }
+
+    /**
+     * Update the specified resource's content in storage.
+     */
+    public function updateContent(Request $request, \App\Models\VehicleIssue $incident)
+    {
+        if (!$incident->canBeEditedBy($request->user())) {
+            abort(403, 'No tiene permisos para editar esta incidencia.');
+        }
+
+        $validated = $request->validate([
+            'severity' => 'required|in:Low,Medium,High,Critical',
+        ]);
+
+        $incident->update($validated);
+
+        return redirect()->route('vehicles.incidents.show', $incident)
+            ->with('success', 'Gravedad de la incidencia actualizada correctamente.');
+    }
+
 
     /**
      * Update the specified resource in storage.
@@ -219,7 +248,7 @@ class VehicleIssueController extends Controller
         // Comandancia (HQ) OR Inspector Material Mayor
         if (
             $user->role === 'admin' ||
-            ($user->role === 'inspector' && $user->department === 'Material Mayor')
+            ($user->role === 'inspector' && $user->department === 'Material Mayor' && $incident->sent_to_hq)
         ) {
             // "Visto por Material Mayor" (uses hq_read_at field)
             $incident->update(['hq_read_at' => now()]);

@@ -55,4 +55,41 @@ class VehicleIssue extends Model
     {
         return $this->belongsTo(VehicleMaintenance::class, 'vehicle_maintenance_id');
     }
+
+    public function images()
+    {
+        return $this->hasMany(VehicleIssueImage::class, 'vehicle_issue_id');
+    }
+
+    public function canBeEditedBy(User $user): bool
+    {
+        if ($this->status === 'Resolved') {
+            return false;
+        }
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if (is_null($this->reviewed_at)) {
+            return $this->reporter_id === $user->id;
+        }
+
+        return ($user->role === 'inspector' && $user->department === 'Material Mayor')
+            || $user->role === 'comandante';
+    }
+
+    public function canDeleteImagesBy(User $user): bool
+    {
+        if ($this->status === 'Resolved') {
+            return false;
+        }
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return is_null($this->reviewed_at) && $this->reporter_id === $user->id;
+    }
 }
+

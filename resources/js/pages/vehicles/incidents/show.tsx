@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useOtpAction } from '@/hooks/use-otp-action';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
@@ -28,6 +29,12 @@ import {
     ShieldAlert,
     User as UserIcon,
     Wrench,
+    Image as ImageIcon,
+    Trash2,
+    Download,
+    Upload,
+    Loader2,
+    Pencil,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,10 +44,24 @@ interface Vehicle {
     company: string;
 }
 
+interface VehicleIssueImage {
+    id: number;
+    image_path: string;
+    original_name: string;
+    uploaded_by: number;
+    created_at: string;
+    updated_at: string;
+    uploader?: {
+        id: number;
+        name: string;
+    };
+}
+
 interface Issue {
     id: number;
     vehicle: Vehicle;
     reporter: { name: string };
+    reporter_id: number;
     reviewer?: { name: string };
     description: string;
     severity: string;
@@ -55,9 +76,18 @@ interface Issue {
     hq_read_at?: string;
     reported_to_commander: boolean;
     commander_seen: boolean;
+    images?: VehicleIssueImage[];
 }
 
-export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
+export default function VehicleIncidentShow({
+    incident,
+    canEdit,
+    canDeleteImages,
+}: {
+    incident: Issue;
+    canEdit: boolean;
+    canDeleteImages: boolean;
+}) {
     const { auth } = usePage().props as any;
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } =
         useOtpAction();
@@ -85,6 +115,71 @@ export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
                     setReviewOpen(false);
                 },
             });
+        });
+    };
+
+    const [uploadOpen, setUploadOpen] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<any>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+
+        // Size check (5MB)
+        if (selectedFile.size > 5 * 1024 * 1024) {
+            setUploadError('La imagen no debe pesar más de 5MB.');
+            setFile(null);
+            setPreviewUrl(null);
+            return;
+        }
+
+        // Format check
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        if (!allowedTypes.includes(selectedFile.type)) {
+            setUploadError('Formato no permitido. Solo se aceptan JPEG, PNG, JPG y WEBP.');
+            setFile(null);
+            setPreviewUrl(null);
+            return;
+        }
+
+        setUploadError(null);
+        setFile(selectedFile);
+        setPreviewUrl(URL.createObjectURL(selectedFile));
+    };
+
+    const handleUploadSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        router.post(`/vehicles/incidents/${incident.id}/images`, formData as any, {
+            onSuccess: () => {
+                setUploadOpen(false);
+                setFile(null);
+                setPreviewUrl(null);
+                setUploadError(null);
+            },
+            onError: (err: any) => {
+                setUploadError(err.image || 'Error al subir la imagen.');
+            },
+            onFinish: () => {
+                setUploading(false);
+            },
+        });
+    };
+
+    const handleDeleteImage = (imageId: number) => {
+        if (!confirm('¿Está seguro de que desea eliminar esta imagen?')) return;
+
+        router.delete(`/vehicles/incident-images/${imageId}`, {
+            preserveScroll: true,
         });
     };
 
@@ -186,6 +281,17 @@ export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        {canEdit && (
+                            <Button
+                                variant="outline"
+                                asChild
+                                className="transition-all hover:scale-105 border-primary text-primary hover:bg-primary/5"
+                            >
+                                <Link href={`/vehicles/incidents/${incident.id}/edit`}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Editar Incidencia
+                                </Link>
+                            </Button>
+                        )}
                         {canReview && (
                             <Button
                                 onClick={() => setReviewOpen(true)}
@@ -323,6 +429,83 @@ export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
                                         </p>
                                     </div>
                                 </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="overflow-hidden border-none shadow-md ring-1 ring-border">
+                            <CardHeader className="bg-muted/30 flex flex-row items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <ImageIcon className="h-5 w-5 text-primary" />
+                                    Imágenes Adjuntas ({incident.images?.length || 0}/3)
+                                </CardTitle>
+                                {canEdit && (incident.images?.length ?? 0) < 3 && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setUploadOpen(true)}
+                                        className="transition-all hover:scale-105"
+                                    >
+                                        <Upload className="mr-2 h-4 w-4" /> Añadir Imagen
+                                    </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                {!incident.images || incident.images.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                                        <ImageIcon className="h-10 w-10 mb-2 stroke-1" />
+                                        <p className="text-sm">No hay imágenes adjuntas a esta incidencia.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                        {incident.images.map((img) => (
+                                            <div
+                                                key={img.id}
+                                                className="group relative overflow-hidden rounded-lg border bg-muted/20 p-2 ring-1 ring-border"
+                                            >
+                                                <div className="aspect-video relative overflow-hidden rounded-md bg-black/5">
+                                                    <img
+                                                        src={`/storage/${img.image_path}`}
+                                                        alt={img.original_name}
+                                                        className="h-full w-full object-cover cursor-zoom-in transition-all duration-300 group-hover:scale-105"
+                                                        onClick={() => setSelectedImage(img)}
+                                                    />
+                                                </div>
+                                                <div className="mt-2 space-y-1">
+                                                    <p className="truncate text-xs font-semibold text-foreground" title={img.original_name}>
+                                                        {img.original_name}
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        Subido por: {img.uploader?.name || 'Desconocido'}
+                                                    </p>
+                                                </div>
+                                                <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <Button
+                                                        size="icon"
+                                                        variant="secondary"
+                                                        className="h-8 w-8 bg-white/90 shadow-sm backdrop-blur hover:bg-white dark:bg-slate-900/90 dark:hover:bg-slate-900"
+                                                        asChild
+                                                    >
+                                                        <a
+                                                            href={`/vehicles/incident-images/${img.id}/download`}
+                                                            download
+                                                        >
+                                                            <Download className="h-4 w-4" />
+                                                        </a>
+                                                    </Button>
+                                                    {canDeleteImages && (
+                                                        <Button
+                                                            size="icon"
+                                                            variant="destructive"
+                                                            className="h-8 w-8 shadow-sm"
+                                                            onClick={() => handleDeleteImage(img.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
@@ -666,6 +849,88 @@ export default function VehicleIncidentShow({ incident }: { incident: Issue }) {
                     onClose={closeOtpModal}
                     onVerified={handleVerified}
                 />
+
+                {/* Upload Image Dialog */}
+                <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+                    <DialogContent className="sm:max-w-[450px]">
+                        <form onSubmit={handleUploadSubmit}>
+                            <DialogHeader>
+                                <DialogTitle>Añadir Imagen</DialogTitle>
+                                <DialogDescription>
+                                    Cargue una imagen de la incidencia (máx. 5MB, formatos: JPEG, PNG, JPG, WEBP).
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="image_file">Seleccionar Archivo</Label>
+                                    <Input
+                                        id="image_file"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={handleFileChange}
+                                        className="cursor-pointer"
+                                    />
+                                    {uploadError && (
+                                        <p className="text-sm text-destructive font-medium">{uploadError}</p>
+                                    )}
+                                </div>
+                                {previewUrl && (
+                                    <div className="relative aspect-video overflow-hidden rounded-lg border bg-muted/30">
+                                        <img
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            className="h-full w-full object-contain"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setUploadOpen(false);
+                                        setFile(null);
+                                        setPreviewUrl(null);
+                                        setUploadError(null);
+                                    }}
+                                    disabled={uploading}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" disabled={uploading || !file}>
+                                    {uploading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Subiendo...
+                                        </>
+                                    ) : (
+                                        'Subir Imagen'
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Lightbox / Preview Dialog */}
+                <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                    <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none">
+                        {selectedImage && (
+                            <div className="relative flex flex-col items-center justify-center">
+                                <img
+                                    src={`/storage/${selectedImage.image_path}`}
+                                    alt={selectedImage.original_name}
+                                    className="max-h-[80vh] w-auto rounded-lg object-contain"
+                                />
+                                <div className="mt-4 rounded-lg bg-black/60 px-4 py-2 text-center text-white backdrop-blur-sm">
+                                    <p className="text-sm font-semibold">{selectedImage.original_name}</p>
+                                    <p className="text-xs text-white/80">Subido por: {selectedImage.uploader?.name || 'Desconocido'}</p>
+                                </div>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

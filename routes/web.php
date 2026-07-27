@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleLogController;
 use App\Http\Controllers\VehicleIssueController;
+use App\Http\Controllers\VehicleIssueImageController;
 use App\Http\Controllers\VehicleMaintenanceController;
 
 use App\Http\Controllers\Central\CentralController;
@@ -312,6 +313,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('logs', VehicleLogController::class)->names('vehicles.logs');
             Route::patch('incidents/{incident}/mark-read', [VehicleIssueController::class, 'markAsRead'])->name('vehicles.incidents.markRead');
             Route::patch('incidents/{incident}/mark-commander-seen', [VehicleIssueController::class, 'markCommanderSeen'])->name('vehicles.incidents.markCommanderSeen');
+            Route::put('incidents/{incident}/content', [VehicleIssueController::class, 'updateContent'])->name('vehicles.incidents.updateContent');
+            Route::post('incidents/{incident}/images', [VehicleIssueImageController::class, 'store'])->name('vehicles.incidents.images.store');
+            Route::get('incident-images/{image}/download', [VehicleIssueImageController::class, 'download'])->name('vehicles.incident-images.download');
+            Route::delete('incident-images/{image}', [VehicleIssueImageController::class, 'destroy'])->name('vehicles.incident-images.destroy');
             Route::resource('incidents', VehicleIssueController::class)->names('vehicles.incidents');
             Route::get('workshop/{maintenance}/print', [VehicleMaintenanceController::class, 'print'])->name('vehicles.workshop.print');
             Route::get('workshop/{maintenance}/print-exit', [VehicleMaintenanceController::class, 'printExit'])->name('vehicles.workshop.print_exit');
