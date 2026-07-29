@@ -355,15 +355,21 @@ class VehicleMaintenanceController extends Controller
         // Filter inventory items compatible with this vehicle or generic (empty compatibility)
         $vehicleId = $workshop->vehicle_id;
         $inventoryItems = \App\Models\WorkshopInventory::query()
-            ->where(function ($query) use ($vehicleId) {
-                // Compatible if 'compatibility' is null, empty array, or contains vehicleId
-                $query->whereNull('compatibility')
-                    ->orWhere('compatibility', '[]') // Empty JSON array
-                    ->orWhereJsonContains('compatibility', $vehicleId);
-            })
             ->where('category', '!=', 'herramienta')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->filter(function ($item) use ($vehicleId) {
+                if (is_null($item->compatibility) || empty($item->compatibility) || $item->compatibility === '[]') {
+                    return true;
+                }
+                if (is_array($item->compatibility)) {
+                    return in_array($vehicleId, $item->compatibility) || 
+                           in_array((string)$vehicleId, $item->compatibility) ||
+                           in_array((int)$vehicleId, $item->compatibility);
+                }
+                return false;
+            })
+            ->values();
 
         return Inertia::render('vehicles/workshop/show', [
             'maintenance' => $workshop,
@@ -479,10 +485,10 @@ class VehicleMaintenanceController extends Controller
             foreach ($validated['tasks'] as $taskData) {
                 if (isset($taskData['id'])) {
                     $task = \App\Models\VehicleMaintenanceTask::find($taskData['id']);
-                    if ($task && $task->vehicle_maintenance_id === $workshop->id) {
+                    if ($task && $task->vehicle_maintenance_id == $workshop->id) {
                         $task->update([
                             'description' => $taskData['description'],
-                            'is_completed' => $taskData['is_completed'] ?? false,
+                            'is_completed' => filter_var($taskData['is_completed'] ?? false, FILTER_VALIDATE_BOOLEAN),
                             'cost' => $taskData['cost'] ?? null,
                         ]);
                         $currentTaskIds[] = $task->id;
@@ -490,7 +496,7 @@ class VehicleMaintenanceController extends Controller
                 } else {
                     $newTask = $workshop->tasks()->create([
                         'description' => $taskData['description'],
-                        'is_completed' => $taskData['is_completed'] ?? false,
+                        'is_completed' => filter_var($taskData['is_completed'] ?? false, FILTER_VALIDATE_BOOLEAN),
                         'cost' => $taskData['cost'] ?? null,
                     ]);
                     $currentTaskIds[] = $newTask->id;
@@ -510,7 +516,7 @@ class VehicleMaintenanceController extends Controller
             foreach ($validated['external_works'] as $index => $work) {
                 if (isset($work['id'])) {
                     $externalWork = \App\Models\VehicleMaintenanceExternalWork::find($work['id']);
-                    if ($externalWork && $externalWork->vehicle_maintenance_id === $workshop->id) {
+                    if ($externalWork && $externalWork->vehicle_maintenance_id == $workshop->id) {
                         $updateData = [
                             'description' => $work['description'],
                             'provider' => $work['provider'],

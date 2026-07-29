@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.3',
+                'date' => '29-07-2026',
+                'changes' => [
+                    'Corrección de bug en el taller mecánico que borraba las tareas de mantenimiento y los trabajos externos al guardar cambios debido a comparaciones estrictas de tipos en los identificadores de base de datos.',
+                    'Optimización en el módulo de bodega para que los ítems compatibles con el vehículo se carguen de forma consistente sin fallar por problemas de tipo de datos',
+                ],
+            ],
+            [
                 'version' => 'v1.1.2',
                 'date' => '27-07-2026',
                 'changes' => [
