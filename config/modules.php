@@ -16,7 +16,7 @@ return [
         // Main Modules (Matching Route Middleware)
         'vehicles'    => true,  // Includes Status, Incidents, Logs, Workshop, Checklist, Inventory (Bodega), Renditions
         'users'       => true,  // Administration of users
-        'equipment'   => false, // Material Menor
+        'equipment'   => false,  // Material Menor (Includes Inventory, Deliveries, Receptions, Repairs, Equipment)
         'batteries'   => false,
         'tickets'     => false,
         'central'     => false,

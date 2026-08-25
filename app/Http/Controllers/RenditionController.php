@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use App\Services\NotificationRecipientService;
+use App\Notifications\PettyCashRenditionCreatedNotification;
+use App\Notifications\PettyCashRenditionApprovedByInspectorNotification;
 
 class RenditionController extends Controller
 {
@@ -168,6 +171,10 @@ class RenditionController extends Controller
           ]);
         }
       }
+
+      // Notificar al Inspector de Material Mayor para su aprobación
+      $inspectors = NotificationRecipientService::getMaterialMayorInspectors();
+      NotificationRecipientService::safeNotify($inspectors, new PettyCashRenditionCreatedNotification($rendition));
     });
 
     return redirect()->route('vehicles.renditions.index')->with('success', 'Rendición ingresada correctamente.');
@@ -229,6 +236,10 @@ class RenditionController extends Controller
           'inspector_id' => $user->id,
           'inspector_vised_at' => now(),
         ]);
+
+        // Notificar a la Secretaria de Adquisiciones para validación final
+        $secretaries = NotificationRecipientService::getAcquisitionSecretaries();
+        NotificationRecipientService::safeNotify($secretaries, new PettyCashRenditionApprovedByInspectorNotification($rendition));
       } elseif ($originalStatus === 'pending_secretary') {
         $rendition->update([
           'status' => 'approved',
@@ -335,6 +346,12 @@ class RenditionController extends Controller
         'step' => $step,
         'comment' => null,
       ]);
+
+      if ($newStatus === 'pending_secretary') {
+        $rendition->refresh();
+        $secretaries = NotificationRecipientService::getAcquisitionSecretaries();
+        NotificationRecipientService::safeNotify($secretaries, new PettyCashRenditionApprovedByInspectorNotification($rendition));
+      }
     }
 
     return back()->with('success', 'Rendiciones seleccionadas han sido aprobadas correctamente.');

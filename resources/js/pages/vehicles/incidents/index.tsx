@@ -1,5 +1,5 @@
 
-import { ReportModal } from '@/components/report-modal';
+import { ExportIncidentsDialog } from '@/components/vehicles/export-incidents-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -33,6 +33,7 @@ import { useState } from 'react';
 interface Vehicle {
     id: number;
     name: string;
+    company?: string | null;
 }
 
 interface Issue {
@@ -406,12 +407,10 @@ export default function VehicleIncidents({
                 </div>
 
 
-                <ReportModal
-                    isOpen={reportModalOpen}
-                    onClose={() => setReportModalOpen(false)}
-                    title="Reporte de Incidencias"
-                    route="/vehicles/reports/incidents"
-                    type="excel"
+                <ExportIncidentsDialog
+                    open={reportModalOpen}
+                    onOpenChange={setReportModalOpen}
+                    vehicles={vehicles}
                 />
             </div>
         </AppLayout>

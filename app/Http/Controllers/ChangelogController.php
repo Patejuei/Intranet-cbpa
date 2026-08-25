@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.4',
+                'date' => '25-08-2026',
+                'changes' => [
+                    'Corrección de bug donde se ocultaba el acceso al Estado de Unidades para el rol de Maquinista',
+                    'Implementación de notificación por Correo Electrónico al crear una nueva incidencia, al revisar una incidencia, al finalizar una orden de trabajo, al realizar un Checklist y al crear una nueva entrada de rendiciones',
+                    'Adición de filtros para la exportación de bitácoras e incidencias a Excel, incluyendo filtros por fecha y vechículo, así como la opción de exportar todas las bitácoras sin filtros.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.3',
                 'date' => '29-07-2026',
                 'changes' => [

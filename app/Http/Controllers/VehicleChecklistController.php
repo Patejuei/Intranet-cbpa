@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\VehicleChecklist;
 use Inertia\Inertia;
+use App\Services\NotificationRecipientService;
+use App\Notifications\VehicleChecklistCreatedNotification;
 
 class VehicleChecklistController extends Controller
 {
@@ -169,6 +171,21 @@ class VehicleChecklistController extends Controller
                 'status' => $detail['status'],
                 'notes' => $detail['notes'] ?? null,
             ]);
+        }
+
+        $checklist->load('vehicle');
+        $vehicle = $checklist->vehicle;
+
+        if ($vehicle) {
+            if ($vehicle->company === 'Comandancia') {
+                $recipients = NotificationRecipientService::getCommanders()
+                    ->merge(NotificationRecipientService::getMaterialMayorInspectors());
+            } else {
+                $recipients = NotificationRecipientService::getCaptainsForCompany($vehicle->company)
+                    ->merge(NotificationRecipientService::getMachinistsForCompany($vehicle->company));
+            }
+
+            NotificationRecipientService::safeNotify($recipients, new VehicleChecklistCreatedNotification($checklist));
         }
 
         return redirect()->route('vehicles.checklists.show', $checklist)->with('success', 'Checklist creado correctamente.');
@@ -368,8 +385,8 @@ class VehicleChecklistController extends Controller
 
             return false;
         } else {
-            $isCaptain = ($user->role === 'capitan' || $user->role === 'ayudante' || $user->role === 'admin');
-            $isMachinist = ($user->role === 'maquinista' || $user->role === 'admin');
+            $isCaptain = ((($user->role === 'capitan' || $user->role === 'ayudante') && $user->company === $checklist->vehicle->company) || $user->role === 'admin');
+            $isMachinist = (($user->role === 'maquinista' && $user->company === $checklist->vehicle->company) || $user->role === 'admin' );
 
             if ($isCaptain && !$checklist->captain_reviewed_at)
                 return true;

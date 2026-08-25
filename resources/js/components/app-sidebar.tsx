@@ -266,12 +266,15 @@ export function AppSidebar({ user }: { user: any }) {
 
         // Maquinista Restrictions (Explicit Block)
         if (user.role === 'maquinista') {
-            const restricted = [
-                'vehicles.inventory',
-                'vehicles.petty-cash',
-                'vehicles.renditions',
+            const allowed = [
+                'vehicles.status',
+                'vehicles.checklist',
+                'vehicles.logs',
+                'vehicles.workshop',
+                'vehicles.incidents',
             ];
-            if (restricted.includes(module)) return false;
+            if (allowed.includes(module)) return true;
+            return false;
         }
 
         if (user.role === 'mechanic') {

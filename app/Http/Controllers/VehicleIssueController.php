@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Services\NotificationRecipientService;
+use App\Notifications\VehicleIssueCreatedNotification;
+use App\Notifications\VehicleIssueReviewedNotification;
 
 class VehicleIssueController extends Controller
 {
@@ -43,7 +46,7 @@ class VehicleIssueController extends Controller
                         $query->orWhereIn('id', $driverIds);
                     }
                 });
-            })->orderBy('name')->get(['id', 'name']),
+            })->orderBy('name')->get(['id', 'name', 'company']),
         ]);
     }
 
@@ -84,17 +87,22 @@ class VehicleIssueController extends Controller
             ...$validated,
             'reporter_id' => $request->user()->id,
             'status' => 'Open',
-            'is_stopped' => false, // Always false initially unless Captain creates it? 
-            // Requirement: "User or Cuartelero ... cannot select if material is out of service"
-            // Captain will review it.
-            // If Captain creates it, maybe they can set it? 
-            // For simplicity, let's say ALL go through review or Captain edits it immediately after.
-            // But if Captain creates it, it's auto-reviewed?
-            // Let's keep it simple: Create -> Open. Captain Review -> Reviewed.
+            'is_stopped' => false,
         ]);
 
-        // If Captain creates it, we could auto-approve, but let's stick to flow:
-        // Reported -> Notification to Captain. Captain reviews.
+        $issue->load('vehicle');
+        $vehicle = $issue->vehicle;
+
+        if ($vehicle) {
+            if ($vehicle->company === 'Comandancia') {
+                $recipients = NotificationRecipientService::getCommanders()
+                    ->merge(NotificationRecipientService::getMaterialMayorInspectors());
+            } else {
+                $recipients = NotificationRecipientService::getCaptainsForCompany($vehicle->company);
+            }
+
+            NotificationRecipientService::safeNotify($recipients, new VehicleIssueCreatedNotification($issue));
+        }
 
         return redirect()->back()->with('success', 'Incidencia reportada. Pendiente de revisión por Capitán.');
     }
@@ -217,17 +225,23 @@ class VehicleIssueController extends Controller
 
         if ($validated['is_stopped']) {
             $incident->vehicle->update(['status' => 'Out of Service']);
-        } else {
-            // If marked as NOT stopped, ensure vehicle is not Out of Service due to THIS incident?
-            // Logic is tricky if multiple incidents. But usually one stops it.
-            // If we mark it distinct, we might want to check if other active incidents stop it.
-            // For now, if Captain says NOT stopped, we might assume it's operational unless other flags exists.
-            // But simpler: If stopped -> Out of Service. If not stopped -> don't change or set to 'Active' (Available)?
-            // The prompt says "determinar si queda fuera de servicio ... o no".
-            // If "No", maybe we should set it back to Available if it was Out of Service? 
-            // Or just leave it.
-            // Let's leave it unless explicitly requested to restore.
-            // Actually, if it was running, it stays running.
+        }
+
+        // Notificar a las entidades seleccionadas en la revisión
+        $recipients = collect();
+
+        if (!empty($validated['sent_to_hq'])) {
+            $recipients = $recipients->merge(NotificationRecipientService::getMaterialMayorInspectors());
+        }
+        if (!empty($validated['sent_to_workshop'])) {
+            $recipients = $recipients->merge(NotificationRecipientService::getMechanics());
+        }
+        if (!empty($validated['reported_to_commander'])) {
+            $recipients = $recipients->merge(NotificationRecipientService::getCommanders());
+        }
+
+        if ($recipients->isNotEmpty()) {
+            NotificationRecipientService::safeNotify($recipients, new VehicleIssueReviewedNotification($incident));
         }
 
         return redirect()->back()->with('success', 'Incidencia revisada correctamente.');

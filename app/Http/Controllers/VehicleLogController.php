@@ -68,7 +68,7 @@ class VehicleLogController extends Controller
                         ->latest('date')
                         ->limit(1)
                 ])
-                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.coupon_number', 'last_mileage']),
+                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number', 'last_mileage']),
             'filters' => request()->only(['vehicle_id', 'movement_key']),
         ]);
     }
@@ -149,13 +149,6 @@ class VehicleLogController extends Controller
         $user = request()->user();
         $log = \App\Models\VehicleLog::with(['vehicle', 'driver'])->findOrFail($id);
 
-        // Security check
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
-            if ($log->vehicle->company !== $user->company) {
-                abort(403, 'No tiene permiso para ver esta bitácora.');
-            }
-        }
-
         return Inertia::render('vehicles/logs/show', [
             'log' => $log,
         ]);
@@ -190,24 +183,71 @@ class VehicleLogController extends Controller
     public function export(Request $request)
     {
         $user = $request->user();
-        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest();
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest('date')->latest('id');
 
-        // Apply same filters as Index (Replicated logic)
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
-            if ($user->role !== 'mechanic') {
+        // Apply same security filters as Index
+        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+            if ($driverIds->isEmpty()) {
                 $logQuery->whereHas('vehicle', function ($q) use ($user) {
                     $q->where('company', $user->company);
+                });
+            } else {
+                $logQuery->whereHas('vehicle', function ($query) use ($driverIds, $user) {
+                    $query->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $driverIds);
+                    }
                 });
             }
         }
 
-        // Vehicle Filter - Fixed to handle 'all'
-        if ($request->has('vehicle_id') && $request->vehicle_id && $request->vehicle_id !== 'all') {
-            $logQuery->where('vehicle_id', $request->vehicle_id);
+        $exportAll = $request->boolean('export_all');
+
+        if (!$exportAll) {
+            // Multiple vehicle IDs filter
+            if ($request->filled('vehicle_ids')) {
+                $vehicleIds = is_array($request->vehicle_ids)
+                    ? $request->vehicle_ids
+                    : explode(',', (string) $request->vehicle_ids);
+                $vehicleIds = array_filter(array_map('trim', $vehicleIds));
+                if (!empty($vehicleIds)) {
+                    $logQuery->whereIn('vehicle_id', $vehicleIds);
+                }
+            } elseif ($request->filled('vehicle_id') && $request->vehicle_id !== 'all') {
+                // Backwards compatibility for single vehicle_id
+                $logQuery->where('vehicle_id', $request->vehicle_id);
+            }
+
+            // Period Filter
+            $periodType = $request->input('period_type');
+            if ($periodType === 'month') {
+                $year = $request->input('year');
+                $month = $request->input('month');
+                if ($year && $month) {
+                    $logQuery->whereYear('date', $year)->whereMonth('date', $month);
+                } elseif ($month) {
+                    $logQuery->whereMonth('date', $month);
+                } elseif ($year) {
+                    $logQuery->whereYear('date', $year);
+                }
+            } elseif ($periodType === 'year') {
+                $year = $request->input('year');
+                if ($year) {
+                    $logQuery->whereYear('date', $year);
+                }
+            } elseif ($periodType === 'custom') {
+                if ($request->filled('date_from')) {
+                    $logQuery->whereDate('date', '>=', $request->date_from);
+                }
+                if ($request->filled('date_to')) {
+                    $logQuery->whereDate('date', '<=', $request->date_to);
+                }
+            }
         }
 
         // Movement Key Filter
-        if ($request->has('movement_key') && $request->movement_key) {
+        if ($request->filled('movement_key')) {
             $logQuery->where('movement_key', 'like', '%' . $request->movement_key . '%');
         }
 

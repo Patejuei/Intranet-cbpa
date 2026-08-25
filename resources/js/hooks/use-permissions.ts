@@ -141,7 +141,7 @@ export function usePermissions() {
         if (user.role === 'maquinista') {
             // Maquinista Edit permissions
             const editModules = [
-                'vehicles.status', // ADDED per user request
+                'vehicles.incidents', // ADDED per user request
                 'vehicles.checklist', // Usually they sign checklists
             ];
             if (editModules.includes(module)) return true;

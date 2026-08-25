@@ -114,6 +114,7 @@ export default function Dashboard({
         if (user.role === 'maquinista') {
             const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
             if (restricted.includes(moduleKey)) return false;
+            return true;
         }
 
         // Specific Roles check for vehicles

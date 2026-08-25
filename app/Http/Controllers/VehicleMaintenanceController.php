@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Services\NotificationRecipientService;
+use App\Notifications\VehicleMaintenanceFinalizedNotification;
 
 class VehicleMaintenanceController extends Controller
 {
@@ -220,9 +222,19 @@ class VehicleMaintenanceController extends Controller
             'finalizer_user_id' => $request->user()->id,
         ]);
 
-        // Resolve issues
-        // $maintenance->issues()->update(['status' => 'Resolved']);
-        // $maintenance->tasks()->update(['is_completed' => true]);
+        $maintenance->load('vehicle');
+        $vehicle = $maintenance->vehicle;
+
+        if ($vehicle) {
+            if ($vehicle->company === 'Comandancia') {
+                $recipients = NotificationRecipientService::getCommanders()
+                    ->merge(NotificationRecipientService::getMaterialMayorInspectors());
+            } else {
+                $recipients = NotificationRecipientService::getCaptainsForCompany($vehicle->company);
+            }
+
+            NotificationRecipientService::safeNotify($recipients, new VehicleMaintenanceFinalizedNotification($maintenance));
+        }
 
         return back()->with('success', 'Mantenimiento finalizado correctamente.');
     }
@@ -444,7 +456,7 @@ class VehicleMaintenanceController extends Controller
 
         $updateData = [
             'status' => $validated['status'],
-            'tentative_exit_date' => $validated['tentative_exit_date'],
+            'tentative_exit_date' => $validated['tentative_exit_date'] ?? $workshop->tentative_exit_date,
             'description' => $validated['description'] ?? $workshop->description,
         ];
 
@@ -476,6 +488,8 @@ class VehicleMaintenanceController extends Controller
                 $updateData['status'] = 'Trabajando';
             }
         }
+
+        $previousStatus = $workshop->status;
 
         $workshop->update($updateData);
 
@@ -596,6 +610,8 @@ class VehicleMaintenanceController extends Controller
                 ->update(['status' => 'Resolved']);
         }
 
+        $wasFinalized = in_array($previousStatus, ['Finalizado', 'Entregado']);
+
         // Check if status is finalized (e.g. 'Entregado') to release vehicle?
         // User asked for states like "Ingresado, Trabajando, En espera de materiales".
         // If "Entregado" or "Finalizado", we might want to set Vehicle to Operative.
@@ -608,10 +624,21 @@ class VehicleMaintenanceController extends Controller
             $workshop->update($updateDataForFinalization);
             $workshop->vehicle->update(['status' => 'Operative']);
 
-            // Auto-resolve all linked issues and check off all tasks
-            // $workshop->issues()->update(['status' => 'Resolved']);
-            // $workshop->tasks()->update(['is_completed' => true]);
-            // \App\Models\VehicleIssue::where('vehicle_maintenance_id', $workshop->id)->update(['is_stopped' => false]);
+            if (!$wasFinalized && $validated['status'] === 'Finalizado') {
+                $workshop->load('vehicle');
+                $vehicle = $workshop->vehicle;
+
+                if ($vehicle) {
+                    if ($vehicle->company === 'Comandancia') {
+                        $recipients = NotificationRecipientService::getCommanders()
+                            ->merge(NotificationRecipientService::getMaterialMayorInspectors());
+                    } else {
+                        $recipients = NotificationRecipientService::getCaptainsForCompany($vehicle->company);
+                    }
+
+                    NotificationRecipientService::safeNotify($recipients, new VehicleMaintenanceFinalizedNotification($workshop));
+                }
+            }
         }
 
         return redirect()->back()->with('success', 'Orden de trabajo actualizada.');

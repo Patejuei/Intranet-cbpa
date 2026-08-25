@@ -29,6 +29,8 @@ class User extends Authenticatable
         'department',
         'is_enabled',
         'signature_path',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
     ];
 
     /**

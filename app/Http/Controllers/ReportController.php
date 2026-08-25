@@ -90,42 +90,149 @@ class ReportController extends Controller
      */
     public function incidentsReport(Request $request)
     {
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
+        $user = $request->user();
+        $query = VehicleIssue::with(['vehicle', 'reporter', 'reviewer'])->latest('date')->latest('id');
 
-        $incidents = VehicleIssue::with(['vehicle', 'reporter'])
-            ->when($startDate, fn($q) => $q->where('date', '>=', $startDate))
-            ->when($endDate, fn($q) => $q->where('date', '<=', $endDate))
-            ->get();
+        if ($user) {
+            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+            $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
+
+            if ($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM) {
+                $query->whereHas('vehicle', function ($q) use ($user, $driverIds) {
+                    $q->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $q->orWhereIn('id', $driverIds);
+                    }
+                });
+            }
+            if ($user->role === 'mechanic') {
+                $query->where('sent_to_workshop', '=', 1);
+            }
+            if ($user->role === 'commander') {
+                $query->where('reported_to_commander', '=', 1);
+            }
+        }
+
+        $exportAll = $request->boolean('export_all');
+
+        if (!$exportAll) {
+            // Vehicle IDs filter
+            if ($request->filled('vehicle_ids')) {
+                $vehicleIds = is_array($request->vehicle_ids)
+                    ? $request->vehicle_ids
+                    : explode(',', (string) $request->vehicle_ids);
+                $vehicleIds = array_filter(array_map('trim', $vehicleIds));
+                if (!empty($vehicleIds)) {
+                    $query->whereIn('vehicle_id', $vehicleIds);
+                }
+            } elseif ($request->filled('vehicle_id') && $request->vehicle_id !== 'all') {
+                $query->where('vehicle_id', $request->vehicle_id);
+            }
+
+            // Period filter
+            $periodType = $request->input('period_type');
+            if ($periodType === 'month') {
+                $year = $request->input('year');
+                $month = $request->input('month');
+                if ($year && $month) {
+                    $query->whereYear('date', $year)->whereMonth('date', $month);
+                } elseif ($month) {
+                    $query->whereMonth('date', $month);
+                } elseif ($year) {
+                    $query->whereYear('date', $year);
+                }
+            } elseif ($periodType === 'year') {
+                $year = $request->input('year');
+                if ($year) {
+                    $query->whereYear('date', $year);
+                }
+            } elseif ($periodType === 'custom') {
+                if ($request->filled('date_from')) {
+                    $query->whereDate('date', '>=', $request->date_from);
+                }
+                if ($request->filled('date_to')) {
+                    $query->whereDate('date', '<=', $request->date_to);
+                }
+            } else {
+                // Backwards compatibility for start_date & end_date
+                if ($request->filled('start_date')) {
+                    $query->whereDate('date', '>=', $request->start_date);
+                }
+                if ($request->filled('end_date')) {
+                    $query->whereDate('date', '<=', $request->end_date);
+                }
+            }
+        }
+
+        $incidents = $query->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Incidencias');
 
-        $headers = ['Fecha', 'Vehículo', 'Informante', 'Descripción', 'Gravedad', 'Estado', '¿Detenido?'];
+        $headers = [
+            'ID',
+            'Fecha',
+            'Vehículo',
+            'Compañía',
+            'Informante',
+            'Descripción',
+            'Gravedad',
+            'Estado',
+            '¿Detenido?',
+            'Enviado a Cuartel General',
+            'Enviado a Taller',
+            'Revisado Por',
+            'Fecha Revisión'
+        ];
         $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:M1')->getFont()->setBold(true);
 
-        $data = $incidents->map(function($i) {
-            return [
-                $i->date,
-                $i->vehicle->name ?? 'N/A',
-                $i->reporter->name ?? 'N/A',
-                $i->description,
-                $i->severity,
-                $i->status,
-                $i->is_stopped ? 'Sí' : 'No'
-            ];
-        })->toArray();
+        $severityTranslations = [
+            'Low' => 'Baja',
+            'Medium' => 'Media',
+            'High' => 'Alta',
+            'Critical' => 'Crítica',
+        ];
 
-        $sheet->fromArray($data, null, 'A2');
+        $statusTranslations = [
+            'Open' => 'Abierta',
+            'Reviewed' => 'Revisada',
+            'In Progress' => 'En Progreso',
+            'Resolved' => 'Resuelta',
+        ];
+
+        $row = 2;
+        foreach ($incidents as $i) {
+            $sheet->setCellValue('A' . $row, $i->id);
+            $sheet->setCellValue('B' . $row, $i->date);
+            $sheet->setCellValue('C' . $row, $i->vehicle ? $i->vehicle->name : 'N/A');
+            $sheet->setCellValue('D' . $row, $i->vehicle ? $i->vehicle->company : 'N/A');
+            $sheet->setCellValue('E' . $row, $i->reporter ? $i->reporter->name : 'N/A');
+            $sheet->setCellValue('F' . $row, $i->description);
+            $sheet->setCellValue('G' . $row, $severityTranslations[$i->severity] ?? $i->severity);
+            $sheet->setCellValue('H' . $row, $statusTranslations[$i->status] ?? $i->status);
+            $sheet->setCellValue('I' . $row, $i->is_stopped ? 'Sí' : 'No');
+            $sheet->setCellValue('J' . $row, $i->sent_to_hq ? 'Sí' : 'No');
+            $sheet->setCellValue('K' . $row, $i->sent_to_workshop ? 'Sí' : 'No');
+            $sheet->setCellValue('L' . $row, $i->reviewer ? $i->reviewer->name : 'N/A');
+            $sheet->setCellValue('M' . $row, $i->reviewed_at ? $i->reviewed_at->format('Y-m-d H:i') : 'N/A');
+            $row++;
+        }
+
+        foreach (range('A', 'M') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
 
         $writer = new Xlsx($spreadsheet);
-        $fileName = 'Reporte_Incidencias.xlsx';
-        
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-        $writer->save('php://output');
-        exit;
+        $fileName = 'Reporte_Incidencias_' . date('Y-m-d_H-i') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     /**

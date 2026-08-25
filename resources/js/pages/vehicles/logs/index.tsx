@@ -28,9 +28,12 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { Check, X } from 'lucide-react';
 
+import { ExportLogsDialog } from '@/components/vehicles/export-logs-dialog';
+
 interface Vehicle {
     id: number;
     name: string;
+    company?: string | null;
     last_mileage?: number;
     coupon_number?: string | null;
 }
@@ -64,6 +67,7 @@ export default function VehicleLogs({
 }) {
     const { canCreate } = usePermissions();
     const [searchKey, setSearchKey] = useState(filters?.movement_key || '');
+    const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
@@ -616,11 +620,7 @@ export default function VehicleLogs({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => {
-                                            const vehicleId = filters.vehicle_id || 'all';
-                                            const movementKey = filters.movement_key || '';
-                                            window.location.href = `/vehicles/logs/export?vehicle_id=${vehicleId}&movement_key=${movementKey}`;
-                                        }}
+                                        onClick={() => setIsExportDialogOpen(true)}
                                     >
                                         Exportar Excel
                                     </Button>
@@ -757,6 +757,13 @@ export default function VehicleLogs({
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <ExportLogsDialog
+                open={isExportDialogOpen}
+                onOpenChange={setIsExportDialogOpen}
+                vehicles={vehicles}
+                currentMovementKey={searchKey || filters?.movement_key}
+            />
         </AppLayout>
     );
 }

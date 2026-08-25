@@ -143,7 +143,7 @@ class VehicleIssueTest extends TestCase
             'is_stopped' => false,
             'company' => '1a Compañía',
             'reviewed_at' => now(),
-            'reviewed_by' => 99,
+            'reviewed_by' => $inspector->id,
         ]);
 
         $response = $this->actingAs($inspector)
