@@ -100,12 +100,12 @@ export default function Dashboard({
         if (user.role === 'capitan' || user.role === 'ayudante') {
             const restricted = [
                 'vehicles.inventory', 
-                'vehicles.petty-cash',
+                'vehicles.renditions',
                 'vehicles.workshop'
             ];
             
             if (user.role === 'ayudante' && restricted.includes(moduleKey)) return false;
-            if (user.role === 'capitan' && (moduleKey === 'vehicles.inventory' || moduleKey === 'vehicles.petty-cash')) return false;
+            if (user.role === 'capitan' && (moduleKey === 'vehicles.inventory' || moduleKey === 'vehicles.renditions')) return false;
 
             return true;
         }

@@ -123,6 +123,7 @@ export function usePermissions() {
         // Capitan: Read-Only for Workshop
         if (user.role === 'capitan') {
             if (module === 'vehicles.workshop') return false;
+            if (module === 'vehicles.status') return false; // Fleet status is read-only
             return true;
         }
 

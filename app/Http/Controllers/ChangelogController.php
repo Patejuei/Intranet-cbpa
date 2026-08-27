@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.5',
+                'date' => '27-08-2026',
+                'changes' => [
+                    'Corrección de bug de Edición de Unidades desde el usuario de Capitán',
+                    'Corrección de bug de aparición de módulo de rendiciones en el DashBoard desde el usuario de Capitán',
+                ],
+            ],
+            [
                 'version' => 'v1.1.4',
                 'date' => '25-08-2026',
                 'changes' => [
