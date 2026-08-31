@@ -10,16 +10,22 @@ import { Eye, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { usePermissions } from '@/hooks/use-permissions';
 
+interface UserModel {
+    id: number;
+    name: string;
+    company: string;
+}
+
 interface TicketModel {
     id: number;
     subject: string;
     company: string;
+    category: string | null;
     priority: string;
     status: string;
     created_at: string;
-    user: { name: string };
-    commander_seen: boolean;
-    reported_to_commander: boolean;
+    user: UserModel;
+    assigned_to: UserModel | null;
 }
 
 interface PageProps {
@@ -27,16 +33,22 @@ interface PageProps {
         data: TicketModel[];
         links: any[];
     };
+    categories: Record<string, string>;
+    can_create?: boolean;
 }
 
-export default function TicketIndex({ tickets }: PageProps) {
-    const { canCreate } = usePermissions();
+export default function TicketIndex({ tickets, categories, can_create }: PageProps) {
+    const { canCreate, user } = usePermissions();
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Si viene can_create del backend lo usamos directamente, sino usamos canCreate hook
+    const showCreateButton = can_create !== undefined ? can_create : canCreate('tickets');
 
     const filteredTickets = tickets.data.filter(
         (t) =>
             t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
             t.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (t.category && categories[t.category]?.toLowerCase().includes(searchTerm.toLowerCase())) ||
             t.id.toString().includes(searchTerm),
     );
 
@@ -48,7 +60,7 @@ export default function TicketIndex({ tickets }: PageProps) {
                         variant="default"
                         className="bg-yellow-500 hover:bg-yellow-600"
                     >
-                        Pendiente
+                        Abierto
                     </Badge>
                 );
             case 'EN_PROCESO':
@@ -98,22 +110,23 @@ export default function TicketIndex({ tickets }: PageProps) {
         <AppLayout
             breadcrumbs={[
                 { title: 'Panel Principal', href: '/dashboard' },
-                { title: 'Ticketera', href: '/tickets' },
+                { title: 'Soporte', href: '/tickets' },
             ]}
         >
-            <Head title="Ticketera / Solicitudes" />
+            <Head title="Soporte / Ticketera" />
 
             <div className="flex flex-col gap-6 p-4">
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">
-                            Solicitudes y Soporte
+                            Soporte de Plataforma
                         </h2>
                         <p className="text-muted-foreground">
-                            Gestión de requerimientos a Comandancia.
+                            Sistema de tickets para soporte técnico de la
+                            intranet.
                         </p>
                     </div>
-                    {canCreate('tickets') && (
+                    {showCreateButton && (
                         <Link href="/tickets/create">
                             <Button className="gap-2">
                                 <Plus className="size-4" />
@@ -127,13 +140,13 @@ export default function TicketIndex({ tickets }: PageProps) {
                     <div className="flex max-w-sm items-center gap-2">
                         <Search className="size-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar en esta página..."
+                            placeholder="Buscar por asunto, categoría o compañía..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="h-9"
                         />
                     </div>
-                    <CompanyFilter />
+                    {user?.role === 'admin' && <CompanyFilter />}
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
@@ -148,6 +161,9 @@ export default function TicketIndex({ tickets }: PageProps) {
                                         Asunto
                                     </th>
                                     <th className="px-4 py-3 font-medium">
+                                        Categoría
+                                    </th>
+                                    <th className="px-4 py-3 font-medium">
                                         Prioridad
                                     </th>
                                     <th className="px-4 py-3 font-medium">
@@ -160,10 +176,10 @@ export default function TicketIndex({ tickets }: PageProps) {
                                         Solicitante
                                     </th>
                                     <th className="px-4 py-3 font-medium">
-                                        Fecha
+                                        Asignado a
                                     </th>
-                                    <th className="px-4 py-3 font-medium text-center">
-                                        Visto Cmdte.
+                                    <th className="px-4 py-3 font-medium">
+                                        Fecha
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
                                         Acciones
@@ -183,6 +199,11 @@ export default function TicketIndex({ tickets }: PageProps) {
                                             <td className="px-4 py-3 font-medium">
                                                 {ticket.subject}
                                             </td>
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {ticket.category
+                                                    ? categories[ticket.category] ?? ticket.category
+                                                    : '-'}
+                                            </td>
                                             <td className="px-4 py-3">
                                                 {getPriorityBadge(
                                                     ticket.priority,
@@ -198,22 +219,16 @@ export default function TicketIndex({ tickets }: PageProps) {
                                                 {ticket.user.name}
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
-                                                {formatDate(ticket.created_at)}
+                                                {ticket.assigned_to
+                                                    ? ticket.assigned_to.name
+                                                    : (
+                                                        <span className="text-xs italic">
+                                                            Sin asignar
+                                                        </span>
+                                                    )}
                                             </td>
-                                            <td className="px-4 py-3 text-center">
-                                                {ticket.reported_to_commander ? (
-                                                    ticket.commander_seen ? (
-                                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
-                                                            Visto
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200">
-                                                            No Visto
-                                                        </Badge>
-                                                    )
-                                                ) : (
-                                                    <span className="text-muted-foreground text-xs">-</span>
-                                                )}
+                                            <td className="px-4 py-3 text-muted-foreground">
+                                                {formatDate(ticket.created_at)}
                                             </td>
                                             <td className="px-4 py-3 text-right">
                                                 <Link
@@ -234,11 +249,10 @@ export default function TicketIndex({ tickets }: PageProps) {
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={9}
+                                            colSpan={10}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            No se encontraron tickets en esta
-                                            página.
+                                            No se encontraron tickets.
                                         </td>
                                     </tr>
                                 )}

@@ -73,6 +73,7 @@ class HandleInertiaRequests extends Middleware
                         ];
                         $user->permissions = array_values(array_unique(array_merge($user->permissions ?? [], $defaults)));
                     }
+                    $user->has_tickets = \App\Models\Ticket::where('user_id', $user->id)->exists();
                 }) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

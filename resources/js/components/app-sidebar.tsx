@@ -30,6 +30,7 @@ import {
     FileText,
     Hammer,
     LayoutGrid,
+    LifeBuoy,
     LogOut,
     Package,
     Shield,
@@ -68,7 +69,7 @@ const NAV_GROUPS = [
                 title: 'Inventario',
                 url: '/inventory',
                 icon: Package,
-                permission: 'inventory',
+                permission: 'equipment',
                 tooltip: 'Inventario',
             },
             // {
@@ -96,15 +97,8 @@ const NAV_GROUPS = [
                 title: 'Actas de Entrega',
                 url: '/deliveries',
                 icon: FileText,
-                permission: 'deliveries',
+                permission: 'equipment',
                 tooltip: 'Actas de Entrega',
-            },
-            {
-                title: 'Ticketera',
-                url: '/tickets',
-                icon: Ticket,
-                permission: 'tickets',
-                tooltip: 'Ticketera',
             },
             {
                 title: 'Recepción',
@@ -204,6 +198,13 @@ const NAV_GROUPS = [
                 icon: Shield,
                 permission: 'firefighters',
                 tooltip: 'Bomberos',
+            },
+            {
+                title: 'Soporte',
+                url: '/tickets',
+                icon: LifeBuoy,
+                permission: 'tickets',
+                tooltip: 'Soporte / Ticketera',
             },
         ],
     },
@@ -345,7 +346,8 @@ export function AppSidebar({ user }: { user: any }) {
         return (
             permissions.includes(module) ||
             permissions.includes(`${module}.view`) ||
-            permissions.includes(`${module}.edit`)
+            permissions.includes(`${module}.edit`) ||
+            (module === 'tickets' && !!user.has_tickets)
         );
     };
 

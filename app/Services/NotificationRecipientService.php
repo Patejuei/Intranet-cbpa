@@ -97,6 +97,17 @@ class NotificationRecipientService
             ->get();
     }
 
+    public static function getAdmins(): Collection
+    {
+        return User::where('role', 'admin')
+            ->where(function ($q) {
+                $q->where('is_enabled', true)
+                  ->orWhereNull('is_enabled');
+            })
+            ->whereNotNull('email')
+            ->get();
+    }
+
     /**
      * Envía una notificación de forma segura a una colección o array de usuarios,
      * previniendo que un fallo de conexión SMTP interrumpa el flujo del usuario.

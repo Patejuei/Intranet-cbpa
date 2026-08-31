@@ -46,19 +46,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $pendingTickets = [];
             $respondedTickets = [];
 
-            if ($user->company === 'Comandancia') {
+            if ($user->role === 'admin') {
+                // Admin ve tickets abiertos sin asignar o asignados a él
                 $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
-                    ->when($user->role !== 'admin' && $user->role !== 'inspector', function ($q) {
-                        $q->where('reported_to_commander', true)
-                            ->where('commander_seen', false);
-                    })
-                    ->with('user')->take(5)->get();
-            } else {
-                $respondedTickets = \App\Models\Ticket::where('company', $user->company)
-                    ->where('status', 'EN_PROCESO') // Assuming En Proceso means responded/active
-                    ->with('user')
+                    ->with(['user', 'assignedTo'])
+                    ->latest()
                     ->take(5)
                     ->get();
+            } elseif ($user->company === 'Comandancia' || $user->role === 'capitan' || $user->role === 'secretaria_adquisiciones' || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')) {
+                // Usuarios con acceso a tickets ven sus tickets respondidos
+                if ($user->company === 'Comandancia') {
+                    $respondedTickets = \App\Models\Ticket::where('status', 'EN_PROCESO')
+                        ->with(['user', 'assignedTo'])
+                        ->latest()
+                        ->take(5)
+                        ->get();
+                } else {
+                    $respondedTickets = \App\Models\Ticket::where('company', $user->company)
+                        ->where('status', 'EN_PROCESO')
+                        ->with(['user', 'assignedTo'])
+                        ->latest()
+                        ->take(5)
+                        ->get();
+                }
             }
 
             // Material Mayor Logic
@@ -281,12 +291,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('equipment/acquisitions/{acquisition}/reception', [EquipmentLogController::class, 'confirmReception'])->name('equipment.reception');
     Route::post('equipment/acquisitions/{acquisition}/inventory-entry', [EquipmentLogController::class, 'finishInventoryEntry'])->name('equipment.inventory_entry');
     Route::resource('equipment', EquipmentLogController::class)->only(['index', 'store'])->middleware('module:equipment');
-    Route::resource('tickets', TicketController::class)->middleware('module:tickets');
-    Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply');
-    Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
-    Route::patch('tickets/{ticket}/priority', [TicketController::class, 'updatePriority'])->name('tickets.updatePriority');
-    Route::post('tickets/{ticket}/report', [TicketController::class, 'reportToCommander'])->name('tickets.report');
-    Route::post('tickets/{ticket}/mark-seen', [TicketController::class, 'markAsSeenByCommander'])->name('tickets.markSeen');
+    Route::resource('tickets', TicketController::class)->only(['index', 'create', 'store', 'show'])->middleware('module:tickets');
+    Route::post('tickets/{ticket}/reply', [TicketController::class, 'reply'])->name('tickets.reply')->middleware('module:tickets');
+    Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus')->middleware('module:tickets');
+    Route::post('tickets/{ticket}/assign', [TicketController::class, 'assignToMe'])->name('tickets.assign')->middleware('module:tickets');
 
     // Material Mayor Routes
     Route::middleware('module:vehicles')->prefix('vehicles')->group(

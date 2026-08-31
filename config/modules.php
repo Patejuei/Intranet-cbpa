@@ -18,7 +18,7 @@ return [
         'users'       => true,  // Administration of users
         'equipment'   => false,  // Material Menor (Includes Inventory, Deliveries, Receptions, Repairs, Equipment)
         'batteries'   => false,
-        'tickets'     => false,
+        'tickets'     => true,
         'central'     => false,
         'firefighters' => false,
     ],

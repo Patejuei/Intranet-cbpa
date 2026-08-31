@@ -6,11 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ticket extends Model
 {
-    protected $fillable = ['subject', 'description', 'company', 'priority', 'status', 'user_id', 'image_path', 'reported_to_commander', 'commander_seen'];
+    protected $fillable = [
+        'subject',
+        'description',
+        'company',
+        'priority',
+        'status',
+        'category',
+        'user_id',
+        'assigned_to',
+        'image_path',
+    ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function messages()

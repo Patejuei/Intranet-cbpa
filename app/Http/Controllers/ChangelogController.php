@@ -14,6 +14,13 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.6',
+                'date' => '31-08-2026',
+                'changes' => [
+                    'Habilitación de Ticketera para Soporte',
+                ],
+            ],
+            [
                 'version' => 'v1.1.5',
                 'date' => '27-08-2026',
                 'changes' => [

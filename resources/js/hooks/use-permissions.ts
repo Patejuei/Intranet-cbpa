@@ -105,7 +105,8 @@ export function usePermissions() {
             permissions.includes(module) ||
             permissions.includes(`${module}.view`) ||
             permissions.includes(`${module}.edit`) ||
-            permissions.includes(`${module}.full`)
+            permissions.includes(`${module}.full`) ||
+            (module === 'tickets' && !!user.has_tickets)
         );
     };
 
@@ -174,6 +175,11 @@ export function usePermissions() {
                 ];
                 if (materialMenorModules.includes(module)) return true;
             }
+        }
+
+        if (user.role === 'secretaria_adquisiciones') {
+            const secModules = ['inventory', 'tickets', 'batteries', 'deliveries', 'reception', 'equipment'];
+            if (secModules.includes(module)) return true;
         }
 
         if (user.role === 'mechanic') {
