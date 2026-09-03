@@ -46,6 +46,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'has_tickets',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -98,5 +107,14 @@ class User extends Authenticatable
     public function driverVehicles()
     {
         return $this->belongsToMany(Vehicle::class, 'driver_vehicle');
+    }
+
+    public function getHasTicketsAttribute(): bool
+    {
+        if (! $this->exists) {
+            return false;
+        }
+
+        return \App\Models\Ticket::where('user_id', $this->id)->exists();
     }
 }

@@ -22,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import  Pagination  from '@/components/Pagination';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
@@ -386,26 +387,7 @@ export default function VehicleIncidents({
                         </table>
                     </div>
                 </div>
-                <div className="flex justify-center gap-2">
-                    {issues.links.map((link: any, index: number) =>
-                        link.url ? (
-                            <Button
-                                key={index}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                asChild
-                            >
-                                <Link
-                                    href={link.url}
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                />
-                            </Button>
-                        ) : null,
-                    )}
-                </div>
-
+                <Pagination links={issues.links} />
 
                 <ExportIncidentsDialog
                     open={reportModalOpen}

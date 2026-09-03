@@ -24,6 +24,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Eye, FileText, Plus, Search, FileSpreadsheet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ReportModal } from '@/components/report-modal';
+import Pagination from '@/components/Pagination';
 
 interface Maintenance {
     id: number;
@@ -280,34 +281,7 @@ export default function VehicleWorkshop() {
                 </Card>
 
                 {/* Pagination */}
-                {maintenances.links.length > 3 && (
-                    <div className="flex justify-center gap-2">
-                        {maintenances.links.map((link, i) =>
-                            link.url ? (
-                                <Button
-                                    key={i}
-                                    variant={
-                                        link.active ? 'default' : 'outline'
-                                    }
-                                    size="sm"
-                                    asChild
-                                >
-                                    <Link
-                                        href={link.url.concat(
-                                            search ? `&search=${search}` : '',
-                                            filters.status
-                                                ? `&status=${filters.status}`
-                                                : '',
-                                        )}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                    />
-                                </Button>
-                            ) : null,
-                        )}
-                    </div>
-                )}
+                <Pagination links={maintenances.links} />
             </div>
             <ReportModal
                 isOpen={reportModalOpen}
