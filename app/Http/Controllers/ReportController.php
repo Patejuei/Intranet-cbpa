@@ -49,7 +49,7 @@ class ReportController extends Controller
             if (!$l->arrival_time || !$l->departure_time) return 0;
             $start = Carbon::parse($l->departure_time);
             $end = Carbon::parse($l->arrival_time);
-            return $end->diffInHours($start);
+            return $start->diffInHours($end);
         });
 
         $exitStats = $logs->groupBy('activity_type')->map(fn($group) => count($group));
@@ -61,7 +61,7 @@ class ReportController extends Controller
                 if (!$l->arrival_time || !$l->departure_time) return 0;
                 $start = Carbon::parse($l->departure_time);
                 $end = Carbon::parse($l->arrival_time);
-                return $end->diffInHours($start);
+                return $start->diffInHours($end);
             });
             return [
                 'name' => $driverName,

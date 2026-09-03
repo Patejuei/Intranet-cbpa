@@ -69,7 +69,7 @@ class VehicleIssue extends Model
             return false;
         }
 
-        if ($user->role === 'admin') {
+        if ($user->role === 'admin' || $user->role === 'capitan' || $user->role === 'maquinista') {
             return true;
         }
 
@@ -87,7 +87,7 @@ class VehicleIssue extends Model
             return false;
         }
 
-        if ($user->role === 'admin') {
+        if ($user->role === 'admin' || $user->role === 'capitan' || $user->role === 'maquinista') {
             return true;
         }
 

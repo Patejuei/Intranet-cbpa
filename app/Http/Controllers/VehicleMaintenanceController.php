@@ -219,6 +219,7 @@ class VehicleMaintenanceController extends Controller
         $maintenance->update([
             'status' => 'Finalizado',
             'exit_date' => now(),
+            'cost' => $maintenance->items->sum('pivot.total_cost') + $maintenance->externalWorks->sum('cost') + ($maintenance->working_hours * $maintenance->hour_rate),
             'finalizer_user_id' => $request->user()->id,
         ]);
 
@@ -618,6 +619,7 @@ class VehicleMaintenanceController extends Controller
         if ($validated['status'] === 'Entregado' || $validated['status'] === 'Finalizado') {
             $updateDataForFinalization = [
                 'exit_date' => $workshop->exit_date ?? now(), // Keep existing if already set
+                'cost' => $workshop->items->sum('pivot.total_cost') + $workshop->externalWorks->sum('cost') + ($workshop->working_hours * $workshop->hour_rate),
                 'finalizer_user_id' => $workshop->finalizer_user_id ?? $request->user()->id,
             ];
 
