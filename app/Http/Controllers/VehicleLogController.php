@@ -118,6 +118,21 @@ class VehicleLogController extends Controller
             }
         }
 
+        if ($user->role === 'user' && $user->company !== 'Comandancia') {
+            $hasDriverVehicles = $user->driverVehicles()->exists();
+            if ($hasDriverVehicles) {
+                $isAssignedDriver = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+                if (!$isAssignedDriver) {
+                    abort(403, 'Solo puede registrar movimientos para las unidades donde usted es conductor asignado.');
+                }
+            } else {
+                $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+                if ($vehicle->company !== $user->company) {
+                    abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+                }
+            }
+        }
+
         // Sanitización si no se cargó combustible
         if (!($validated['has_fuel'] ?? false)) {
             $validated['fuel_liters'] = null;

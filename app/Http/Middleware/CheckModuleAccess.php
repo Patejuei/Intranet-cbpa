@@ -153,27 +153,112 @@ class CheckModuleAccess
         $permissions = $user->permissions ?? [];
         $isWriteRequest = !in_array($request->method(), ['GET', 'HEAD', 'OPTIONS']);
 
+        $targetModules = $this->resolveTargetModules($request, $module);
+
         if ($isWriteRequest) {
-            // Write requests: need base module, .edit or .full
-            if (
-                in_array($module, $permissions) ||
-                in_array($module . '.edit', $permissions) ||
-                in_array($module . '.full', $permissions)
-            ) {
-                return $next($request);
+            // Write requests: need base module or specific submodule .edit or .full
+            foreach ($targetModules as $target) {
+                if (
+                    in_array($target, $permissions) ||
+                    in_array($target . '.edit', $permissions) ||
+                    in_array($target . '.full', $permissions)
+                ) {
+                    return $next($request);
+                }
             }
         } else {
-            // Read requests: can have base, .view, .edit or .full
-            if (
-                in_array($module, $permissions) ||
-                in_array($module . '.view', $permissions) ||
-                in_array($module . '.edit', $permissions) ||
-                in_array($module . '.full', $permissions)
-            ) {
-                return $next($request);
+            // Read requests: can have base or specific submodule, .view, .edit or .full
+            foreach ($targetModules as $target) {
+                if (
+                    in_array($target, $permissions) ||
+                    in_array($target . '.view', $permissions) ||
+                    in_array($target . '.edit', $permissions) ||
+                    in_array($target . '.full', $permissions)
+                ) {
+                    return $next($request);
+                }
             }
         }
 
         abort(403, 'No tienes permiso para acceder a este módulo o realizar esta acción.');
+    }
+
+    /**
+     * Resolve target submodules based on request path and base module.
+     *
+     * @param Request $request
+     * @param string $module
+     * @return array<int, string>
+     */
+    private function resolveTargetModules(Request $request, string $module): array
+    {
+        $targetModules = [$module];
+
+        if ($module === 'vehicles') {
+            $path = $request->path();
+            $segments = explode('/', trim($path, '/'));
+            $section = $segments[1] ?? 'status';
+
+            switch ($section) {
+                case 'logs':
+                    $targetModules[] = 'vehicles.logs';
+                    break;
+                case 'checklists':
+                    $targetModules[] = 'vehicles.checklist';
+                    $targetModules[] = 'vehicles.checklists';
+                    break;
+                case 'incidents':
+                case 'incident-images':
+                    $targetModules[] = 'vehicles.incidents';
+                    break;
+                case 'workshop':
+                    $targetModules[] = 'vehicles.workshop';
+                    break;
+                case 'inventory':
+                    $targetModules[] = 'vehicles.inventory';
+                    break;
+                case 'renditions':
+                    $targetModules[] = 'vehicles.renditions';
+                    $targetModules[] = 'vehicles.petty-cash';
+                    break;
+                case 'status':
+                case 'create':
+                case 'decommissioned':
+                    $targetModules[] = 'vehicles.status';
+                    break;
+                case 'reports':
+                    $reportType = $segments[2] ?? '';
+                    if ($reportType === 'incidents') {
+                        $targetModules[] = 'vehicles.incidents';
+                    } elseif ($reportType === 'workshop') {
+                        $targetModules[] = 'vehicles.workshop';
+                    } elseif ($reportType === 'checklists') {
+                        $targetModules[] = 'vehicles.checklist';
+                    } else {
+                        $targetModules[] = 'vehicles.status';
+                    }
+                    break;
+                default:
+                    $targetModules[] = 'vehicles.status';
+                    break;
+            }
+        } elseif ($module === 'equipment') {
+            $path = $request->path();
+            $segments = explode('/', trim($path, '/'));
+            $section = $segments[0] ?? '';
+
+            if (in_array($section, ['inventory', 'materials'])) {
+                $targetModules[] = 'inventory';
+            } elseif ($section === 'deliveries') {
+                $targetModules[] = 'deliveries';
+            } elseif ($section === 'receptions') {
+                $targetModules[] = 'reception';
+                $targetModules[] = 'receptions';
+            } elseif ($section === 'repairs') {
+                $targetModules[] = 'equipment';
+            }
+        }
+
+        return array_unique($targetModules);
     }
 }

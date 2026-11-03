@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.7',
+                'date' => '03-11-2026',
+                'changes' => [
+                    'Corrección de error 403 al registrar entradas en la bitácora de vehículos para usuarios estándar con permiso de edición.',
+                    'Soporte para resolución dinámica de submódulos en el middleware de control de acceso, permitiendo operaciones de escritura con permisos granulares.',
+                    'Refuerzo de validación multiempresa y de unidades asignadas para conductores en el registro de bitácoras.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.6',
                 'date' => '31-08-2026',
                 'changes' => [
