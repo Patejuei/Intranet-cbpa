@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
+import { edit as editPassword } from '@/routes/user-password';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -205,6 +206,27 @@ export default function Profile({
                                 </Transition>
                             </div>
                         </form>
+                    </div>
+
+                    {/* Password Section Shortcut */}
+                    <div className="border-t border-gray-200 pt-6">
+                        <HeadingSmall
+                            title="Seguridad de la cuenta"
+                            description="Administre su contraseña de acceso y mantenga su cuenta protegida"
+                        />
+                        <div className="mt-4 flex flex-col gap-4 rounded-lg border border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium">Contraseña de acceso</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Puede actualizar su contraseña en cualquier momento para mantener la seguridad de su sesión.
+                                </p>
+                            </div>
+                            <Button variant="outline" asChild className="shrink-0">
+                                <Link href={editPassword().url}>
+                                    Cambiar Contraseña
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </SettingsLayout>

@@ -73,6 +73,13 @@ class VehicleIssueController extends Controller
             'description' => 'required|string',
             'severity' => 'required|in:Low,Medium,High,Critical',
             'date' => 'required|date',
+            'images' => 'nullable|array|max:3',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'images.max' => 'Se pueden adjuntar hasta un máximo de 3 imágenes.',
+            'images.*.image' => 'Los archivos adjuntos deben ser imágenes.',
+            'images.*.mimes' => 'Solo se aceptan imágenes en formato JPEG, PNG, JPG o WEBP.',
+            'images.*.max' => 'Cada imagen no debe superar los 5MB de tamaño.',
         ]);
 
         // Enforcement for Cuartelero: Must be from same Company
@@ -84,11 +91,30 @@ class VehicleIssueController extends Controller
         }
 
         $issue = \App\Models\VehicleIssue::create([
-            ...$validated,
+            'vehicle_id' => $validated['vehicle_id'],
+            'description' => $validated['description'],
+            'severity' => $validated['severity'],
+            'date' => $validated['date'],
             'reporter_id' => $request->user()->id,
             'status' => 'Open',
             'is_stopped' => false,
         ]);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                if ($file && $file->isValid()) {
+                    $originalName = $file->getClientOriginalName();
+                    $path = $file->store("vehicle_issues/{$issue->id}", 'public');
+
+                    \App\Models\VehicleIssueImage::create([
+                        'vehicle_issue_id' => $issue->id,
+                        'image_path' => $path,
+                        'original_name' => $originalName,
+                        'uploaded_by' => $user->id,
+                    ]);
+                }
+            }
+        }
 
         $issue->load('vehicle');
         $vehicle = $issue->vehicle;

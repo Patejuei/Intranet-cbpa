@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn, isSameUrl, resolveUrl } from '@/lib/utils';
 import { edit } from '@/routes/profile';
+import { edit as editPassword } from '@/routes/user-password';
 import { show } from '@/routes/two-factor';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -14,11 +15,11 @@ const sidebarNavItems: NavItem[] = [
         href: edit(),
         icon: null,
     },
-    // {
-    //     title: 'Password',
-    //     href: editPassword(),
-    //     icon: null,
-    // },
+    {
+        title: 'Contraseña',
+        href: editPassword(),
+        icon: null,
+    },
     {
         title: 'Autenticación de dos factores',
         href: show(),

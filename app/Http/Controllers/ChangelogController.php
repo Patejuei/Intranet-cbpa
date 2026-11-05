@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.8',
+                'date' => '05-11-2026',
+                'changes' => [
+                    'Soporte para adjuntar hasta 3 imágenes directamente en el formulario de creación de incidencias, con previsualización en miniatura y validación de peso y formato.',
+                    'Habilitación de la opción de cambio y actualización de contraseña para usuarios registrados desde la Configuración de Perfil.',
+                    'Internacionalización y traducción al español de las vistas de gestión de contraseñas y menú de usuario.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.7',
                 'date' => '03-11-2026',
                 'changes' => [
