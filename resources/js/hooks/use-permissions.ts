@@ -24,6 +24,7 @@ export function usePermissions() {
                 'vehicles.logs',
                 'vehicles.checklist',
                 'vehicles.status',
+                'vehicles.incidents',
             ];
             if (cuarteleroModules.includes(module)) return true;
         }

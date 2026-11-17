@@ -44,6 +44,13 @@ class VehicleIssueImageController extends Controller
         $user = request()->user();
         $incident = $image->issue;
 
+        // Cuartelero de Comandancia: solo puede visualizar o descargar imágenes de incidencias de vehículos de Comandancia
+        if ($user && $user->role === 'cuartelero' && $user->company === 'Comandancia') {
+            if ($incident->vehicle->company !== 'Comandancia') {
+                abort(403, 'No tiene permisos para ver o descargar esta imagen.');
+            }
+        }
+
         // Reuse view permissions from VehicleIssueController
         $canView = $user->role === 'admin' || 
                    $user->company === 'Comandancia' || 

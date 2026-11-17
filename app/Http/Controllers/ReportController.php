@@ -96,8 +96,13 @@ class ReportController extends Controller
         if ($user) {
             $driverIds = $user->driverVehicles()->pluck('vehicles.id');
             $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
+            $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
-            if ($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM) {
+            if ($isCuarteleroComandancia) {
+                $query->whereHas('vehicle', function ($q) {
+                    $q->where('company', 'Comandancia');
+                });
+            } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM) {
                 $query->whereHas('vehicle', function ($q) use ($user, $driverIds) {
                     $q->where('company', $user->company);
                     if ($driverIds->isNotEmpty()) {

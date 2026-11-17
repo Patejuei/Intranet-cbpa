@@ -359,4 +359,71 @@ class VehicleIssueTest extends TestCase
         // Since sent_to_hq is false, it should NOT mark as read for inspector (hq_read_at remains null)
         $this->assertNull($issue2->fresh()->hq_read_at);
     }
+
+    public function test_cuartelero_comandancia_can_only_view_incidents_of_comandancia_vehicles()
+    {
+        $vehicleComandancia = Vehicle::create([
+            'name' => 'K-1',
+            'make' => 'Chevrolet',
+            'model' => 'D-Max',
+            'year' => 2022,
+            'plate' => 'CD-EF-34',
+            'status' => 'Available',
+            'company' => 'Comandancia',
+            'type' => 'Comandancia',
+        ]);
+
+        $cuarteleroComandancia = User::create([
+            'name' => 'Cuartelero Comandancia',
+            'email' => 'cuartelero.cmd@test.com',
+            'rut' => '44444444-4',
+            'password' => bcrypt('password'),
+            'role' => 'cuartelero',
+            'company' => 'Comandancia',
+            'is_enabled' => true,
+        ]);
+
+        // Issue 1: Belongs to Comandancia vehicle
+        $issueComandancia = VehicleIssue::create([
+            'vehicle_id' => $vehicleComandancia->id,
+            'reporter_id' => 1,
+            'description' => 'Incidencia vehículo comandancia',
+            'severity' => 'Low',
+            'date' => '2026-11-17',
+            'status' => 'Open',
+            'is_stopped' => false,
+            'company' => 'Comandancia',
+        ]);
+
+        // Issue 2: Belongs to 1a Compañía vehicle ($this->vehicle)
+        $issueCompany = VehicleIssue::create([
+            'vehicle_id' => $this->vehicle->id,
+            'reporter_id' => 1,
+            'description' => 'Incidencia vehículo 1a compañía',
+            'severity' => 'Low',
+            'date' => '2026-11-17',
+            'status' => 'Open',
+            'is_stopped' => false,
+            'company' => '1a Compañía',
+        ]);
+
+        // Index: Cuartelero Comandancia can access index and see only Comandancia issues
+        $response = $this->actingAs($cuarteleroComandancia)->get(route('vehicles.incidents.index'));
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => 
+            $page->component('vehicles/incidents/index')
+                ->has('issues.data', 1)
+                ->where('issues.data.0.id', $issueComandancia->id)
+        );
+
+        // Show: Cuartelero Comandancia can view Comandancia vehicle issue
+        $this->actingAs($cuarteleroComandancia)
+            ->get(route('vehicles.incidents.show', $issueComandancia->id))
+            ->assertStatus(200);
+
+        // Show: Cuartelero Comandancia CANNOT view non-Comandancia vehicle issue (403)
+        $this->actingAs($cuarteleroComandancia)
+            ->get(route('vehicles.incidents.show', $issueCompany->id))
+            ->assertStatus(403);
+    }
 }

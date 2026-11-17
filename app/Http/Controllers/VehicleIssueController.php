@@ -23,7 +23,9 @@ class VehicleIssueController extends Controller
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
         if ($isCuarteleroComandancia) {
-            $query->whereIn('vehicle_id', $driverIds);
+            $query->whereHas('vehicle', function ($q) {
+                $q->where('company', 'Comandancia');
+            });
         } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM) {
             $query->whereHas('vehicle', function ($query) use ($user, $driverIds) {
                 $query->where('company', $user->company);
@@ -41,8 +43,8 @@ class VehicleIssueController extends Controller
 
         return Inertia::render('vehicles/incidents/index', [
             'issues' => $query->paginate(10),
-            'vehicles' => \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) use ($driverIds) {
-                $q->whereIn('id', $driverIds);
+            'vehicles' => \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) {
+                $q->where('company', 'Comandancia');
             })->when(!$isCuarteleroComandancia && $user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM, function ($q) use ($user, $driverIds) {
                 // Allow both Company vehicles AND Driver Assigned vehicles
                 $q->where(function ($query) use ($driverIds, $user) {
@@ -69,8 +71,8 @@ class VehicleIssueController extends Controller
         $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
-        $vehicles = \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) use ($driverIds) {
-            $q->whereIn('id', $driverIds);
+        $vehicles = \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) {
+            $q->where('company', 'Comandancia');
         })->when(!$isCuarteleroComandancia && $user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM, function ($q) use ($user, $driverIds) {
             $q->where(function ($query) use ($driverIds, $user) {
                 $query->where('company', $user->company);
@@ -159,17 +161,16 @@ class VehicleIssueController extends Controller
     {
         $user = request()->user();
 
-        // Cuartelero de Comandancia: solo puede visualizar incidencias de los vehículos asignados a su usuario
+        // Cuartelero de Comandancia: solo puede visualizar incidencias de los vehículos de Comandancia
         if ($user && $user->role === 'cuartelero' && $user->company === 'Comandancia') {
-            $isAssigned = $user->driverVehicles()->where('vehicles.id', $incident->vehicle_id)->exists();
-            if (!$isAssigned) {
+            if ($incident->vehicle->company !== 'Comandancia') {
                 abort(403, 'No tiene permiso para ver esta incidencia.');
             }
         }
         
         // Basic check: if not admin/comandante, must either be from same company OR be the reporter OR be mechanic (if sent to workshop) OR be inspector (if sent to HQ)
         $canView = $user->role === 'admin' || 
-                   ($user->company === 'Comandancia' && $user->role !== 'cuartelero') || 
+                   $user->company === 'Comandancia' || 
                    $incident->vehicle->company === $user->company ||
                    $incident->reporter_id === $user->id;
 
