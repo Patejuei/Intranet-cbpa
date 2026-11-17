@@ -14,7 +14,9 @@ class VehicleChecklistController extends Controller
     {
         $user = request()->user();
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
-        if ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'comandante' || $isInspector) {
+        if ($user->role === 'cuartelero' && $user->company === 'Comandancia') {
+            $vehicles = $user->driverVehicles()->orderBy('name')->get();
+        } elseif ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'comandante' || $isInspector) {
             // Comandancia, Admin, Comandante, Inspector sees ALL vehicles
             $vehicles = \App\Models\Vehicle::orderBy('name')->get();
         } else {
@@ -119,6 +121,13 @@ class VehicleChecklistController extends Controller
         ]);
 
         $user = $request->user();
+        if ($user->role === 'cuartelero' && $user->company === 'Comandancia') {
+            $isAssigned = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+            if (!$isAssigned) {
+                abort(403, 'Solo puede realizar checklists para los carros que tiene asignados.');
+            }
+        }
+
         // Check Bypass Roles
         $isInspector = $user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor';
         if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'capitan' && $user->role !== 'comandante' && !$isInspector && $user->role !== 'maquinista') {
@@ -193,8 +202,15 @@ class VehicleChecklistController extends Controller
 
     public function show(\App\Models\VehicleChecklist $checklist)
     {
-        $checklist->load(['vehicle', 'user', 'details.item', 'captain', 'machinist', 'commander', 'inspector']);
         $auth_user = request()->user();
+        if ($auth_user && $auth_user->role === 'cuartelero' && $auth_user->company === 'Comandancia') {
+            $assignedIds = $auth_user->driverVehicles()->pluck('vehicles.id');
+            if (!$assignedIds->contains($checklist->vehicle_id)) {
+                abort(403, 'No tiene permiso para ver este checklist.');
+            }
+        }
+
+        $checklist->load(['vehicle', 'user', 'details.item', 'captain', 'machinist', 'commander', 'inspector']);
         return \Inertia\Inertia::render('vehicles/checklist/show', [
             'checklist' => $checklist,
             'canReview' => $this->userCanReview($auth_user, $checklist),
@@ -206,9 +222,14 @@ class VehicleChecklistController extends Controller
         $user = $request->user();
         $query = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->latest();
 
+        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
         // Filter by user permissions/company
         // Comandancia Logic: "podrán Visualizar todos los registros"
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+        if ($isCuarteleroComandancia) {
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+            $query->whereIn('vehicle_id', $assignedIds);
+        } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
             $query->whereHas('vehicle', function ($q) use ($user) {
                 // Same visibility logic as logs: Company OR Assigned
                 $driverIds = $user->driverVehicles()->pluck('vehicles.id');
@@ -230,7 +251,10 @@ class VehicleChecklistController extends Controller
 
         // Vehicles list for filter
         $vehiclesQuery = \App\Models\Vehicle::query()->orderBy('name');
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+        if ($isCuarteleroComandancia) {
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+            $vehiclesQuery->whereIn('id', $assignedIds);
+        } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
             // Apply same filter for the dropdown
             $driverIds = $user->driverVehicles()->pluck('vehicles.id');
             $vehiclesQuery->where(function ($query) use ($driverIds, $user) {

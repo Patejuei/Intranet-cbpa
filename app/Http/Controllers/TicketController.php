@@ -38,7 +38,7 @@ class TicketController extends Controller
             || $user->role === 'capitan'
             || $user->role === 'comandante'
             || $user->role === 'secretaria_adquisiciones'
-            || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')
+            || ($user->role === 'inspector')
             || $user->company === 'Comandancia'
             || Ticket::where('user_id', $user->id)->exists();
     }
@@ -55,7 +55,7 @@ class TicketController extends Controller
             || $user->role === 'capitan'
             || $user->role === 'comandante'
             || $user->role === 'secretaria_adquisiciones'
-            || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')
+            || ($user->role === 'inspector')
             || $user->company === 'Comandancia';
     }
 

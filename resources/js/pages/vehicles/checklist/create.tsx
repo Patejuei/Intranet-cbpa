@@ -22,6 +22,10 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/vehicles/status',
     },
     {
+        title: 'Checklists',
+        href: '/vehicles/checklists',
+    },
+    {
         title: 'Nuevo Checklist',
         href: '/vehicles/checklists/create',
     },

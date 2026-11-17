@@ -110,7 +110,22 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout
+            breadcrumbs={[
+                {
+                    title: 'Vehículos',
+                    href: '/vehicles/status',
+                },
+                {
+                    title: 'Checklists',
+                    href: '/vehicles/checklists',
+                },
+                {
+                    title: `Checklist #${checklist.id}`,
+                    href: `/vehicles/checklists/${checklist.id}`,
+                },
+            ]}
+        >
             <Head title={`Checklist #${checklist.id}`} />
             <div className="flex flex-1 flex-col gap-8 p-4">
                 <Link

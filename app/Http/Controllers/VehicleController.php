@@ -30,6 +30,44 @@ class VehicleController extends Controller
         // but we can double check or rely on it. 
         // We need to return different data structure based on role.
 
+        if ($user->role === 'cuartelero' && $user->company === 'Comandancia') {
+            $vehicles = $user->driverVehicles()->orderBy('name')->get();
+            $grouped = $vehicles->groupBy('company');
+
+            // Si maneja vehículos de distintas compañías, se agrupan por compañía en la vista
+            if ($grouped->count() > 1) {
+                $order = [
+                    'Comandancia',
+                    'Primera Compañía',
+                    'Segunda Compañía',
+                    'Tercera Compañía',
+                    'Cuarta Compañía',
+                    'Quinta Compañía',
+                    'Sexta Compañía',
+                    'Séptima Compañía',
+                    'Octava Compañía',
+                    'Novena Compañía',
+                    'Décima Compañía'
+                ];
+
+                $sortedGrouped = $grouped->sortBy(function ($vehicles, $company) use ($order) {
+                    $index = array_search($company, $order);
+                    return $index === false ? 999 : $index;
+                });
+
+                return Inertia::render('vehicles/status/index', [
+                    'groupedVehicles' => $sortedGrouped,
+                    'isComandancia' => true,
+                ]);
+            }
+
+            return Inertia::render('vehicles/status/index', [
+                'vehicles' => $vehicles,
+                'isComandancia' => false,
+                'userCompany' => $vehicles->first()->company ?? 'Vehículos Asignados',
+            ]);
+        }
+
         if ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'mechanic') {
             // Define custom order
             $order = [
@@ -112,6 +150,13 @@ class VehicleController extends Controller
      */
     public function show($id)
     {
+        $user = request()->user();
+        if ($user && $user->role === 'cuartelero' && $user->company === 'Comandancia') {
+            if (!$user->driverVehicles()->where('vehicles.id', $id)->exists()) {
+                abort(403, 'No tiene permiso para ver este vehículo.');
+            }
+        }
+
         $vehicle = \App\Models\Vehicle::with(['issues' => function ($q) {
             $q->latest();
         }, 'maintenances' => function ($q) {

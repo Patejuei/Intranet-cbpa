@@ -18,8 +18,13 @@ class VehicleLogController extends Controller
 
         $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest();
 
+        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
         // If not admin/comandancia, filter logs by user's company
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin') {
+        if ($isCuarteleroComandancia) {
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+            $logQuery->whereIn('vehicle_id', $assignedIds);
+        } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin') {
             // But if user has 'vehicles.logs' or 'vehicles.logs.view' permission, maybe they should see everything?
             // The requirement says: "el usuario de Comandancia pueda ver los registros de todos los vehículos."
             // Also Mechanic is typically focused on Maintenance, but if they have Read Only logs they might need to see all?
@@ -53,7 +58,11 @@ class VehicleLogController extends Controller
         return Inertia::render('vehicles/logs/index', [
             'logs' => $logQuery->paginate(15)->appends(request()->all()),
             'vehicles' => \App\Models\Vehicle::query()
-                ->when($user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
+                ->when($isCuarteleroComandancia, function ($q) use ($user) {
+                    $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+                    $q->whereIn('id', $assignedIds);
+                })
+                ->when(!$isCuarteleroComandancia && $user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
                     $driverIds = $user->driverVehicles()->pluck('vehicles.id');
                     $q->where(function ($query) use ($driverIds, $user) {
                         $query->where('company', $user->company);
@@ -105,9 +114,16 @@ class VehicleLogController extends Controller
 
         $user = $request->user();
         if ($user->role === 'cuartelero') {
-            $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
-            if ($vehicle->company !== $user->company) {
-                abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+            if ($user->company === 'Comandancia') {
+                $isAssigned = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+                if (!$isAssigned) {
+                    abort(403, 'Solo puede registrar bitácoras para los carros que tiene asignados.');
+                }
+            } else {
+                $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+                if ($vehicle->company !== $user->company) {
+                    abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+                }
             }
         }
 
@@ -200,8 +216,13 @@ class VehicleLogController extends Controller
         $user = $request->user();
         $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest('date')->latest('id');
 
+        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
         // Apply same security filters as Index
-        if ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
+        if ($isCuarteleroComandancia) {
+            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+            $logQuery->whereIn('vehicle_id', $assignedIds);
+        } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
             $driverIds = $user->driverVehicles()->pluck('vehicles.id');
             if ($driverIds->isEmpty()) {
                 $logQuery->whereHas('vehicle', function ($q) use ($user) {

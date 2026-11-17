@@ -134,7 +134,9 @@ export default function VehicleStatus({
                         </h1>
                         <p className="text-muted-foreground">
                             {isComandancia
-                                ? 'Vista General de todas las compañías.'
+                                ? auth.user?.role === 'cuartelero'
+                                    ? 'Vehículos asignados agrupados por compañía.'
+                                    : 'Vista General de todas las compañías.'
                                 : `Vehículos de ${userCompany}`}
                         </p>
                     </div>

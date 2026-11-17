@@ -32,46 +32,57 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'dashboard',
         function () {
             $user = request()->user();
-            $query = \App\Models\BatteryLog::query()
-                ->whereDate('next_change_date', '>=', now())
-                ->orderBy('next_change_date');
+            $isStandardComandancia = ($user->role === 'user' && $user->company === 'Comandancia');
 
-            if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                $query->where('company', $user->company);
+            $upcomingBatteries = [];
+            if (!$isStandardComandancia || $user->hasPermissionTo('batteries')) {
+                $query = \App\Models\BatteryLog::query()
+                    ->whereDate('next_change_date', '>=', now())
+                    ->orderBy('next_change_date');
+
+                if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+                    $query->where('company', $user->company);
+                }
+
+                $upcomingBatteries = $query->take(5)->get();
             }
-
-            $upcomingBatteries = $query->take(5)->get();
 
             // Ticket Logic
             $pendingTickets = [];
             $respondedTickets = [];
 
-            if ($user->role === 'admin') {
-                // Admin ve tickets abiertos sin asignar o asignados a él
-                $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
-                    ->with(['user', 'assignedTo'])
-                    ->latest()
-                    ->take(5)
-                    ->get();
-            } elseif ($user->company === 'Comandancia' || $user->role === 'capitan' || $user->role === 'secretaria_adquisiciones' || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')) {
-                // Usuarios con acceso a tickets ven sus tickets respondidos
-                if ($user->company === 'Comandancia') {
-                    $respondedTickets = \App\Models\Ticket::where('status', 'EN_PROCESO')
+            if (!$isStandardComandancia || $user->hasPermissionTo('tickets')) {
+                if ($user->role === 'admin') {
+                    // Admin ve tickets abiertos sin asignar o asignados a él
+                    $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
                         ->with(['user', 'assignedTo'])
                         ->latest()
                         ->take(5)
                         ->get();
-                } else {
-                    $respondedTickets = \App\Models\Ticket::where('company', $user->company)
-                        ->where('status', 'EN_PROCESO')
-                        ->with(['user', 'assignedTo'])
-                        ->latest()
-                        ->take(5)
-                        ->get();
+                } elseif ($user->company === 'Comandancia' || $user->role === 'capitan' || $user->role === 'secretaria_adquisiciones' || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')) {
+                    // Usuarios con acceso a tickets ven sus tickets respondidos
+                    if ($user->company === 'Comandancia') {
+                        $respondedTickets = \App\Models\Ticket::where('status', 'EN_PROCESO')
+                            ->with(['user', 'assignedTo'])
+                            ->latest()
+                            ->take(5)
+                            ->get();
+                    } else {
+                        $respondedTickets = \App\Models\Ticket::where('company', $user->company)
+                            ->where('status', 'EN_PROCESO')
+                            ->with(['user', 'assignedTo'])
+                            ->latest()
+                            ->take(5)
+                            ->get();
+                    }
                 }
             }
 
             // Material Mayor Logic
+            $hasVehiclesStatusPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.status') || $user->hasPermissionTo('vehicles'));
+            $hasIncidentsPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.incidents') || $user->hasPermissionTo('vehicles'));
+            $hasWorkshopPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.workshop') || $user->hasPermissionTo('vehicles.status') || $user->hasPermissionTo('vehicles'));
+
             $vehicleQuery = \App\Models\Vehicle::query()->whereIn('status', ['Out of Service', 'Workshop']);
             $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
 
@@ -98,108 +109,119 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $incidentQuery->where('reported_to_commander', true)->whereNull('commander_seen');
             }
 
-            $vehiclesStopped = $vehicleQuery->get();
-            $pendingIncidents = $incidentQuery->take(5)->get();
+            $vehiclesStopped = $hasVehiclesStatusPerm ? $vehicleQuery->get() : collect([]);
+            $pendingIncidents = $hasIncidentsPerm ? $incidentQuery->take(5)->get() : collect([]);
 
             // Workshop Vehicles Logic (Vehicles in Workshop state, get active Maintenance)
-    
-            $workshopQuery = \App\Models\Vehicle::query()
-                ->where('status', 'Workshop')
-                ->with([
-                    'maintenances' => function ($q) {
-                        $q->where('status', '!=', 'Completed')->latest();
-                    }
-                ]);
+            $vehiclesInWorkshop = collect([]);
+            if ($hasWorkshopPerm) {
+                $workshopQuery = \App\Models\Vehicle::query()
+                    ->where('status', 'Workshop')
+                    ->with([
+                        'maintenances' => function ($q) {
+                            $q->where('status', '!=', 'Completed')->latest();
+                        }
+                    ]);
 
-            if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                $workshopQuery->where('company', $user->company);
+                if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+                    $workshopQuery->where('company', $user->company);
+                }
+
+                $vehiclesInWorkshop = $workshopQuery->get();
             }
-
-            $vehiclesInWorkshop = $workshopQuery->get();
 
             // Expiring Documents Logic
-            $expiringQuery = \App\Models\Vehicle::query()
-                ->where('status', '!=', 'Decommissioned')
-                ->where(
-                    function ($q) {
-                    $threshold = now()->addDays(30);
-                    $q->whereDate('technical_review_expires_at', '<=', $threshold)
-                        ->orWhereDate('circulation_permit_expires_at', '<=', $threshold)
-                        ->orWhereDate('insurance_expires_at', '<=', $threshold);
-                }
-                );
-
-            if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                $expiringQuery->where('company', $user->company);
-            }
-
-            $expiringDocuments = $expiringQuery->get()->map(
-                function ($vehicle) {
-                    $alerts = [];
-                    $check = function ($date, $label) use (&$alerts) {
-                        if (!$date)
-                            return;
-                        $dateObj = \Carbon\Carbon::parse($date);
-                        $days = (int) now()->diffInDays($dateObj, false);
-                        // If days is negative, it's expired.
-                        if ($days <= 30) {
-                            $status = $days <= 7 ? 'danger' : 'warning';
-                            $alerts[] = [
-                                'label' => $label,
-                                'date' => $dateObj->format('d-m-Y'),
-                                'days' => $days,
-                                'status' => $status
-                            ];
-                        }
-                    };
-
-                    $check($vehicle->technical_review_expires_at, 'Revisión Técnica');
-                    $check($vehicle->circulation_permit_expires_at, 'Permiso de Circulación');
-                    $check($vehicle->insurance_expires_at, 'Seguro Obligatorio');
-
-                    return [
-                        'id' => $vehicle->id,
-                        'name' => $vehicle->name,
-                        'company' => $vehicle->company,
-                        'alerts' => $alerts
-                    ];
-                }
-            )->filter(
-                    function ($v) {
-                        return count($v['alerts']) > 0;
+            $expiringDocuments = collect([]);
+            if ($hasVehiclesStatusPerm) {
+                $expiringQuery = \App\Models\Vehicle::query()
+                    ->where('status', '!=', 'Decommissioned')
+                    ->where(
+                        function ($q) {
+                        $threshold = now()->addDays(30);
+                        $q->whereDate('technical_review_expires_at', '<=', $threshold)
+                            ->orWhereDate('circulation_permit_expires_at', '<=', $threshold)
+                            ->orWhereDate('insurance_expires_at', '<=', $threshold);
                     }
-                )->values();
+                    );
+
+                if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
+                    $expiringQuery->where('company', $user->company);
+                }
+
+                $expiringDocuments = $expiringQuery->get()->map(
+                    function ($vehicle) {
+                        $alerts = [];
+                        $check = function ($date, $label) use (&$alerts) {
+                            if (!$date)
+                                return;
+                            $dateObj = \Carbon\Carbon::parse($date);
+                            $days = (int) now()->diffInDays($dateObj, false);
+                            // If days is negative, it's expired.
+                            if ($days <= 30) {
+                                $status = $days <= 7 ? 'danger' : 'warning';
+                                $alerts[] = [
+                                    'label' => $label,
+                                    'date' => $dateObj->format('d-m-Y'),
+                                    'days' => $days,
+                                    'status' => $status
+                                ];
+                            }
+                        };
+
+                        $check($vehicle->technical_review_expires_at, 'Revisión Técnica');
+                        $check($vehicle->circulation_permit_expires_at, 'Permiso de Circulación');
+                        $check($vehicle->insurance_expires_at, 'Seguro Obligatorio');
+
+                        return [
+                            'id' => $vehicle->id,
+                            'name' => $vehicle->name,
+                            'company' => $vehicle->company,
+                            'alerts' => $alerts
+                        ];
+                    }
+                )->filter(
+                        function ($v) {
+                            return count($v['alerts']) > 0;
+                        }
+                    )->values();
+            }
 
             // Rendiciones Notifications
+            $hasPettyCashPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.petty-cash') || $user->hasPermissionTo('vehicles.renditions'));
             $pendingPettyCash = [];
-            if ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') {
-                $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_inspector')
-                    ->with('user')
-                    ->take(5)
-                    ->get();
-            } elseif ($user->role === 'secretaria_adquisiciones') {
-                $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_secretary')
-                    ->with('user')
-                    ->take(5)
-                    ->get();
-            } elseif ($user->role === 'admin' || $user->role === 'comandante') {
-                $pendingPettyCash = \App\Models\PettyCashRendition::whereIn('status', ['pending_inspector', 'pending_secretary'])
-                    ->with('user')
-                    ->take(5)
-                    ->get();
+            if ($hasPettyCashPerm) {
+                if ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') {
+                    $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_inspector')
+                        ->with('user')
+                        ->take(5)
+                        ->get();
+                } elseif ($user->role === 'secretaria_adquisiciones') {
+                    $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_secretary')
+                        ->with('user')
+                        ->take(5)
+                        ->get();
+                } elseif ($user->role === 'admin' || $user->role === 'comandante') {
+                    $pendingPettyCash = \App\Models\PettyCashRendition::whereIn('status', ['pending_inspector', 'pending_secretary'])
+                        ->with('user')
+                        ->take(5)
+                        ->get();
+                }
             }
 
-            // Critical Stock Logic (Comandancia / Inspector MM / Admin)
+            // Critical Stock Logic (Acceso solo por rol: Admin, Comandante, Mechanic, Inspector MM)
             $criticalStockItems = [];
-            if (
+            $canSeeCriticalStock = (
                 $user->role === 'admin' ||
-                $user->company === 'Comandancia' ||
-                ($user->role === 'inspector' && $user->department === 'Material Mayor')
-            ) {
+                $user->role === 'comandante' ||
+                $user->role === 'mechanic' ||
+                ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor')
+            );
+            if ($canSeeCriticalStock) {
                 $criticalStockItems = \App\Models\WorkshopInventory::whereColumn('stock', '<=', 'min_stock')->get();
             }
 
             // Pending Checklists Logic
+            $hasChecklistPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.checklist'));
             $checklistQuery = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->where('status', '!=', 'Completed');
 
             if ($user->company === 'Comandancia') {
@@ -266,7 +288,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             // Final execute
-            $pendingChecklists = $checklistQuery->take(5)->get();
+            $pendingChecklists = $hasChecklistPerm ? $checklistQuery->take(5)->get() : collect([]);
 
 
             return Inertia::render('dashboard', [

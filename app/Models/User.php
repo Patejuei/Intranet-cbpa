@@ -117,4 +117,20 @@ class User extends Authenticatable
 
         return \App\Models\Ticket::where('user_id', $this->id)->exists();
     }
+
+    public function hasPermissionTo(string $module): bool
+    {
+        if ($this->role === 'admin' || $this->role === 'comandante') {
+            return true;
+        }
+
+        $perms = $this->permissions ?? [];
+        if (!is_array($perms)) {
+            $perms = [];
+        }
+
+        return in_array($module, $perms, true)
+            || in_array("{$module}.view", $perms, true)
+            || in_array("{$module}.edit", $perms, true);
+    }
 }

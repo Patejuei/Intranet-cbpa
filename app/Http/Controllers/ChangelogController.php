@@ -14,6 +14,17 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.9',
+                'date' => '17-11-2026',
+                'changes' => [
+                    'Restricción para Cuartelero de Comandancia: solo visualiza, lee y realiza ingresos (Control de Unidades, Bitácora y Checklist) para los vehículos que tiene específicamente asignados, reflejándose en los comboboxes de selección.',
+                    'Agrupación por compañías en Control de Unidades para el Cuartelero de Comandancia cuando los vehículos que maneja son de distintas compañías, manteniendo la visualización exclusiva de sus unidades asignadas.',
+                    'Inhabilitación del reporte de incidencias para Cuarteleros (Compañías y Comandancia), permitiendo al Cuartelero de Comandancia únicamente visualizar las incidencias de sus unidades asignadas.',
+                    'Ocultamiento de notificaciones en el panel principal (Dashboard) para usuarios estándar de Comandancia sin rol específico en módulos sin permisos de lectura ni escritura, manteniendo el stock crítico de taller exclusivo para roles de taller y mando.',
+                    'Inclusión de la página de inicio de Checklists (Index) en la barra de navegación (Breadcrumb) en todas las vistas del módulo de Checklists.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.8',
                 'date' => '05-11-2026',
                 'changes' => [

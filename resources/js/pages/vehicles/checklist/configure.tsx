@@ -67,6 +67,14 @@ export default function ConfigureChecklist({
         <AppLayout
             breadcrumbs={[
                 {
+                    title: 'Vehículos',
+                    href: '/vehicles/status',
+                },
+                {
+                    title: 'Checklists',
+                    href: '/vehicles/checklists',
+                },
+                {
                     title: 'Configurar Checklist',
                     href: '/vehicles/checklist/configure',
                 },

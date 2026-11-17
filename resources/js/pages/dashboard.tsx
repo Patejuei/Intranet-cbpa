@@ -186,6 +186,16 @@ export default function Dashboard({
         );
     };
 
+    const canAccessModule = (permissionKey: string) => {
+        return hasPermission({
+            key: permissionKey,
+            title: '',
+            href: '',
+            icon: () => null,
+            permission: permissionKey,
+        } as any);
+    };
+
     useEffect(() => {
         try {
             const stored = localStorage.getItem(RECENT_MODULES_KEY);
@@ -210,6 +220,11 @@ export default function Dashboard({
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     };
 
+    const canSeeCriticalStock =
+        ['admin', 'comandante', 'mechanic'].includes(auth.user?.role || '') ||
+        (auth.user?.role === 'inspector' &&
+            (auth.user?.department || '').trim() === 'Material Mayor');
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Intranet - CBPA" />
@@ -220,7 +235,7 @@ export default function Dashboard({
             </div>
             <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
                 {/* Critical Stock Alert */}
-                {criticalStockItems && criticalStockItems.length > 0 && (
+                {canSeeCriticalStock && criticalStockItems && criticalStockItems.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-4 shadow-sm dark:bg-red-950/10 sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold text-red-700 dark:text-red-500">
@@ -251,7 +266,7 @@ export default function Dashboard({
                 )}
 
                 {/* Petty Cash Pending (Inspector/Comandante) */}
-                {pendingPettyCash.length > 0 && (
+                {canAccessModule('vehicles.renditions') && pendingPettyCash.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -301,7 +316,7 @@ export default function Dashboard({
                 )}
 
                 {/* Pending Checklists Widget */}
-                {pendingChecklists.length > 0 && (
+                {canAccessModule('vehicles.checklist') && pendingChecklists.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-cyan-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -348,7 +363,7 @@ export default function Dashboard({
                 )}
 
                 {/* Tickets Pendientes (Comandancia) */}
-                {isModuleEnabled('tickets') && pendingTickets.length > 0 && (
+                {isModuleEnabled('tickets') && canAccessModule('tickets') && pendingTickets.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -387,7 +402,7 @@ export default function Dashboard({
                 )}
 
                 {/* Tickets Respondidos (Compañías) */}
-                {isModuleEnabled('tickets') && respondedTickets.length > 0 && (
+                {isModuleEnabled('tickets') && canAccessModule('tickets') && respondedTickets.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-blue-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -425,7 +440,7 @@ export default function Dashboard({
                 )}
 
                 {/* Material Mayor Widgets */}
-                {vehiclesStopped.length > 0 && (
+                {canAccessModule('vehicles.status') && vehiclesStopped.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -466,7 +481,7 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {pendingIncidents.length > 0 && (
+                {canAccessModule('vehicles.incidents') && pendingIncidents.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-orange-500 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -589,7 +604,7 @@ export default function Dashboard({
                     )}
 
                 {/* Specific Workshop Widget with Order Details */}
-                {vehiclesInWorkshop.length > 0 && (
+                {canAccessModule('vehicles.workshop') && vehiclesInWorkshop.length > 0 && (
                     <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-4 shadow-sm sm:p-6">
                         <div className="mb-4">
                             <h2 className="flex items-center gap-2 text-xl font-bold">
@@ -656,7 +671,7 @@ export default function Dashboard({
                 )}
             </div>
 
-            {isModuleEnabled('batteries') && upcomingBatteries.length > 0 && (
+            {isModuleEnabled('batteries') && canAccessModule('batteries') && upcomingBatteries.length > 0 && (
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <div className="mb-4 flex items-center gap-4">
                         <div className="rounded-lg bg-primary/10 p-3 text-primary">

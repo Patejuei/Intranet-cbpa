@@ -209,7 +209,7 @@ export function usePermissions() {
     const canCreate = (module: string) => {
         if (!user) return false;
 
-        if (user.role === 'ayudante') {
+        if (user.role === 'ayudante' || user.role === 'cuartelero') {
             if (module === 'vehicles.incidents') return false;
             // Allow creation for others (checklists, logs - if driver, users - limited list in controller)
             return canEdit(module);
