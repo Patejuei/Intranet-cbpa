@@ -211,9 +211,16 @@ const NAV_GROUPS = [
 ];
 
 export function AppSidebar({ user }: { user: any }) {
-    const { enabledModules = {}, appVersion = 'v1.0.0' } = (usePage().props as any) as { 
+    const page = usePage();
+    const url = page.url;
+    const { enabledModules = {}, appVersion = 'v1.0.0' } = (page.props as any) as { 
         enabledModules: Record<string, boolean>;
         appVersion: string;
+    };
+
+    const isItemActive = (itemUrl: string) => {
+        if (itemUrl === '/dashboard') return url === '/dashboard';
+        return url.startsWith(itemUrl);
     };
 
     const isModuleEnabled = (permission?: string) => {
@@ -395,6 +402,7 @@ export function AppSidebar({ user }: { user: any }) {
                                                 <SidebarMenuButton
                                                     asChild
                                                     tooltip={item.tooltip}
+                                                    isActive={isItemActive(item.url)}
                                                 >
                                                     <Link href={item.url}>
                                                         <item.icon />
@@ -429,6 +437,7 @@ export function AppSidebar({ user }: { user: any }) {
                                                     <SidebarMenuButton
                                                         asChild
                                                         tooltip={item.tooltip}
+                                                        isActive={isItemActive(item.url)}
                                                     >
                                                         <Link href={item.url}>
                                                             <item.icon />

@@ -1,5 +1,6 @@
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -16,12 +17,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Firefighter } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Pencil, Search, Trash, UserPlus } from 'lucide-react';
+import { Flame, Pencil, Search, Trash, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
-import { usePermissions } from '@/hooks/use-permissions';
 
 interface PageProps {
     firefighters: {
@@ -32,6 +41,19 @@ interface PageProps {
         search: string;
     };
 }
+
+const companies = [
+    'Primera Compañía',
+    'Segunda Compañía',
+    'Tercera Compañía',
+    'Cuarta Compañía',
+    'Quinta Compañía',
+    'Séptima Compañía',
+    'Octava Compañía',
+    'Novena Compañía',
+    'Décima Compañía',
+    'Comandancia',
+];
 
 export default function FirefighterIndex({ firefighters, filters }: PageProps) {
     const { canCreate, canEdit } = usePermissions();
@@ -87,14 +109,6 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
         }
     };
 
-    // Debounced search
-    const handleSearch = (term: string) => {
-        setSearchTerm(term);
-        // Basic debounce implementation or just direct replace for now?
-        // Let's us simple timeout or just a keypress effect if possible, but setState is immediate.
-        // We will trigger router visit on a debounce effect.
-    };
-
     // Effect for debounce
     const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout>();
 
@@ -128,249 +142,245 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
         >
             <Head title="Gestión de Bomberos" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-6 p-4 sm:p-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">
-                            Gestión de Bomberos
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Administra el personal de bomberos.
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Gestión de Bomberos
+                            </h1>
+                            <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                {firefighters.data.length} en página
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Registro del personal de voluntarios, números de registro general y compañía de pertenencia.
                         </p>
                     </div>
+
                     {canCreate('firefighters') && (
-                        <Button onClick={openCreate} className="gap-2">
+                        <Button onClick={openCreate} className="gap-2 shadow-xs shrink-0">
                             <UserPlus className="size-4" />
-                            Nuevo Bombero
+                            <span>Nuevo Bombero</span>
                         </Button>
                     )}
                 </div>
 
-                <div className="flex max-w-sm items-center gap-2">
-                    <Search className="size-4 text-muted-foreground" />
+                {/* Search Bar */}
+                <div className="relative w-full max-w-md">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                     <Input
-                        placeholder="Buscar por nombre, RUT o N° Reg..."
+                        placeholder="Buscar por nombre, RUT o N° de registro..."
                         value={searchTerm}
                         onChange={onSearchChange}
-                        className="h-9"
+                        className="h-9 pl-9 pr-4 text-sm"
                     />
                 </div>
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50 text-muted-foreground">
-                                <tr>
-                                    <th className="px-4 py-3 font-medium">
-                                        N° Reg. General
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Nombre Completo
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        RUT
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Compañía
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Email
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
+
+                {/* Table */}
+                <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden">
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[140px]">N° Reg. General</TableHead>
+                                    <TableHead className="min-w-[200px]">Nombre Completo</TableHead>
+                                    <TableHead>RUT</TableHead>
+                                    <TableHead>Compañía</TableHead>
+                                    <TableHead className="min-w-[180px]">Correo Electrónico</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {firefighters.data.length > 0 ? (
                                     firefighters.data.map((firefighter) => (
-                                        <tr
+                                        <TableRow
                                             key={firefighter.id}
-                                            className="hover:bg-muted/30"
+                                            className="transition-colors hover:bg-muted/40"
                                         >
-                                            <td className="px-4 py-3">
-                                                {firefighter.general_registry_number ||
-                                                    '-'}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium">
-                                                {firefighter.full_name}
-                                            </td>
-                                            <td className="px-4 py-3">
+                                            <TableCell className="font-semibold text-muted-foreground text-xs sm:text-sm">
+                                                {firefighter.general_registry_number || '-'}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-foreground">
+                                                <div className="flex items-center gap-2">
+                                                    <Flame className="size-3.5 text-primary opacity-70" />
+                                                    <span>{firefighter.full_name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-xs sm:text-sm text-muted-foreground">
                                                 {firefighter.rut}
-                                            </td>
-                                            <td className="px-4 py-3">
+                                            </TableCell>
+                                            <TableCell className="text-xs font-medium text-foreground">
                                                 {firefighter.company}
-                                            </td>
-                                            <td className="px-4 py-3">
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
                                                 {firefighter.email || '-'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex gap-2">
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
                                                     {canEdit('firefighters') && (
-                                                        <button
-                                                            onClick={() =>
-                                                                openEdit(
-                                                                    firefighter,
-                                                                )
-                                                            }
-                                                            className="rounded p-1 text-blue-600 hover:bg-blue-100"
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                            onClick={() => openEdit(firefighter)}
                                                         >
-                                                            <Pencil className="size-4" />
-                                                        </button>
+                                                            <Pencil className="size-3.5" />
+                                                            <span className="sr-only">Editar bombero</span>
+                                                        </Button>
                                                     )}
                                                     {canEdit('firefighters') && (
-                                                        <button
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    firefighter.id,
-                                                                )
-                                                            }
-                                                            className="rounded p-1 text-red-600 hover:bg-red-100"
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                                                            onClick={() => handleDelete(firefighter.id)}
                                                         >
-                                                            <Trash className="size-4" />
-                                                        </button>
+                                                            <Trash className="size-3.5" />
+                                                            <span className="sr-only">Eliminar bombero</span>
+                                                        </Button>
                                                     )}
                                                 </div>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td
-                                            colSpan={5}
-                                            className="px-4 py-8 text-center text-muted-foreground"
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={6}
+                                            className="h-32 text-center text-muted-foreground"
                                         >
-                                            No se encontraron bomberos en esta
-                                            página.
-                                        </td>
-                                    </tr>
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Users className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium">No se encontraron bomberos.</p>
+                                                <p className="text-xs text-muted-foreground/70">
+                                                    {searchTerm
+                                                        ? 'Pruebe modificando los términos de búsqueda.'
+                                                        : 'No hay registros cargados en esta vista.'}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
 
                 <Pagination links={firefighters.links} />
             </div>
 
+            {/* Modal Dialog */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>
+                        <DialogTitle className="text-lg font-bold">
                             {isEdit ? 'Editar Bombero' : 'Nuevo Bombero'}
                         </DialogTitle>
-                        <DialogDescription>
-                            Complete los datos del bombero.
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            Complete los antecedentes institucionales del voluntario.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submit} className="grid gap-4 py-4">
+
+                    <form onSubmit={submit} className="grid gap-4 py-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="company">Compañía</Label>
-                            {/* Assuming Admin can set company, or filtering by user's company logic */}
+                            <Label htmlFor="company" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Compañía <span className="text-destructive">*</span>
+                            </Label>
                             <Select
                                 value={data.company}
                                 onValueChange={(value) =>
                                     setData('company', value)
                                 }
                             >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger id="company" className="h-10 text-sm">
                                     <SelectValue placeholder="Seleccione Compañía" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Primera Compañía">
-                                        Primera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Segunda Compañía">
-                                        Segunda Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Tercera Compañía">
-                                        Tercera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Cuarta Compañía">
-                                        Cuarta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Quinta Compañía">
-                                        Quinta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Séptima Compañía">
-                                        Séptima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Octava Compañía">
-                                        Octava Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Novena Compañía">
-                                        Novena Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Décima Compañía">
-                                        Décima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Comandancia">
-                                        Comandancia
-                                    </SelectItem>
+                                    {companies.map((c) => (
+                                        <SelectItem key={c} value={c}>
+                                            {c}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             {errors.company && (
-                                <p className="text-sm text-red-500">
+                                <p className="text-xs text-destructive">
                                     {errors.company}
                                 </p>
                             )}
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="full_name">Nombre Completo</Label>
+                            <Label htmlFor="full_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Nombre Completo <span className="text-destructive">*</span>
+                            </Label>
                             <Input
                                 id="full_name"
                                 value={data.full_name}
                                 onChange={(e) =>
                                     setData('full_name', e.target.value)
                                 }
+                                placeholder="Ej: Carlos Silva Gómez"
+                                className="h-10 text-sm"
                                 required
                             />
                             {errors.full_name && (
-                                <p className="text-sm text-red-500">
+                                <p className="text-xs text-destructive">
                                     {errors.full_name}
                                 </p>
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="rut">RUT</Label>
-                            <Input
-                                id="rut"
-                                value={data.rut}
-                                onChange={(e) => setData('rut', e.target.value)}
-                                placeholder="12.345.678-9"
-                                required
-                            />
-                            {errors.rut && (
-                                <p className="text-sm text-red-500">
-                                    {errors.rut}
-                                </p>
-                            )}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="rut" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    RUT <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="rut"
+                                    value={data.rut}
+                                    onChange={(e) => setData('rut', e.target.value)}
+                                    placeholder="12.345.678-9"
+                                    className="h-10 text-sm"
+                                    required
+                                />
+                                {errors.rut && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.rut}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="general_registry_number" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    N° Registro General
+                                </Label>
+                                <Input
+                                    id="general_registry_number"
+                                    value={data.general_registry_number}
+                                    onChange={(e) =>
+                                        setData(
+                                            'general_registry_number',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="Ej: 1420"
+                                    className="h-10 text-sm"
+                                />
+                                {errors.general_registry_number && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.general_registry_number}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="general_registry_number">
-                                N° Registro General
+                            <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Correo Electrónico
                             </Label>
-                            <Input
-                                id="general_registry_number"
-                                value={data.general_registry_number}
-                                onChange={(e) =>
-                                    setData(
-                                        'general_registry_number',
-                                        e.target.value,
-                                    )
-                                }
-                            />
-                            {errors.general_registry_number && (
-                                <p className="text-sm text-red-500">
-                                    {errors.general_registry_number}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Correo Electrónico</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -378,16 +388,17 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                 onChange={(e) =>
                                     setData('email', e.target.value)
                                 }
-                                placeholder="bombero@ejemplo.com"
+                                placeholder="bombero@cbpa.cl"
+                                className="h-10 text-sm"
                             />
                             {errors.email && (
-                                <p className="text-sm text-red-500">
+                                <p className="text-xs text-destructive">
                                     {errors.email}
                                 </p>
                             )}
                         </div>
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-3">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -395,7 +406,7 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                             >
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={processing}>
+                            <Button type="submit" disabled={processing} className="shadow-xs">
                                 {isEdit ? 'Guardar Cambios' : 'Crear Bombero'}
                             </Button>
                         </div>

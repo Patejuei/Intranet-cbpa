@@ -1,15 +1,28 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, History, Package } from 'lucide-react';
+import {
+    AlertTriangle,
+    ArrowLeft,
+    CheckCircle2,
+    Clock,
+    DollarSign,
+    History,
+    MapPin,
+    Package,
+    Tag,
+    User,
+} from 'lucide-react';
 
 interface InventoryItem {
     id: number;
@@ -47,6 +60,39 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
         }).format(amount);
     };
 
+    const getMovementBadge = (type: string) => {
+        switch (type) {
+            case 'ALTA':
+            case 'ADD':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 font-semibold text-[11px]"
+                    >
+                        {type}
+                    </Badge>
+                );
+            case 'REMOVE':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-red-500/30 bg-red-500/10 text-red-700 dark:border-red-500/35 dark:bg-red-500/20 dark:text-red-300 font-semibold text-[11px]"
+                    >
+                        {type}
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge
+                        variant="secondary"
+                        className="border-border/60 text-muted-foreground font-medium text-[11px]"
+                    >
+                        {type}
+                    </Badge>
+                );
+        }
+    };
+
     return (
         <AuthenticatedLayout
             breadcrumbs={[
@@ -60,106 +106,119 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
         >
             <Head title={`Detalle: ${item.name}`} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href="/vehicles/inventory">
-                                <ArrowLeft className="size-5" />
-                            </Link>
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">
-                                {item.name}
-                            </h1>
-                            <p className="text-muted-foreground">
-                                Trazabilidad e historial de cambios
-                            </p>
-                        </div>
-                    </div>
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
+                {/* Back button */}
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                        asChild
+                    >
+                        <Link href="/vehicles/inventory">
+                            <ArrowLeft className="size-4" />
+                            <span>Volver a la bodega de repuestos</span>
+                        </Link>
+                    </Button>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-3">
+                {/* Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                {item.name}
+                            </h1>
+                            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                SKU: {item.sku || 'S/N'}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Ficha técnica del material, disponibilidad en pañol y trazabilidad histórica.
+                        </p>
+                    </div>
+
+                    <Button size="sm" asChild className="gap-2 shadow-xs shrink-0">
+                        <Link href={`/vehicles/inventory/${item.id}/edit`}>
+                            <span>Editar Ítem</span>
+                        </Link>
+                    </Button>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-3">
                     {/* Item Details Card */}
-                    <Card className="h-fit md:col-span-1">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Package className="size-5 text-primary" />
-                                Información del Ítem
+                    <Card className="h-fit rounded-2xl border border-border/70 shadow-xs lg:col-span-1">
+                        <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+                            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                <Package className="size-4 text-primary" />
+                                <span>Información General</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                    Categoría
-                                </h3>
-                                <Badge
-                                    variant="outline"
-                                    className="mt-1 capitalize"
-                                >
-                                    {item.category}
-                                </Badge>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                        SKU
-                                    </h3>
-                                    <p className="mt-0.5 font-mono text-sm">
-                                        {item.sku || '-'}
-                                    </p>
+                        <CardContent className="space-y-4 px-5 pb-5 sm:px-6">
+                            <div className="flex flex-wrap gap-2">
+                                <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-xs">
+                                    <Tag className="size-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Categoría:</span>
+                                    <span className="font-semibold text-foreground capitalize">{item.category}</span>
                                 </div>
-                                <div>
-                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                        Ubicación
-                                    </h3>
-                                    <p className="mt-0.5 text-sm">
-                                        {item.location || '-'}
-                                    </p>
+                                <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-xs">
+                                    <MapPin className="size-3 text-muted-foreground" />
+                                    <span className="text-muted-foreground">Ubicación:</span>
+                                    <span className="font-semibold text-foreground">{item.location || 'Sin asignar'}</span>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                        Stock Actual
-                                    </h3>
-                                    <div className="mt-0.5 flex flex-col">
-                                        <span
-                                            className={`text-sm font-bold ${item.stock <= item.min_stock ? 'text-red-500' : 'text-green-600'}`}
-                                        >
-                                            {item.stock}{' '}
-                                            {item.unit_of_measure || 'Unidades'}
+
+                            <div className="rounded-xl border border-border/60 bg-muted/15 p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Stock en Bodega
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        Mínimo: {item.min_stock}
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline justify-between">
+                                    <span
+                                        className={`text-2xl font-bold ${
+                                            item.stock <= item.min_stock
+                                                ? 'text-destructive dark:text-red-400'
+                                                : 'text-foreground'
+                                        }`}
+                                    >
+                                        {item.stock}{' '}
+                                        <span className="text-sm font-normal text-muted-foreground">
+                                            {item.unit_of_measure || 'unidades'}
                                         </span>
-                                        {item.stock <= item.min_stock && (
-                                            <span className="text-[10px] font-medium text-red-400">
-                                                Bajo Stock Crítico
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                                        Stock Mínimo
-                                    </h3>
-                                    <p className="mt-0.5 text-sm">
-                                        {item.min_stock}
-                                    </p>
+                                    </span>
+                                    {item.stock <= item.min_stock ? (
+                                        <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-700 dark:text-red-300">
+                                            <AlertTriangle className="size-3" />
+                                            Bajo Stock
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                                            <CheckCircle2 className="size-3" />
+                                            Normal
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            <div>
-                                <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+
+                            <div className="space-y-1">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Costo Unitario
-                                </h3>
-                                <p className="mt-0.5 text-sm font-medium">
+                                </span>
+                                <p className="text-lg font-bold text-foreground">
                                     {formatCurrency(item.unit_cost)}
                                 </p>
                             </div>
+
                             {item.description && (
-                                <div>
-                                    <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                                <div className="space-y-1 pt-1 border-t border-border/50">
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                         Descripción
-                                    </h3>
-                                    <p className="mt-0.5 text-sm whitespace-pre-line text-muted-foreground">
+                                    </span>
+                                    <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
                                         {item.description}
                                     </p>
                                 </div>
@@ -168,139 +227,81 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
                     </Card>
 
                     {/* History Card */}
-                    <Card className="md:col-span-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <History className="size-5 text-primary" />
-                                Historial de Cambios
+                    <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden lg:col-span-2">
+                        <CardHeader className="border-b border-border/60 bg-muted/20 px-5 py-4 sm:px-6">
+                            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                <History className="size-4 text-primary" />
+                                <span>Historial de Movimientos y Entregas</span>
                             </CardTitle>
-                            <CardDescription>
-                                Registro cronológico de movimientos y
-                                modificaciones
+                            <CardDescription className="text-xs text-muted-foreground">
+                                Registro cronológico de ingresos, egresos y consumos en taller.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="overflow-hidden rounded-md border">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="border-b bg-muted/50 text-muted-foreground">
-                                            <tr>
-                                                <th className="p-3 font-medium">
-                                                    Fecha
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Tipo
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Variación
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Saldo
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Descripción
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Usuario
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {history.length > 0 ? (
-                                                history.map((record) => (
-                                                    <tr
-                                                        key={record.id}
-                                                        className="transition-colors hover:bg-muted/30"
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[140px]">Fecha</TableHead>
+                                        <TableHead>Tipo</TableHead>
+                                        <TableHead className="text-right">Variación</TableHead>
+                                        <TableHead className="text-right">Saldo</TableHead>
+                                        <TableHead className="min-w-[180px]">Descripción</TableHead>
+                                        <TableHead className="text-right">Usuario</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {history.length > 0 ? (
+                                        history.map((record) => (
+                                            <TableRow
+                                                key={record.id}
+                                                className="transition-colors hover:bg-muted/40"
+                                            >
+                                                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                                    {new Date(record.created_at).toLocaleString('es-CL', {
+                                                        dateStyle: 'short',
+                                                        timeStyle: 'short',
+                                                    })}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {getMovementBadge(record.type)}
+                                                </TableCell>
+                                                <TableCell className="text-right font-semibold text-xs">
+                                                    <span
+                                                        className={
+                                                            record.quantity_change > 0
+                                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                                : record.quantity_change < 0
+                                                                  ? 'text-red-600 dark:text-red-400'
+                                                                  : 'text-muted-foreground'
+                                                        }
                                                     >
-                                                        <td className="p-3 whitespace-nowrap text-muted-foreground">
-                                                            {new Date(
-                                                                record.created_at,
-                                                            ).toLocaleString(
-                                                                'es-CL',
-                                                                {
-                                                                    day: '2-digit',
-                                                                    month: '2-digit',
-                                                                    year: 'numeric',
-                                                                    hour: '2-digit',
-                                                                    minute: '2-digit',
-                                                                },
-                                                            )}
-                                                        </td>
-                                                        <td className="p-3">
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={
-                                                                    record.type ===
-                                                                    'ALTA'
-                                                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                                                        : record.type ===
-                                                                            'ADD'
-                                                                          ? 'border-green-200 bg-green-50 text-green-700'
-                                                                          : record.type ===
-                                                                              'REMOVE'
-                                                                            ? 'border-red-200 bg-red-50 text-red-700'
-                                                                            : 'border-slate-200 bg-slate-50 text-slate-700'
-                                                                }
-                                                            >
-                                                                {record.type}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="p-3 text-right font-medium">
-                                                            <span
-                                                                className={
-                                                                    record.quantity_change >
-                                                                    0
-                                                                        ? 'text-green-600'
-                                                                        : record.quantity_change <
-                                                                            0
-                                                                          ? 'text-red-600'
-                                                                          : 'text-muted-foreground'
-                                                                }
-                                                            >
-                                                                {record.quantity_change >
-                                                                0
-                                                                    ? '+'
-                                                                    : ''}
-                                                                {
-                                                                    record.quantity_change
-                                                                }
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-3 text-right font-mono text-xs">
-                                                            {
-                                                                record.current_balance
-                                                            }
-                                                        </td>
-                                                        <td
-                                                            className="max-w-[250px] p-3"
-                                                            title={
-                                                                record.description
-                                                            }
-                                                        >
-                                                            {record.description}
-                                                        </td>
-                                                        <td className="p-3 text-right text-xs text-muted-foreground">
-                                                            {record.user
-                                                                ?.name ||
-                                                                'Sistema'}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td
-                                                        colSpan={6}
-                                                        className="p-8 text-center text-muted-foreground italic"
-                                                    >
-                                                        No se registra historial
-                                                        para este ítem.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                                                        {record.quantity_change > 0 ? '+' : ''}
+                                                        {record.quantity_change}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right font-mono text-xs font-semibold text-foreground">
+                                                    {record.current_balance}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-foreground" title={record.description}>
+                                                    {record.description}
+                                                </TableCell>
+                                                <TableCell className="text-right text-xs text-muted-foreground">
+                                                    {record.user?.name || 'Sistema'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={6}
+                                                className="h-28 text-center text-muted-foreground text-xs italic"
+                                            >
+                                                No se registran movimientos para este ítem en la bitácora de bodega.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
                 </div>

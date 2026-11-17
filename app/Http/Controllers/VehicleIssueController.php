@@ -60,7 +60,29 @@ class VehicleIssueController extends Controller
      */
     public function create()
     {
-        //
+        $user = request()->user();
+        if ($user->role === 'ayudante' || $user->role === 'cuartelero') {
+            abort(403, 'No tiene permiso para reportar incidencias directamente.');
+        }
+
+        $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+        $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
+        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
+        $vehicles = \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) use ($driverIds) {
+            $q->whereIn('id', $driverIds);
+        })->when(!$isCuarteleroComandancia && $user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM, function ($q) use ($user, $driverIds) {
+            $q->where(function ($query) use ($driverIds, $user) {
+                $query->where('company', $user->company);
+                if ($driverIds->isNotEmpty()) {
+                    $query->orWhereIn('id', $driverIds);
+                }
+            });
+        })->orderBy('name')->get(['id', 'name', 'company']);
+
+        return Inertia::render('vehicles/incidents/create', [
+            'vehicles' => $vehicles,
+        ]);
     }
 
     /**
@@ -127,7 +149,7 @@ class VehicleIssueController extends Controller
             NotificationRecipientService::safeNotify($recipients, new VehicleIssueCreatedNotification($issue));
         }
 
-        return redirect()->back()->with('success', 'Incidencia reportada. Pendiente de revisión por Capitán.');
+        return redirect()->route('vehicles.incidents.index')->with('success', 'Incidencia reportada. Pendiente de revisión por Capitán.');
     }
 
     /**

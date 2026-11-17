@@ -2,33 +2,20 @@
 import { ExportIncidentsDialog } from '@/components/vehicles/export-incidents-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-import { Combobox } from '@/components/ui/combobox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import  Pagination  from '@/components/Pagination';
-import { Textarea } from '@/components/ui/textarea';
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import Pagination from '@/components/Pagination';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { format } from 'date-fns';
-import { Eye, FileSpreadsheet, Plus, Image as ImageIcon, Trash2, Upload } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Eye, FileSpreadsheet, Image as ImageIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface Vehicle {
@@ -66,93 +53,7 @@ export default function VehicleIncidents({
     vehicles: Vehicle[];
 }) {
     const { canCreate } = usePermissions();
-    const [open, setOpen] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
-
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
-        vehicle_id: string;
-        description: string;
-        severity: string;
-        date: string;
-        images: File[];
-    }>({
-        vehicle_id: '',
-        description: '',
-        severity: 'Low',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        images: [],
-    });
-
-    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    const [imageClientError, setImageClientError] = useState<string | null>(null);
-
-    const cleanUpPreviews = () => {
-        imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-        setImagePreviews([]);
-        setImageClientError(null);
-    };
-
-    const handleOpenChange = (isOpen: boolean) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-            cleanUpPreviews();
-            reset();
-            clearErrors();
-        }
-    };
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) return;
-
-        setImageClientError(null);
-
-        if (data.images.length + files.length > 3) {
-            setImageClientError('Solo se pueden adjuntar hasta 3 imágenes en total.');
-            return;
-        }
-
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-        const validFiles: File[] = [];
-
-        for (const file of files) {
-            if (!allowedTypes.includes(file.type)) {
-                setImageClientError('Formato no permitido. Solo se aceptan JPEG, PNG, JPG y WEBP.');
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                setImageClientError('Cada imagen no debe superar los 5MB.');
-                return;
-            }
-            validFiles.push(file);
-        }
-
-        const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
-        setData('images', [...data.images, ...validFiles]);
-        setImagePreviews((prev) => [...prev, ...newPreviews]);
-        e.target.value = '';
-    };
-
-    const removeImage = (index: number) => {
-        URL.revokeObjectURL(imagePreviews[index]);
-        const nextImages = data.images.filter((_, i) => i !== index);
-        const nextPreviews = imagePreviews.filter((_, i) => i !== index);
-        setData('images', nextImages);
-        setImagePreviews(nextPreviews);
-        setImageClientError(null);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post('/vehicles/incidents', {
-            forceFormData: true,
-            onSuccess: () => {
-                setOpen(false);
-                cleanUpPreviews();
-                reset();
-            },
-        });
-    };
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
@@ -175,355 +76,150 @@ export default function VehicleIncidents({
             ]}
         >
             <Head title="Registro de Incidencias" />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
+            <div className="mx-auto flex h-full w-full flex-1 flex-col gap-6 p-4 sm:p-6 max-w-7xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
                             Registro de Incidencias
                         </h1>
-                        <p className="text-muted-foreground">
-                            Reporte y seguimiento de problemas mecánicos.
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            Reporte y seguimiento de novedades mecánicas de la flota.
                         </p>
                     </div>
-                    <div className="flex gap-2">
-                        {canCreate('vehicles.incidents') && (
-                            <Dialog open={open} onOpenChange={handleOpenChange}>
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <Plus className="mr-2 h-4 w-4" /> Nueva
-                                        Incidencia
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
-                                    <form onSubmit={handleSubmit}>
-                                        <DialogHeader>
-                                            <DialogTitle>
-                                                Reportar Incidencia
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Ingrese los detalles del problema
-                                                detectado en la unidad.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="vehicle">
-                                                    Vehículo
-                                                </Label>
-                                                <Combobox
-                                                    options={vehicles.map((v) => ({
-                                                        value: v.id.toString(),
-                                                        label: v.name,
-                                                    }))}
-                                                    value={data.vehicle_id}
-                                                    onChange={(value) =>
-                                                        setData('vehicle_id', value)
-                                                    }
-                                                    placeholder="Seleccione unidad"
-                                                    searchPlaceholder="Buscar unidad..."
-                                                    searchInDescription={false}
-                                                />
-                                                {errors.vehicle_id && (
-                                                    <p className="text-sm text-destructive">
-                                                        {errors.vehicle_id}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="severity">
-                                                    Severidad
-                                                </Label>
-                                                <Select
-                                                    onValueChange={(value) =>
-                                                        setData('severity', value)
-                                                    }
-                                                    value={data.severity}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Nivel de Gravedad" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="Low">
-                                                            Baja (Observación)
-                                                        </SelectItem>
-                                                        <SelectItem value="Medium">
-                                                            Media (Reparación
-                                                            necesaria)
-                                                        </SelectItem>
-                                                        <SelectItem value="High">
-                                                            Alta (Riesgo operativo)
-                                                        </SelectItem>
-                                                        <SelectItem value="Critical">
-                                                            Crítica (Inoperativo)
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="date">
-                                                    Fecha Detección
-                                                </Label>
-                                                <Input
-                                                    type="date"
-                                                    value={data.date}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'date',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="description">
-                                                    Descripción del Problema
-                                                </Label>
-                                                <Textarea
-                                                    id="description"
-                                                    value={data.description}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'description',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="Detalle el problema, observaciones, etc."
-                                                />
-                                                {errors.description && (
-                                                    <p className="text-sm text-destructive">
-                                                        {errors.description}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Apartado para adjuntar imágenes */}
-                                            <div className="grid gap-2 border-t pt-3">
-                                                <div className="flex items-center justify-between">
-                                                    <Label htmlFor="incident_images" className="flex items-center gap-1.5 font-medium">
-                                                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                                                        Adjuntar Imágenes (Opcional)
-                                                    </Label>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {data.images.length}/3 seleccionadas
-                                                    </span>
-                                                </div>
-
-                                                {data.images.length < 3 && (
-                                                    <div className="relative">
-                                                        <Input
-                                                            id="incident_images"
-                                                            type="file"
-                                                            multiple
-                                                            accept="image/jpeg,image/png,image/webp,image/jpg"
-                                                            onChange={handleImageChange}
-                                                            className="cursor-pointer file:cursor-pointer"
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {imageClientError && (
-                                                    <p className="text-xs text-destructive font-medium">
-                                                        {imageClientError}
-                                                    </p>
-                                                )}
-
-                                                {errors.images && (
-                                                    <p className="text-xs text-destructive font-medium">
-                                                        {errors.images}
-                                                    </p>
-                                                )}
-
-                                                {imagePreviews.length > 0 && (
-                                                    <div className="grid grid-cols-3 gap-2 pt-2">
-                                                        {imagePreviews.map((preview, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className="relative group rounded-md border overflow-hidden aspect-video bg-muted/40"
-                                                            >
-                                                                <img
-                                                                    src={preview}
-                                                                    alt={`Vista previa ${idx + 1}`}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeImage(idx)}
-                                                                    className="absolute top-1 right-1 bg-black/70 hover:bg-black text-white p-1 rounded-full transition-opacity opacity-90 hover:opacity-100"
-                                                                    title="Quitar imagen"
-                                                                >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </button>
-                                                                <span className="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm truncate max-w-[85%]">
-                                                                    {data.images[idx]?.name}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    Formatos permitidos: JPEG, PNG, JPG, WEBP. Máx. 3 imágenes (5MB c/u).
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                            >
-                                                {processing ? 'Reportando...' : 'Reportar'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        )}
+                    <div className="flex flex-wrap items-center gap-2.5">
                         <Button
                             variant="outline"
                             onClick={() => setReportModalOpen(true)}
                         >
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
                             Reporte Excel
                         </Button>
+                        {canCreate('vehicles.incidents') && (
+                            <Button asChild>
+                                <Link href="/vehicles/incidents/create">
+                                    <Plus className="mr-2 size-4" />
+                                    Nueva Incidencia
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
-                <div className="rounded-md border">
-                    <div className="relative w-full overflow-auto">
-                        <table className="w-full caption-bottom text-sm">
-                            <thead className="[&_tr]:border-b">
-                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Fecha
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Unidad
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Gravedad
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Descripción
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Estado
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Reportado Por
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="[&_tr:last-child]:border-0">
-                                {issues.data.map((issue: Issue) => (
-                                    <tr
-                                        key={issue.id}
-                                        className="border-b transition-colors hover:bg-muted/50"
-                                    >
-                                        <td className="p-4 align-middle">
-                                            {issue.date}
-                                        </td>
-                                        <td className="p-4 align-middle font-medium">
-                                            {issue.vehicle.name}
-                                        </td>
-                                        <td className="p-4 align-middle">
-                                            <Badge
-                                                variant={
-                                                    getSeverityColor(
-                                                        issue.severity,
-                                                    ) as any
-                                                }
-                                            >
-                                                {issue.severity}
-                                            </Badge>
-                                        </td>
-                                        <td className="min-w-[300px] p-4 align-middle">
-                                            <div className="flex flex-col gap-1 whitespace-pre-line">
-                                                <span>{issue.description}</span>
-                                                {issue.images_count ? issue.images_count > 0 ? (
-                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                        <ImageIcon className="h-3.5 w-3.5" />
-                                                        <span>{issue.images_count} {issue.images_count === 1 ? 'imagen' : 'imágenes'}</span>
-                                                    </div>
-                                                ) : null : null}
-                                            </div>
-                                        </td>
-                                        <td className="p-4 align-middle">
-                                            <div className="flex flex-col gap-1">
-                                                {issue.status === 'Resolved' ? (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="w-fit border-green-500 bg-green-50 text-green-700"
-                                                    >
-                                                        Resuelto
-                                                    </Badge>
-                                                ) : issue.status === 'En Taller' ? (
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="w-fit bg-blue-100 text-blue-700 hover:bg-blue-100/80"
-                                                    >
-                                                        En Taller
-                                                    </Badge>
-                                                ) : !issue.reviewed_at ? (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="w-fit border-yellow-500 text-yellow-600"
-                                                    >
-                                                        Pendiente Revisión
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="w-fit border-blue-500 text-blue-600"
-                                                    >
-                                                        Revisado
-                                                    </Badge>
-                                                )}
-                                                {issue.is_stopped && (
-                                                    <Badge
-                                                        variant="destructive"
-                                                        className="w-fit text-[10px]"
-                                                    >
-                                                        Detenido
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="p-4 align-middle">
-                                            {issue.reporter?.name ||
-                                                'Desconocido'}
-                                        </td>
-                                        <td className="p-4 align-middle">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                asChild
-                                            >
-                                                <Link href={`/vehicles/incidents/${issue.id}`}>
-                                                    <Eye className="mr-2 size-4" /> Ver
-                                                </Link>
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {issues.data.length === 0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="p-4 text-center text-muted-foreground"
+                <Card className="rounded-2xl border border-border/70 bg-card shadow-xs overflow-hidden">
+                    <CardHeader className="px-5 sm:px-6 py-4 border-b border-border/50 flex flex-row items-center justify-between">
+                        <CardTitle className="text-base font-semibold text-foreground">Listado de Novedades</CardTitle>
+                        <Badge variant="outline" className="border-border/60 text-xs font-normal">
+                            {issues.total ?? issues.data.length} registros
+                        </Badge>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-b border-border/60 bg-muted/20">
+                                        <TableHead className="w-28">Fecha</TableHead>
+                                        <TableHead>Unidad</TableHead>
+                                        <TableHead>Gravedad</TableHead>
+                                        <TableHead className="min-w-[280px]">Descripción</TableHead>
+                                        <TableHead>Estado</TableHead>
+                                        <TableHead>Reportado Por</TableHead>
+                                        <TableHead className="text-right">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {issues.data.map((issue: Issue) => (
+                                        <TableRow
+                                            key={issue.id}
+                                            className="transition-colors hover:bg-muted/30"
                                         >
-                                            No hay incidencias registradas.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                            <TableCell className="font-mono text-xs">
+                                                {issue.date}
+                                            </TableCell>
+                                            <TableCell className="font-bold text-sm text-foreground">
+                                                {issue.vehicle.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        getSeverityColor(
+                                                            issue.severity,
+                                                        ) as any
+                                                    }
+                                                    className="font-semibold text-xs"
+                                                >
+                                                    {issue.severity}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1 whitespace-pre-line text-sm text-foreground">
+                                                    <span>{issue.description}</span>
+                                                    {issue.images_count ? issue.images_count > 0 ? (
+                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-0.5">
+                                                            <ImageIcon className="size-3.5 text-primary" />
+                                                            <span>{issue.images_count} {issue.images_count === 1 ? 'imagen' : 'imágenes'}</span>
+                                                        </div>
+                                                    ) : null : null}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col gap-1.5">
+                                                    {issue.status === 'Resolved' ? (
+                                                        <span className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                                                            Resuelto
+                                                        </span>
+                                                    ) : issue.status === 'En Taller' ? (
+                                                        <span className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                                                            En Taller
+                                                        </span>
+                                                    ) : !issue.reviewed_at ? (
+                                                        <span className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                                                            Pendiente Revisión
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20">
+                                                            Revisado
+                                                        </span>
+                                                    )}
+                                                    {issue.is_stopped && (
+                                                        <span className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-destructive/10 text-destructive border border-destructive/20">
+                                                            Detenido
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {issue.reporter?.name ||
+                                                    'Desconocido'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    asChild
+                                                    className="text-xs hover:text-primary transition-colors"
+                                                >
+                                                    <Link href={`/vehicles/incidents/${issue.id}`}>
+                                                        <Eye className="mr-1.5 size-3.5" /> Ver
+                                                    </Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {issues.data.length === 0 && (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={7}
+                                                className="h-28 text-center text-sm text-muted-foreground"
+                                            >
+                                                No hay incidencias registradas.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </CardContent>
+                </Card>
                 <Pagination links={issues.links} />
 
                 <ExportIncidentsDialog

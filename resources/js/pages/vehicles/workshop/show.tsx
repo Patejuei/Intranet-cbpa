@@ -352,55 +352,67 @@ export default function WorkshopShow({
             <Head title={`Orden de Trabajo #${maintenance.id}`} />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4">
-                <Button
-                    variant="ghost"
-                    className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-primary"
-                    asChild
-                >
-                    <Link href="/vehicles/workshop">
-                        <ArrowLeft className="h-4 w-4" />
-                        Volver al Taller
-                    </Link>
-                </Button>
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                        asChild
+                    >
+                        <Link href="/vehicles/workshop">
+                            <ArrowLeft className="size-4" />
+                            <span>Volver al taller</span>
+                        </Link>
+                    </Button>
+                </div>
 
                 <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-bold">
-                            <Wrench className="h-6 w-6" />
-                            Orden de Trabajo #{maintenance.id}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            {maintenance.vehicle.name} -{' '}
-                            {maintenance.vehicle.plate} (
-                            {maintenance.vehicle.company})
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                <Wrench className="size-6 text-primary" />
+                                <span>Orden de Trabajo #{maintenance.id}</span>
+                            </h1>
+                            <Badge
+                                variant="outline"
+                                className="border-primary/30 bg-primary/10 text-primary font-semibold text-xs"
+                            >
+                                {maintenance.status}
+                            </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                            <span className="font-semibold text-foreground">{maintenance.vehicle.name}</span> — Patente{' '}
+                            <span className="font-mono font-semibold text-foreground">{maintenance.vehicle.plate}</span> ({maintenance.vehicle.company})
                         </p>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="flex flex-wrap items-center gap-2">
                         {(maintenance.status === 'Finalizado' ||
                             maintenance.status === 'Entregado') && (
                             <Button
                                 variant="outline"
+                                size="sm"
                                 asChild
-                                className="border-green-600 text-green-600 hover:bg-green-50"
+                                className="gap-2 border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:border-emerald-500/35 dark:text-emerald-300 shadow-xs"
                             >
                                 <a
                                     href={`/vehicles/workshop/${maintenance.id}/print-exit`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    Imprimir Salida
+                                    <FileText className="size-4" />
+                                    <span>Acta de Salida</span>
                                 </a>
                             </Button>
                         )}
 
-                        <Button variant="outline" asChild>
+                        <Button variant="outline" size="sm" asChild className="gap-2 shadow-xs">
                             <a
                                 href={`/vehicles/workshop/${maintenance.id}/print`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <Printer className="mr-2 h-4 w-4" />
+                                <Printer className="size-4" />
                                 <span className="hidden sm:inline">
                                     Imprimir Orden
                                 </span>
@@ -410,10 +422,12 @@ export default function WorkshopShow({
 
                         {!isReadOnly && (
                             <Button
+                                size="sm"
                                 onClick={handleSaveWorks}
                                 disabled={processing}
+                                className="gap-2 shadow-xs"
                             >
-                                <Save className="mr-2 h-4 w-4" />
+                                <Save className="size-4" />
                                 <span className="hidden sm:inline">
                                     Guardar Cambios
                                 </span>
@@ -424,13 +438,14 @@ export default function WorkshopShow({
                             maintenance.status !== 'Finalizado' &&
                             maintenance.status !== 'Entregado' && (
                                 <Button
-                                    variant="destructive"
+                                    size="sm"
                                     onClick={handleFinalize}
                                     disabled={processing || isContentLocked}
+                                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                 >
-                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    <CheckCircle2 className="size-4" />
                                     <span className="hidden sm:inline">
-                                        Finalizar
+                                        Finalizar Orden
                                     </span>
                                 </Button>
                             )}

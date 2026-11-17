@@ -4,7 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Clock, Download, ExternalLink, Fuel, Gauge, Hash, MapPin, User as UserIcon } from 'lucide-react';
+import {
+    ArrowLeft,
+    Calendar,
+    Clock,
+    Download,
+    ExternalLink,
+    Fuel,
+    Gauge,
+    Hash,
+    MapPin,
+    Receipt,
+    Route,
+    Truck,
+    User as UserIcon,
+} from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -31,115 +45,186 @@ interface Log {
 }
 
 export default function VehicleLogShow({ log }: { log: Log }) {
-    const traveledKm = (log.end_km && log.start_km) ? log.end_km - log.start_km : null;
+    const traveledKm = log.end_km && log.start_km ? log.end_km - log.start_km : null;
 
     return (
         <AppLayout
             breadcrumbs={[
                 { title: 'Panel Principal', href: '/dashboard' },
                 { title: 'Bitácora', href: '/vehicles/logs' },
-                { title: `Detalle #${log.id}`, href: `/vehicles/logs/${log.id}` },
+                { title: `Movimiento #${log.id}`, href: `/vehicles/logs/${log.id}` },
             ]}
         >
             <Head title={`Detalle Bitácora #${log.id}`} />
-            <div className="flex h-full flex-col gap-6 p-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
+
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
+                {/* Back button */}
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                        asChild
+                    >
                         <Link href="/vehicles/logs">
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-4" />
+                            <span>Volver a la bitácora</span>
                         </Link>
                     </Button>
+                </div>
+
+                {/* Header */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">Detalle de Bitácora #{log.id}</h1>
-                        <p className="text-muted-foreground">
-                            Registro de movimiento de la unidad {log.vehicle.name}.
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Registro de Movimiento #{log.id}
+                            </h1>
+                            <Badge
+                                variant="outline"
+                                className="border-primary/30 bg-primary/10 text-primary font-semibold text-xs"
+                            >
+                                {log.activity_type}
+                            </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                            Unidad <span className="font-semibold text-foreground">{log.vehicle.name}</span> ({log.vehicle.company}) — Realizado el{' '}
+                            {formatDate(log.date)}
                         </p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    {/* Movement Details */}
                     <div className="space-y-6 lg:col-span-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Gauge className="h-5 w-5 text-primary" />
-                                    Información del Movimiento
+                        <Card className="rounded-2xl border border-border/70 shadow-xs">
+                            <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                    <Route className="size-4 text-primary" />
+                                    <span>Información del Trayecto</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <CardContent className="grid grid-cols-1 gap-5 p-5 sm:p-6 sm:grid-cols-2">
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3">
-                                        <Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-xs font-medium uppercase text-muted-foreground">Fecha</p>
-                                            <p className="font-semibold">{formatDate(log.date)}</p>
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                            <Calendar className="size-4" />
                                         </div>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <Clock className="mt-0.5 h-4 w-4 text-muted-foreground" />
                                         <div>
-                                            <p className="text-xs font-medium uppercase text-muted-foreground">Horario</p>
-                                            <p className="font-semibold">
-                                                {log.departure_time || '--:--'} - {log.arrival_time || '--:--'}
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Fecha de Salida
+                                            </p>
+                                            <p className="text-sm font-semibold text-foreground">
+                                                {formatDate(log.date)}
                                             </p>
                                         </div>
                                     </div>
+
                                     <div className="flex items-start gap-3">
-                                        <UserIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                            <Clock className="size-4" />
+                                        </div>
                                         <div>
-                                            <p className="text-xs font-medium uppercase text-muted-foreground">Conductor/Responsable</p>
-                                            <p className="font-semibold">{log.driver?.name || 'N/A'}</p>
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Horario
+                                            </p>
+                                            <p className="text-sm font-semibold text-foreground">
+                                                {log.departure_time || '--:--'} — {log.arrival_time || '--:--'}
+                                            </p>
                                         </div>
                                     </div>
+
                                     <div className="flex items-start gap-3">
-                                        <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                            <UserIcon className="size-4" />
+                                        </div>
                                         <div>
-                                            <p className="text-xs font-medium uppercase text-muted-foreground">Destino</p>
-                                            <p className="font-semibold">{log.destination}</p>
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Maquinista / Conductor
+                                            </p>
+                                            <p className="text-sm font-semibold text-foreground">
+                                                {log.driver?.name || 'No especificado'}
+                                            </p>
                                         </div>
                                     </div>
+
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                            <MapPin className="size-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Destino
+                                            </p>
+                                            <p className="text-sm font-semibold text-foreground">
+                                                {log.destination}
+                                            </p>
+                                        </div>
+                                    </div>
+
                                     {log.movement_key && (
                                         <div className="flex items-start gap-3">
-                                            <Hash className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                                <Hash className="size-4" />
+                                            </div>
                                             <div>
-                                                <p className="text-xs font-medium uppercase text-muted-foreground">Clave</p>
-                                                <p className="font-semibold font-mono text-sm">{log.movement_key}</p>
+                                                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                    Clave Radial
+                                                </p>
+                                                <p className="text-sm font-mono font-bold text-primary">
+                                                    {log.movement_key}
+                                                </p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 rounded-xl border border-border/60 bg-muted/15 p-4">
                                     <div className="flex items-start gap-3">
-                                        <Gauge className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-xs font-medium uppercase text-muted-foreground">Kilometraje</p>
-                                            <div className="space-y-1">
-                                                <p className="text-sm">Inicio: <span className="font-semibold">{log.start_km} km</span></p>
-                                                <p className="text-sm">Término: <span className="font-semibold">{log.end_km ? `${log.end_km} km` : 'En proceso'}</span></p>
-                                                {traveledKm !== null && (
-                                                    <Badge variant="secondary" className="mt-1">
-                                                        Recorrido: {traveledKm} km
-                                                    </Badge>
-                                                )}
-                                            </div>
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                            <Gauge className="size-4" />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium uppercase text-muted-foreground">Actividad</p>
-                                        <Badge className="mt-1" variant="outline">{log.activity_type}</Badge>
+                                        <div className="space-y-1">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                Kilometraje
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Inicial:{' '}
+                                                <span className="font-semibold text-foreground font-mono">
+                                                    {log.start_km.toLocaleString('es-CL')} km
+                                                </span>
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Final:{' '}
+                                                <span className="font-semibold text-foreground font-mono">
+                                                    {log.end_km
+                                                        ? `${log.end_km.toLocaleString('es-CL')} km`
+                                                        : 'En recorrido'}
+                                                </span>
+                                            </p>
+
+                                            {traveledKm !== null && (
+                                                <div className="pt-2">
+                                                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                                                        Recorrido: {traveledKm.toLocaleString('es-CL')} km
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {log.observations && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Observaciones</CardTitle>
+                            <Card className="rounded-2xl border border-border/70 shadow-xs">
+                                <CardHeader className="pb-2 pt-5 px-5 sm:px-6">
+                                    <CardTitle className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                                        Observaciones de la Bitácora
+                                    </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <p className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm italic">
+                                <CardContent className="px-5 pb-5 sm:px-6">
+                                    <p className="rounded-xl border border-border/60 bg-muted/20 p-4 text-xs sm:text-sm text-foreground leading-relaxed whitespace-pre-wrap italic">
                                         "{log.observations}"
                                     </p>
                                 </CardContent>
@@ -147,53 +232,73 @@ export default function VehicleLogShow({ log }: { log: Log }) {
                         )}
                     </div>
 
+                    {/* Fuel Card */}
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Fuel className="h-5 w-5 text-primary" />
-                                    Carga de Combustible
+                        <Card className="rounded-2xl border border-border/70 shadow-xs">
+                            <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                    <Fuel className="size-4 text-primary" />
+                                    <span>Carga de Combustible</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <p className="text-xs font-medium uppercase text-muted-foreground">Litros Cargados</p>
-                                    <p className="text-lg font-bold">{log.fuel_liters ? `${log.fuel_liters} L` : 'N/A'}</p>
+                            <CardContent className="space-y-4 px-5 pb-5 sm:px-6">
+                                <div className="rounded-xl border border-border/60 bg-muted/15 p-4 space-y-1">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Litros Cargados
+                                    </p>
+                                    <p className="text-2xl font-bold text-foreground font-mono">
+                                        {log.fuel_liters ? `${log.fuel_liters} L` : 'Sin carga'}
+                                    </p>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-medium uppercase text-muted-foreground">Nº Cupón / Vale</p>
-                                    <p className="font-semibold">{log.fuel_coupon || 'N/A'}</p>
+
+                                <div className="space-y-1">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Nº Cupón / Vale
+                                    </p>
+                                    <p className="text-sm font-mono font-semibold text-foreground">
+                                        {log.fuel_coupon || 'No registrado'}
+                                    </p>
                                 </div>
 
                                 {log.receipt_path && (
-                                    <div className="mt-6 space-y-3">
-                                        <p className="text-xs font-medium uppercase text-muted-foreground">Comprobante de Carga</p>
-                                        <div className="group relative overflow-hidden rounded-lg border shadow-sm">
+                                    <div className="space-y-3 pt-2 border-t border-border/50">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Comprobante Digital
+                                        </p>
+                                        <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs">
                                             {log.receipt_path.toLowerCase().endsWith('.pdf') ? (
-                                                <div className="flex h-32 flex-col items-center justify-center bg-muted text-muted-foreground">
-                                                    <Download className="mb-2 h-8 w-8" />
+                                                <div className="flex h-32 flex-col items-center justify-center bg-muted/30 text-muted-foreground p-3 text-center">
+                                                    <Download className="mb-2 size-6 text-primary opacity-75" />
                                                     <span className="text-xs font-medium">Documento PDF</span>
                                                 </div>
                                             ) : (
-                                                <img 
-                                                    src={`/storage/${log.receipt_path}`} 
-                                                    alt="Boleta de carga" 
-                                                    className="aspect-square h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                <img
+                                                    src={`/storage/${log.receipt_path}`}
+                                                    alt="Boleta de carga"
+                                                    className="aspect-square h-full w-full object-cover transition duration-300 group-hover:scale-105"
                                                 />
                                             )}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                                <div className="flex gap-2">
-                                                    <Button size="sm" variant="secondary" asChild>
-                                                        <a href={`/storage/${log.receipt_path}`} target="_blank" rel="noopener noreferrer">
-                                                            <ExternalLink className="mr-2 h-4 w-4" /> Ver
-                                                        </a>
-                                                    </Button>
-                                                </div>
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition duration-200 group-hover:opacity-100 backdrop-blur-xs">
+                                                <Button size="sm" variant="secondary" asChild className="gap-1.5 shadow-xs">
+                                                    <a
+                                                        href={`/storage/${log.receipt_path}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <ExternalLink className="size-3.5" />
+                                                        <span>Ver</span>
+                                                    </a>
+                                                </Button>
                                             </div>
                                         </div>
-                                        <Button className="w-full" variant="outline" asChild>
-                                            <a href={`/storage/${log.receipt_path}`} download={`boleta_${log.id}`}>
-                                                <Download className="mr-2 h-4 w-4" /> Descargar Boleta
+
+                                        <Button className="w-full gap-2 shadow-xs" variant="outline" size="sm" asChild>
+                                            <a
+                                                href={`/storage/${log.receipt_path}`}
+                                                download={`boleta_carga_${log.id}`}
+                                            >
+                                                <Download className="size-4" />
+                                                <span>Descargar Boleta</span>
                                             </a>
                                         </Button>
                                     </div>

@@ -1,6 +1,7 @@
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
@@ -17,11 +18,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import AuthenticatedLayout from '@/layouts/app-layout';
 import { useOtpAction } from '@/hooks/use-otp-action';
-import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
+import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCircle2, Download, Eye, Plus } from 'lucide-react';
+import { CheckCircle2, Download, Eye, FileText, Plus, Receipt } from 'lucide-react';
 import { useState } from 'react';
 
 interface Rendition {
@@ -72,7 +72,7 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/vehicles/renditions/export';
-        // Add CSRF token
+
         const token = document
             .querySelector('meta[name="csrf-token"]')
             ?.getAttribute('content');
@@ -84,7 +84,6 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
             form.appendChild(input);
         }
 
-        // Add expense type filter
         if (expenseFilter !== 'all') {
             const input = document.createElement('input');
             input.type = 'hidden';
@@ -93,7 +92,6 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
             form.appendChild(input);
         }
 
-        // Add selected IDs if any
         if (selectedIds.length > 0) {
             selectedIds.forEach((id) => {
                 const input = document.createElement('input');
@@ -147,7 +145,7 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                 return (
                     <Badge
                         variant="outline"
-                        className="border-orange-200 text-orange-600"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 font-medium text-[11px]"
                     >
                         Pendiente Inspector
                     </Badge>
@@ -156,21 +154,35 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                 return (
                     <Badge
                         variant="outline"
-                        className="border-blue-200 text-blue-600"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 font-medium text-[11px]"
                     >
                         Pendiente Secretaria
                     </Badge>
                 );
             case 'approved':
                 return (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                    <Badge
+                        variant="outline"
+                        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 font-semibold text-[11px]"
+                    >
                         Aprobado
                     </Badge>
                 );
             case 'rejected':
-                return <Badge variant="destructive">Rechazado</Badge>;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-red-500/30 bg-red-500/10 text-red-700 dark:border-red-500/35 dark:bg-red-500/20 dark:text-red-300 font-semibold text-[11px]"
+                    >
+                        Rechazado
+                    </Badge>
+                );
             default:
-                return <Badge variant="secondary">{status}</Badge>;
+                return (
+                    <Badge variant="secondary" className="text-[11px]">
+                        {status}
+                    </Badge>
+                );
         }
     };
 
@@ -206,96 +218,106 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                 },
             ]}
         >
-            <Head title="Rendiciones" />
+            <Head title="Rendiciones y Gastos" />
 
-            <div className="flex flex-1 flex-col gap-8 p-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-6 p-4 sm:p-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">
-                            Rendiciones y Gastos
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Gestión de facturas, boletas y rendiciones de
-                            taller.
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Rendiciones y Gastos
+                            </h1>
+                            <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                {renditions.data.length} registros
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Gestión, validación y trazabilidad de facturas, boletas y rendiciones del taller institucional.
                         </p>
                     </div>
-                    {(userRole === 'mechanic' ||
-                        userRole === 'admin') && (
-                        <Button asChild>
+
+                    {(userRole === 'mechanic' || userRole === 'admin') && (
+                        <Button asChild className="gap-2 shadow-xs shrink-0">
                             <Link href="/vehicles/renditions/create">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nueva Rendición
+                                <Plus className="size-4" />
+                                <span>Nueva Rendición</span>
                             </Link>
                         </Button>
                     )}
                 </div>
 
-                <div className="flex justify-end gap-2">
-                    {canBatchApprove && (
-                        <Button
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={handleBatchValidate}
-                            disabled={selectedIds.length === 0}
+                {/* Filter and Actions Bar */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="w-full sm:w-[240px]">
+                        <Select
+                            value={expenseFilter}
+                            onValueChange={setExpenseFilter}
                         >
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            {getBatchButtonLabel()} ({selectedIds.length})
+                            <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Tipo de Gasto" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los gastos</SelectItem>
+                                <SelectItem value="repair_supplies">Insumos Reparación</SelectItem>
+                                <SelectItem value="spare_parts">Repuestos</SelectItem>
+                                <SelectItem value="tools">Herramientas</SelectItem>
+                                <SelectItem value="other_tools">Otras Herramientas</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        {canBatchApprove && (
+                            <Button
+                                size="sm"
+                                className="gap-2 shadow-xs"
+                                onClick={handleBatchValidate}
+                                disabled={selectedIds.length === 0}
+                            >
+                                <CheckCircle2 className="size-4" />
+                                <span>{getBatchButtonLabel()} ({selectedIds.length})</span>
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 shadow-xs"
+                            onClick={handleExport}
+                        >
+                            <Download className="size-4" />
+                            <span>Exportar Excel {selectedIds.length > 0 ? `(${selectedIds.length})` : ''}</span>
                         </Button>
-                    )}
-                    <Select
-                        value={expenseFilter}
-                        onValueChange={setExpenseFilter}
-                    >
-                        <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Tipo de Gasto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            <SelectItem value="repair_supplies">Insumos Reparación</SelectItem>
-                            <SelectItem value="spare_parts">Repuestos</SelectItem>
-                            <SelectItem value="tools">Herramientas</SelectItem>
-                            <SelectItem value="other_tools">Otras Herramientas</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button
-                        variant="outline"
-                        onClick={handleExport}
-                    >
-                        <Download className="mr-2 h-4 w-4" />
-                        Exportar Excel {selectedIds.length > 0 ? `(${selectedIds.length})` : '(Todos)'}
-                    </Button>
+                    </div>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Historial de Rendiciones</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                {/* Table */}
+                <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden">
+                    <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[50px]">
+                                    <TableHead className="w-[45px]">
                                         <Checkbox
                                             checked={
                                                 renditions.data.length > 0 &&
-                                                selectedIds.length ===
-                                                    renditions.data.length
+                                                selectedIds.length === renditions.data.length
                                             }
                                             onCheckedChange={(val) =>
                                                 handleSelectAll(!!val)
                                             }
+                                            aria-label="Seleccionar todo"
                                         />
                                     </TableHead>
-                                    <TableHead>Fecha Factura</TableHead>
-                                    <TableHead>Concepto</TableHead>
-                                    <TableHead>Nº Doc</TableHead>
-                                    <TableHead>Proveedor</TableHead>
-                                    <TableHead>Dependencia</TableHead>
+                                    <TableHead className="w-[110px]">Fecha Doc.</TableHead>
+                                    <TableHead className="min-w-[180px]">Concepto</TableHead>
+                                    <TableHead>Nº Factura</TableHead>
+                                    <TableHead>Proveedor (RUT)</TableHead>
+                                    <TableHead>Destino / Carro</TableHead>
                                     <TableHead>Tipo</TableHead>
-                                    <TableHead>Monto</TableHead>
+                                    <TableHead className="text-right">Monto</TableHead>
                                     <TableHead>Estado</TableHead>
-                                    <TableHead className="text-right">
-                                        Acciones
-                                    </TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -303,57 +325,62 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                                     <TableRow>
                                         <TableCell
                                             colSpan={10}
-                                            className="h-24 text-center text-muted-foreground"
+                                            className="h-32 text-center text-muted-foreground"
                                         >
-                                            No hay rendiciones registradas.
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Receipt className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium">No hay rendiciones registradas.</p>
+                                                <p className="text-xs text-muted-foreground/70">
+                                                    Las compras y rendiciones ingresadas por taller aparecerán aquí.
+                                                </p>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     renditions.data.map((item) => (
-                                        <TableRow key={item.id}>
+                                        <TableRow
+                                            key={item.id}
+                                            className="transition-colors hover:bg-muted/40"
+                                        >
                                             <TableCell>
                                                 <Checkbox
-                                                    checked={selectedIds.includes(
-                                                        item.id,
-                                                    )}
+                                                    checked={selectedIds.includes(item.id)}
                                                     onCheckedChange={(val) =>
-                                                        handleSelect(
-                                                            item.id,
-                                                            !!val,
-                                                        )
+                                                        handleSelect(item.id, !!val)
                                                     }
+                                                    aria-label={`Seleccionar rendición #${item.id}`}
                                                 />
                                             </TableCell>
-                                            <TableCell>
-                                                {new Date(
-                                                    item.invoice_date,
-                                                ).toLocaleDateString('es-CL', {
+                                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                                {new Date(item.invoice_date).toLocaleDateString('es-CL', {
                                                     timeZone: 'UTC',
+                                                    dateStyle: 'short',
                                                 })}
                                             </TableCell>
-                                            <TableCell
-                                                className="max-w-[200px] truncate"
-                                                title={item.description}
-                                            >
-                                                {item.description}
+                                            <TableCell className="font-medium text-foreground">
+                                                <Link
+                                                    href={`/vehicles/renditions/${item.id}`}
+                                                    className="hover:text-primary transition-colors line-clamp-1"
+                                                    title={item.description}
+                                                >
+                                                    {item.description}
+                                                </Link>
                                             </TableCell>
-                                            <TableCell>
-                                                {item.invoice_number}
+                                            <TableCell className="font-mono text-xs font-semibold text-muted-foreground">
+                                                #{item.invoice_number}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
                                                 {item.supplier_rut}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-xs font-medium text-foreground">
                                                 {item.vehicle
                                                     ? `${item.vehicle.name} (${item.vehicle.company})`
                                                     : 'Taller / General'}
                                             </TableCell>
-                                            <TableCell>
-                                                {getExpenseLabel(
-                                                    item.expense_type,
-                                                )}
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {getExpenseLabel(item.expense_type)}
                                             </TableCell>
-                                            <TableCell className="font-mono">
+                                            <TableCell className="text-right font-mono text-xs font-bold text-foreground">
                                                 {formatCurrency(item.amount)}
                                             </TableCell>
                                             <TableCell>
@@ -363,13 +390,12 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    className="h-8 gap-1.5 hover:text-primary"
                                                     asChild
                                                 >
-                                                    <Link
-                                                        href={`/vehicles/renditions/${item.id}`}
-                                                    >
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        Ver
+                                                    <Link href={`/vehicles/renditions/${item.id}`}>
+                                                        <Eye className="size-3.5" />
+                                                        <span>Ver</span>
                                                     </Link>
                                                 </Button>
                                             </TableCell>
@@ -380,6 +406,7 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                         </Table>
                     </CardContent>
                 </Card>
+
                 <ActionOtpVerificationModal
                     isOpen={isOtpModalOpen}
                     onClose={closeOtpModal}

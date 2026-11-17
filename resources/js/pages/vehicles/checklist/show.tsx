@@ -86,11 +86,23 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'ok':
-                return <Badge className="bg-green-500">OK</Badge>;
+                return (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        OK
+                    </span>
+                );
             case 'next_maint':
-                return <Badge className="bg-yellow-500">Próx. Mant.</Badge>;
+                return (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                        Próx. Mant.
+                    </span>
+                );
             case 'urgent':
-                return <Badge className="bg-red-500">Urgente</Badge>;
+                return (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+                        Urgente
+                    </span>
+                );
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -99,11 +111,11 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'ok':
-                return <CheckCircle className="size-5 text-green-500" />;
+                return <CheckCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />;
             case 'next_maint':
-                return <Clock className="size-5 text-yellow-500" />;
+                return <Clock className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />;
             case 'urgent':
-                return <AlertCircle className="size-5 text-red-500" />;
+                return <AlertCircle className="size-4 text-destructive shrink-0" />;
             default:
                 return null;
         }
@@ -127,10 +139,10 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
             ]}
         >
             <Head title={`Checklist #${checklist.id}`} />
-            <div className="flex flex-1 flex-col gap-8 p-4">
+            <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 max-w-7xl">
                 <Link
                     href="/vehicles/checklists"
-                    className="flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                    className="flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <ArrowLeft className="size-4" />
                     Volver a la lista
@@ -138,28 +150,26 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
 
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-bold">
+                        <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight text-foreground">
                             Checklist #{checklist.id}
-                            <Badge
-                                variant={
+                            <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                                     checklist.status === 'Completed'
-                                        ? 'default'
-                                        : 'secondary'
-                                }
+                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                                }`}
                             >
-                                {checklist.status}
-                            </Badge>
+                                {checklist.status === 'Completed' ? 'Completado' : checklist.status}
+                            </span>
                         </h1>
-                        <p className="text-muted-foreground">
-                            {formatDate(checklist.created_at)} - Realizado por{' '}
-                            {checklist.user.name}
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            {formatDate(checklist.created_at)} • Realizado por {checklist.user.name}
                         </p>
                     </div>
                     {canReview && (
                         <Button
                             onClick={handleReview}
-                            size="lg"
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs"
                         >
                             <CheckCircle className="mr-2 size-4" />
                             Visar Checklist
@@ -168,42 +178,42 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Datos del Vehículo</CardTitle>
+                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
+                        <CardHeader className="border-b border-border/40 pb-3">
+                            <CardTitle className="text-base font-semibold text-foreground">Datos del Vehículo</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                            <div className="flex justify-between">
+                        <CardContent className="space-y-2.5 pt-4">
+                            <div className="flex justify-between text-sm">
                                 <span className="font-medium text-muted-foreground">
                                     Nombre:
                                 </span>
-                                <span>{checklist.vehicle.name}</span>
+                                <span className="font-bold text-foreground">{checklist.vehicle.name}</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex justify-between text-sm">
                                 <span className="font-medium text-muted-foreground">
                                     Patente:
                                 </span>
-                                <span>{checklist.vehicle.plate}</span>
+                                <span className="font-mono text-xs bg-muted/50 px-1.5 py-0.5 rounded border border-border/40 text-foreground">{checklist.vehicle.plate}</span>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex justify-between text-sm">
                                 <span className="font-medium text-muted-foreground">
                                     Compañía:
                                 </span>
-                                <span>{checklist.vehicle.company}</span>
+                                <span className="text-foreground">{checklist.vehicle.company}</span>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Estado de Revisión</CardTitle>
+                    <Card className="rounded-2xl border border-border/70 bg-card shadow-xs">
+                        <CardHeader className="border-b border-border/40 pb-3">
+                            <CardTitle className="text-base font-semibold text-foreground">Estado de Revisión</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3 pt-4">
                             {checklist.vehicle.company === 'Comandancia' ? (
                                 <>
-                                    <div className="flex items-center justify-between rounded border p-2">
+                                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 p-3">
                                         <div>
-                                            <p className="font-bold">
+                                            <p className="font-semibold text-sm text-foreground">
                                                 Comandante
                                             </p>
                                             <p className="text-xs text-muted-foreground">
@@ -213,21 +223,21 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                             </p>
                                         </div>
                                         {checklist.commander_reviewed_at ? (
-                                            <div className="flex items-center gap-1 text-sm text-green-600">
-                                                <CheckCircle className="size-4" />
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <CheckCircle className="size-3.5" />
                                                 {formatDate(
                                                     checklist.commander_reviewed_at,
                                                 )}
                                             </div>
                                         ) : (
-                                            <Badge variant="outline">
+                                            <Badge variant="outline" className="border-border/60 text-xs">
                                                 Pendiente
                                             </Badge>
                                         )}
                                     </div>
-                                    <div className="flex items-center justify-between rounded border p-2">
+                                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 p-3">
                                         <div>
-                                            <p className="font-bold">
+                                            <p className="font-semibold text-sm text-foreground">
                                                 Inspector M.M.
                                             </p>
                                             <p className="text-xs text-muted-foreground">
@@ -237,14 +247,14 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                             </p>
                                         </div>
                                         {checklist.inspector_reviewed_at ? (
-                                            <div className="flex items-center gap-1 text-sm text-green-600">
-                                                <CheckCircle className="size-4" />
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <CheckCircle className="size-3.5" />
                                                 {formatDate(
                                                     checklist.inspector_reviewed_at,
                                                 )}
                                             </div>
                                         ) : (
-                                            <Badge variant="outline">
+                                            <Badge variant="outline" className="border-border/60 text-xs">
                                                 Pendiente
                                             </Badge>
                                         )}
@@ -252,9 +262,9 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex items-center justify-between rounded border p-2">
+                                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 p-3">
                                         <div>
-                                            <p className="font-bold">Capitán</p>
+                                            <p className="font-semibold text-sm text-foreground">Capitán</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {checklist.captain
                                                     ? checklist.captain.name
@@ -262,21 +272,21 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                             </p>
                                         </div>
                                         {checklist.captain_reviewed_at ? (
-                                            <div className="flex items-center gap-1 text-sm text-green-600">
-                                                <CheckCircle className="size-4" />
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <CheckCircle className="size-3.5" />
                                                 {formatDate(
                                                     checklist.captain_reviewed_at,
                                                 )}
                                             </div>
                                         ) : (
-                                            <Badge variant="outline">
+                                            <Badge variant="outline" className="border-border/60 text-xs">
                                                 Pendiente
                                             </Badge>
                                         )}
                                     </div>
-                                    <div className="flex items-center justify-between rounded border p-2">
+                                    <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/20 p-3">
                                         <div>
-                                            <p className="font-bold">
+                                            <p className="font-semibold text-sm text-foreground">
                                                 Maquinista
                                             </p>
                                             <p className="text-xs text-muted-foreground">
@@ -286,14 +296,14 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                             </p>
                                         </div>
                                         {checklist.machinist_reviewed_at ? (
-                                            <div className="flex items-center gap-1 text-sm text-green-600">
-                                                <CheckCircle className="size-4" />
+                                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <CheckCircle className="size-3.5" />
                                                 {formatDate(
                                                     checklist.machinist_reviewed_at,
                                                 )}
                                             </div>
                                         ) : (
-                                            <Badge variant="outline">
+                                            <Badge variant="outline" className="border-border/60 text-xs">
                                                 Pendiente
                                             </Badge>
                                         )}
@@ -302,11 +312,11 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                             )}
 
                             {checklist.general_observations && (
-                                <div className="rounded-lg border bg-muted/50 p-4">
-                                    <h3 className="mb-2 font-medium">
+                                <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                                    <h3 className="mb-1 text-xs font-semibold text-foreground uppercase tracking-wider">
                                         Observaciones Generales
                                     </h3>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                         {checklist.general_observations}
                                     </p>
                                 </div>
@@ -315,26 +325,26 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                     </Card>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {Object.entries(groupedDetails).map(
                         ([category, details]) => (
-                            <Card key={category}>
-                                <div className="border-b bg-muted/50 px-6 py-4">
-                                    <h3 className="text-lg font-bold">
+                            <Card key={category} className="rounded-2xl border border-border/70 bg-card shadow-xs overflow-hidden">
+                                <div className="border-b border-border/50 bg-muted/20 px-5 sm:px-6 py-3.5">
+                                    <h3 className="text-base font-semibold text-foreground tracking-tight">
                                         {category}
                                     </h3>
                                 </div>
                                 <CardContent className="p-0">
-                                    <div className="divide-y">
+                                    <div className="divide-y divide-border/40">
                                         {details.map((detail) => (
                                             <div
                                                 key={detail.id}
-                                                className="flex flex-col justify-between gap-4 p-4 md:flex-row md:items-center"
+                                                className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center hover:bg-muted/20 transition-colors"
                                             >
-                                                <div className="flex-1 font-medium">
+                                                <div className="flex-1 font-medium text-sm text-foreground">
                                                     {detail.item.name}
                                                 </div>
-                                                <div className="flex min-w-[150px] items-center gap-3">
+                                                <div className="flex min-w-[140px] items-center gap-2.5">
                                                     {getStatusIcon(
                                                         detail.status,
                                                     )}
@@ -342,7 +352,7 @@ export default function ShowChecklist({ checklist, canReview }: Props) {
                                                         detail.status,
                                                     )}
                                                 </div>
-                                                <div className="flex-1 text-sm text-muted-foreground italic">
+                                                <div className="flex-1 text-xs sm:text-sm text-muted-foreground italic">
                                                     {detail.notes ||
                                                         'Sin observaciones'}
                                                 </div>

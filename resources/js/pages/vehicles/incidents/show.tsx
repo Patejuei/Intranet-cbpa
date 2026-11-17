@@ -436,39 +436,40 @@ export default function VehicleIncidentShow({
                                             {incident.is_stopped && (
                                                 <Badge
                                                     variant="destructive"
-                                                    className="px-3 py-1 text-xs tracking-tighter uppercase shadow-sm"
+                                                    className="px-2.5 py-0.5 text-xs font-bold tracking-tight uppercase shadow-xs"
                                                 >
                                                     FUERA DE SERVICIO
                                                 </Badge>
                                             )}
                                             {incident.status === 'Resolved' && (
-                                                <Badge className="border-green-500 bg-green-50 px-3 py-1 text-xs tracking-tighter text-green-700 uppercase shadow-sm hover:bg-green-100">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold tracking-tight text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 uppercase shadow-xs"
+                                                >
                                                     RESUELTO
                                                 </Badge>
                                             )}
-                                            {incident.status ===
-                                                'En Taller' && (
+                                            {incident.status === 'En Taller' && (
                                                 <Badge
-                                                    variant="secondary"
-                                                    className="bg-blue-100 px-3 py-1 text-xs tracking-tighter text-blue-700 uppercase shadow-sm hover:bg-blue-200"
+                                                    variant="outline"
+                                                    className="border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-bold tracking-tight text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 uppercase shadow-xs"
                                                 >
                                                     EN TALLER
                                                 </Badge>
                                             )}
                                             {incident.status !== 'Resolved' &&
-                                                incident.status !==
-                                                    'En Taller' &&
+                                                incident.status !== 'En Taller' &&
                                                 (!incident.reviewed_at ? (
                                                     <Badge
                                                         variant="outline"
-                                                        className="border-yellow-500 bg-yellow-50 px-3 py-1 text-xs tracking-tighter text-yellow-700 uppercase shadow-sm hover:bg-yellow-100"
+                                                        className="border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold tracking-tight text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 uppercase shadow-xs"
                                                     >
                                                         PENDIENTE REVISIÓN
                                                     </Badge>
                                                 ) : (
                                                     <Badge
                                                         variant="outline"
-                                                        className="border-blue-500 bg-blue-50 px-3 py-1 text-xs tracking-tighter text-blue-700 uppercase shadow-sm hover:bg-blue-100"
+                                                        className="border-sky-500/30 bg-sky-500/10 px-2.5 py-0.5 text-xs font-bold tracking-tight text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 uppercase shadow-xs"
                                                     >
                                                         REVISADO
                                                     </Badge>

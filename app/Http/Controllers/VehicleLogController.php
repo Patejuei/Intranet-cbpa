@@ -71,13 +71,7 @@ class VehicleLogController extends Controller
                         }
                     });
                 })
-                ->addSelect([
-                    'last_mileage' => \App\Models\VehicleLog::select('end_km')
-                        ->whereColumn('vehicle_id', 'vehicles.id')
-                        ->latest('date')
-                        ->limit(1)
-                ])
-                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number', 'last_mileage']),
+                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company']),
             'filters' => request()->only(['vehicle_id', 'movement_key']),
         ]);
     }
@@ -87,7 +81,34 @@ class VehicleLogController extends Controller
      */
     public function create()
     {
-        //
+        $user = request()->user();
+        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
+        $vehicles = \App\Models\Vehicle::query()
+            ->when($isCuarteleroComandancia, function ($q) use ($user) {
+                $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
+                $q->whereIn('id', $assignedIds);
+            })
+            ->when(!$isCuarteleroComandancia && $user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
+                $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+                $q->where(function ($query) use ($driverIds, $user) {
+                    $query->where('company', $user->company);
+                    if ($driverIds->isNotEmpty()) {
+                        $query->orWhereIn('id', $driverIds);
+                    }
+                });
+            })
+            ->addSelect([
+                'last_mileage' => \App\Models\VehicleLog::select('end_km')
+                    ->whereColumn('vehicle_id', 'vehicles.id')
+                    ->latest('date')
+                    ->limit(1)
+            ])
+            ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number', 'last_mileage']);
+
+        return Inertia::render('vehicles/logs/create', [
+            'vehicles' => $vehicles,
+        ]);
     }
 
     /**
@@ -169,7 +190,7 @@ class VehicleLogController extends Controller
             'receipt_path' => $receiptPath,
         ]);
 
-        return redirect()->back()->with('success', 'Bitácora registrada correctamente.');
+        return redirect()->route('vehicles.logs.index')->with('success', 'Bitácora registrada correctamente.');
     }
 
     /**

@@ -16,11 +16,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, FileSpreadsheet } from 'lucide-react';
+import { Plus, FileSpreadsheet, CheckCircle2, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { ReportModal } from '@/components/report-modal';
 
@@ -71,23 +72,23 @@ export default function IndexChecklist({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Historial Checklists" />
-            <div className="flex flex-1 flex-col gap-8 p-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 max-w-7xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
                             Historial de Checklists
                         </h1>
-                        <p className="text-muted-foreground">
-                            Registro de revisiones preventivas.
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            Registro de revisiones preventivas de material mayor.
                         </p>
                     </div>
-                    <div className="flex gap-2">
-                        <div className="w-[200px]">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="w-full sm:w-[220px]">
                             <Select
                                 value={filters.vehicle_id || 'all'}
                                 onValueChange={handleFilterChange}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="h-9">
                                     <SelectValue placeholder="Filtrar por Vehículo" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -108,99 +109,114 @@ export default function IndexChecklist({
 
                         {/* @ts-ignore */}
                         {canCreate('vehicles.checklist') && (
-                            <Link href="/vehicles/checklists/create">
-                                <Button>
+                            <Button asChild>
+                                <Link href="/vehicles/checklists/create">
                                     <Plus className="mr-2 size-4" />
                                     Nuevo Checklist
-                                </Button>
-                            </Link>
+                                </Link>
+                            </Button>
                         )}
                         <Button variant="outline" onClick={() => setReportModalOpen(true)}>
-                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                            <FileSpreadsheet className="mr-2 size-4" />
                             Reporte Excel
                         </Button>
                     </div>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Registros</CardTitle>
+                <Card className="rounded-2xl border border-border/70 bg-card shadow-xs overflow-hidden">
+                    <CardHeader className="px-5 sm:px-6 py-4 border-b border-border/50 flex flex-row items-center justify-between">
+                        <CardTitle className="text-base font-semibold text-foreground">Registros de Inspección</CardTitle>
+                        <Badge variant="outline" className="border-border/60 text-xs font-normal">
+                            {checklists.total ?? checklists.data.length} registros
+                        </Badge>
                     </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID</TableHead>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead>Vehículo</TableHead>
-                                    <TableHead>Realizado Por</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead className="text-right">
-                                        Acciones
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {checklists.data.map((checklist) => (
-                                    <TableRow key={checklist.id}>
-                                        <TableCell className="font-medium">
-                                            #{checklist.id}
-                                        </TableCell>
-                                        <TableCell>
-                                            {formatDate(checklist.created_at)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">
-                                                {checklist.vehicle.name}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {checklist.vehicle.company}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {checklist.user.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant={
-                                                    checklist.status ===
-                                                    'Completed'
-                                                        ? 'default'
-                                                        : 'secondary'
-                                                }
-                                            >
-                                                {checklist.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {/* @ts-ignore */}
-                                            <Link
-                                                href={`/vehicles/checklists/${checklist.id}`}
-                                            >
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-b border-border/60 bg-muted/20">
+                                        <TableHead className="w-16">ID</TableHead>
+                                        <TableHead>Fecha</TableHead>
+                                        <TableHead>Vehículo</TableHead>
+                                        <TableHead>Realizado Por</TableHead>
+                                        <TableHead>Estado</TableHead>
+                                        <TableHead className="text-right">
+                                            Acciones
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {checklists.data.map((checklist) => (
+                                        <TableRow key={checklist.id} className="transition-colors hover:bg-muted/30">
+                                            <TableCell className="font-mono text-xs font-medium text-muted-foreground">
+                                                #{checklist.id}
+                                            </TableCell>
+                                            <TableCell className="text-sm">
+                                                {formatDate(checklist.created_at)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="font-semibold text-sm text-foreground">
+                                                    {checklist.vehicle.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {checklist.vehicle.company}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-sm text-foreground">
+                                                {checklist.user.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
+                                                        checklist.status === 'Completed'
+                                                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                                                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                                                    }`}
+                                                >
+                                                    {checklist.status === 'Completed' ? (
+                                                        <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />
+                                                    ) : (
+                                                        <Clock className="size-3 text-amber-600 dark:text-amber-400" />
+                                                    )}
+                                                    {checklist.status === 'Completed' ? 'Completado' : checklist.status}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {/* @ts-ignore */}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    asChild
+                                                    className="text-xs hover:text-primary transition-colors"
                                                 >
-                                                    Ver Detalles
+                                                    <Link href={`/vehicles/checklists/${checklist.id}`}>
+                                                        Ver Detalles
+                                                    </Link>
                                                 </Button>
-                                            </Link>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {checklists.data.length === 0 && (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={6}
-                                            className="h-24 text-center text-muted-foreground"
-                                        >
-                                            No hay registros encontrados.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {checklists.data.length === 0 && (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={6}
+                                                className="h-28 text-center text-sm text-muted-foreground"
+                                            >
+                                                No hay registros encontrados.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
+
+                {checklists.links && (
+                    <div className="flex justify-center pt-2">
+                        <Pagination links={checklists.links} />
+                    </div>
+                )}
                 <ReportModal
                     isOpen={reportModalOpen}
                     onClose={() => setReportModalOpen(false)}

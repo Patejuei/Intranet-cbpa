@@ -54,66 +54,71 @@ export default function VehicleStatus({
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Operative':
-                return 'bg-green-100 text-green-800 hover:bg-green-100';
+                return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20';
             case 'Workshop':
-                return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+                return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20';
             case 'Out of Service':
-                return 'bg-red-100 text-red-800 hover:bg-red-100';
+                return 'bg-destructive/10 text-destructive border-destructive/20';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-muted text-muted-foreground border-border/40';
         }
     };
 
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'Operative':
-                return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+                return <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />;
             case 'Workshop':
-                return <Wrench className="h-4 w-4 text-yellow-600" />;
+                return <Wrench className="size-3.5 text-amber-600 dark:text-amber-400" />;
             case 'Out of Service':
-                return <AlertCircle className="h-4 w-4 text-red-600" />;
+                return <AlertCircle className="size-3.5 text-destructive" />;
             default:
                 return null;
         }
     };
 
     const VehicleCard = ({ vehicle }: { vehicle: Vehicle }) => (
-        <Link href={`/vehicles/status/${vehicle.id}`}>
-            <Card className="h-full transition-all hover:shadow-md">
-                <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-2xl font-bold">
+        <Link href={`/vehicles/status/${vehicle.id}`} className="group block h-full">
+            <Card className="h-full rounded-2xl border border-border/70 bg-card p-5 shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-sm active:scale-[0.99] flex flex-col justify-between">
+                <div>
+                    <div className="flex items-center justify-between gap-2 pb-1">
+                        <CardTitle className="text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
                             {vehicle.name}
                         </CardTitle>
-                        <Badge
-                            variant="secondary"
-                            className={getStatusColor(vehicle.status)}
+                        <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border whitespace-nowrap shrink-0 ${getStatusColor(vehicle.status)}`}
                         >
-                            <span className="flex items-center gap-1">
-                                {getStatusIcon(vehicle.status)}
-                                {vehicle.status === 'Operative'
-                                    ? 'En Servicio'
-                                    : vehicle.status === 'Workshop'
-                                      ? 'En Taller'
-                                      : 'Fuera de Servicio'}
-                            </span>
-                        </Badge>
+                            {getStatusIcon(vehicle.status)}
+                            {vehicle.status === 'Operative'
+                                ? 'En Servicio'
+                                : vehicle.status === 'Workshop'
+                                  ? 'En Taller'
+                                  : 'Fuera de Servicio'}
+                        </span>
                     </div>
-                    <CardDescription>
+                    <CardDescription className="text-xs text-muted-foreground font-medium truncate pb-3" title={`${vehicle.make} ${vehicle.model}`}>
                         {vehicle.make} {vehicle.model}
                     </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="mb-0 text-sm text-muted-foreground">
-                        PPU: {vehicle.plate}
-                    </p>
-                    <p className="mb-2 text-sm text-muted-foreground font-medium">
-                        Cupón: {vehicle.coupon_number || '-'}
-                    </p>
-                    <Button variant="outline" className="w-full">
+                    <div className="space-y-1.5 py-2 border-t border-border/40">
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">PPU:</span>
+                            <span className="font-mono font-medium text-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/40">
+                                {vehicle.plate}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Cupón:</span>
+                            <span className="font-medium text-foreground">
+                                {vehicle.coupon_number || '-'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div className="pt-3 border-t border-border/40">
+                    <Button variant="outline" size="sm" className="w-full text-xs font-medium group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all">
                         Ver Detalles
                     </Button>
-                </CardContent>
+                </div>
             </Card>
         </Link>
     );
@@ -126,13 +131,13 @@ export default function VehicleStatus({
             ]}
         >
             <Head title="Estado de Carros" />
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-7xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
                             Estado de la Flota
                         </h1>
-                        <p className="text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             {isComandancia
                                 ? auth.user?.role === 'cuartelero'
                                     ? 'Vehículos asignados agrupados por compañía.'
@@ -143,7 +148,7 @@ export default function VehicleStatus({
                     {canCreate('vehicles.status') && (
                         <Button asChild>
                             <Link href="/vehicles/create">
-                                <Plus className="mr-2 h-4 w-4" />
+                                <Plus className="mr-2 size-4" />
                                 Nuevo Vehículo
                             </Link>
                         </Button>
@@ -153,24 +158,23 @@ export default function VehicleStatus({
                 {isComandancia && groupedVehicles ? (
                     <Accordion type="multiple" className="w-full space-y-4">
                         {Object.entries(groupedVehicles).map(
-                            ([company, companyVehicles], index) => (
+                            ([company, companyVehicles]) => (
                                 <AccordionItem
                                     key={company}
                                     value={company}
-                                    className="rounded-lg border px-4"
+                                    className="rounded-2xl border border-border/70 bg-card px-4 sm:px-6 shadow-xs overflow-hidden"
                                 >
-                                    <AccordionTrigger className="py-4 hover:no-underline">
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-lg font-semibold">
+                                    <AccordionTrigger className="py-4 hover:no-underline text-foreground">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-base sm:text-lg font-semibold tracking-tight">
                                                 {company}
                                             </span>
-                                            <Badge variant="outline">
-                                                {companyVehicles.length}{' '}
-                                                Unidades
+                                            <Badge variant="outline" className="border-border/60 font-medium">
+                                                {companyVehicles.length} {companyVehicles.length === 1 ? 'Unidad' : 'Unidades'}
                                             </Badge>
                                         </div>
                                     </AccordionTrigger>
-                                    <AccordionContent className="pt-4 pb-4">
+                                    <AccordionContent className="pt-2 pb-5">
                                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                             {companyVehicles.map((vehicle) => (
                                                 <VehicleCard

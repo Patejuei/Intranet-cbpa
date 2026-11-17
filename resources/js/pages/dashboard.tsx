@@ -3,7 +3,19 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Battery, Clock, Receipt } from 'lucide-react';
+import {
+    AlertCircle,
+    AlertTriangle,
+    Battery,
+    CheckCircle2,
+    Clock,
+    FileText,
+    Receipt,
+    ShieldAlert,
+    Ticket as TicketIcon,
+    Truck,
+    Wrench,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -228,36 +240,53 @@ export default function Dashboard({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Intranet - CBPA" />
-            <div className="mx-5 my-4 rounded-xl border bg-muted/40 p-6">
-                <h2 className="mb-2 text-xl font-semibold">
-                    Bienvenido al Sistema de Intranet
-                </h2>
+            {/* Header de Bienvenida Minimalista */}
+            <div className="mx-4 sm:mx-6 my-4 sm:my-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-border/70 bg-card p-5 sm:p-6 shadow-xs">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                        Bienvenido, {auth.user?.name || 'Voluntario'}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        {auth.user?.company ? `${auth.user.company} • ` : ''}
+                        {auth.user?.role ? `${auth.user.role.toUpperCase()} • ` : ''}
+                        Intranet Institucional del Cuerpo de Bomberos de Puente Alto
+                    </p>
+                </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">
+
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 px-4 sm:px-6 md:grid-cols-2">
                 {/* Critical Stock Alert */}
                 {canSeeCriticalStock && criticalStockItems && criticalStockItems.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-red-600 bg-red-50 p-4 shadow-sm dark:bg-red-950/10 sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold text-red-700 dark:text-red-500">
-                                <span className="flex size-3 animate-pulse rounded-full bg-red-600 dark:bg-red-500" />
-                                Stock Crítico en Taller
-                            </h2>
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                                Los siguientes ítems tienen stock bajo o nulo.
-                            </p>
+                    <div className="rounded-2xl border border-destructive/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-destructive/10 p-2 text-destructive">
+                                    <AlertCircle className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Stock Crítico en Taller
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Ítems con stock bajo o nulo
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                                {criticalStockItems.length} alerta{criticalStockItems.length > 1 ? 's' : ''}
+                            </span>
                         </div>
                         <div className="space-y-2">
                             {criticalStockItems.map((item: any) => (
                                 <div
                                     key={item.id}
-                                    className="flex flex-col gap-2 rounded-lg border border-red-200 bg-white p-3 dark:border-red-900/50 dark:bg-red-950/20 sm:flex-row sm:items-center sm:justify-between"
+                                    className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-muted/40"
                                 >
-                                    <span className="font-medium">
+                                    <span className="font-medium text-sm text-foreground">
                                         {item.name}
                                     </span>
-                                    <span className="rounded bg-red-100 px-2 py-1 text-xs font-bold text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                                        Stock: {item.stock} / Min:{' '}
-                                        {item.min_stock}
+                                    <span className="rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+                                        Stock: {item.stock} / Mín: {item.min_stock}
                                     </span>
                                 </div>
                             ))}
@@ -267,35 +296,43 @@ export default function Dashboard({
 
                 {/* Petty Cash Pending (Inspector/Comandante) */}
                 {canAccessModule('vehicles.renditions') && pendingPettyCash.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-blue-600 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <Receipt className="size-5 text-blue-600" />
-                                Rendiciones Pendientes
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Rendiciones pendientes de revisión o validación.
-                            </p>
+                    <div className="rounded-2xl border border-blue-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
+                                    <Receipt className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Rendiciones Pendientes
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Rendiciones pendientes de revisión o validación
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                {pendingPettyCash.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {pendingPettyCash.map((item) => (
                                 <Link
                                     key={item.id}
                                     href={`/vehicles/renditions/${item.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-medium">
+                                            <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {item.user.name}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {item.description ||
-                                                    'Sin descripción'}
+                                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                                {item.description || 'Sin descripción'}
                                             </p>
                                         </div>
-                                        <div className="text-left sm:text-right">
-                                            <div className="font-bold text-blue-700">
+                                        <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center gap-1">
+                                            <span className="font-bold text-sm text-blue-600 dark:text-blue-400">
                                                 {new Intl.NumberFormat(
                                                     'es-CL',
                                                     {
@@ -303,10 +340,10 @@ export default function Dashboard({
                                                         currency: 'CLP',
                                                     },
                                                 ).format(item.amount)}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground">
                                                 {formatDate(item.created_at)}
-                                            </div>
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -317,43 +354,48 @@ export default function Dashboard({
 
                 {/* Pending Checklists Widget */}
                 {canAccessModule('vehicles.checklist') && pendingChecklists.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-cyan-500 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-cyan-500" />
-                                Checklists Pendientes de Revisión
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Revisiones de material mayor pendientes de
-                                firma.
-                            </p>
+                    <div className="rounded-2xl border border-cyan-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-cyan-500/10 p-2 text-cyan-600 dark:text-cyan-400">
+                                    <CheckCircle2 className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Checklists Pendientes
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Revisiones de material mayor pendientes de firma
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-600 dark:text-cyan-400">
+                                {pendingChecklists.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {pendingChecklists.map((checklist: any) => (
                                 <Link
                                     key={checklist.id}
                                     href={`/vehicles/checklists/${checklist.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-medium">
+                                            <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {checklist.vehicle.name}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Realizado por:{' '}
-                                                {checklist.user.name}
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Realizado por: {checklist.user.name}
                                             </p>
                                         </div>
-                                        <div className="text-left sm:text-right">
-                                            <div className="rounded bg-cyan-100 px-2 py-1 text-xs text-cyan-700">
+                                        <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center gap-1">
+                                            <span className="rounded-md bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
                                                 Revisar
-                                            </div>
-                                            <div className="mt-1 text-[10px] text-muted-foreground">
-                                                {formatDate(
-                                                    checklist.created_at,
-                                                )}
-                                            </div>
+                                            </span>
+                                            <span className="text-[11px] text-muted-foreground">
+                                                {formatDate(checklist.created_at)}
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -364,31 +406,39 @@ export default function Dashboard({
 
                 {/* Tickets Pendientes (Comandancia) */}
                 {isModuleEnabled('tickets') && canAccessModule('tickets') && pendingTickets.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-yellow-500 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-yellow-500" />
-                                Tickets Pendientes
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Solicitudes que requieren atención.
-                            </p>
+                    <div className="rounded-2xl border border-amber-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+                                    <TicketIcon className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Tickets Pendientes
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Solicitudes que requieren atención
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                                {pendingTickets.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {pendingTickets.map((ticket) => (
                                 <Link
                                     key={ticket.id}
                                     href={`/tickets/${ticket.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-medium">
+                                            <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {ticket.subject}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {ticket.user.company} -{' '}
-                                                {ticket.user.name}
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                {ticket.user.company} • {ticket.user.name}
                                             </p>
                                         </div>
                                         <div className="font-mono text-xs text-muted-foreground">
@@ -403,33 +453,42 @@ export default function Dashboard({
 
                 {/* Tickets Respondidos (Compañías) */}
                 {isModuleEnabled('tickets') && canAccessModule('tickets') && respondedTickets.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-blue-500 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-blue-500" />
-                                Tickets en Proceso
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Solicitudes con respuesta de Comandancia.
-                            </p>
+                    <div className="rounded-2xl border border-blue-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
+                                    <TicketIcon className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Tickets en Proceso
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Solicitudes con respuesta de Comandancia
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                {respondedTickets.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {respondedTickets.map((ticket) => (
                                 <Link
                                     key={ticket.id}
                                     href={`/tickets/${ticket.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-medium">
+                                            <p className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {ticket.subject}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-xs text-muted-foreground mt-0.5">
                                                 Estado: {ticket.status}
                                             </p>
                                         </div>
-                                        <div className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                        <div className="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
                                             Ver Respuesta
                                         </div>
                                     </div>
@@ -441,39 +500,52 @@ export default function Dashboard({
 
                 {/* Material Mayor Widgets */}
                 {canAccessModule('vehicles.status') && vehiclesStopped.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-red-500 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-red-500" />
-                                Material Fuera de Servicio
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Vehículos detenidos o en taller.
-                            </p>
+                    <div className="rounded-2xl border border-destructive/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-destructive/10 p-2 text-destructive">
+                                    <Truck className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Material Fuera de Servicio
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Vehículos detenidos o en taller
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                                {vehiclesStopped.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {vehiclesStopped.map((vehicle) => (
                                 <Link
                                     key={vehicle.id}
                                     href={`/vehicles/status/${vehicle.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="font-bold">
+                                            <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
                                                 {vehicle.name}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-xs text-muted-foreground mt-0.5">
                                                 {vehicle.company}
                                             </p>
                                         </div>
-                                        <div
-                                            className={`rounded px-2 py-1 text-xs font-medium ${vehicle.status === 'Out of Service' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}
+                                        <span
+                                            className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                                                vehicle.status === 'Out of Service'
+                                                    ? 'bg-destructive/10 text-destructive'
+                                                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                            }`}
                                         >
                                             {vehicle.status === 'Out of Service'
                                                 ? 'Fuera de Servicio'
                                                 : 'En Taller'}
-                                        </div>
+                                        </span>
                                     </div>
                                 </Link>
                             ))}
@@ -482,46 +554,51 @@ export default function Dashboard({
                 )}
 
                 {canAccessModule('vehicles.incidents') && pendingIncidents.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-orange-500 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-orange-500" />
-                                Incidencias Pendientes
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Novedades reportadas sin resolver.
-                            </p>
+                    <div className="rounded-2xl border border-amber-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+                                    <AlertTriangle className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Incidencias Pendientes
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Novedades reportadas sin resolver
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                                {pendingIncidents.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {pendingIncidents.map((incident) => (
                                 <Link
                                     key={incident.id}
                                     href={`/vehicles/incidents/${incident.id}`}
-                                    className="block"
+                                    className="block group"
                                 >
-                                    <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="line-clamp-1 font-medium">
-                                                {incident.vehicle.name} -{' '}
-                                                {incident.description}
+                                            <p className="line-clamp-1 font-medium text-sm text-foreground group-hover:text-primary transition-colors">
+                                                {incident.vehicle.name} • {incident.description}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Reportado:{' '}
-                                                {formatDate(
-                                                    incident.created_at,
-                                                )}
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Reportado: {formatDate(incident.created_at)}
                                             </p>
                                         </div>
-                                        <div className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-700">
+                                        <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
                                             {incident.severity}
-                                        </div>
+                                        </span>
                                     </div>
                                 </Link>
                             ))}
                         </div>
                     </div>
                 )}
-                {/* Documentos por Vencer */}
+
                 {/* Documentos por Vencer */}
                 {expiringDocuments.length > 0 &&
                     (auth.user.role === 'capitan' ||
@@ -529,54 +606,61 @@ export default function Dashboard({
                         auth.user.role === 'comandante' ||
                         (auth.user.role === 'inspector' &&
                             auth.user.department === 'Material Mayor')) && (
-                        <div className="rounded-xl border border-l-4 border-l-red-600 bg-card p-4 shadow-sm sm:p-6">
-                            <div className="mb-4">
-                                <h2 className="flex items-center gap-2 text-xl font-bold">
-                                    <span className="flex size-3 animate-pulse rounded-full bg-red-600" />
-                                    Vencimiento de Documentación
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Vehículos con documentación próxima a vencer
-                                    o vencida.
-                                </p>
+                        <div className="rounded-2xl border border-destructive/30 bg-card p-5 sm:p-6 shadow-xs">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="rounded-xl bg-destructive/10 p-2 text-destructive">
+                                        <ShieldAlert className="size-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                            Vencimiento de Documentación
+                                        </h2>
+                                        <p className="text-xs text-muted-foreground">
+                                            Vehículos con documentación próxima a vencer o vencida
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+                                    {expiringDocuments.length}
+                                </span>
                             </div>
-                            <div className="space-y-3">
+                            <div className="space-y-2.5">
                                 {expiringDocuments
                                     .slice(0, showAllExpires ? undefined : 5)
                                     .map((vehicle) => (
                                         <Link
                                             key={vehicle.id}
                                             href={`/vehicles/status/${vehicle.id}`}
-                                            className="block"
+                                            className="block group"
                                         >
-                                            <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                                            <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99]">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="font-bold">
+                                                    <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
                                                         {vehicle.name}
                                                     </p>
                                                     <span className="text-xs text-muted-foreground">
                                                         {vehicle.company}
                                                     </span>
                                                 </div>
-                                                <div className="flex flex-col gap-1">
+                                                <div className="flex flex-col gap-1.5 pt-1">
                                                     {vehicle.alerts.map(
                                                         (alert, idx) => (
                                                             <div
                                                                 key={idx}
-                                                                className="flex items-center justify-between text-sm"
+                                                                className="flex items-center justify-between text-xs"
                                                             >
-                                                                <span>
-                                                                    {
-                                                                        alert.label
-                                                                    }
+                                                                <span className="text-muted-foreground">
+                                                                    {alert.label}
                                                                 </span>
                                                                 <span
-                                                                    className={`font-medium ${alert.status === 'danger' ? 'text-red-600' : 'text-orange-600'}`}
+                                                                    className={`font-semibold rounded px-1.5 py-0.5 ${
+                                                                        alert.status === 'danger'
+                                                                            ? 'bg-destructive/10 text-destructive'
+                                                                            : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                                                    }`}
                                                                 >
-                                                                    {alert.date}{' '}
-                                                                    (
-                                                                    {alert.days}{' '}
-                                                                    días)
+                                                                    {alert.date} ({alert.days} días)
                                                                 </span>
                                                             </div>
                                                         ),
@@ -592,7 +676,7 @@ export default function Dashboard({
                                         onClick={() =>
                                             setShowAllExpires(!showAllExpires)
                                         }
-                                        className="text-sm font-medium text-primary hover:underline"
+                                        className="text-xs font-semibold text-primary hover:underline cursor-pointer"
                                     >
                                         {showAllExpires
                                             ? 'Ver menos'
@@ -605,17 +689,26 @@ export default function Dashboard({
 
                 {/* Specific Workshop Widget with Order Details */}
                 {canAccessModule('vehicles.workshop') && vehiclesInWorkshop.length > 0 && (
-                    <div className="rounded-xl border border-l-4 border-l-yellow-600 bg-card p-4 shadow-sm sm:p-6">
-                        <div className="mb-4">
-                            <h2 className="flex items-center gap-2 text-xl font-bold">
-                                <span className="flex size-3 rounded-full bg-yellow-600" />
-                                Unidades en Taller
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Vehículos con orden de trabajo activa.
-                            </p>
+                    <div className="rounded-2xl border border-amber-500/30 bg-card p-5 sm:p-6 shadow-xs">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
+                                    <Wrench className="size-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                                        Unidades en Taller
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Vehículos con orden de trabajo activa
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                                {vehiclesInWorkshop.length}
+                            </span>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {vehiclesInWorkshop.map((vehicle) => {
                                 const maintenance = vehicle.maintenances?.[0];
                                 return (
@@ -626,12 +719,12 @@ export default function Dashboard({
                                                 ? `/vehicles/workshop/${maintenance.id}`
                                                 : `/vehicles/status/${vehicle.id}`
                                         }
-                                        className="block"
+                                        className="block group"
                                     >
-                                        <div className="flex flex-col gap-2 rounded-lg border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-3.5 transition-all hover:bg-muted/40 hover:border-border active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <p className="font-bold">
+                                                    <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">
                                                         {vehicle.name}
                                                     </p>
                                                     <span className="text-xs text-muted-foreground">
@@ -639,27 +732,18 @@ export default function Dashboard({
                                                     </span>
                                                 </div>
                                                 {maintenance ? (
-                                                    <p className="text-xs font-medium text-yellow-700">
-                                                        {
-                                                            maintenance.workshop_name
-                                                        }{' '}
-                                                        -{' '}
-                                                        {
-                                                            maintenance.description
-                                                        }
+                                                    <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-0.5">
+                                                        {maintenance.workshop_name} - {maintenance.description}
                                                     </p>
                                                 ) : (
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
                                                         Sin detalles de orden.
                                                     </p>
                                                 )}
                                             </div>
                                             {maintenance?.entry_date && (
                                                 <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
-                                                    Ingreso:{' '}
-                                                    {formatDate(
-                                                        maintenance.entry_date,
-                                                    )}
+                                                    Ingreso: {formatDate(maintenance.entry_date)}
                                                 </div>
                                             )}
                                         </div>
@@ -672,61 +756,60 @@ export default function Dashboard({
             </div>
 
             {isModuleEnabled('batteries') && canAccessModule('batteries') && upcomingBatteries.length > 0 && (
-                <div className="rounded-xl border bg-card p-6 shadow-sm">
-                    <div className="mb-4 flex items-center gap-4">
-                        <div className="rounded-lg bg-primary/10 p-3 text-primary">
-                            <Battery className="size-6" />
+                <div className="mx-4 sm:mx-6 my-4 sm:my-6 rounded-2xl border border-border/70 bg-card p-5 sm:p-6 shadow-xs">
+                    <div className="mb-4 flex items-center gap-3">
+                        <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+                            <Battery className="size-5" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold">
+                            <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground">
                                 Próximos Cambios de Baterías
                             </h2>
-                            <p className="text-muted-foreground">
-                                Equipos que requieren atención pronto
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                                Equipos que requieren reemplazo próximo de baterías
                             </p>
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-xl border border-border/50">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b text-left font-medium text-muted-foreground">
-                                    <th className="pb-2">Fecha</th>
-                                    <th className="pb-2">Días</th>
-                                    <th className="pb-2">Equipo</th>
-                                    <th className="pb-2">Responsable</th>
-                                    <th className="pb-2">Compañía</th>
+                                <tr className="border-b border-border/60 bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                                    <th className="px-4 py-3">Fecha</th>
+                                    <th className="px-4 py-3">Días</th>
+                                    <th className="px-4 py-3">Equipo</th>
+                                    <th className="px-4 py-3">Responsable</th>
+                                    <th className="px-4 py-3">Compañía</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y">
+                            <tbody className="divide-y divide-border/40">
                                 {upcomingBatteries.map((battery) => {
                                     const days = calculateDaysRemaining(
                                         battery.next_change_date,
                                     );
                                     return (
-                                        <tr key={battery.id}>
-                                            <td className="py-3">
-                                                {formatDate(
-                                                    battery.next_change_date,
-                                                )}
+                                        <tr key={battery.id} className="transition-colors hover:bg-muted/20">
+                                            <td className="px-4 py-3 font-mono text-xs">
+                                                {formatDate(battery.next_change_date)}
                                             </td>
-                                            <td className="py-3">
+                                            <td className="px-4 py-3">
                                                 <span
-                                                    className={`rounded px-2 py-1 font-bold ${days <= 3
-                                                            ? 'bg-destructive/20 text-destructive'
+                                                    className={`rounded-md px-2 py-0.5 text-xs font-bold ${
+                                                        days <= 3
+                                                            ? 'bg-destructive/10 text-destructive'
                                                             : 'bg-muted text-muted-foreground'
-                                                        }`}
+                                                    }`}
                                                 >
                                                     {days} días
                                                 </span>
                                             </td>
-                                            <td className="py-3">
+                                            <td className="px-4 py-3 font-medium text-foreground">
                                                 {battery.equipment_type}
                                             </td>
-                                            <td className="py-3">
+                                            <td className="px-4 py-3 text-muted-foreground">
                                                 {battery.responsible_name}
                                             </td>
-                                            <td className="py-3">
+                                            <td className="px-4 py-3 text-muted-foreground">
                                                 {battery.company}
                                             </td>
                                         </tr>
@@ -739,27 +822,27 @@ export default function Dashboard({
             )}
 
             {recent.length > 0 && (
-                <div className="space-y-4 px-5">
+                <div className="space-y-3 px-4 sm:px-6 my-4 sm:my-6">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="size-4" />
-                        <h2 className="text-sm font-medium tracking-wider uppercase">
+                        <Clock className="size-4 text-primary" />
+                        <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                             Visitados Recientemente
                         </h2>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {recent.map((module) => {
                             const Icon = module.icon;
                             return (
                                 <Link
                                     key={module.key}
                                     href={module.href}
-                                    className="group relative flex items-center gap-3 overflow-hidden rounded-lg border bg-card p-4 shadow-sm transition-all hover:border-primary hover:shadow-md"
+                                    className="group relative flex items-center gap-3.5 overflow-hidden rounded-xl border border-border/70 bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-sm active:scale-[0.99]"
                                 >
-                                    <div className="rounded-md bg-primary/10 p-2 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                                    <div className="rounded-lg bg-primary/10 p-2.5 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                                         <Icon className="size-5" />
                                     </div>
                                     <div>
-                                        <h3 className="leading-none font-medium">
+                                        <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                                             {module.title}
                                         </h3>
                                     </div>
@@ -770,11 +853,11 @@ export default function Dashboard({
                 </div>
             )}
 
-            <div className="my-4 space-y-4 px-5">
-                <h2 className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
+            <div className="my-6 space-y-4 px-4 sm:px-6">
+                <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     Todos los Módulos
                 </h2>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {MODULES.filter((m) => !m.key.startsWith('admin-')).map(
                         (module) => {
                             if (!hasPermission(module)) return null;
@@ -784,17 +867,17 @@ export default function Dashboard({
                                 <Link
                                     key={module.key}
                                     href={module.href}
-                                    className="group relative overflow-hidden rounded-xl border bg-card p-6 shadow-sm transition-all hover:border-primary hover:shadow-md"
+                                    className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 sm:p-6 shadow-xs transition-all hover:border-primary/50 hover:shadow-sm active:scale-[0.99]"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="rounded-lg bg-primary/10 p-3 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                                    <div className="flex items-start gap-4">
+                                        <div className="rounded-xl bg-primary/10 p-3 text-primary transition-all duration-200 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-xs shrink-0">
                                             <Icon className="size-6" />
                                         </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold">
+                                        <div className="space-y-1 min-w-0">
+                                            <h3 className="text-base font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                                                 {module.title}
                                             </h3>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
                                                 {module.description}
                                             </p>
                                         </div>

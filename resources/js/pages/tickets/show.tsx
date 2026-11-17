@@ -1,12 +1,26 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, FileText, LifeBuoy, Paperclip, Send, User, UserCheck } from 'lucide-react';
+import {
+    AlertCircle,
+    ArrowLeft,
+    CheckCircle2,
+    Clock,
+    FileText,
+    Paperclip,
+    RotateCcw,
+    Send,
+    Tag,
+    User,
+    UserCheck,
+    X,
+} from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface UserModel {
@@ -62,11 +76,32 @@ export default function TicketShow({ ticket, categories }: PageProps) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'ABIERTO':
-                return <Badge className="bg-yellow-500">Abierto</Badge>;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 font-medium"
+                    >
+                        Abierto
+                    </Badge>
+                );
             case 'EN_PROCESO':
-                return <Badge className="bg-blue-500">En Proceso</Badge>;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 font-medium"
+                    >
+                        En Proceso
+                    </Badge>
+                );
             case 'CERRADO':
-                return <Badge variant="secondary">Cerrado</Badge>;
+                return (
+                    <Badge
+                        variant="secondary"
+                        className="border-border/60 text-muted-foreground font-medium"
+                    >
+                        Cerrado
+                    </Badge>
+                );
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -75,12 +110,19 @@ export default function TicketShow({ ticket, categories }: PageProps) {
     const getPriorityBadge = (priority: string) => {
         switch (priority) {
             case 'ALTA':
-                return <Badge variant="destructive">Alta</Badge>;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-red-500/30 bg-red-500/10 text-red-700 dark:border-red-500/35 dark:bg-red-500/20 dark:text-red-300 font-semibold"
+                    >
+                        Alta
+                    </Badge>
+                );
             case 'MEDIA':
                 return (
                     <Badge
                         variant="outline"
-                        className="border-yellow-600 text-yellow-600"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 font-medium"
                     >
                         Media
                     </Badge>
@@ -89,7 +131,7 @@ export default function TicketShow({ ticket, categories }: PageProps) {
                 return (
                     <Badge
                         variant="outline"
-                        className="border-green-600 text-green-600"
+                        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 font-medium"
                     >
                         Baja
                     </Badge>
@@ -115,278 +157,341 @@ export default function TicketShow({ ticket, categories }: PageProps) {
                 },
             ]}
         >
-            <Head title={`Ticket #${ticket.id}`} />
+            <Head title={`Ticket #${ticket.id} - ${ticket.subject}`} />
 
-            <div className="mx-auto flex h-[calc(100vh-120px)] w-full max-w-5xl flex-col gap-6 p-4">
-                <Button
-                    variant="ghost"
-                    className="w-fit gap-2 pl-0 hover:bg-transparent hover:text-primary"
-                    asChild
-                >
-                    <Link href="/tickets">
-                        <ArrowLeft className="h-4 w-4" />
-                        Volver a Soporte
-                    </Link>
-                </Button>
-
-                {/* Header Ticket Info */}
-                <div className="flex flex-col justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:p-6">
-                    <div className="flex-1 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-xl font-bold">
-                                #{ticket.id} - {ticket.subject}
-                            </h2>
-                            {getStatusBadge(ticket.status)}
-                            {getPriorityBadge(ticket.priority)}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                            <span>
-                                Categoría:{' '}
-                                <span className="font-medium text-foreground">
-                                    {ticket.category
-                                        ? categories[ticket.category] ?? ticket.category
-                                        : 'Sin categoría'}
-                                </span>
-                            </span>
-                            <span>
-                                Solicitante:{' '}
-                                <span className="font-medium text-foreground">
-                                    {ticket.user.name}
-                                </span>{' '}
-                                ({ticket.company})
-                            </span>
-                            <span>Creado el {formatDate(ticket.created_at)}</span>
-                        </div>
-                        {ticket.assigned_to && (
-                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                <UserCheck className="size-3.5" />
-                                Asignado a:{' '}
-                                <span className="font-medium text-foreground">
-                                    {ticket.assigned_to.name}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Admin Actions */}
-                    {isAdmin && (
-                        <div className="flex flex-wrap items-start gap-2">
-                            {/* Assign to me */}
-                            {!ticket.assigned_to && (
-                                <Link
-                                    href={`/tickets/${ticket.id}/assign`}
-                                    method="post"
-                                    as="button"
-                                >
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-1.5"
-                                    >
-                                        <UserCheck className="size-3.5" />
-                                        Tomar Ticket
-                                    </Button>
-                                </Link>
-                            )}
-
-                            {/* Status buttons */}
-                            {ticket.status !== 'EN_PROCESO' &&
-                                ticket.status !== 'CERRADO' && (
-                                    <Link
-                                        href={`/tickets/${ticket.id}/status`}
-                                        method="patch"
-                                        data={{ status: 'EN_PROCESO' }}
-                                        as="button"
-                                    >
-                                        <Button
-                                            variant="default"
-                                            size="sm"
-                                            className="bg-blue-600 hover:bg-blue-700"
-                                        >
-                                            Marcar En Proceso
-                                        </Button>
-                                    </Link>
-                                )}
-                            {ticket.status !== 'ABIERTO' &&
-                                ticket.status !== 'CERRADO' && (
-                                    <Link
-                                        href={`/tickets/${ticket.id}/status`}
-                                        method="patch"
-                                        data={{ status: 'ABIERTO' }}
-                                        as="button"
-                                    >
-                                        <Button variant="outline" size="sm">
-                                            Reabrir
-                                        </Button>
-                                    </Link>
-                                )}
-                            {ticket.status !== 'CERRADO' && (
-                                <Link
-                                    href={`/tickets/${ticket.id}/status`}
-                                    method="patch"
-                                    data={{ status: 'CERRADO' }}
-                                    as="button"
-                                >
-                                    <Button variant="secondary" size="sm">
-                                        Cerrar Ticket
-                                    </Button>
-                                </Link>
-                            )}
-                        </div>
-                    )}
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
+                {/* Back navigation */}
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                        asChild
+                    >
+                        <Link href="/tickets">
+                            <ArrowLeft className="size-4" />
+                            <span>Volver a la lista de tickets</span>
+                        </Link>
+                    </Button>
                 </div>
 
+                {/* Header Ticket Info Card */}
+                <Card className="rounded-2xl border border-border/70 shadow-xs">
+                    <CardContent className="p-5 sm:p-6">
+                        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+                            <div className="flex-1 space-y-3">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    <span className="text-sm font-bold text-primary">
+                                        #{ticket.id}
+                                    </span>
+                                    <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                                        {ticket.subject}
+                                    </h1>
+                                    <div className="flex items-center gap-2">
+                                        {getStatusBadge(ticket.status)}
+                                        {getPriorityBadge(ticket.priority)}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
+                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-muted-foreground">
+                                        <Tag className="size-3.5 text-muted-foreground/70" />
+                                        <span>Categoría:</span>
+                                        <span className="font-semibold text-foreground">
+                                            {ticket.category
+                                                ? categories[ticket.category] ?? ticket.category
+                                                : 'General'}
+                                        </span>
+                                    </div>
+
+                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-muted-foreground">
+                                        <User className="size-3.5 text-muted-foreground/70" />
+                                        <span>Solicitante:</span>
+                                        <span className="font-semibold text-foreground">
+                                            {ticket.user.name} ({ticket.company})
+                                        </span>
+                                    </div>
+
+                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-muted-foreground">
+                                        <Clock className="size-3.5 text-muted-foreground/70" />
+                                        <span>Creado:</span>
+                                        <span className="font-medium text-foreground">
+                                            {formatDate(ticket.created_at)}
+                                        </span>
+                                    </div>
+
+                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1 text-muted-foreground">
+                                        <UserCheck className="size-3.5 text-muted-foreground/70" />
+                                        <span>Asignado:</span>
+                                        {ticket.assigned_to ? (
+                                            <span className="font-semibold text-foreground">
+                                                {ticket.assigned_to.name}
+                                            </span>
+                                        ) : (
+                                            <span className="italic text-muted-foreground/70">
+                                                Sin asignar
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Admin Actions */}
+                            {isAdmin && (
+                                <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 shrink-0">
+                                    {/* Assign to me */}
+                                    {!ticket.assigned_to && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 shadow-xs"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/tickets/${ticket.id}/assign`}
+                                                method="post"
+                                                as="button"
+                                            >
+                                                <UserCheck className="size-3.5" />
+                                                Tomar Ticket
+                                            </Link>
+                                        </Button>
+                                    )}
+
+                                    {/* Status buttons */}
+                                    {ticket.status !== 'EN_PROCESO' &&
+                                        ticket.status !== 'CERRADO' && (
+                                            <Button
+                                                size="sm"
+                                                className="gap-1.5 shadow-xs"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/tickets/${ticket.id}/status`}
+                                                    method="patch"
+                                                    data={{ status: 'EN_PROCESO' }}
+                                                    as="button"
+                                                >
+                                                    <Clock className="size-3.5" />
+                                                    Marcar En Proceso
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    {ticket.status !== 'ABIERTO' &&
+                                        ticket.status !== 'CERRADO' && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-1.5"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/tickets/${ticket.id}/status`}
+                                                    method="patch"
+                                                    data={{ status: 'ABIERTO' }}
+                                                    as="button"
+                                                >
+                                                    <RotateCcw className="size-3.5" />
+                                                    Reabrir
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    {ticket.status !== 'CERRADO' && (
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="gap-1.5"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={`/tickets/${ticket.id}/status`}
+                                                method="patch"
+                                                data={{ status: 'CERRADO' }}
+                                                as="button"
+                                            >
+                                                <CheckCircle2 className="size-3.5 text-emerald-500" />
+                                                Cerrar Ticket
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Conversation Area */}
-                <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border bg-muted/20 p-4">
+                <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/10 p-4 sm:p-6 shadow-xs min-h-[300px]">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                        <span>Historial de Conversación</span>
+                        <span>{ticket.messages.length} {ticket.messages.length === 1 ? 'mensaje' : 'mensajes'}</span>
+                    </div>
+
                     {ticket.messages.length === 0 ? (
-                        <div className="py-10 text-center text-muted-foreground">
-                            No hay mensajes.
+                        <div className="py-12 text-center text-muted-foreground">
+                            <AlertCircle className="mx-auto size-8 text-muted-foreground/40 mb-2" />
+                            <p className="text-sm font-medium">No hay mensajes registrados aún.</p>
                         </div>
                     ) : (
-                        ticket.messages.map((msg) => {
-                            const isOwnMessage = msg.user.id === currentUser.id;
-                            return (
-                                <div
-                                    key={msg.id}
-                                    className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
-                                >
-                                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                                        <User className="size-4 text-primary" />
-                                    </div>
+                        <div className="space-y-5">
+                            {ticket.messages.map((msg) => {
+                                const isOwnMessage = msg.user.id === currentUser.id;
+                                return (
                                     <div
-                                        className={`flex max-w-[80%] flex-col ${isOwnMessage ? 'items-end' : ''}`}
+                                        key={msg.id}
+                                        className={`flex gap-3.5 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
-                                        <div className="mb-1 flex items-center gap-2">
-                                            <span className="text-xs font-medium text-muted-foreground">
-                                                {msg.user.name}
-                                            </span>
-                                            <span className="text-[10px] text-muted-foreground/70">
-                                                {new Date(
-                                                    msg.created_at,
-                                                ).toLocaleString()}
-                                            </span>
-                                        </div>
                                         <div
-                                            className={`rounded-lg p-3 text-sm ${
+                                            className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                                                 isOwnMessage
-                                                    ? 'rounded-tr-none bg-primary text-primary-foreground'
-                                                    : 'rounded-tl-none border bg-card shadow-sm'
+                                                    ? 'bg-primary text-primary-foreground shadow-xs'
+                                                    : 'bg-muted border border-border/70 text-foreground'
                                             }`}
                                         >
-                                            <p className="whitespace-pre-wrap">
-                                                {msg.message}
-                                            </p>
+                                            {msg.user.name.charAt(0).toUpperCase()}
                                         </div>
-                                        {msg.image_path && (
-                                            <div className="mt-2 text-sm">
-                                                {isImage(msg.image_path) ? (
-                                                    <div className="max-w-[200px] overflow-hidden rounded-md border">
+
+                                        <div
+                                            className={`flex max-w-[85%] sm:max-w-[75%] flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}
+                                        >
+                                            <div className="mb-1.5 flex items-center gap-2 px-1">
+                                                <span className="text-xs font-semibold text-foreground">
+                                                    {msg.user.name}
+                                                </span>
+                                                <span className="text-[11px] text-muted-foreground">
+                                                    {new Date(msg.created_at).toLocaleString([], {
+                                                        dateStyle: 'short',
+                                                        timeStyle: 'short',
+                                                    })}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                className={`rounded-2xl p-4 text-sm leading-relaxed shadow-xs ${
+                                                    isOwnMessage
+                                                        ? 'rounded-tr-xs bg-primary text-primary-foreground'
+                                                        : 'rounded-tl-xs border border-border/70 bg-card text-foreground'
+                                                }`}
+                                            >
+                                                <p className="whitespace-pre-wrap">{msg.message}</p>
+                                            </div>
+
+                                            {msg.image_path && (
+                                                <div className="mt-2.5">
+                                                    {isImage(msg.image_path) ? (
+                                                        <div className="max-w-[280px] overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs transition hover:opacity-95">
+                                                            <a
+                                                                href={`/storage/${msg.image_path}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                <img
+                                                                    src={`/storage/${msg.image_path}`}
+                                                                    alt="Adjunto"
+                                                                    className="h-auto w-full object-cover"
+                                                                />
+                                                            </a>
+                                                        </div>
+                                                    ) : (
                                                         <a
                                                             href={`/storage/${msg.image_path}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card px-3.5 py-2 text-xs font-medium text-foreground shadow-xs transition hover:bg-muted/50"
                                                         >
-                                                            <img
-                                                                src={`/storage/${msg.image_path}`}
-                                                                alt="Adjunto"
-                                                                className="h-auto w-full"
-                                                            />
+                                                            <FileText className="size-4 text-primary" />
+                                                            Ver archivo adjunto
                                                         </a>
-                                                    </div>
-                                                ) : (
-                                                    <a
-                                                        href={`/storage/${msg.image_path}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
-                                                    >
-                                                        <FileText className="size-3.5" />
-                                                        Ver archivo adjunto
-                                                    </a>
-                                                )}
-                                            </div>
-                                        )}
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
 
                 {/* Reply Form */}
-                {ticket.status !== 'CERRADO' && (
-                    <div className="rounded-xl border bg-card p-4 shadow-sm">
-                        <form onSubmit={submitReply} className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="reply-message">
-                                    Responder
-                                </Label>
-                                <Textarea
-                                    id="reply-message"
-                                    value={data.message}
-                                    onChange={(
-                                        e: React.ChangeEvent<HTMLTextAreaElement>,
-                                    ) => setData('message', e.target.value)}
-                                    placeholder="Escriba su respuesta..."
-                                    className="min-h-[100px]"
-                                    required
-                                />
-                                {errors.message && (
-                                    <p className="text-xs text-destructive">
-                                        {errors.message}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Label
-                                        htmlFor="reply-image"
-                                        className="cursor-pointer"
-                                    >
-                                        <div className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-muted">
-                                            <Paperclip className="size-3.5" />
-                                            Adjuntar archivo
-                                        </div>
+                {ticket.status !== 'CERRADO' ? (
+                    <Card className="rounded-2xl border border-border/70 shadow-xs">
+                        <CardContent className="p-4 sm:p-5">
+                            <form onSubmit={submitReply} className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="reply-message" className="text-sm font-semibold text-foreground">
+                                        Enviar Respuesta
                                     </Label>
-                                    <Input
-                                        id="reply-image"
-                                        type="file"
-                                        accept="image/*,.pdf"
-                                        onChange={(e) =>
-                                            setData(
-                                                'image',
-                                                e.target.files
-                                                    ? e.target.files[0]
-                                                    : null,
-                                            )
+                                    <Textarea
+                                        id="reply-message"
+                                        value={data.message}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                            setData('message', e.target.value)
                                         }
-                                        className="hidden"
+                                        placeholder="Escriba su respuesta o actualización sobre este ticket..."
+                                        className="min-h-[110px] rounded-xl text-sm"
+                                        required
                                     />
-                                    {data.image && (
-                                        <span className="text-xs text-muted-foreground">
-                                            {data.image.name}
-                                        </span>
+                                    {errors.message && (
+                                        <p className="text-xs text-destructive">{errors.message}</p>
                                     )}
                                 </div>
 
-                                <Button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="gap-2"
-                                >
-                                    <Send className="size-4" />
-                                    Enviar
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                )}
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
+                                    <div className="flex items-center gap-2">
+                                        <Label
+                                            htmlFor="reply-image"
+                                            className="cursor-pointer"
+                                        >
+                                            <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted">
+                                                <Paperclip className="size-3.5 text-muted-foreground" />
+                                                <span>Adjuntar imagen o PDF</span>
+                                            </div>
+                                        </Label>
+                                        <Input
+                                            id="reply-image"
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={(e) =>
+                                                setData(
+                                                    'image',
+                                                    e.target.files ? e.target.files[0] : null,
+                                                )
+                                            }
+                                            className="hidden"
+                                        />
+                                        {data.image && (
+                                            <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                                                <span className="max-w-[200px] truncate">
+                                                    {data.image.name}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setData('image', null)}
+                                                    className="hover:opacity-75"
+                                                >
+                                                    <X className="size-3" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
 
-                {ticket.status === 'CERRADO' && (
-                    <div className="rounded-xl border border-muted bg-muted/30 p-4 text-center text-sm text-muted-foreground">
-                        Este ticket ha sido cerrado. No se pueden enviar más
-                        respuestas.
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="gap-2 shadow-xs shrink-0"
+                                    >
+                                        <Send className="size-4" />
+                                        <span>Enviar Respuesta</span>
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-border/70 bg-muted/30 p-5 text-center text-sm font-medium text-muted-foreground shadow-xs">
+                        <CheckCircle2 className="size-4 text-emerald-500" />
+                        <span>Este ticket ha sido cerrado. No se admiten nuevas respuestas en este hilo.</span>
                     </div>
                 )}
             </div>

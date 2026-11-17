@@ -1,7 +1,19 @@
 import Pagination from '@/components/Pagination';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Pencil, Trash, UserPlus } from 'lucide-react';
+import { Pencil, Shield, Trash, UserPlus, Users } from 'lucide-react';
 
 interface User {
     id: number;
@@ -30,6 +42,49 @@ export default function UserIndex({ users }: PageProps) {
         }
     };
 
+    const getRoleBadge = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-purple-500/30 bg-purple-500/10 text-purple-700 dark:border-purple-500/35 dark:bg-purple-500/20 dark:text-purple-300 font-semibold uppercase text-[11px]"
+                    >
+                        Administrador
+                    </Badge>
+                );
+            case 'comandante':
+            case 'inspector':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-primary/30 bg-primary/10 text-primary dark:border-primary/40 dark:bg-primary/20 font-medium capitalize text-[11px]"
+                    >
+                        {role}
+                    </Badge>
+                );
+            case 'capitan':
+            case 'maquinista':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 font-medium capitalize text-[11px]"
+                    >
+                        {role}
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge
+                        variant="secondary"
+                        className="border-border/60 text-muted-foreground capitalize text-[11px]"
+                    >
+                        {role}
+                    </Badge>
+                );
+        }
+    };
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -39,130 +94,133 @@ export default function UserIndex({ users }: PageProps) {
         >
             <Head title="Gestión de Usuarios" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-6 p-4 sm:p-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">
-                            Gestión de Usuarios
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Administra usuarios, roles y permisos.
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Gestión de Usuarios
+                            </h1>
+                            <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                {users.data.length} {users.data.length === 1 ? 'usuario' : 'usuarios'}
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Administra cuentas de acceso, roles institucionales y permisos modulares.
                         </p>
                     </div>
-                    <Link
-                        href="/admin/users/create"
-                        className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                    >
-                        <UserPlus className="size-4" />
-                        Nuevo Usuario
-                    </Link>
+
+                    <Button asChild className="gap-2 shadow-xs shrink-0">
+                        <Link href="/admin/users/create">
+                            <UserPlus className="size-4" />
+                            <span>Nuevo Usuario</span>
+                        </Link>
+                    </Button>
                 </div>
 
-                <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50 text-muted-foreground">
-                                <tr>
-                                    <th className="px-4 py-3 font-medium">
-                                        Nombre
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Email
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Compañía
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Rol
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Permisos
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {users.data.map((user) => (
-                                    <tr
-                                        key={user.id}
-                                        className="hover:bg-muted/30"
-                                    >
-                                        <td className="px-4 py-3 font-medium">
-                                            {user.name}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {user.email}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            {user.company || '-'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span
-                                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                    user.role === 'admin'
-                                                        ? 'bg-purple-100 text-purple-700'
-                                                        : 'bg-blue-100 text-blue-700'
-                                                }`}
-                                            >
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-1">
-                                                {user.role === 'admin' ? (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        Acceso Total
-                                                    </span>
-                                                ) : (
-                                                    (Array.isArray(
-                                                        user.permissions,
-                                                    )
-                                                        ? user.permissions
-                                                        : []
-                                                    ).map((perm) => (
-                                                        <span
-                                                            key={perm}
-                                                            className="rounded border bg-background px-1.5 py-0.5 text-xs text-muted-foreground"
-                                                        >
-                                                            {perm}
+                {/* Users Table */}
+                <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden">
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="min-w-[180px]">Nombre</TableHead>
+                                    <TableHead className="min-w-[200px]">Correo Electrónico</TableHead>
+                                    <TableHead>Compañía</TableHead>
+                                    <TableHead>Rol del Sistema</TableHead>
+                                    <TableHead className="min-w-[220px]">Permisos</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {users.data.length > 0 ? (
+                                    users.data.map((u) => (
+                                        <TableRow
+                                            key={u.id}
+                                            className="transition-colors hover:bg-muted/40"
+                                        >
+                                            <TableCell className="font-semibold text-foreground">
+                                                {u.name}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground text-xs sm:text-sm">
+                                                {u.email}
+                                            </TableCell>
+                                            <TableCell className="text-xs font-medium text-foreground">
+                                                {u.company || '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {getRoleBadge(u.role)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-wrap gap-1 max-w-xs">
+                                                    {u.role === 'admin' ? (
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400">
+                                                            <Shield className="size-3" />
+                                                            Acceso Total
                                                         </span>
-                                                    ))
-                                                )}
+                                                    ) : (
+                                                        (Array.isArray(u.permissions)
+                                                            ? u.permissions
+                                                            : []
+                                                        ).map((perm) => (
+                                                            <span
+                                                                key={perm}
+                                                                className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                                                            >
+                                                                {perm}
+                                                            </span>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {currentUserRole !== 'ayudante' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                            asChild
+                                                        >
+                                                            <Link href={`/admin/users/${u.id}/edit`}>
+                                                                <Pencil className="size-3.5" />
+                                                                <span className="sr-only">Editar usuario</span>
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                    {u.id !== 1 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                                                            onClick={() => handleDelete(u.id)}
+                                                        >
+                                                            <Trash className="size-3.5" />
+                                                            <span className="sr-only">Eliminar usuario</span>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={6}
+                                            className="h-32 text-center text-muted-foreground"
+                                        >
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Users className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium">No se encontraron usuarios.</p>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex gap-2">
-                                                {currentUserRole !==
-                                                'ayudante' ? (
-                                                    <Link
-                                                        href={`/admin/users/${user.id}/edit`}
-                                                        className="rounded p-1 text-blue-600 hover:bg-blue-100"
-                                                    >
-                                                        <Pencil className="size-4" />
-                                                    </Link>
-                                                ) : null}
-                                                {user.id !== 1 && ( // Prevent deleting main admin
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                user.id,
-                                                            )
-                                                        }
-                                                        className="rounded p-1 text-red-600 hover:bg-red-100"
-                                                    >
-                                                        <Trash className="size-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
 
                 <Pagination links={users.links} />
             </div>

@@ -1,3 +1,4 @@
+import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,16 +13,19 @@ import {
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import AuthenticatedLayout from '@/layouts/app-layout';
 import { useOtpAction } from '@/hooks/use-otp-action';
-import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
+import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Building2,
+    Calendar,
     CheckCircle2,
     Clock,
     Download,
     FileText,
+    Receipt,
+    Truck,
     User,
     XCircle,
 } from 'lucide-react';
@@ -75,7 +79,7 @@ interface Props {
 
 export default function RenditionShow({ rendition, canReview, userRole, userDepartment }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        action: '',
+        action: 'approve',
         comment: '',
     });
 
@@ -83,14 +87,15 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
     const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
     const handleApprove = () => {
-        const confirmMsg = rendition.status === 'pending_inspector'
-            ? '¿Confirma aprobar esta rendición y pasarla a Secretaría de Adquisiciones?'
-            : '¿Confirma validar y aprobar esta rendición?';
+        const confirmMsg =
+            rendition.status === 'pending_inspector'
+                ? '¿Confirma visar esta rendición y derivarla a Secretaría de Adquisiciones?'
+                : '¿Confirma validar y aprobar definitivamente esta rendición?';
 
         if (confirm(confirmMsg)) {
+            setData('action', 'approve');
             performWithOtp(() => {
                 post(`/vehicles/renditions/${rendition.id}/review`, {
-                    data: { action: 'approve', comment: '' },
                     onSuccess: () => reset(),
                 });
             });
@@ -98,6 +103,7 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
     };
 
     const handleReject = () => {
+        setData('action', 'reject');
         performWithOtp(() => {
             post(`/vehicles/renditions/${rendition.id}/review`, {
                 onSuccess: () => {
@@ -131,7 +137,7 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
                 return (
                     <Badge
                         variant="outline"
-                        className="border-orange-200 text-orange-600"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 font-medium text-[11px]"
                     >
                         Pendiente Inspector
                     </Badge>
@@ -140,50 +146,64 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
                 return (
                     <Badge
                         variant="outline"
-                        className="border-blue-200 text-blue-600"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 font-medium text-[11px]"
                     >
                         Pendiente Secretaria
                     </Badge>
                 );
             case 'approved':
                 return (
-                    <Badge className="bg-green-100 text-green-700">
+                    <Badge
+                        variant="outline"
+                        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 font-semibold text-[11px]"
+                    >
                         Aprobado
                     </Badge>
                 );
             case 'rejected':
-                return <Badge variant="destructive">Rechazado</Badge>;
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-red-500/30 bg-red-500/10 text-red-700 dark:border-red-500/35 dark:bg-red-500/20 dark:text-red-300 font-semibold text-[11px]"
+                    >
+                        Rechazado
+                    </Badge>
+                );
             default:
-                return <Badge variant="secondary">{status}</Badge>;
+                return (
+                    <Badge variant="secondary" className="text-[11px]">
+                        {status}
+                    </Badge>
+                );
         }
     };
 
     const getReviewCardTitle = () => {
         if (rendition.status === 'pending_inspector') {
-            return 'Revisión Inspector Material Mayor';
+            return 'Visación Inspector de Material Mayor';
         }
         if (rendition.status === 'pending_secretary') {
-            return 'Validación Secretaria Adquisiciones';
+            return 'Validación de Secretaría de Adquisiciones';
         }
-        return 'Revisión';
+        return 'Revisión y Aprobación';
     };
 
     const getApproveButtonLabel = () => {
         if (rendition.status === 'pending_inspector') {
-            return 'Aprobar y Pasar a Secretaría';
+            return 'Aprobar y Derivar a Secretaría';
         }
         if (rendition.status === 'pending_secretary') {
-            return 'Validar y Aprobar';
+            return 'Validar y Aprobar Definitivo';
         }
-        return 'Aprobar';
+        return 'Aprobar Rendición';
     };
 
     const getStepLabel = (step: string) => {
-        return step === 'inspector' ? 'Inspector' : 'Secretaria';
+        return step === 'inspector' ? 'Inspector M.M.' : 'Secretaría de Adquisiciones';
     };
 
     const getActionLabel = (action: string) => {
-        return action === 'approved' ? 'Aprobado' : 'Rechazado';
+        return action === 'approved' ? 'Aprobó' : 'Rechazó';
     };
 
     const sortedReviews = [...(rendition.reviews || [])].sort(
@@ -202,161 +222,160 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
         >
             <Head title={`Rendición #${rendition.id}`} />
 
-            <div className="flex flex-1 flex-col gap-8 p-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild>
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 sm:p-6">
+                {/* Back button */}
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                        asChild
+                    >
                         <Link href="/vehicles/renditions">
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="size-4" />
+                            <span>Volver al listado de rendiciones</span>
                         </Link>
                     </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold">
-                            Rendición #{rendition.id}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Ingresada por {rendition.user.name} el{' '}
-                            {new Date(
-                                rendition.created_at,
-                            ).toLocaleDateString()}
-                        </p>
+                </div>
+
+                {/* Header */}
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <Receipt className="size-5" />
+                        </div>
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                    Rendición #{rendition.id}
+                                </h1>
+                                {getStatusBadge(rendition.status)}
+                            </div>
+                            <p className="text-xs text-muted-foreground sm:text-sm">
+                                Ingresada por <span className="font-semibold text-foreground">{rendition.user.name}</span> el{' '}
+                                {new Date(rendition.created_at).toLocaleDateString('es-CL', {
+                                    dateStyle: 'long',
+                                })}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-3">
-                    <div className="space-y-6 md:col-span-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>
-                                    Información de la Rendición
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {/* Left Column: Details & Attachments */}
+                    <div className="space-y-6 lg:col-span-2">
+                        <Card className="rounded-2xl border border-border/70 shadow-xs">
+                            <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+                                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                                    Detalles de la Rendición
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
+                            <CardContent className="space-y-6 px-5 pb-5 sm:px-6">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border/60 bg-muted/20 p-4">
                                     <div className="space-y-1">
-                                        <Label className="text-muted-foreground">
-                                            Estado
-                                        </Label>
-                                        <div>
-                                            {getStatusBadge(rendition.status)}
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            Monto Total Rendido
+                                        </span>
+                                        <div className="text-2xl sm:text-3xl font-bold text-foreground font-mono">
+                                            {formatCurrency(rendition.amount)}
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-muted-foreground">
-                                            Monto Total
-                                        </Label>
-                                        <div className="text-2xl font-bold">
-                                            {formatCurrency(rendition.amount)}
+                                    <div className="flex flex-wrap gap-2">
+                                        <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-3 py-1.5 text-xs">
+                                            <Calendar className="size-3.5 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Fecha Doc.:</span>
+                                            <span className="font-semibold text-foreground">
+                                                {rendition.invoice_date
+                                                    ? new Date(rendition.invoice_date).toLocaleDateString('es-CL', {
+                                                          timeZone: 'UTC',
+                                                          dateStyle: 'short',
+                                                      })
+                                                    : '-'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <Separator />
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label className="text-muted-foreground">
-                                            Unidad
-                                        </Label>
-                                        <div className="font-medium">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs">
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-muted-foreground">Destino / Carro:</span>
+                                        <p className="text-sm font-semibold text-foreground">
                                             {rendition.vehicle
                                                 ? `${rendition.vehicle.name} (${rendition.vehicle.company})`
-                                                : '-'}
-                                        </div>
+                                                : 'Taller / General'}
+                                        </p>
                                     </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">
-                                            Tipo de Gasto
-                                        </Label>
-                                        <div className="font-medium">
-                                            {getExpenseLabel(
-                                                rendition.expense_type,
-                                            )}
-                                        </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-muted-foreground">Tipo de Gasto:</span>
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {getExpenseLabel(rendition.expense_type)}
+                                        </p>
                                     </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">
-                                            Proveedor (RUT)
-                                        </Label>
-                                        <div className="font-medium">
-                                            {rendition.supplier_rut}
-                                        </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-muted-foreground">Proveedor (RUT):</span>
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {rendition.supplier_rut || '-'}
+                                        </p>
                                     </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">
-                                            Nº Factura
-                                        </Label>
-                                        <div className="font-medium">
-                                            {rendition.invoice_number}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label className="text-muted-foreground">
-                                            Fecha Factura
-                                        </Label>
-                                        <div className="font-medium">
-                                            {rendition.invoice_date
-                                                ? new Date(
-                                                      rendition.invoice_date,
-                                                  ).toLocaleDateString(
-                                                      'es-CL',
-                                                      { timeZone: 'UTC' },
-                                                  )
-                                                : '-'}
-                                        </div>
+                                    <div className="space-y-1">
+                                        <span className="font-medium text-muted-foreground">Nº Documento / Factura:</span>
+                                        <p className="text-sm font-mono font-semibold text-foreground">
+                                            #{rendition.invoice_number}
+                                        </p>
                                     </div>
                                 </div>
 
                                 <Separator />
 
                                 <div className="space-y-2">
-                                    <Label className="text-muted-foreground">
-                                        Concepto / Descripción
+                                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Concepto o Justificación del Gasto
                                     </Label>
-                                    <p className="rounded-md border bg-muted/20 p-3 text-sm">
+                                    <p className="rounded-xl border border-border/60 bg-muted/20 p-4 text-xs sm:text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                                         {rendition.description}
                                     </p>
                                 </div>
 
                                 <Separator />
 
-                                <div className="space-y-4">
-                                    <Label className="text-muted-foreground">
-                                        Archivos Adjuntos
+                                <div className="space-y-3">
+                                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Comprobantes y Facturas Digitalizadas ({rendition.attachments.length})
                                     </Label>
-                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                         {rendition.attachments.map((file) => (
                                             <div
                                                 key={file.id}
-                                                className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                                                className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-card shadow-xs transition hover:border-primary/50"
                                             >
                                                 <a
                                                     href={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="block h-full w-full transition-all hover:ring-2 hover:ring-primary"
+                                                    className="block h-full w-full"
                                                 >
-                                                    {file.mime_type?.startsWith(
-                                                        'image/',
-                                                    ) ? (
+                                                    {file.mime_type?.startsWith('image/') ? (
                                                         <img
                                                             src={`/vehicles/renditions/${rendition.id}/attachments/${file.id}`}
                                                             alt={file.file_name}
-                                                            className="h-full w-full object-cover"
+                                                            className="h-full w-full object-cover transition group-hover:scale-105"
                                                         />
                                                     ) : (
-                                                        <div className="flex h-full flex-col items-center justify-center p-2 text-center text-xs text-muted-foreground">
-                                                            <FileText className="mb-2 h-8 w-8" />
-                                                            {file.file_name}
+                                                        <div className="flex h-full flex-col items-center justify-center p-3 text-center text-xs text-muted-foreground">
+                                                            <FileText className="mb-2 size-8 text-primary opacity-80" />
+                                                            <span className="line-clamp-2 text-[11px] font-medium text-foreground">
+                                                                {file.file_name}
+                                                            </span>
                                                         </div>
                                                     )}
                                                 </a>
                                                 <a
                                                     href={`/vehicles/renditions/${rendition.id}/attachments/${file.id}?download=1`}
                                                     download={file.file_name}
-                                                    className="absolute bottom-2 right-2 rounded-md bg-background/80 p-1.5 text-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-background group-hover:opacity-100"
-                                                    title="Descargar"
+                                                    className="absolute bottom-2 right-2 rounded-lg bg-background/90 p-1.5 text-foreground opacity-0 shadow-xs backdrop-blur-sm transition hover:bg-background group-hover:opacity-100"
+                                                    title="Descargar archivo"
                                                 >
-                                                    <Download className="h-4 w-4" />
+                                                    <Download className="size-4" />
                                                 </a>
                                             </div>
                                         ))}
@@ -366,165 +385,127 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
                         </Card>
                     </div>
 
+                    {/* Right Column: Actions & History */}
                     <div className="space-y-6">
                         {canReview && (
-                            <Card className="border-blue-100 bg-blue-50/50">
-                                <CardHeader>
-                                    <CardTitle className="text-base">
+                            <Card className="rounded-2xl border border-primary/25 bg-primary/5 shadow-xs">
+                                <CardHeader className="pb-3 pt-5 px-5 sm:px-6">
+                                    <CardTitle className="text-sm font-semibold uppercase tracking-wider text-foreground">
                                         {getReviewCardTitle()}
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="flex flex-col gap-2">
+                                <CardContent className="space-y-3 px-5 pb-5 sm:px-6">
                                     <Button
-                                        className="w-full bg-green-600 hover:bg-green-700"
-                                        onClick={() => {
-                                            setData('action', 'approve');
-                                            handleApprove();
-                                        }}
+                                        className="w-full gap-2 shadow-xs"
+                                        onClick={handleApprove}
                                         disabled={processing}
                                     >
-                                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                                        {getApproveButtonLabel()}
+                                        <CheckCircle2 className="size-4" />
+                                        <span>{getApproveButtonLabel()}</span>
                                     </Button>
                                     <Button
-                                        variant="destructive"
-                                        className="w-full"
-                                        onClick={() => {
-                                            setData('action', 'reject');
-                                            setIsRejectDialogOpen(true);
-                                        }}
+                                        variant="outline"
+                                        className="w-full gap-2 border-red-500/30 text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:border-red-500/40 dark:text-red-400"
+                                        onClick={() => setIsRejectDialogOpen(true)}
                                         disabled={processing}
                                     >
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        Rechazar
+                                        <XCircle className="size-4" />
+                                        <span>Rechazar Rendición</span>
                                     </Button>
                                 </CardContent>
                             </Card>
                         )}
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base">
-                                    Historial
+                        {/* History Timeline */}
+                        <Card className="rounded-2xl border border-border/70 shadow-xs">
+                            <CardHeader className="pb-3 pt-5 px-5 sm:px-6 border-b border-border/60">
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                    <Clock className="size-4 text-primary" />
+                                    <span>Trazabilidad y Visaciones</span>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <div className="space-y-6 border-l-2 border-muted pl-4">
-                                    {/* Entry: Ingresado */}
+                            <CardContent className="p-5 sm:p-6">
+                                <div className="space-y-5 border-l-2 border-border/60 pl-4">
+                                    {/* Entry */}
                                     <div className="relative">
-                                        <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-primary ring-4 ring-background" />
-                                        <p className="text-sm font-medium">
-                                            Ingresado
+                                        <div className="absolute -left-[23px] top-1 size-3.5 rounded-full bg-primary border-2 border-background" />
+                                        <p className="text-xs font-bold text-foreground">
+                                            Rendición Ingresada
                                         </p>
-                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <User className="h-3 w-3" />{' '}
+                                        <p className="text-[11px] text-muted-foreground">
                                             {rendition.user.name}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <Clock className="h-3 w-3" />{' '}
-                                            {new Date(
-                                                rendition.created_at,
-                                            ).toLocaleString()}
-                                        </div>
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground/70">
+                                            {new Date(rendition.created_at).toLocaleString('es-CL', {
+                                                dateStyle: 'short',
+                                                timeStyle: 'short',
+                                            })}
+                                        </p>
                                     </div>
 
-                                    {/* Dynamic reviews */}
+                                    {/* Reviews */}
                                     {sortedReviews.map((review) => (
                                         <div key={review.id} className="relative">
                                             <div
-                                                className={`absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full ring-4 ring-background ${review.action === 'approved' ? 'bg-green-500' : 'bg-red-500'}`}
+                                                className={`absolute -left-[23px] top-1 size-3.5 rounded-full border-2 border-background ${
+                                                    review.action === 'approved' ? 'bg-emerald-500' : 'bg-red-500'
+                                                }`}
                                             />
-                                            <p className="text-sm font-medium">
+                                            <p className="text-xs font-bold text-foreground">
                                                 {getStepLabel(review.step)} — {getActionLabel(review.action)}
                                             </p>
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                <User className="h-3 w-3" />{' '}
+                                            <p className="text-[11px] text-muted-foreground">
                                                 {review.user.name}
-                                            </div>
+                                            </p>
                                             {review.comment && (
-                                                <div className="flex items-center gap-1 text-xs text-red-500">
-                                                    {review.comment}
-                                                </div>
+                                                <p className="mt-1 rounded-md bg-muted/40 p-2 text-xs text-destructive">
+                                                    "{review.comment}"
+                                                </p>
                                             )}
-                                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                <Clock className="h-3 w-3" />{' '}
-                                                {new Date(
-                                                    review.created_at,
-                                                ).toLocaleString()}
-                                            </div>
+                                            <p className="text-[10px] text-muted-foreground/70">
+                                                {new Date(review.created_at).toLocaleString('es-CL', {
+                                                    dateStyle: 'short',
+                                                    timeStyle: 'short',
+                                                })}
+                                            </p>
                                         </div>
                                     ))}
-
-                                    {/* Pending steps */}
-                                    {rendition.status === 'pending_inspector' && (
-                                        <>
-                                            <div className="relative">
-                                                <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
-                                                <p className="text-sm font-medium text-muted-foreground">
-                                                    Revisión Inspector
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Esperando...
-                                                </p>
-                                            </div>
-                                            <div className="relative">
-                                                <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
-                                                <p className="text-sm font-medium text-muted-foreground">
-                                                    Validación Secretaria
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Esperando...
-                                                </p>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {rendition.status === 'pending_secretary' && (
-                                        <div className="relative">
-                                            <div className="absolute -left-[21px] flex h-3 w-3 items-center justify-center rounded-full bg-gray-300 ring-4 ring-background" />
-                                            <p className="text-sm font-medium text-muted-foreground">
-                                                Validación Secretaria
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Esperando...
-                                            </p>
-                                        </div>
-                                    )}
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 </div>
 
-                <Dialog
-                    open={isRejectDialogOpen}
-                    onOpenChange={setIsRejectDialogOpen}
-                >
-                    <DialogContent>
+                {/* Reject Dialog */}
+                <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Rechazar Rendición</DialogTitle>
-                            <DialogDescription>
-                                Indique el motivo del rechazo.
+                            <DialogTitle className="text-lg font-bold text-destructive flex items-center gap-2">
+                                <XCircle className="size-5" />
+                                <span>Rechazar Rendición</span>
+                            </DialogTitle>
+                            <DialogDescription className="text-xs text-muted-foreground">
+                                Ingrese el motivo o causal del rechazo para que el usuario pueda corregir la rendición.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-2">
-                            <Label>Motivo</Label>
+
+                        <div className="grid gap-2 py-2">
+                            <Label htmlFor="comment" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Motivo del Rechazo <span className="text-destructive">*</span>
+                            </Label>
                             <Textarea
+                                id="comment"
                                 value={data.comment}
-                                onChange={(e) =>
-                                    setData('comment', e.target.value)
-                                }
-                                placeholder="Ej: Falta información..."
+                                onChange={(e) => setData('comment', e.target.value)}
+                                placeholder="Indique las observaciones o motivos por los que no procede la rendición..."
+                                className="min-h-[100px] text-sm"
+                                required
                             />
-                            {errors.comment && (
-                                <p className="text-sm text-red-500">
-                                    {errors.comment}
-                                </p>
-                            )}
                         </div>
-                        <DialogFooter>
+
+                        <DialogFooter className="gap-2">
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 onClick={() => setIsRejectDialogOpen(false)}
                             >
                                 Cancelar
@@ -532,13 +513,14 @@ export default function RenditionShow({ rendition, canReview, userRole, userDepa
                             <Button
                                 variant="destructive"
                                 onClick={handleReject}
-                                disabled={processing}
+                                disabled={processing || !data.comment.trim()}
                             >
                                 Confirmar Rechazo
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
                 <ActionOtpVerificationModal
                     isOpen={isOtpModalOpen}
                     onClose={closeOtpModal}

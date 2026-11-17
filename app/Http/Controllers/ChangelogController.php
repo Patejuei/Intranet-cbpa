@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.10',
+                'date' => '17-11-2026',
+                'changes' => [
+                    'Modernización de Diseño de los componentes visuales',
+                    'Creación de ruta independiente para ingreso de incidencias y bitácoras'
+                ],
+            ],
+            [
                 'version' => 'v1.1.9',
                 'date' => '17-11-2026',
                 'changes' => [

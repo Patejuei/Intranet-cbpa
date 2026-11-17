@@ -107,13 +107,13 @@ export default function VehicleShow({
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Operative':
-                return 'bg-green-100 text-green-800';
+                return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20';
             case 'Workshop':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20';
             case 'Out of Service':
-                return 'bg-red-100 text-red-800';
+                return 'bg-destructive/10 text-destructive border border-destructive/20';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-muted text-muted-foreground border border-border/40';
         }
     };
 
@@ -203,15 +203,15 @@ export default function VehicleShow({
                         <div>
                             <h1 className="flex items-center gap-3 text-2xl font-bold">
                                 {vehicle.name}
-                                <Badge
-                                    className={getStatusColor(vehicle.status)}
+                                <span
+                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap shrink-0 ${getStatusColor(vehicle.status)}`}
                                 >
                                     {vehicle.status === 'Operative'
                                         ? 'En Servicio'
                                         : vehicle.status === 'Workshop'
                                           ? 'En Taller'
                                           : 'Fuera de Servicio'}
-                                </Badge>
+                                </span>
                             </h1>
                             <p className="text-muted-foreground">
                                 {vehicle.company} - {vehicle.make}{' '}
@@ -398,7 +398,7 @@ export default function VehicleShow({
                     </div>
                 </div>
 
-                {/* Document Alerts */}
+                {/* Document Alerts - Opción 1: Superficie Semántica en Cards */}
                 {documents.some(
                     (d) =>
                         d.check?.status === 'expired' ||
@@ -408,45 +408,54 @@ export default function VehicleShow({
                         {documents.map((doc, idx) => {
                             if (!doc.check || doc.check.status === 'ok')
                                 return null;
+                            const isExpired = doc.check.status === 'expired';
                             return (
                                 <Card
                                     key={idx}
-                                    className={`border-l-4 ${doc.check.status === 'expired' ? 'border-l-red-500 bg-red-50' : 'border-l-yellow-500 bg-yellow-50'}`}
+                                    className={`rounded-2xl border p-5 shadow-xs transition-all ${
+                                        isExpired
+                                            ? 'border-red-500/25 dark:border-red-500/35 bg-card hover:border-red-500/50'
+                                            : 'border-amber-500/25 dark:border-amber-500/35 bg-card hover:border-amber-500/50'
+                                    }`}
                                 >
-                                    <CardContent className="pt-4">
-                                        <div className="flex items-start gap-3">
-                                            <AlertCircle
-                                                className={`h-5 w-5 ${doc.check.status === 'expired' ? 'text-red-600' : 'text-yellow-600'}`}
-                                            />
-                                            <div>
-                                                <p
-                                                    className={`font-semibold ${doc.check.status === 'expired' ? 'text-red-700' : 'text-yellow-700'}`}
+                                    <div className="flex items-start gap-3.5">
+                                        <div
+                                            className={`rounded-xl p-2.5 shrink-0 ${
+                                                isExpired
+                                                    ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                    : 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                                            }`}
+                                        >
+                                            <AlertCircle className="size-5" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p
+                                                className={`text-sm font-semibold tracking-tight ${
+                                                    isExpired
+                                                        ? 'text-red-600 dark:text-red-400'
+                                                        : 'text-amber-600 dark:text-amber-400'
+                                                }`}
+                                            >
+                                                {doc.label}{' '}
+                                                {isExpired ? 'Vencido' : 'Por Vencer'}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Vence: {formatDate(doc.date!)}
+                                            </p>
+                                            <div className="mt-2.5">
+                                                <span
+                                                    className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold font-mono border ${
+                                                        isExpired
+                                                            ? 'border-red-500/20 dark:border-red-500/35 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                            : 'border-amber-500/20 dark:border-amber-500/35 bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                                    }`}
                                                 >
-                                                    {doc.label}{' '}
-                                                    {doc.check.status ===
-                                                    'expired'
-                                                        ? 'Vencido'
-                                                        : 'Por Vencer'}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Vence:{' '}
-                                                    {formatDate(doc.date!)}{' '}
-                                                    <span className="font-medium">
-                                                        (
-                                                        {Math.abs(
-                                                            doc.check.days,
-                                                        )}{' '}
-                                                        días{' '}
-                                                        {doc.check.status ===
-                                                        'expired'
-                                                            ? 'atrasado'
-                                                            : 'restantes'}
-                                                        )
-                                                    </span>
-                                                </p>
+                                                    {Math.abs(doc.check.days)} días{' '}
+                                                    {isExpired ? 'atrasado' : 'restantes'}
+                                                </span>
                                             </div>
                                         </div>
-                                    </CardContent>
+                                    </div>
                                 </Card>
                             );
                         })}
@@ -455,9 +464,9 @@ export default function VehicleShow({
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Main Info */}
-                    <Card className="md:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Información del Vehículo</CardTitle>
+                    <Card className="md:col-span-2 rounded-2xl border border-border/70 bg-card shadow-xs">
+                        <CardHeader className="border-b border-border/40 pb-3">
+                            <CardTitle className="text-base font-semibold text-foreground">Información del Vehículo</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -524,22 +533,21 @@ export default function VehicleShow({
                             {allProps.auth?.user &&
                                 (allProps.auth.user.company === 'Comandancia' ||
                                     allProps.auth.user.role === 'admin') && (
-                                    <div className="mt-4 rounded-md bg-blue-50 p-4">
-                                        <div className="mb-1 flex items-center gap-2 text-blue-800">
-                                            <DollarSign className="h-5 w-5" />
-                                            <span className="font-bold">
+                                    <div className="mt-5 rounded-2xl border border-primary/30 bg-primary/5 p-4 sm:p-5 shadow-xs">
+                                        <div className="mb-1.5 flex items-center gap-2 text-primary">
+                                            <DollarSign className="size-5" />
+                                            <span className="font-semibold text-sm">
                                                 Inversión Total en Mantenimiento
                                             </span>
                                         </div>
-                                        <p className="text-2xl font-bold text-blue-900">
+                                        <p className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                                             $
                                             {(
                                                 totalMaintenanceCost || 0
                                             ).toLocaleString('es-CL')}
                                         </p>
-                                        <p className="mt-1 text-xs text-blue-700">
-                                            Suma histórica de todas los trabajos
-                                            realizados.
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            Suma histórica de todos los trabajos realizados.
                                         </p>
                                     </div>
                                 )}
@@ -549,44 +557,45 @@ export default function VehicleShow({
                     {/* Status Details Widget */}
                     <div className="space-y-6">
                         {vehicle.status === 'Operative' && (
-                            <Card className="border-green-200 bg-green-50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2 text-green-800">
-                                        <CheckCircle2 className="h-5 w-5" />
+                            <Card className="rounded-2xl border border-emerald-500/25 bg-card p-5 shadow-xs">
+                                <CardHeader className="p-0 pb-3">
+                                    <CardTitle className="flex items-center gap-2 text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                        <CheckCircle2 className="size-5 shrink-0" />
                                         Unidad Operativa
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-green-700">
-                                        La unidad se encuentra operativa y
-                                        disponible para el servicio.
+                                <CardContent className="p-0">
+                                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                                        La unidad se encuentra operativa y disponible para el servicio.
                                     </p>
                                 </CardContent>
                             </Card>
                         )}
 
                         {vehicle.status === 'Out of Service' && activeIssue && (
-                            <Card className="border-red-200 bg-red-50">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2 text-red-800">
-                                        <AlertCircle className="h-5 w-5" />
+                            <Card className="rounded-2xl border border-red-500/25 dark:border-red-500/35 bg-card p-5 shadow-xs">
+                                <CardHeader className="p-0 pb-3">
+                                    <CardTitle className="flex items-center gap-2 text-base font-bold text-red-600 dark:text-red-400">
+                                        <AlertCircle className="size-5 shrink-0" />
                                         Fuera de Servicio
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className="text-sm font-medium text-red-900">
+                                <CardContent className="p-0 space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                         Motivo:
                                     </p>
-                                    <p className="text-sm text-red-800">
+                                    <p className="text-sm text-foreground leading-relaxed">
                                         {activeIssue.description}
                                     </p>
-                                    <div className="mt-2 flex gap-2 text-xs text-red-700">
-                                        <Calendar className="h-3 w-3" />{' '}
-                                        {activeIssue.date
-                                            ? formatDate(activeIssue.date)
-                                            : formatDate(
-                                                  activeIssue.created_at,
-                                              )}
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <Calendar className="size-3.5" />
+                                        <span>
+                                            {activeIssue.date
+                                                ? formatDate(activeIssue.date)
+                                                : formatDate(
+                                                      activeIssue.created_at,
+                                                  )}
+                                        </span>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -597,10 +606,10 @@ export default function VehicleShow({
                                 !activeIssue &&
                                 activeMaintenance)) &&
                             (activeMaintenance ? (
-                                <Card className="border-yellow-200 bg-yellow-50">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                            <Wrench className="h-5 w-5" />
+                                <Card className="rounded-2xl border border-amber-500/25 bg-card p-5 shadow-xs">
+                                    <CardHeader className="p-0 pb-3">
+                                        <CardTitle className="flex items-center gap-2 text-base font-bold text-amber-600 dark:text-amber-400">
+                                            <Wrench className="size-5 shrink-0" />
                                             En Taller (
                                             {activeMaintenance.status ===
                                             'Scheduled'
@@ -609,22 +618,24 @@ export default function VehicleShow({
                                             )
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent className="space-y-4">
+                                    <CardContent className="p-0 space-y-4">
                                         <div>
-                                            <p className="text-sm font-semibold text-yellow-900">
+                                            <p className="text-sm font-semibold text-foreground">
                                                 {
                                                     activeMaintenance.workshop_name
                                                 }
                                             </p>
-                                            <p className="text-sm text-yellow-800">
+                                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-relaxed">
                                                 {activeMaintenance.description}
                                             </p>
-                                            <div className="mt-1 flex gap-2 text-xs text-yellow-700">
-                                                <Calendar className="h-3 w-3" />{' '}
-                                                Ingreso:{' '}
-                                                {formatDate(
-                                                    activeMaintenance.entry_date,
-                                                )}
+                                            <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                <Calendar className="size-3.5" />
+                                                <span>
+                                                    Ingreso:{' '}
+                                                    {formatDate(
+                                                        activeMaintenance.entry_date,
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
 
@@ -632,8 +643,8 @@ export default function VehicleShow({
                                         {activeMaintenance.tasks &&
                                             activeMaintenance.tasks.length >
                                                 0 && (
-                                                <div className="rounded-md bg-white/50 p-3">
-                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-yellow-900 uppercase">
+                                                <div className="rounded-xl border border-border/50 bg-muted/20 p-3.5">
+                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                                                         Tareas
                                                     </h4>
                                                     <div className="space-y-2">
@@ -643,18 +654,18 @@ export default function VehicleShow({
                                                                     key={
                                                                         task.id
                                                                     }
-                                                                    className="flex items-start gap-2 text-sm"
+                                                                    className="flex items-start gap-2 text-xs sm:text-sm"
                                                                 >
                                                                     {task.is_completed ? (
-                                                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600" />
+                                                                        <CheckCircle2 className="mt-0.5 size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                                                                     ) : (
-                                                                        <div className="mt-0.5 h-4 w-4 rounded-full border-2 border-slate-300" />
+                                                                        <div className="mt-0.5 size-3.5 rounded-full border-2 border-border shrink-0" />
                                                                     )}
                                                                     <span
                                                                         className={
                                                                             task.is_completed
-                                                                                ? 'text-slate-700 line-through opacity-70'
-                                                                                : 'font-medium text-slate-800'
+                                                                                ? 'text-muted-foreground line-through opacity-70'
+                                                                                : 'font-medium text-foreground'
                                                                         }
                                                                     >
                                                                         {
@@ -672,11 +683,11 @@ export default function VehicleShow({
                                         {activeMaintenance.issues &&
                                             activeMaintenance.issues.length >
                                                 0 && (
-                                                <div className="rounded-md bg-white/50 p-3">
-                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-yellow-900 uppercase">
+                                                <div className="rounded-xl border border-border/50 bg-muted/20 p-3.5">
+                                                    <h4 className="mb-2 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                                                         Incidencias Asociadas
                                                     </h4>
-                                                    <ul className="list-disc pl-4 text-sm text-slate-700">
+                                                    <ul className="list-disc pl-4 text-xs sm:text-sm text-foreground space-y-1">
                                                         {activeMaintenance.issues.map(
                                                             (issue) => (
                                                                 <li
@@ -689,7 +700,7 @@ export default function VehicleShow({
                                                                     }
                                                                     {issue.status ===
                                                                         'Resolved' && (
-                                                                        <span className="ml-2 text-xs font-bold text-green-600">
+                                                                        <span className="ml-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                                                             (Solucionado)
                                                                         </span>
                                                                     )}
@@ -702,15 +713,15 @@ export default function VehicleShow({
                                     </CardContent>
                                 </Card>
                             ) : (
-                                <Card className="border-yellow-200 bg-yellow-50">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                            <Wrench className="h-5 w-5" />
+                                <Card className="rounded-2xl border border-amber-500/25 bg-card p-5 shadow-xs">
+                                    <CardHeader className="p-0 pb-3">
+                                        <CardTitle className="flex items-center gap-2 text-base font-bold text-amber-600 dark:text-amber-400">
+                                            <Wrench className="size-5 shrink-0" />
                                             En Taller
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-yellow-800">
+                                    <CardContent className="p-0">
+                                        <p className="text-xs sm:text-sm text-muted-foreground">
                                             No hay información detallada de la
                                             orden de trabajo.
                                         </p>

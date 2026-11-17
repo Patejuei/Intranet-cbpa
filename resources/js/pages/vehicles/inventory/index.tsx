@@ -1,6 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -18,19 +26,21 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { usePermissions } from '@/hooks/use-permissions';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Download, Edit, Plus, Search, Trash2, Clock, Save } from 'lucide-react';
+import {
+    AlertTriangle,
+    Clock,
+    Download,
+    Edit,
+    Package,
+    Plus,
+    Save,
+    Search,
+    Trash2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { usePermissions } from '@/hooks/use-permissions';
 
 declare let route: any;
 
@@ -49,7 +59,7 @@ interface InventoryItem {
 interface Props {
     items: {
         data: InventoryItem[];
-        links: any[]; // Pagination links
+        links: any[];
     };
     filters: {
         search?: string;
@@ -98,13 +108,15 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
 
     const handleSaveRate = () => {
         setIsSavingRate(true);
-        router.post('/vehicles/inventory/settings', {
-            default_hour_rate: hourRate
-        }, {
-            onSuccess: () => setIsSavingRate(false),
-            onError: () => setIsSavingRate(false),
-            preserveScroll: true
-        });
+        router.post(
+            '/vehicles/inventory/settings',
+            { default_hour_rate: hourRate },
+            {
+                onSuccess: () => setIsSavingRate(false),
+                onError: () => setIsSavingRate(false),
+                preserveScroll: true,
+            },
+        );
     };
 
     const formatCurrency = (amount: number) => {
@@ -114,255 +126,302 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
         }).format(amount);
     };
 
+    const getCategoryBadge = (cat: string) => {
+        switch (cat) {
+            case 'insumo':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300 font-medium text-[11px]"
+                    >
+                        Insumo
+                    </Badge>
+                );
+            case 'herramienta':
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-purple-500/30 bg-purple-500/10 text-purple-700 dark:border-purple-500/35 dark:bg-purple-500/20 dark:text-purple-300 font-medium text-[11px]"
+                    >
+                        Herramienta
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 font-medium text-[11px]"
+                    >
+                        Repuesto
+                    </Badge>
+                );
+        }
+    };
+
     return (
         <AuthenticatedLayout
             breadcrumbs={[
                 { title: 'Panel Principal', href: '/dashboard' },
                 {
-                    title: 'Bodega',
+                    title: 'Bodega Material Mayor',
                     href: '/vehicles/inventory',
                 },
             ]}
         >
             <Head title="Bodega Material Mayor" />
 
-            <div className="flex flex-1 flex-col gap-8 p-4">
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <div className="flex flex-col gap-6 p-4 sm:p-6">
+                {/* Header Section */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold">
-                            Bodega Material Mayor
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Gestión de repuestos, insumos y control de stock.
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Bodega Material Mayor
+                            </h1>
+                            <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                {items.data.length} ítems
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Control de repuestos, insumos, inventario y stock crítico para mantenimiento.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" asChild>
+
+                    <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                        <Button variant="outline" size="sm" asChild className="gap-2 shadow-xs">
                             <a href="/vehicles/inventory/export">
-                                <Download className="mr-2 h-4 w-4" />
-                                Descargar Excel
+                                <Download className="size-4" />
+                                <span>Exportar Excel</span>
                             </a>
                         </Button>
-                        {canCreate('vehicles.inventory') && (
-                            <Button asChild>
-                                <Link href="/vehicles/inventory/create">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Ítem
-                                </Link>
+
+                        {canConfigureHH() && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsSettingsModalOpen(true)}
+                                className="gap-2 shadow-xs"
+                            >
+                                <Clock className="size-4" />
+                                <span>Ajustes Taller</span>
                             </Button>
                         )}
-                        {canConfigureHH() && (
-                            <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
-                                <Clock className="mr-2 h-4 w-4" />
-                                Ajustes Taller
+
+                        {canCreate('vehicles.inventory') && (
+                            <Button size="sm" asChild className="gap-2 shadow-xs">
+                                <Link href="/vehicles/inventory/create">
+                                    <Plus className="size-4" />
+                                    <span>Nuevo Ítem</span>
+                                </Link>
                             </Button>
                         )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm">
-                    <div className="relative flex-1">
-                        <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                {/* Filters */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="relative w-full max-w-md">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                         <Input
                             placeholder="Buscar por nombre, SKU o ubicación..."
-                            className="pl-9"
+                            className="h-9 pl-9 pr-4 text-sm"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <Select
-                        value={category}
-                        onValueChange={handleCategoryChange}
-                    >
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todas</SelectItem>
-                            <SelectItem value="insumo">Insumos</SelectItem>
-                            <SelectItem value="repuesto">Repuestos</SelectItem>
-                            <SelectItem value="herramienta">Herramientas</SelectItem>
-                        </SelectContent>
-                    </Select>
+
+                    <div className="w-full sm:w-[200px] shrink-0">
+                        <Select
+                            value={category}
+                            onValueChange={handleCategoryChange}
+                        >
+                            <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Filtrar categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las categorías</SelectItem>
+                                <SelectItem value="insumo">Insumos</SelectItem>
+                                <SelectItem value="repuesto">Repuestos</SelectItem>
+                                <SelectItem value="herramienta">Herramientas</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
-                                <TableHead className="w-[100px]">SKU</TableHead>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Categoría</TableHead>
-                                <TableHead>Unidad</TableHead>
-                                <TableHead className="text-right">
-                                    Stock
-                                </TableHead>
-                                <TableHead className="text-right">
-                                    Costo Unit.
-                                </TableHead>
-                                <TableHead>Ubicación</TableHead>
-                                <TableHead className="text-right">
-                                    Acciones
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {items.data.length === 0 ? (
+                {/* Table */}
+                <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden">
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell
-                                        colSpan={8}
-                                        className="h-24 text-center text-muted-foreground"
-                                    >
-                                        No se encontraron ítems en la bodega.
-                                    </TableCell>
+                                    <TableHead className="w-[110px]">SKU</TableHead>
+                                    <TableHead className="min-w-[200px]">Nombre</TableHead>
+                                    <TableHead>Categoría</TableHead>
+                                    <TableHead>Unidad</TableHead>
+                                    <TableHead className="text-right">Stock</TableHead>
+                                    <TableHead className="text-right">Costo Unit.</TableHead>
+                                    <TableHead>Ubicación</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
-                            ) : (
-                                items.data.map((item) => (
-                                    <TableRow
-                                        key={item.id}
-                                        className="transition-colors hover:bg-muted/50"
-                                    >
-                                        <TableCell className="font-mono text-xs font-medium text-muted-foreground">
-                                            {item.sku || 'N/A'}
-                                        </TableCell>
-                                        <TableCell className="font-medium hover:text-primary transition-colors cursor-pointer">
-                                            <Link href={`/vehicles/inventory/${item.id}`}>
-                                                {item.name}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant={
-                                                    item.category === 'insumo'
-                                                        ? 'secondary'
-                                                        : item.category === 'herramienta'
-                                                          ? 'default'
-                                                          : 'outline'
-                                                }
-                                                className={
-                                                    item.category === 'insumo'
-                                                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
-                                                        : item.category === 'herramienta'
-                                                          ? 'bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200'
-                                                          : 'border-orange-200 text-orange-700'
-                                                }
-                                            >
-                                                {item.category === 'insumo'
-                                                    ? 'Insumo'
-                                                    : item.category === 'herramienta'
-                                                      ? 'Herramienta'
-                                                      : 'Repuesto'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="capitalize">
-                                            {item.unit_of_measure || 'Unidades'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex flex-col items-end">
-                                                <span
-                                                    className={
-                                                        item.stock <=
-                                                        item.min_stock
-                                                            ? 'font-bold text-red-600'
-                                                            : 'font-medium'
-                                                    }
-                                                >
-                                                    {item.stock}
-                                                </span>
-                                                {item.stock <=
-                                                    item.min_stock && (
-                                                    <span className="text-[10px] font-medium text-red-500">
-                                                        Bajo Stock
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right text-muted-foreground tabular-nums">
-                                            {formatCurrency(item.unit_cost)}
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {item.location || '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                {canEdit('vehicles.inventory') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
-                                                        className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                                                    >
-                                                        <Link
-                                                            href={`/vehicles/inventory/${item.id}/edit`}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                )}
-                                                {hasPermission('vehicles.inventory.edit') && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                                                        onClick={() =>
-                                                            handleDelete(item.id)
-                                                        }
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                )}
+                            </TableHeader>
+                            <TableBody>
+                                {items.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={8}
+                                            className="h-32 text-center text-muted-foreground"
+                                        >
+                                            <div className="flex flex-col items-center justify-center gap-2">
+                                                <Package className="size-8 text-muted-foreground/40" />
+                                                <p className="text-sm font-medium">No se encontraron ítems en la bodega.</p>
+                                                <p className="text-xs text-muted-foreground/70">
+                                                    {search
+                                                        ? 'Pruebe modificando los términos de búsqueda.'
+                                                        : 'No hay elementos registrados en esta categoría.'}
+                                                </p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                                ) : (
+                                    items.data.map((item) => (
+                                        <TableRow
+                                            key={item.id}
+                                            className="transition-colors hover:bg-muted/40"
+                                        >
+                                            <TableCell className="font-mono text-xs font-semibold text-muted-foreground">
+                                                {item.sku || 'S/N'}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-foreground">
+                                                <Link
+                                                    href={`/vehicles/inventory/${item.id}`}
+                                                    className="hover:text-primary transition-colors font-semibold"
+                                                >
+                                                    {item.name}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell>
+                                                {getCategoryBadge(item.category)}
+                                            </TableCell>
+                                            <TableCell className="capitalize text-xs text-muted-foreground">
+                                                {item.unit_of_measure || 'Unidades'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span
+                                                        className={`text-sm font-bold ${
+                                                            item.stock <= item.min_stock
+                                                                ? 'text-destructive dark:text-red-400'
+                                                                : 'text-foreground'
+                                                        }`}
+                                                    >
+                                                        {item.stock}
+                                                    </span>
+                                                    {item.stock <= item.min_stock && (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive dark:text-red-400">
+                                                            <AlertTriangle className="size-2.5" />
+                                                            Crítico
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs font-medium text-foreground tabular-nums">
+                                                {formatCurrency(item.unit_cost)}
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {item.location || '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {canEdit('vehicles.inventory') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            asChild
+                                                            className="size-8 text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <Link
+                                                                href={`/vehicles/inventory/${item.id}/edit`}
+                                                            >
+                                                                <Edit className="size-3.5" />
+                                                                <span className="sr-only">Editar</span>
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                    {hasPermission('vehicles.inventory.edit') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-8 text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                                                            onClick={() => handleDelete(item.id)}
+                                                        >
+                                                            <Trash2 className="size-3.5" />
+                                                            <span className="sr-only">Eliminar</span>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
             </div>
 
+            {/* Settings Modal */}
             <Dialog open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Clock className="h-5 w-5" />
-                            Ajustes del Taller
+                        <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                            <Clock className="size-5 text-primary" />
+                            <span>Ajustes del Taller Mecánico</span>
                         </DialogTitle>
-                        <DialogDescription>
-                            Configure los parámetros globales para el módulo de taller mecánico.
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            Configure los parámetros globales de tarificación para órdenes de trabajo.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+
+                    <div className="grid gap-4 py-3">
                         <div className="space-y-2">
-                            <Label htmlFor="hour-rate">Precio Valor Hora Hombre (HH)</Label>
+                            <Label htmlFor="hour-rate" className="text-sm font-semibold text-foreground">
+                                Valor Hora Hombre (HH)
+                            </Label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-semibold">
+                                    $
+                                </span>
                                 <Input
                                     id="hour-rate"
                                     type="number"
                                     value={hourRate}
                                     onChange={(e) => setHourRate(Number(e.target.value))}
-                                    className="pl-7"
+                                    className="h-10 pl-7 text-sm font-medium"
                                 />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Este valor se aplicará a todas las órdenes de trabajo activas y será el valor inicial para órdenes nuevas.
+                                Este monto base se utilizará en las liquidaciones horarias de las órdenes del taller.
                             </p>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSettingsModalOpen(false)}>
+
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsSettingsModalOpen(false)}
+                        >
                             Cancelar
                         </Button>
-                        <Button 
+                        <Button
                             onClick={() => {
                                 handleSaveRate();
                                 setIsSettingsModalOpen(false);
                             }}
                             disabled={isSavingRate}
+                            className="gap-2 shadow-xs"
                         >
-                            <Save className="mr-2 h-4 w-4" />
-                            Guardar Configuración
+                            <Save className="size-4" />
+                            <span>Guardar Configuración</span>
                         </Button>
                     </DialogFooter>
                 </DialogContent>
