@@ -79,6 +79,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             // Material Mayor Logic
+            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
+            $isInspectorMM = ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor');
+            $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+
             $hasVehiclesStatusPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.status') || $user->hasPermissionTo('vehicles'));
             $hasIncidentsPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.incidents') || $user->hasPermissionTo('vehicles'));
             $hasWorkshopPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.workshop') || $user->hasPermissionTo('vehicles.status') || $user->hasPermissionTo('vehicles'));
@@ -86,27 +90,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $vehicleQuery = \App\Models\Vehicle::query()->whereIn('status', ['Out of Service', 'Workshop']);
             $incidentQuery = \App\Models\VehicleIssue::query()->where('status', 'Open')->with(['vehicle', 'reporter']);
 
-            if (
-                ($user->role === 'inspector' && $user->department === 'Material Mayor')
-            ) {
-                $incidentQuery->where(
-                    function ($q) {
-                        $q->where('sent_to_hq', true)
-                            ->whereNull('hq_read_at');
-                    }
-                );
-            } elseif ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                $vehicleQuery->where('company', $user->company);
-                $incidentQuery->whereHas(
-                    'vehicle',
-                    function ($q) use ($user) {
+            // 1. Vehicle Query Filters (Stopped / Out of service)
+            if ($isCuarteleroComandancia) {
+                $vehicleQuery->whereIn('id', $driverIds);
+            } elseif ($user->role !== 'admin' && $user->role !== 'comandante' && !$isInspectorMM && $user->role !== 'mechanic') {
+                if ($user->company === 'Comandancia') {
+                    $vehicleQuery->where('company', 'Comandancia');
+                } elseif ($user->company) {
+                    $vehicleQuery->where(function ($q) use ($user, $driverIds) {
                         $q->where('company', $user->company);
-                    }
-                );
+                        if ($driverIds->isNotEmpty()) {
+                            $q->orWhereIn('id', $driverIds);
+                        }
+                    });
+                }
+            }
+
+            // 2. Incident Query Filters
+            if ($isInspectorMM) {
+                $incidentQuery->where(function ($q) {
+                    $q->where('sent_to_hq', true)
+                        ->whereNull('hq_read_at');
+                });
             } elseif ($user->role === 'mechanic') {
                 $incidentQuery->where('sent_to_workshop', true)->whereNull('workshop_read_at');
             } elseif ($user->role === 'comandante') {
                 $incidentQuery->where('reported_to_commander', true)->whereNull('commander_seen');
+            } elseif ($isCuarteleroComandancia) {
+                // Cuartelero de Comandancia: solo incidencias de vehículos de Comandancia
+                $incidentQuery->whereHas('vehicle', function ($q) {
+                    $q->where('company', 'Comandancia');
+                });
+            } elseif ($user->role !== 'admin') {
+                if ($user->company === 'Comandancia') {
+                    $incidentQuery->whereHas('vehicle', function ($q) {
+                        $q->where('company', 'Comandancia');
+                    });
+                } elseif ($user->company) {
+                    $incidentQuery->whereHas('vehicle', function ($q) use ($user, $driverIds) {
+                        $q->where('company', $user->company);
+                        if ($driverIds->isNotEmpty()) {
+                            $q->orWhereIn('id', $driverIds);
+                        }
+                    });
+                }
             }
 
             $vehiclesStopped = $hasVehiclesStatusPerm ? $vehicleQuery->get() : collect([]);
@@ -123,8 +150,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
                         }
                     ]);
 
-                if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                    $workshopQuery->where('company', $user->company);
+                if ($isCuarteleroComandancia) {
+                    $workshopQuery->whereIn('id', $driverIds);
+                } elseif ($user->role !== 'admin' && $user->role !== 'comandante' && !$isInspectorMM && $user->role !== 'mechanic') {
+                    if ($user->company === 'Comandancia') {
+                        $workshopQuery->where('company', 'Comandancia');
+                    } elseif ($user->company) {
+                        $workshopQuery->where(function ($q) use ($user, $driverIds) {
+                            $q->where('company', $user->company);
+                            if ($driverIds->isNotEmpty()) {
+                                $q->orWhereIn('id', $driverIds);
+                            }
+                        });
+                    }
                 }
 
                 $vehiclesInWorkshop = $workshopQuery->get();
@@ -144,8 +182,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     }
                     );
 
-                if ($user->role !== 'admin' && $user->company !== 'Comandancia' && $user->company) {
-                    $expiringQuery->where('company', $user->company);
+                if ($isCuarteleroComandancia) {
+                    $expiringQuery->whereIn('id', $driverIds);
+                } elseif ($user->role !== 'admin' && $user->role !== 'comandante' && !$isInspectorMM) {
+                    if ($user->company === 'Comandancia') {
+                        $expiringQuery->where('company', 'Comandancia');
+                    } elseif ($user->company) {
+                        $expiringQuery->where(function ($q) use ($user, $driverIds) {
+                            $q->where('company', $user->company);
+                            if ($driverIds->isNotEmpty()) {
+                                $q->orWhereIn('id', $driverIds);
+                            }
+                        });
+                    }
                 }
 
                 $expiringDocuments = $expiringQuery->get()->map(
@@ -260,12 +309,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $isMachinist = ($user->role === 'maquinista');
 
                 if ($isCaptain || $isMachinist) {
-                    // Filter by Company
+                    // Filter by Company or assigned vehicles
                     $checklistQuery->whereHas(
                         'vehicle',
-                        function ($q) use ($user) {
-                        $q->where('company', $user->company);
-                    }
+                        function ($q) use ($user, $driverIds) {
+                            $q->where('company', $user->company);
+                            if ($driverIds->isNotEmpty()) {
+                                $q->orWhereIn('id', $driverIds);
+                            }
+                        }
                     );
 
                     $conditions = [];

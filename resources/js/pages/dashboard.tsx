@@ -601,9 +601,11 @@ export default function Dashboard({
 
                 {/* Documentos por Vencer */}
                 {expiringDocuments.length > 0 &&
-                    (auth.user.role === 'capitan' ||
+                    (auth.user.role === 'admin' ||
+                        auth.user.role === 'capitan' ||
                         auth.user.role === 'maquinista' ||
                         auth.user.role === 'comandante' ||
+                        auth.user.role === 'cuartelero' ||
                         (auth.user.role === 'inspector' &&
                             auth.user.department === 'Material Mayor')) && (
                         <div className="rounded-2xl border border-destructive/30 bg-card p-5 sm:p-6 shadow-xs">
