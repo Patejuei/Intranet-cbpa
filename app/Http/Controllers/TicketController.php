@@ -19,6 +19,7 @@ class TicketController extends Controller
      */
     public const CATEGORIES = [
         'error_plataforma'      => 'Error en la Plataforma',
+        'correccion_data'      => 'Corrección de Datos',
         'solicitud_acceso'      => 'Solicitud de Acceso',
         'solicitud_usuario'     => 'Solicitud/Actualización de Usuario',
         'recuperacion_password' => 'Recuperación de Contraseña',
