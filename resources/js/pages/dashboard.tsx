@@ -103,6 +103,9 @@ export default function Dashboard({
         // Admin and Comandante have full access
         if (user.role === 'admin' || user.role === 'comandante') return true;
 
+        // Tickets is enabled for all authenticated users
+        if (module.permission === 'tickets') return true;
+
         // Ayudante: No access to users
         if (user.role === 'ayudante' && module.permission === 'users') return false;
 

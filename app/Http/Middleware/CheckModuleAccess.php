@@ -133,20 +133,9 @@ class CheckModuleAccess
             return $next($request); // Capitan and Ayudante usually have broad access anyway
         }
 
-        // Ticket module: explicit access for allowed roles or users with existing tickets
+        // Ticket module: explicit access for all authenticated users
         if ($module === 'tickets') {
-            if ($user->role === 'capitan' || $user->company === 'Comandancia') {
-                return $next($request);
-            }
-            if ($user->role === 'secretaria_adquisiciones') {
-                return $next($request);
-            }
-            if ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor') {
-                return $next($request);
-            }
-            if (\App\Models\Ticket::where('user_id', $user->id)->exists()) {
-                return $next($request);
-            }
+            return $next($request);
         }
 
         // Check specific permission

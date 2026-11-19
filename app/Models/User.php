@@ -124,6 +124,10 @@ class User extends Authenticatable
             return true;
         }
 
+        if ($module === 'tickets') {
+            return true;
+        }
+
         $perms = $this->permissions ?? [];
         if (!is_array($perms)) {
             $perms = [];

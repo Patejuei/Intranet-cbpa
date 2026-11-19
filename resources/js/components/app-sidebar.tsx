@@ -236,6 +236,9 @@ export function AppSidebar({ user }: { user: any }) {
         if (!module) return true; // Public items
         if (!user) return false;
 
+        // Soporte / tickets enabled for all users
+        if (module === 'tickets') return true;
+
         // Special restriction for Users Administration
         if (module === 'users') return user.role === 'admin';
 

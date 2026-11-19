@@ -7,6 +7,9 @@ export function usePermissions() {
     const hasPermission = (module: string) => {
         if (!user) return false;
 
+        // Tickets is enabled for all authenticated users
+        if (module === 'tickets') return true;
+
         // Ayudante: No access to users
         if (user.role === 'ayudante' && module === 'users') return false;
 
@@ -114,6 +117,8 @@ export function usePermissions() {
     const canEdit = (module: string) => {
         if (!user) return false;
 
+        if (module === 'tickets') return true;
+
         // Ayudante restriction (cannot edit users, but can edit checklists/logs for his units/company)
         if (user.role === 'ayudante') {
             if (module === 'users') return false; // Cannot edit users
@@ -210,6 +215,8 @@ export function usePermissions() {
     const canCreate = (module: string) => {
         if (!user) return false;
 
+        if (module === 'tickets') return true;
+
         if (user.role === 'ayudante' || user.role === 'cuartelero') {
             if (module === 'vehicles.incidents') return false;
             // Allow creation for others (checklists, logs - if driver, users - limited list in controller)
@@ -227,6 +234,8 @@ export function usePermissions() {
 
     const canDelete = (module: string) => {
         if (!user) return false;
+
+        if (module === 'tickets') return user.role === 'admin';
 
         // Ayudante doesn't have delete permissions
         if (user.role === 'ayudante') return false;

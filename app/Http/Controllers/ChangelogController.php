@@ -14,6 +14,15 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.11',
+                'date' => '19-11-2026',
+                'changes' => [
+                    'Habilitación de la Ticketera de Soporte para todos los usuarios de la plataforma, indiferente a su rol.',
+                    'Canalización de las solicitudes y reportes de soporte dirigidas a los usuarios con rol de Administrador.',
+                    'Gestión y asignación centralizada: los administradores gestionan todos los requerimientos, los gestores de compañía visualizan los de su unidad, y los demás usuarios pueden consultar el avance y responder a sus propios tickets.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.10',
                 'date' => '17-11-2026',
                 'changes' => [

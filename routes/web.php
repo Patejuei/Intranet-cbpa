@@ -51,31 +51,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $pendingTickets = [];
             $respondedTickets = [];
 
-            if (!$isStandardComandancia || $user->hasPermissionTo('tickets')) {
-                if ($user->role === 'admin') {
-                    // Admin ve tickets abiertos sin asignar o asignados a él
-                    $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
+            if ($user->role === 'admin') {
+                // Admin ve tickets abiertos sin asignar o asignados a él
+                $pendingTickets = \App\Models\Ticket::where('status', '!=', 'CERRADO')
+                    ->with(['user', 'assignedTo'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
+            } elseif ($user->company === 'Comandancia' || $user->role === 'capitan' || $user->role === 'secretaria_adquisiciones' || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')) {
+                // Usuarios gestores ven sus tickets respondidos/en proceso
+                if ($user->company === 'Comandancia') {
+                    $respondedTickets = \App\Models\Ticket::where('status', 'EN_PROCESO')
                         ->with(['user', 'assignedTo'])
                         ->latest()
                         ->take(5)
                         ->get();
-                } elseif ($user->company === 'Comandancia' || $user->role === 'capitan' || $user->role === 'secretaria_adquisiciones' || ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Menor')) {
-                    // Usuarios con acceso a tickets ven sus tickets respondidos
-                    if ($user->company === 'Comandancia') {
-                        $respondedTickets = \App\Models\Ticket::where('status', 'EN_PROCESO')
-                            ->with(['user', 'assignedTo'])
-                            ->latest()
-                            ->take(5)
-                            ->get();
-                    } else {
-                        $respondedTickets = \App\Models\Ticket::where('company', $user->company)
-                            ->where('status', 'EN_PROCESO')
-                            ->with(['user', 'assignedTo'])
-                            ->latest()
-                            ->take(5)
-                            ->get();
-                    }
+                } else {
+                    $respondedTickets = \App\Models\Ticket::where('company', $user->company)
+                        ->where('status', 'EN_PROCESO')
+                        ->with(['user', 'assignedTo'])
+                        ->latest()
+                        ->take(5)
+                        ->get();
                 }
+            } else {
+                // Cualquier otro usuario ve sus propios tickets en proceso
+                $respondedTickets = \App\Models\Ticket::where('user_id', $user->id)
+                    ->where('status', 'EN_PROCESO')
+                    ->with(['user', 'assignedTo'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
             }
 
             // Material Mayor Logic

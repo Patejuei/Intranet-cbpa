@@ -32,31 +32,15 @@ class TicketController extends Controller
      */
     private function canAccessTickets(): bool
     {
-        $user = request()->user();
-
-        return $user->role === 'admin'
-            || $user->role === 'capitan'
-            || $user->role === 'comandante'
-            || $user->role === 'secretaria_adquisiciones'
-            || ($user->role === 'inspector')
-            || $user->company === 'Comandancia'
-            || Ticket::where('user_id', $user->id)->exists();
+        return true;
     }
 
     /**
      * Verifica si el usuario puede crear tickets.
-     * Los usuarios con acceso excepcional (solo dueños de tickets) no pueden crear nuevos.
      */
     private function canCreateTickets(): bool
     {
-        $user = request()->user();
-
-        return $user->role === 'admin'
-            || $user->role === 'capitan'
-            || $user->role === 'comandante'
-            || $user->role === 'secretaria_adquisiciones'
-            || ($user->role === 'inspector')
-            || $user->company === 'Comandancia';
+        return true;
     }
 
     public function index()
@@ -74,7 +58,7 @@ class TicketController extends Controller
         // Admin ve todos los tickets
         // Comandancia ve todos los tickets
         // Gestores estándar ven los de su compañía
-        // Usuarios con acceso excepcional solo ven sus propios tickets
+        // Los demás usuarios ven solo sus propios tickets
         if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
             if ($isStandardManager) {
                 $query->where('company', $user->company);
@@ -190,7 +174,7 @@ class TicketController extends Controller
 
         // Admin y Comandancia ven cualquier ticket
         // Gestores estándar ven tickets de su compañía
-        // Usuarios con acceso excepcional solo ven sus propios tickets
+        // Los demás usuarios ven solo sus propios tickets
         if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
             if ($isStandardManager && $ticket->company !== $user->company) {
                 abort(403);
@@ -220,7 +204,7 @@ class TicketController extends Controller
 
         // Admin y Comandancia pueden responder cualquier ticket
         // Gestores estándar pueden responder tickets de su compañía
-        // Usuarios con acceso excepcional solo pueden responder sus propios tickets
+        // Los demás usuarios solo pueden responder sus propios tickets
         if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
             if ($isStandardManager && $ticket->company !== $user->company) {
                 abort(403);
