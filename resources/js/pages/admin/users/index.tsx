@@ -19,9 +19,11 @@ interface User {
     id: number;
     name: string;
     email: string;
+    rut?: string;
     role: string;
     permissions: string[];
     company: string;
+    is_enabled?: boolean;
 }
 
 interface PageProps {
@@ -126,6 +128,7 @@ export default function UserIndex({ users }: PageProps) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="min-w-[180px]">Nombre</TableHead>
+                                    <TableHead className="min-w-[130px]">RUT</TableHead>
                                     <TableHead className="min-w-[200px]">Correo Electrónico</TableHead>
                                     <TableHead>Compañía</TableHead>
                                     <TableHead>Rol del Sistema</TableHead>
@@ -141,7 +144,26 @@ export default function UserIndex({ users }: PageProps) {
                                             className="transition-colors hover:bg-muted/40"
                                         >
                                             <TableCell className="font-semibold text-foreground">
-                                                {u.name}
+                                                <div className="flex items-center gap-2">
+                                                    <span>{u.name}</span>
+                                                    {u.is_enabled === false && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="border-destructive/30 bg-destructive/10 text-destructive text-[10px] px-1.5 py-0"
+                                                        >
+                                                            Inactivo
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-mono text-xs">
+                                                {u.rut ? (
+                                                    <span className="font-medium text-foreground">{u.rut}</span>
+                                                ) : (
+                                                    <span className="text-muted-foreground/50 italic text-[11px]">
+                                                        Sin RUT
+                                                    </span>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground text-xs sm:text-sm">
                                                 {u.email}

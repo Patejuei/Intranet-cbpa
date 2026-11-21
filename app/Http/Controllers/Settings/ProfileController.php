@@ -29,6 +29,15 @@ class ProfileController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        if ($request->has('rut')) {
+            $rawRut = (string) $request->input('rut', '');
+            $cleanRut = strtoupper(preg_replace('/[^0-9kK]/', '', $rawRut));
+            $normalizedRut = (strlen($cleanRut) > 1)
+                ? substr($cleanRut, 0, -1) . '-' . substr($cleanRut, -1)
+                : ($cleanRut !== '' ? $cleanRut : null);
+            $request->merge(['rut' => $normalizedRut]);
+        }
+
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => [
@@ -48,17 +57,6 @@ class ProfileController extends Controller
             ],
             'signature' => ['nullable', 'image', 'max:1024'], // 1MB Max
         ]);
-
-        if (array_key_exists('rut', $validated)) {
-            $rut = $validated['rut'];
-            if ($rut) {
-                $rut = str_replace(['.', '-'], '', strtoupper($rut));
-                if (strlen($rut) > 1) {
-                    $rut = substr($rut, 0, -1) . '-' . substr($rut, -1);
-                }
-            }
-            $validated['rut'] = $rut;
-        }
 
         $request->user()->fill($validated);
 

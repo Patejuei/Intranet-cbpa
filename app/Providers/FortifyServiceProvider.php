@@ -6,9 +6,11 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -29,37 +31,65 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Fortify::authenticateUsing(function (Request $request) {
-            $input = $request->input('email'); // Fortify uses 'email' field name by default for username
-            $password = $request->input('password');
+            $rawInput = (string) $request->input('email', '');
+            $input = trim($rawInput);
+            $password = (string) $request->input('password', '');
+
+            if ($input === '' || $password === '') {
+                return null;
+            }
 
             $user = null;
 
             // 1. Check if input is Email
             if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
-                $user = \App\Models\User::where('email', $input)->first();
+                $user = \App\Models\User::whereRaw('LOWER(email) = ?', [strtolower($input)])->first();
             } else {
-                // 2. Treat as RUT
-                // Strategy: Strip all non-alphanumeric.
-                // Reconstruct with hyphen before last char (DV) to query DB.
-                // This ensures "ignored hyphen" during input but matches "hyphenated" storage.
-
-                $rutClean = strtoupper(str_replace(['.', '-'], '', $input));
+                // 2. Treat as Chilean RUT
+                // Strip all non-alphanumeric (removes spaces, dots, dashes, slashes, etc.)
+                $rutClean = strtoupper(preg_replace('/[^0-9kK]/', '', $input));
 
                 if (strlen($rutClean) > 1) {
-                    $rutFormatted = substr($rutClean, 0, -1) . '-' . substr($rutClean, -1);
-                    $user = \App\Models\User::where('rut', $rutFormatted)->first();
+                    $body = substr($rutClean, 0, -1);
+                    $dv = substr($rutClean, -1);
+                    $rutFormatted = $body . '-' . $dv;
+                    $rutWithDots = (is_numeric($body) ? number_format((int)$body, 0, '', '.') : $body) . '-' . $dv;
+
+                    $possibleFormats = array_unique([
+                        $rutFormatted,
+                        strtolower($rutFormatted),
+                        $rutClean,
+                        strtolower($rutClean),
+                        $rutWithDots,
+                        strtolower($rutWithDots),
+                    ]);
+
+                    $user = \App\Models\User::whereIn('rut', $possibleFormats)->first();
+
+                    if (!$user) {
+                        // Fallback matching in DB removing dots, hyphens, and spaces
+                        $user = \App\Models\User::whereRaw(
+                            "REPLACE(REPLACE(REPLACE(UPPER(rut), '.', ''), '-', ''), ' ', '') = ?",
+                            [$rutClean]
+                        )->first();
+                    }
                 } else {
-                    // Fallback check if stored without hyphen or too short
-                    $user = \App\Models\User::where('rut', $rutClean)->first();
+                    $user = \App\Models\User::where('rut', $rutClean)
+                        ->orWhere('rut', strtolower($rutClean))
+                        ->first();
                 }
             }
 
-            if ($user && \Illuminate\Support\Facades\Hash::check($password, $user->password)) {
+            if ($user && Hash::check($password, $user->password)) {
                 if (!$user->is_enabled) {
-                    return null; // Or throw ValidationException if we want a specific error, but null just fails login
+                    throw ValidationException::withMessages([
+                        Fortify::username() => 'Esta cuenta se encuentra deshabilitada. Contacte al administrador.',
+                    ]);
                 }
                 return $user;
             }
+
+            return null;
         });
 
         $this->configureActions();

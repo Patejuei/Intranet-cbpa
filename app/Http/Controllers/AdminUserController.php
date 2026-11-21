@@ -42,10 +42,14 @@ class AdminUserController extends Controller
             abort(403);
         }
 
+        if ($request->has('rut')) {
+            $request->merge(['rut' => $this->normalizeRut($request->input('rut'))]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'rut' => 'nullable|string|max:20|unique:users',
+            'rut' => 'nullable|string|max:20|unique:users,rut',
             'company' => 'required|string',
             'role' => 'required|string|in:user,admin,capitan,teniente,maquinista,ayudante,comandancia,cuartelero,mechanic,inspector,comandante,secretaria_adquisiciones,central_operator',
             'department' => 'nullable|string|in:Material Mayor,Material Menor',
@@ -65,7 +69,7 @@ class AdminUserController extends Controller
         $createdUser = \App\Models\User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'rut' => isset($validated['rut']) ? $this->normalizeRut($validated['rut']) : null,
+            'rut' => $validated['rut'] ?? null,
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
@@ -104,6 +108,10 @@ class AdminUserController extends Controller
             abort(403);
         }
 
+        if ($request->has('rut')) {
+            $request->merge(['rut' => $this->normalizeRut($request->input('rut'))]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
@@ -126,7 +134,7 @@ class AdminUserController extends Controller
         $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'rut' => isset($validated['rut']) ? $this->normalizeRut($validated['rut']) : null,
+            'rut' => $validated['rut'] ?? null,
             'company' => $validated['company'],
             'role' => $validated['role'],
             'department' => isset($validated['department']) ? trim($validated['department']) : null,
@@ -158,13 +166,15 @@ class AdminUserController extends Controller
         return redirect()->back();
     }
 
-    private function normalizeRut($rut)
+    private function normalizeRut($rut): ?string
     {
-        if (!$rut) return null;
-        $rut = str_replace(['.', '-'], '', strtoupper($rut));
-        if (strlen($rut) > 1) {
-            return substr($rut, 0, -1) . '-' . substr($rut, -1);
+        if (!$rut) {
+            return null;
         }
-        return $rut;
+        $clean = strtoupper(preg_replace('/[^0-9kK]/', '', (string)$rut));
+        if (strlen($clean) > 1) {
+            return substr($clean, 0, -1) . '-' . substr($clean, -1);
+        }
+        return $clean !== '' ? $clean : null;
     }
 }

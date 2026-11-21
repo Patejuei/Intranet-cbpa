@@ -14,6 +14,13 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.12',
+                'date' => '21-11-2026',
+                'changes' => [
+                    'BugFix inicio de sesión con RUT',
+                ],
+            ],
+            [
                 'version' => 'v1.1.11',
                 'date' => '19-11-2026',
                 'changes' => [
