@@ -2,6 +2,19 @@
 
 Todas las modificaciones notables a este proyecto están documentadas en este archivo.
 
+## [v1.1.14] - 24-11-2026
+
+### Añadido y Actualizado
+- **Módulo de Gestión de Bomberos Exclusivo para Administradores**: Habilitación oficial del módulo de bomberos institucional (`admin/firefighters`) en configuración del sistema (`modules.php`), asegurado con restricciones estrictas de rol en middleware (`CheckModuleAccess`), controlador y menú lateral (`app-sidebar.tsx`).
+- **Páginas Completas de Administración de Bomberos (Create, Edit y Show)**:
+  - `create.tsx`: Registro de nuevos voluntarios con validación de primer nombre, segundo nombre, apellido paterno, apellido materno, RUT, compañía y N° de registro general.
+  - `edit.tsx`: Edición completa de datos del voluntario.
+  - `show.tsx`: Ficha individual detallada con identificación personal, datos institucionales, listado de material menor y prendas asignadas activas, y registro de actas de entrega emitidas con descarga de PDF.
+- **Normalización de Formato de Nombres de Bomberos**: Adaptación para desplegar el formato `{Nombre} {Apellido Paterno} {Apellido Materno}` a partir de `first_name`, `paternal_last_name` y `maternal_last_name`, mejorando la legibilidad visual en tablas y selectores.
+- **Campo OBAC en Bitácora de Vehículos**: Nuevo campo de Oficial o Bombero a Cargo en el formulario de movimientos de Material Mayor (`vehicles/logs/create.tsx`).
+- **Autocompletado y Buscador en Tiempo Real**: Componente `Combobox` inteligente con búsqueda multi-palabra y normalización NFD (sin distinción de tildes ni mayúsculas), permitiendo encontrar voluntarios por nombre o número de registro general (`general_registry_number`).
+- **Trazabilidad y Reportes de OBAC**: Almacenamiento de clave foránea (`obac_id`) y snapshot histórico (`obac_name`), visualización en el detalle del trayecto (`show.tsx`), en la tabla de movimientos (`index.tsx`) y en la exportación de bitácoras a Excel (`.xlsx`).
+
 ## [v1.1.13] - 23-11-2026
 
 ### Añadido y Corregido

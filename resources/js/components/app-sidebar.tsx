@@ -239,8 +239,8 @@ export function AppSidebar({ user }: { user: any }) {
         // Soporte / tickets enabled for all users
         if (module === 'tickets') return true;
 
-        // Special restriction for Users Administration
-        if (module === 'users') return user.role === 'admin';
+        // Special restriction for Users and Firefighters Administration (Admin only)
+        if (module === 'users' || module === 'firefighters') return user.role === 'admin';
 
         // Admin and Comandante have full access to everything else
         if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;

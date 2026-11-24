@@ -13,7 +13,7 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { useState } from 'react';
 
 export interface ComboboxOption {
@@ -33,6 +33,7 @@ interface ComboboxProps {
     disabled?: boolean;
     className?: string;
     searchInDescription?: boolean;
+    clearable?: boolean;
 }
 
 export function Combobox({
@@ -45,6 +46,7 @@ export function Combobox({
     disabled,
     className,
     searchInDescription = true,
+    clearable = false,
 }: ComboboxProps) {
     const [open, setOpen] = useState(false);
 
@@ -78,21 +80,47 @@ export function Combobox({
                             placeholder
                         )}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <span className="flex items-center gap-1 shrink-0 ml-2">
+                        {clearable && value && !disabled && (
+                            <span
+                                role="button"
+                                tabIndex={0}
+                                aria-label="Limpiar selección"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onChange('');
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.stopPropagation();
+                                        onChange('');
+                                    }
+                                }}
+                                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </span>
+                        )}
+                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </span>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command
                     filter={(val, search) => {
-                        const normalize = (s: string) =>
+                        const clean = (s: string) =>
                             s
                                 .toLowerCase()
                                 .normalize('NFD') // remove accents
-                                .replace(/[\u0300-\u036f]/g, '')
-                                .replace(/[-\s]/g, ''); // strip hyphens and spaces
+                                .replace(/[\u0300-\u036f]/g, '');
 
-                        if (normalize(val).includes(normalize(search))) return 1;
-                        return 0;
+                        const target = clean(val);
+                        const searchWords = clean(search).split(/\s+/).filter(Boolean);
+
+                        if (searchWords.length === 0) return 1;
+
+                        const allMatch = searchWords.every((word) => target.includes(word));
+                        return allMatch ? 1 : 0;
                     }}
                 >
                     <CommandInput placeholder={searchPlaceholder} />
@@ -107,7 +135,11 @@ export function Combobox({
                                         `${option.label} ${searchInDescription ? option.description || '' : ''}`
                                     }
                                     onSelect={() => {
-                                        onChange(option.value);
+                                        if (clearable && value === option.value) {
+                                            onChange('');
+                                        } else {
+                                            onChange(option.value);
+                                        }
                                         setOpen(false);
                                     }}
                                 >

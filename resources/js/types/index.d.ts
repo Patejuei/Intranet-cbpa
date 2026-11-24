@@ -53,6 +53,10 @@ export interface User {
 export interface Firefighter {
     id: number;
     general_registry_number: string | null;
+    first_name: string;
+    middle_name: string | null;
+    paternal_last_name: string;
+    maternal_last_name: string;
     full_name: string;
     rut: string;
     company: string;

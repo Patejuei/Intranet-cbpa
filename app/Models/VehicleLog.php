@@ -9,6 +9,8 @@ class VehicleLog extends Model
     protected $fillable = [
         'vehicle_id',
         'driver_id',
+        'obac_id',
+        'obac_name',
         'start_km',
         'end_km',
         'date',
@@ -31,5 +33,10 @@ class VehicleLog extends Model
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    public function obac()
+    {
+        return $this->belongsTo(Firefighter::class, 'obac_id');
     }
 }

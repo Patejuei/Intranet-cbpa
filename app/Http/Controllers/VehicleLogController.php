@@ -16,7 +16,7 @@ class VehicleLogController extends Controller
     {
         $user = request()->user();
 
-        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest();
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver', 'obac'])->latest();
 
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
@@ -109,8 +109,14 @@ class VehicleLogController extends Controller
             ])
             ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number', 'last_mileage']);
 
+        $firefighters = \App\Models\Firefighter::query()
+            ->orderBy('first_name')
+            ->orderBy('paternal_last_name')
+            ->get(['id', 'first_name', 'paternal_last_name', 'maternal_last_name', 'full_name', 'general_registry_number', 'company']);
+
         return Inertia::render('vehicles/logs/create', [
             'vehicles' => $vehicles,
+            'firefighters' => $firefighters,
         ]);
     }
 
@@ -121,6 +127,7 @@ class VehicleLogController extends Controller
     {
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
+            'obac_id' => 'nullable|exists:firefighters,id',
             'start_km' => 'required|integer',
             'end_km' => 'required|integer|gte:start_km',
             'activity_type' => 'required|string',
@@ -195,9 +202,19 @@ class VehicleLogController extends Controller
 
         unset($validated['has_fuel']);
 
+        $obacName = null;
+        if (!empty($validated['obac_id'])) {
+            $firefighter = \App\Models\Firefighter::find($validated['obac_id']);
+            $obacName = $firefighter
+                ? (trim("{$firefighter->first_name} {$firefighter->paternal_last_name} {$firefighter->maternal_last_name}") ?: $firefighter->full_name)
+                : null;
+        }
+
         \App\Models\VehicleLog::create([
             ...$validated,
             'driver_id' => $request->user()->id,
+            'obac_id' => $validated['obac_id'] ?? null,
+            'obac_name' => $obacName,
             'receipt_path' => $receiptPath,
         ]);
 
@@ -210,7 +227,7 @@ class VehicleLogController extends Controller
     public function show(string $id)
     {
         $user = request()->user();
-        $log = \App\Models\VehicleLog::with(['vehicle', 'driver'])->findOrFail($id);
+        $log = \App\Models\VehicleLog::with(['vehicle', 'driver', 'obac'])->findOrFail($id);
 
         return Inertia::render('vehicles/logs/show', [
             'log' => $log,
@@ -246,7 +263,7 @@ class VehicleLogController extends Controller
     public function export(Request $request)
     {
         $user = $request->user();
-        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver'])->latest('date')->latest('id');
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver', 'obac'])->latest('date')->latest('id');
 
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
@@ -325,9 +342,9 @@ class VehicleLogController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header Row
-        $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Lts. Combust.', 'Nº Cupón Comb.', 'Destino', 'Clave', 'Obs'];
+        $columns = ['ID', 'Vehículo', 'Compañía', 'Conductor', 'OBAC', 'Fecha', 'Hora Salida', 'Hora Llegada', 'Km Inicio', 'Km Término', 'Kms Recorridos', 'Actividad', 'Lts. Combust.', 'Nº Cupón Comb.', 'Destino', 'Clave', 'Obs'];
         $sheet->fromArray($columns, NULL, 'A1');
-        $sheet->getStyle('A1:P1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
 
         // Data Rows
         $row = 2;
@@ -336,23 +353,30 @@ class VehicleLogController extends Controller
             $sheet->setCellValue('B' . $row, $log->vehicle ? $log->vehicle->name : 'N/A');
             $sheet->setCellValue('C' . $row, $log->vehicle ? $log->vehicle->company : 'N/A');
             $sheet->setCellValue('D' . $row, $log->driver ? $log->driver->name : 'N/A');
-            $sheet->setCellValue('E' . $row, $log->date);
-            $sheet->setCellValue('F' . $row, $log->departure_time);
-            $sheet->setCellValue('G' . $row, $log->arrival_time);
-            $sheet->setCellValue('H' . $row, $log->start_km);
-            $sheet->setCellValue('I' . $row, $log->end_km);
-            $sheet->setCellValue('J' . $row, ($log->end_km && $log->start_km) ? $log->end_km - $log->start_km : 0);
-            $sheet->setCellValue('K' . $row, $log->activity_type);
-            $sheet->setCellValue('L' . $row, $log->fuel_liters ?? 'N/A');
-            $sheet->setCellValue('M' . $row, $log->fuel_coupon ?? 'N/A');
-            $sheet->setCellValue('N' . $row, $log->destination);
-            $sheet->setCellValue('O' . $row, $log->movement_key ?? 'N/A');
-            $sheet->setCellValue('P' . $row, $log->observations);
+            $obacDisplay = 'N/A';
+            if ($log->obac) {
+                $obacDisplay = trim("{$log->obac->first_name} {$log->obac->paternal_last_name} {$log->obac->maternal_last_name}") ?: ($log->obac->full_name ?? 'N/A');
+            } elseif ($log->obac_name) {
+                $obacDisplay = $log->obac_name;
+            }
+            $sheet->setCellValue('E' . $row, $obacDisplay);
+            $sheet->setCellValue('F' . $row, $log->date);
+            $sheet->setCellValue('G' . $row, $log->departure_time);
+            $sheet->setCellValue('H' . $row, $log->arrival_time);
+            $sheet->setCellValue('I' . $row, $log->start_km);
+            $sheet->setCellValue('J' . $row, $log->end_km);
+            $sheet->setCellValue('K' . $row, ($log->end_km && $log->start_km) ? $log->end_km - $log->start_km : 0);
+            $sheet->setCellValue('L' . $row, $log->activity_type);
+            $sheet->setCellValue('M' . $row, $log->fuel_liters ?? 'N/A');
+            $sheet->setCellValue('N' . $row, $log->fuel_coupon ?? 'N/A');
+            $sheet->setCellValue('O' . $row, $log->destination);
+            $sheet->setCellValue('P' . $row, $log->movement_key ?? 'N/A');
+            $sheet->setCellValue('Q' . $row, $log->observations);
             $row++;
         }
 
         // Auto size columns
-        foreach (range('A', 'P') as $columnID) {
+        foreach (range('A', 'Q') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 

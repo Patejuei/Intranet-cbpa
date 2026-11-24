@@ -82,11 +82,17 @@ class FirefighterSeeder extends Seeder
                 continue;
             }
 
+            $nameParts = Firefighter::splitFullName($nombre);
+
             Firefighter::updateOrCreate(
                 ['rut' => $rut], // Unique identifier
                 [
                     'general_registry_number' => $registro ?: null,
-                    'full_name' => $nombre,
+                    'first_name' => $nameParts['first_name'],
+                    'middle_name' => $nameParts['middle_name'],
+                    'paternal_last_name' => $nameParts['paternal_last_name'],
+                    'maternal_last_name' => $nameParts['maternal_last_name'],
+                    'full_name' => Firefighter::buildFullName($nameParts),
                     'company' => $company,
                     'email' => $email ?: null,
                 ]

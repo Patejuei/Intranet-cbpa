@@ -20,6 +20,6 @@ return [
         'batteries'   => false,
         'tickets'     => true,
         'central'     => false,
-        'firefighters' => false,
+        'firefighters' => true,
     ],
 ];

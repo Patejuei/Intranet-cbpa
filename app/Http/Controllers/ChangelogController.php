@@ -14,6 +14,18 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.14',
+                'date' => '24-11-2026',
+                'changes' => [
+                    'Módulo de Gestión de Bomberos para Administradores: Habilitación oficial del módulo de administración de bomberos institucional en configuración de módulos del sistema, restringido estrictamente al rol de Administrador en backend y frontend.',
+                    'Páginas completas de gestión de Bomberos: Desarrollo e integración de las vistas dedicadas e independientes de Registro, Edición y Ficha Detallada, incluyendo historial de material asignado y actas de entrega.',
+                    'Estructura de Nombres Normalizada: Adaptación y visualización del formato Nombre, Apellido Paterno y Apellido Materno en listados y selectores, prescindiendo del segundo nombre para mayor claridad operativa.',
+                    'Campo OBAC en Bitácoras de Material Mayor: Incorporación del campo Oficial o Bombero a Cargo (OBAC) en el formulario de registro de movimiento de unidades.',
+                    'Buscador y Autocompletado en Tiempo Real: Selector inteligente con búsqueda multi-palabra y normalización sin acentos para localizar voluntarios por nombre, apellidos o N° de registro general.',
+                    'Persistencia y Reportes de OBAC: Almacenamiento de relación y snapshot histórico en base de datos, con visualización en el detalle del trayecto, tabla de bitácoras y exportación a Excel.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.13',
                 'date' => '23-11-2026',
                 'changes' => [

@@ -18,6 +18,7 @@ import {
     Route,
     Truck,
     User as UserIcon,
+    UserCheck,
 } from 'lucide-react';
 
 interface Vehicle {
@@ -30,6 +31,16 @@ interface Log {
     id: number;
     vehicle: Vehicle;
     driver: { name: string };
+    obac?: {
+        id: number;
+        first_name?: string | null;
+        paternal_last_name?: string | null;
+        maternal_last_name?: string | null;
+        full_name?: string | null;
+        general_registry_number?: string | null;
+        company?: string | null;
+    } | null;
+    obac_name?: string | null;
     start_km: number;
     end_km: number | null;
     activity_type: string;
@@ -144,6 +155,37 @@ export default function VehicleLogShow({ log }: { log: Log }) {
                                             </p>
                                             <p className="text-sm font-semibold text-foreground">
                                                 {log.driver?.name || 'No especificado'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                            <UserCheck className="size-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                OBAC
+                                            </p>
+                                            <p className="text-sm font-semibold text-foreground">
+                                                {(() => {
+                                                    const obacName = log.obac
+                                                        ? [log.obac.first_name, log.obac.paternal_last_name, log.obac.maternal_last_name].filter(Boolean).join(' ') || log.obac.full_name
+                                                        : log.obac_name;
+
+                                                    return obacName ? (
+                                                        <span>
+                                                            {obacName}
+                                                            {log.obac?.general_registry_number && (
+                                                                <span className="ml-1 text-xs text-muted-foreground">
+                                                                    (Reg. {log.obac.general_registry_number})
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    ) : (
+                                                        'No especificado'
+                                                    );
+                                                })()}
                                             </p>
                                         </div>
                                     </div>

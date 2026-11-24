@@ -16,9 +16,18 @@ class FirefighterFactory extends Factory
      */
     public function definition(): array
     {
+        $firstName = $this->faker->firstName;
+        $middleName = $this->faker->boolean(70) ? $this->faker->firstName : null;
+        $paternalLastName = $this->faker->lastName;
+        $maternalLastName = $this->faker->lastName;
+
         return [
             'general_registry_number' => $this->faker->unique()->numberBetween(1000, 9999),
-            'full_name' => $this->faker->name,
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'paternal_last_name' => $paternalLastName,
+            'maternal_last_name' => $maternalLastName,
+            'full_name' => trim(implode(' ', array_filter([$firstName, $middleName, $paternalLastName, $maternalLastName]))),
             'rut' => $this->faker->unique()->numerify('##.###.###-#'),
             'company' => $this->faker->randomElement([
                 'Primera Compañía',

@@ -28,8 +28,8 @@ import {
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { Firefighter } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Flame, Pencil, Search, Trash, UserPlus, Users } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Eye, Flame, Pencil, Search, Trash, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
 
 interface PageProps {
@@ -65,7 +65,10 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
     const { data, setData, post, put, processing, errors, reset } = useForm({
         id: 0,
         general_registry_number: '',
-        full_name: '',
+        first_name: '',
+        middle_name: '',
+        paternal_last_name: '',
+        maternal_last_name: '',
         rut: '',
         company: '',
         email: '',
@@ -81,7 +84,10 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
         setData({
             id: firefighter.id,
             general_registry_number: firefighter.general_registry_number || '',
-            full_name: firefighter.full_name,
+            first_name: firefighter.first_name || '',
+            middle_name: firefighter.middle_name || '',
+            paternal_last_name: firefighter.paternal_last_name || '',
+            maternal_last_name: firefighter.maternal_last_name || '',
             rut: firefighter.rut,
             company: firefighter.company,
             email: firefighter.email || '',
@@ -160,9 +166,11 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                     </div>
 
                     {canCreate('firefighters') && (
-                        <Button onClick={openCreate} className="gap-2 shadow-xs shrink-0">
-                            <UserPlus className="size-4" />
-                            <span>Nuevo Bombero</span>
+                        <Button asChild className="gap-2 shadow-xs shrink-0">
+                            <Link href="/admin/firefighters/create">
+                                <UserPlus className="size-4" />
+                                <span>Nuevo Bombero</span>
+                            </Link>
                         </Button>
                     )}
                 </div>
@@ -185,7 +193,7 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[140px]">N° Reg. General</TableHead>
-                                    <TableHead className="min-w-[200px]">Nombre Completo</TableHead>
+                                    <TableHead className="min-w-[200px]">Nombre</TableHead>
                                     <TableHead>RUT</TableHead>
                                     <TableHead>Compañía</TableHead>
                                     <TableHead className="min-w-[180px]">Correo Electrónico</TableHead>
@@ -205,7 +213,16 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                             <TableCell className="font-medium text-foreground">
                                                 <div className="flex items-center gap-2">
                                                     <Flame className="size-3.5 text-primary opacity-70" />
-                                                    <span>{firefighter.full_name}</span>
+                                                    <span>
+                                                        {[
+                                                            firefighter.first_name,
+                                                            firefighter.paternal_last_name,
+                                                            firefighter.maternal_last_name,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(' ') ||
+                                                            firefighter.full_name}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-xs sm:text-sm text-muted-foreground">
@@ -219,15 +236,28 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-8 text-muted-foreground hover:text-foreground"
+                                                        asChild
+                                                    >
+                                                        <Link href={`/admin/firefighters/${firefighter.id}`}>
+                                                            <Eye className="size-3.5" />
+                                                            <span className="sr-only">Ver ficha</span>
+                                                        </Link>
+                                                    </Button>
                                                     {canEdit('firefighters') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
                                                             className="size-8 text-muted-foreground hover:text-foreground"
-                                                            onClick={() => openEdit(firefighter)}
+                                                            asChild
                                                         >
-                                                            <Pencil className="size-3.5" />
-                                                            <span className="sr-only">Editar bombero</span>
+                                                            <Link href={`/admin/firefighters/${firefighter.id}/edit`}>
+                                                                <Pencil className="size-3.5" />
+                                                                <span className="sr-only">Editar bombero</span>
+                                                            </Link>
                                                         </Button>
                                                     )}
                                                     {canEdit('firefighters') && (
@@ -312,25 +342,89 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                             )}
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="full_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Nombre Completo <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="full_name"
-                                value={data.full_name}
-                                onChange={(e) =>
-                                    setData('full_name', e.target.value)
-                                }
-                                placeholder="Ej: Carlos Silva Gómez"
-                                className="h-10 text-sm"
-                                required
-                            />
-                            {errors.full_name && (
-                                <p className="text-xs text-destructive">
-                                    {errors.full_name}
-                                </p>
-                            )}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="first_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Nombre <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="first_name"
+                                    value={data.first_name}
+                                    onChange={(e) =>
+                                        setData('first_name', e.target.value)
+                                    }
+                                    placeholder="Ej: Carlos"
+                                    className="h-10 text-sm"
+                                    required
+                                />
+                                {errors.first_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.first_name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="middle_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Segundo Nombre
+                                </Label>
+                                <Input
+                                    id="middle_name"
+                                    value={data.middle_name}
+                                    onChange={(e) =>
+                                        setData('middle_name', e.target.value)
+                                    }
+                                    placeholder="Ej: Alberto"
+                                    className="h-10 text-sm"
+                                />
+                                {errors.middle_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.middle_name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="paternal_last_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Apellido Paterno <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="paternal_last_name"
+                                    value={data.paternal_last_name}
+                                    onChange={(e) =>
+                                        setData('paternal_last_name', e.target.value)
+                                    }
+                                    placeholder="Ej: Silva"
+                                    className="h-10 text-sm"
+                                    required
+                                />
+                                {errors.paternal_last_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.paternal_last_name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="maternal_last_name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Apellido Materno <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="maternal_last_name"
+                                    value={data.maternal_last_name}
+                                    onChange={(e) =>
+                                        setData('maternal_last_name', e.target.value)
+                                    }
+                                    placeholder="Ej: Gómez"
+                                    className="h-10 text-sm"
+                                    required
+                                />
+                                {errors.maternal_last_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.maternal_last_name}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

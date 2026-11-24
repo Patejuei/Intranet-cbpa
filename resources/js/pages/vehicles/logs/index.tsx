@@ -39,6 +39,15 @@ interface Log {
     id: number;
     vehicle: Vehicle;
     driver: { name: string };
+    obac?: {
+        id?: number;
+        first_name?: string | null;
+        paternal_last_name?: string | null;
+        maternal_last_name?: string | null;
+        full_name?: string | null;
+        general_registry_number?: string | null;
+    } | null;
+    obac_name?: string | null;
     start_km: number;
     end_km: number;
     activity_type: string;
@@ -269,7 +278,23 @@ export default function VehicleLogs({
                                                 {log.end_km || '-'}
                                             </td>
                                             <td className="p-4">
-                                                {log.driver?.name}
+                                                <div className="flex flex-col text-xs">
+                                                    <span className="font-medium text-foreground">{log.driver?.name || '-'}</span>
+                                                    {(() => {
+                                                        const obacName = log.obac
+                                                            ? [log.obac.first_name, log.obac.paternal_last_name, log.obac.maternal_last_name].filter(Boolean).join(' ') || log.obac.full_name
+                                                            : log.obac_name;
+
+                                                        return obacName ? (
+                                                            <span
+                                                                className="text-muted-foreground text-[11px] truncate max-w-[160px]"
+                                                                title={`OBAC: ${obacName}`}
+                                                            >
+                                                                OBAC: {obacName}
+                                                            </span>
+                                                        ) : null;
+                                                    })()}
+                                                </div>
                                             </td>
                                             <td className="p-4 text-right">
                                                 <Button

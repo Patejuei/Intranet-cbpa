@@ -26,8 +26,8 @@ class CheckModuleAccess
 
         $user = $request->user();
 
-        // Admin User Management Restriction
-        if ($module === 'users' && $user->role !== 'admin') {
+        // Admin User & Firefighters Management Restriction
+        if (in_array($module, ['users', 'firefighters']) && $user->role !== 'admin') {
             abort(403, 'Solo el Administrador del sistema puede acceder a este módulo.');
         }
 

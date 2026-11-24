@@ -10,6 +10,9 @@ export function usePermissions() {
         // Tickets is enabled for all authenticated users
         if (module === 'tickets') return true;
 
+        // Special restriction for Users and Firefighters Administration (Admin only)
+        if (module === 'users' || module === 'firefighters') return user.role === 'admin';
+
         // Ayudante: No access to users
         if (user.role === 'ayudante' && module === 'users') return false;
 
@@ -128,6 +131,9 @@ export function usePermissions() {
         if (!user) return false;
 
         if (module === 'tickets') return true;
+
+        // Special restriction for Users and Firefighters Administration (Admin only)
+        if (module === 'users' || module === 'firefighters') return user.role === 'admin';
 
         // Ayudante restriction (cannot edit users, but can edit checklists/logs for his units/company)
         if (user.role === 'ayudante') {
@@ -264,7 +270,7 @@ export function usePermissions() {
     const canDelete = (module: string) => {
         if (!user) return false;
 
-        if (module === 'tickets') return user.role === 'admin';
+        if (module === 'tickets' || module === 'users' || module === 'firefighters') return user.role === 'admin';
 
         // Ayudante doesn't have delete permissions
         if (user.role === 'ayudante') return false;

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Combobox } from '@/components/ui/combobox';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { Firefighter } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
@@ -33,6 +35,7 @@ import {
     Plus,
     Truck,
     Upload,
+    UserCheck,
 } from 'lucide-react';
 
 interface Vehicle {
@@ -45,11 +48,14 @@ interface Vehicle {
 
 export default function VehicleLogCreate({
     vehicles,
+    firefighters = [],
 }: {
     vehicles: Vehicle[];
+    firefighters?: Firefighter[];
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         vehicle_id: '',
+        obac_id: '',
         start_km: '',
         end_km: '',
         departure_time: '',
@@ -64,6 +70,29 @@ export default function VehicleLogCreate({
         receipt: null as File | null,
         observations: '',
     });
+
+    const obacOptions = React.useMemo(() => {
+        return (firefighters || []).map((f) => {
+            const displayName =
+                [f.first_name, f.paternal_last_name, f.maternal_last_name]
+                    .filter(Boolean)
+                    .join(' ') || f.full_name;
+
+            return {
+                value: f.id.toString(),
+                label: displayName,
+                description: [
+                    f.general_registry_number
+                        ? `Reg. ${f.general_registry_number}`
+                        : null,
+                    f.company || null,
+                ]
+                    .filter(Boolean)
+                    .join(' • '),
+                searchValue: `${displayName} ${f.full_name || ''} ${f.general_registry_number || ''} ${f.company || ''}`,
+            };
+        });
+    }, [firefighters]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -208,25 +237,26 @@ export default function VehicleLogCreate({
                                         </div>
                                     </div>
 
-                                    {/* Dirección y Clave */}
+                                    {/* OBAC y Clave */}
                                     <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                                         <div className="space-y-2 md:col-span-2">
-                                            <Label htmlFor="destination" className="flex items-center gap-1.5 text-sm font-medium">
-                                                <MapPin className="size-3.5 text-muted-foreground" />
-                                                Dirección / Destino <span className="text-destructive">*</span>
+                                            <Label htmlFor="obac" className="flex items-center gap-1.5 text-sm font-medium">
+                                                <UserCheck className="size-3.5 text-muted-foreground" />
+                                                OBAC <span className="text-xs font-normal text-muted-foreground">(Oficial o Bombero a Cargo)</span>
                                             </Label>
-                                            <Input
-                                                id="destination"
+                                            <Combobox
+                                                options={obacOptions}
+                                                value={data.obac_id}
+                                                onChange={(val) => setData('obac_id', val)}
+                                                placeholder="Buscar por nombre o N° de registro general..."
+                                                searchPlaceholder="Escriba nombre o N° de registro..."
+                                                emptyText="No se encontró ningún bombero con ese criterio."
+                                                clearable
                                                 className="h-10"
-                                                value={data.destination}
-                                                aria-invalid={!!errors.destination}
-                                                onChange={(e) =>
-                                                    setData('destination', e.target.value)
-                                                }
-                                                placeholder="Dirección o lugar de destino..."
                                             />
-                                            <InputError message={errors.destination} />
+                                            <InputError message={errors.obac_id} />
                                         </div>
+
                                         <div className="space-y-2">
                                             <Label htmlFor="movement_key" className="flex items-center gap-1.5 text-sm font-medium">
                                                 <KeyRound className="size-3.5 text-muted-foreground" />
@@ -244,6 +274,25 @@ export default function VehicleLogCreate({
                                             />
                                             <InputError message={errors.movement_key} />
                                         </div>
+                                    </div>
+
+                                    {/* Dirección / Destino */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="destination" className="flex items-center gap-1.5 text-sm font-medium">
+                                            <MapPin className="size-3.5 text-muted-foreground" />
+                                            Dirección / Destino <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id="destination"
+                                            className="h-10"
+                                            value={data.destination}
+                                            aria-invalid={!!errors.destination}
+                                            onChange={(e) =>
+                                                setData('destination', e.target.value)
+                                            }
+                                            placeholder="Dirección o lugar de destino..."
+                                        />
+                                        <InputError message={errors.destination} />
                                     </div>
 
                                     {/* Kilometraje */}
