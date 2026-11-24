@@ -59,10 +59,10 @@ class HandleInertiaRequests extends Middleware
                             'vehicles.checklist',
                             'vehicles.checklist.view',
                             'vehicles.checklist.edit',
-                            // Logs/Bitacora (Edit)
+                            // Logs/Bitacora
                             'vehicles.logs',
                             'vehicles.logs.view',
-                            'vehicles.logs.edit',
+                            ...($user->is_driver ? ['vehicles.logs.edit'] : []),
                             // Inventory (Edit)
                             'vehicles.inventory',
                             'vehicles.inventory.view',

@@ -1,0 +1,10 @@
+{
+    "auth.failed": "Las credenciales ingresadas no coinciden con nuestros registros.",
+    "auth.invalid": "Las credenciales ingresadas son incorrectas o no coinciden con nuestros registros.",
+    "auth.password": "La contraseña ingresada es incorrecta.",
+    "auth.throttle": "Demasiados intentos de acceso fallidos. Por favor, intente nuevamente en unos momentos.",
+    "These credentials do not match our records.": "Las credenciales ingresadas no coinciden con nuestros registros.",
+    "The provided password was incorrect.": "La contraseña proporcionada es incorrecta.",
+    "The provided password does not match your current password.": "La contraseña actual no coincide con la registrada.",
+    "The given data was invalid.": "Los datos proporcionados no son válidos."
+}

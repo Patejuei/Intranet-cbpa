@@ -111,36 +111,64 @@ export default function Dashboard({
 
         const moduleKey = module.permission;
 
+        // Secretaria de Adquisiciones
+        if (user.role === 'secretaria_adquisiciones') {
+            const allowed = [
+                'inventory',
+                'batteries',
+                'equipment',
+                'deliveries',
+                'tickets',
+                'reception',
+                'vehicles.renditions',
+                'vehicles.petty-cash',
+            ];
+            return allowed.includes(moduleKey);
+        }
+
         // Capitan and Ayudante Restrictions
         if (user.role === 'capitan' || user.role === 'ayudante') {
             const restricted = [
-                'vehicles.inventory', 
+                'inventory',
+                'vehicles.inventory',
                 'vehicles.renditions',
-                'vehicles.workshop'
+                'vehicles.petty-cash',
             ];
-            
-            if (user.role === 'ayudante' && restricted.includes(moduleKey)) return false;
-            if (user.role === 'capitan' && (moduleKey === 'vehicles.inventory' || moduleKey === 'vehicles.renditions')) return false;
-
-            return true;
-        }
-
-        // Maquinista Restrictions
-        if (user.role === 'maquinista') {
-            const restricted = ['vehicles.inventory', 'vehicles.petty-cash'];
+            if (user.role === 'ayudante') {
+                restricted.push('vehicles.workshop', 'users');
+            }
             if (restricted.includes(moduleKey)) return false;
             return true;
         }
 
-        // Specific Roles check for vehicles
-        // Specific Roles check for vehicles
-        if (
-            moduleKey.startsWith('vehicles') &&
-            ['mechanic'].includes(user.role || '')
-        ) {
-            return true;
+        // Maquinista Restrictions (Whitelist)
+        if (user.role === 'maquinista') {
+            const allowed = [
+                'vehicles.status',
+                'vehicles.checklist',
+                'vehicles.logs',
+                'vehicles.workshop',
+                'vehicles.incidents',
+            ];
+            return allowed.includes(moduleKey);
         }
 
+        // Mechanic (Workshop, maintenance and vehicle expenses)
+        if (user.role === 'mechanic') {
+            const allowed = [
+                'vehicles.workshop',
+                'vehicles.incidents',
+                'vehicles.status',
+                'vehicles.checklist',
+                'vehicles.logs',
+                'vehicles.inventory',
+                'vehicles.renditions',
+                'vehicles.petty-cash',
+            ];
+            return allowed.includes(moduleKey);
+        }
+
+        // Cuartelero (Whitelist)
         if (user.role === 'cuartelero') {
             const allowed = [
                 'vehicles.status',
@@ -148,13 +176,12 @@ export default function Dashboard({
                 'vehicles.logs',
                 'vehicles.checklist',
             ];
-            if (allowed.includes(moduleKey)) return true;
+            return allowed.includes(moduleKey);
         }
 
         // Inspector Role Logic
         if (user.role === 'inspector') {
             const dept = (user.department || '').trim();
-            // const moduleKey = module.permission; // Removed duplicate
 
             if (dept === 'Material Mayor') {
                 const allowed = [
@@ -164,14 +191,13 @@ export default function Dashboard({
                     'vehicles.logs',
                     'vehicles.workshop',
                     'vehicles.checklist',
+                    'vehicles.renditions',
+                    'vehicles.petty-cash',
                     'vehicles',
                 ];
-                if (
-                    allowed.some(
-                        (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
-                    )
-                )
-                    return true;
+                return allowed.some(
+                    (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
+                );
             } else if (dept === 'Material Menor') {
                 const allowed = [
                     'inventory',
@@ -181,18 +207,15 @@ export default function Dashboard({
                     'reception',
                     'equipment',
                 ];
-                if (
-                    allowed.some(
-                        (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
-                    )
-                )
-                    return true;
+                return allowed.some(
+                    (m) => m === moduleKey || m.startsWith(moduleKey + '.'),
+                );
             }
+            return false;
         }
 
         // Check explicit permissions
         const permissions = user.permissions || [];
-        // const moduleKey = module.permission; // Removed duplicate
 
         return (
             permissions.includes(moduleKey) ||
@@ -210,6 +233,13 @@ export default function Dashboard({
             permission: permissionKey,
         } as any);
     };
+
+    const canReviewRenditions = Boolean(
+        auth.user?.role === 'admin' ||
+        auth.user?.role === 'comandante' ||
+        (auth.user?.role === 'inspector' && (auth.user?.department || '').trim() === 'Material Mayor') ||
+        auth.user?.role === 'secretaria_adquisiciones'
+    );
 
     useEffect(() => {
         try {
@@ -297,8 +327,8 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* Petty Cash Pending (Inspector/Comandante) */}
-                {canAccessModule('vehicles.renditions') && pendingPettyCash.length > 0 && (
+                {/* Petty Cash Pending (Reviewers: Admin, Comandante, Inspector MM, Secretaria Adquisiciones) */}
+                {canReviewRenditions && pendingPettyCash.length > 0 && (
                     <div className="rounded-2xl border border-blue-500/30 bg-card p-5 sm:p-6 shadow-xs">
                         <div className="mb-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">

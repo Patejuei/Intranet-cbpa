@@ -254,13 +254,16 @@ export function AppSidebar({ user }: { user: any }) {
                 'tickets',
                 'reception',
                 'vehicles.renditions',
+                'vehicles.petty-cash',
             ];
             if (allowed.includes(module)) return true;
+            return false;
         }
 
         // Capitan and Ayudante Restrictions
         if (user.role === 'capitan' || user.role === 'ayudante') {
             const restricted = [
+                'inventory',
                 'vehicles.inventory',
                 'vehicles.petty-cash',
                 'vehicles.renditions',
@@ -268,7 +271,7 @@ export function AppSidebar({ user }: { user: any }) {
             
             // Ayudante extra restriction: No Workshop
             if (user.role === 'ayudante') {
-                restricted.push('vehicles.workshop');
+                restricted.push('vehicles.workshop', 'users');
             }
 
             if (restricted.includes(module)) return false;
@@ -297,8 +300,10 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.logs',
                 'vehicles.inventory',
                 'vehicles.renditions',
+                'vehicles.petty-cash',
             ];
             if (mechanicModules.includes(module)) return true;
+            return false;
         }
 
         if (user.role === 'cuartelero') {
@@ -309,6 +314,7 @@ export function AppSidebar({ user }: { user: any }) {
                 'vehicles.checklist',
             ];
             if (allowed.includes(module)) return true;
+            return false;
         }
 
         if (user.role === 'inspector') {
@@ -322,6 +328,7 @@ export function AppSidebar({ user }: { user: any }) {
                     'vehicles.workshop',
                     'vehicles.checklist',
                     'vehicles.renditions',
+                    'vehicles.petty-cash',
                     'vehicles',
                 ];
                 // Check if likely match
@@ -332,6 +339,7 @@ export function AppSidebar({ user }: { user: any }) {
                 )
                     return true;
                 if (allowed.includes(module)) return true;
+                return false;
             } else if (dept === 'Material Menor') {
                 const allowed = [
                     'inventory',
@@ -340,7 +348,7 @@ export function AppSidebar({ user }: { user: any }) {
                     'deliveries',
                     'reception',
                     'equipment',
-                    'vehicles.petty-cash',
+                    'assigned_materials',
                 ];
                 if (
                     allowed.some(
@@ -349,7 +357,9 @@ export function AppSidebar({ user }: { user: any }) {
                 )
                     return true;
                 if (allowed.includes(module)) return true;
+                return false;
             }
+            return false;
         }
 
         const permissions = (user.permissions as string[]) || [];

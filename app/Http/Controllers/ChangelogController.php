@@ -14,6 +14,20 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.13',
+                'date' => '23-11-2026',
+                'changes' => [
+                    'Restricción de registro en bitácoras de Material Mayor: exclusivamente conductores autorizados con unidades asignadas pueden realizar y registrar movimientos, bloqueando el acceso a maquinistas y usuarios sin carros asignados.',
+                    'Validación reforzada a nivel de servidor y cliente para asegurar que cada movimiento sea registrado únicamente en las unidades donde el usuario es conductor asignado.',
+                    'Soporte completo de internacionalización en español para autenticación, restablecimiento de contraseñas y paginación, corrigiendo textos sin traducir.',
+                    'Rediseño y modernización visual de mensajes de error en formularios, con iconografía de alerta, animaciones suaves y soporte para temas claro y oscuro.',
+                    'Ampliación integral de atributos y nombres de campos en español para validaciones en todos los módulos del sistema.',
+                    'Corrección de visibilidad del módulo de Rendiciones en el Panel Principal (Dashboard): implementación de listas blancas estrictas para maquinistas, cuarteleros, ayudantes y capitanes, evitando la aparición de la tarjeta de Rendiciones a usuarios sin permisos.',
+                    'Seguridad y control en widget de Rendiciones Pendientes: restringida la consulta en backend y visualización de aprobaciones únicamente a roles con facultades de visto bueno (Administrador, Comandante, Inspector de Material Mayor y Secretaria de Adquisiciones).',
+                    'Sincronización integral de permisos entre Dashboard, Barra Lateral (Sidebar), Hook usePermissions y Modelo User, unificando los criterios de acceso y edición para toda la plataforma.',
+                ],
+            ],
+            [
                 'version' => 'v1.1.12',
                 'date' => '21-11-2026',
                 'changes' => [

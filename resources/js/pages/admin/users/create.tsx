@@ -1,4 +1,5 @@
 import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -333,12 +334,9 @@ export default function UserCreate({
                                             placeholder="Ej: Juan Pérez Morales"
                                             className="h-10 text-sm"
                                             required
+                                            aria-invalid={!!errors.name}
                                         />
-                                        {errors.name && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.name}
-                                            </p>
-                                        )}
+                                        <InputError message={errors.name} />
                                     </div>
 
                                     <div className="grid gap-2">
@@ -355,12 +353,9 @@ export default function UserCreate({
                                             placeholder="ejemplo@cbpa.cl"
                                             className="h-10 text-sm"
                                             required
+                                            aria-invalid={!!errors.email}
                                         />
-                                        {errors.email && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.email}
-                                            </p>
-                                        )}
+                                        <InputError message={errors.email} />
                                     </div>
 
                                     <div className="grid gap-2">
@@ -376,12 +371,9 @@ export default function UserCreate({
                                                 setData('rut', e.target.value)
                                             }
                                             className="h-10 text-sm"
+                                            aria-invalid={!!errors.rut}
                                         />
-                                        {errors.rut && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.rut}
-                                            </p>
-                                        )}
+                                        <InputError message={errors.rut} />
                                     </div>
 
                                     <div className="grid gap-2">
@@ -411,9 +403,7 @@ export default function UserCreate({
                                             </SelectContent>
                                         </Select>
                                         {errors.company && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.company}
-                                            </p>
+                                            <InputError message={errors.company} />
                                         )}
                                     </div>
                                 </div>
@@ -434,12 +424,9 @@ export default function UserCreate({
                                             }
                                             className="h-10 text-sm"
                                             required
+                                            aria-invalid={!!errors.password}
                                         />
-                                        {errors.password && (
-                                            <p className="text-xs text-destructive">
-                                                {errors.password}
-                                            </p>
-                                        )}
+                                        <InputError message={errors.password} />
                                     </div>
 
                                     <div className="grid gap-2">

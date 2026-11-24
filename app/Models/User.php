@@ -52,6 +52,7 @@ class User extends Authenticatable
      */
     protected $appends = [
         'has_tickets',
+        'is_driver',
     ];
 
     /**
@@ -96,9 +97,21 @@ class User extends Authenticatable
                     'vehicles.inventory.view', 'vehicles.inventory.edit',
                     'vehicles.logs.view', 'vehicles.logs.edit',
                     'vehicles.checklist.view', 'vehicles.checklist.edit',
-                    'vehicles.petty-cash.view', 'vehicles.petty-cash.edit'
+                    'vehicles.petty-cash.view', 'vehicles.petty-cash.edit',
+                    'vehicles.renditions.view', 'vehicles.renditions.edit'
                 ]);
             }
+        } elseif ($this->role === 'secretaria_adquisiciones') {
+            $perms = array_merge($perms, [
+                'inventory.view', 'inventory.edit',
+                'batteries.view', 'batteries.edit',
+                'equipment.view', 'equipment.edit',
+                'deliveries.view', 'deliveries.edit',
+                'tickets.view', 'tickets.edit',
+                'reception.view', 'reception.edit',
+                'vehicles.renditions.view', 'vehicles.renditions.edit',
+                'vehicles.petty-cash.view', 'vehicles.petty-cash.edit'
+            ]);
         }
 
         return array_values(array_unique($perms));
@@ -107,6 +120,15 @@ class User extends Authenticatable
     public function driverVehicles()
     {
         return $this->belongsToMany(Vehicle::class, 'driver_vehicle');
+    }
+
+    public function getIsDriverAttribute(): bool
+    {
+        if (! $this->exists) {
+            return false;
+        }
+
+        return $this->driverVehicles()->exists();
     }
 
     public function getHasTicketsAttribute(): bool

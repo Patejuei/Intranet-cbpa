@@ -13,14 +13,36 @@ export function usePermissions() {
         // Ayudante: No access to users
         if (user.role === 'ayudante' && module === 'users') return false;
 
-        // Capitan and Ayudante: Revoke Bodega (inventory)
+        // Capitan and Ayudante Restrictions
         if (user.role === 'capitan' || user.role === 'ayudante') {
-            if (module === 'inventory') return false;
-            if (user.role === 'ayudante' && module === 'vehicles.workshop') return false;
-            return true; // Default to true for everything else (legacy behavior)
+            const restricted = [
+                'inventory',
+                'vehicles.inventory',
+                'vehicles.petty-cash',
+                'vehicles.renditions',
+            ];
+            if (user.role === 'ayudante') {
+                restricted.push('vehicles.workshop', 'users');
+            }
+            if (restricted.includes(module)) return false;
+            return true;
         }
 
         if (user.role === 'admin' || user.role === 'comandante' || user.role === 'central_operator') return true;
+
+        if (user.role === 'secretaria_adquisiciones') {
+            const allowed = [
+                'inventory',
+                'batteries',
+                'equipment',
+                'deliveries',
+                'tickets',
+                'reception',
+                'vehicles.renditions',
+                'vehicles.petty-cash',
+            ];
+            return allowed.includes(module);
+        }
 
         if (user.role === 'cuartelero') {
             const cuarteleroModules = [
@@ -29,7 +51,7 @@ export function usePermissions() {
                 'vehicles.status',
                 'vehicles.incidents',
             ];
-            if (cuarteleroModules.includes(module)) return true;
+            return cuarteleroModules.includes(module);
         }
 
         if (user.role === 'maquinista') {
@@ -38,30 +60,26 @@ export function usePermissions() {
                 'vehicles.checklist',
                 'vehicles.status',
                 'vehicles.incidents',
-                // 'vehicles.inventory', // REMOVED per user request (Bodega)
-                // 'inventory', // Bodega Global - Explicitly excluded
+                'vehicles.workshop',
             ];
-            if (maquinistaModules.includes(module)) return true;
+            return maquinistaModules.includes(module);
         }
 
         if (user.role === 'mechanic') {
-            // ... existing mechanic logic ...
             const mechanicModules = [
                 'vehicles.workshop',
                 'vehicles.incidents',
                 'vehicles.status',
                 'vehicles.checklist',
                 'vehicles.logs',
-                'vehicles.logs',
-                'vehicles.logs',
                 'vehicles.inventory',
+                'vehicles.renditions',
                 'vehicles.petty-cash',
             ];
-            if (mechanicModules.includes(module)) return true;
+            return mechanicModules.includes(module);
         }
 
         if (user.role === 'inspector') {
-            // ... existing inspector logic ...
             const dept = (user.department || '').trim();
             if (dept === 'Material Mayor') {
                 const allowed = [
@@ -71,18 +89,14 @@ export function usePermissions() {
                     'vehicles.logs',
                     'vehicles.workshop',
                     'vehicles.checklist',
-                    'vehicles.checklist',
+                    'vehicles.renditions',
                     'vehicles.petty-cash',
                     'vehicles',
                     'central',
                 ];
-                if (
-                    allowed.some(
-                        (m) => m === module || m.startsWith(module + '.'),
-                    )
-                )
-                    return true;
-                if (allowed.includes(module)) return true;
+                return allowed.some(
+                    (m) => m === module || m.startsWith(module + '.'),
+                );
             } else if (dept === 'Material Menor') {
                 const allowed = [
                     'inventory',
@@ -92,16 +106,12 @@ export function usePermissions() {
                     'reception',
                     'equipment',
                     'assigned_materials',
-                    'vehicles.petty-cash', // Added permission
                 ];
-                if (
-                    allowed.some(
-                        (m) => m === module || m.startsWith(module + '.'),
-                    )
-                )
-                    return true;
-                if (allowed.includes(module)) return true;
+                return allowed.some(
+                    (m) => m === module || m.startsWith(module + '.'),
+                );
             }
+            return false;
         }
 
         const permissions = (user.permissions as string[]) || [];
@@ -147,6 +157,9 @@ export function usePermissions() {
         }
 
         if (user.role === 'maquinista') {
+            if (module === 'vehicles.logs') {
+                return Boolean(user.is_driver);
+            }
             // Maquinista Edit permissions
             const editModules = [
                 'vehicles.incidents', // ADDED per user request
@@ -165,6 +178,7 @@ export function usePermissions() {
                     'vehicles.logs',
                     'vehicles.checklist', // ADDED
                     'vehicles.petty-cash',
+                    'vehicles.renditions',
                 ];
                 if (editModules.includes(module)) return true;
 
@@ -184,7 +198,16 @@ export function usePermissions() {
         }
 
         if (user.role === 'secretaria_adquisiciones') {
-            const secModules = ['inventory', 'tickets', 'batteries', 'deliveries', 'reception', 'equipment'];
+            const secModules = [
+                'inventory',
+                'tickets',
+                'batteries',
+                'deliveries',
+                'reception',
+                'equipment',
+                'vehicles.renditions',
+                'vehicles.petty-cash',
+            ];
             if (secModules.includes(module)) return true;
         }
 
@@ -199,8 +222,9 @@ export function usePermissions() {
             const fullAccessModules = [
                 'vehicles.workshop',
                 'vehicles.incidents',
-                'vehicles.incidents',
                 'vehicles.inventory',
+                'vehicles.renditions',
+                'vehicles.petty-cash',
             ];
             if (fullAccessModules.includes(module)) return true;
         }
@@ -216,6 +240,11 @@ export function usePermissions() {
         if (!user) return false;
 
         if (module === 'tickets') return true;
+
+        if (module === 'vehicles.logs') {
+            if (user.role === 'admin') return true;
+            return Boolean(user.is_driver) && canEdit(module);
+        }
 
         if (user.role === 'ayudante' || user.role === 'cuartelero') {
             if (module === 'vehicles.incidents') return false;

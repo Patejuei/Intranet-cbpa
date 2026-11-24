@@ -241,11 +241,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     )->values();
             }
 
-            // Rendiciones Notifications
-            $hasPettyCashPerm = (!$isStandardComandancia || $user->hasPermissionTo('vehicles.petty-cash') || $user->hasPermissionTo('vehicles.renditions'));
+            // Rendiciones Notifications (Solo roles con facultades de revisión/aprobación)
+            $canReviewRenditions = (
+                $user->role === 'admin' ||
+                $user->role === 'comandante' ||
+                ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor') ||
+                $user->role === 'secretaria_adquisiciones'
+            );
             $pendingPettyCash = [];
-            if ($hasPettyCashPerm) {
-                if ($user->role === 'inspector' && trim($user->department) === 'Material Mayor') {
+            if ($canReviewRenditions) {
+                if ($user->role === 'inspector' && trim($user->department ?? '') === 'Material Mayor') {
                     $pendingPettyCash = \App\Models\PettyCashRendition::where('status', 'pending_inspector')
                         ->with('user')
                         ->take(5)

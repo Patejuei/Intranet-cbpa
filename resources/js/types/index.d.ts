@@ -46,6 +46,7 @@ export interface User {
     department?: string;
     signature_path?: string;
     permissions?: string[];
+    is_driver?: boolean;
     [key: string]: unknown;
 }
 

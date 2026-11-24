@@ -47,6 +47,7 @@ export default function Login({
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="eMail o RUT"
+                                    aria-invalid={!!errors.email}
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -72,6 +73,7 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Contraseña"
+                                    aria-invalid={!!errors.password}
                                 />
                                 <InputError message={errors.password} />
                             </div>

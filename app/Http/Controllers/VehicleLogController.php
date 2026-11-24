@@ -82,21 +82,24 @@ class VehicleLogController extends Controller
     public function create()
     {
         $user = request()->user();
-        $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
+        $isAdmin = ($user->role === 'admin');
+
+        // Solo conductores autorizados con unidades asignadas (o administradores) pueden crear movimientos
+        if (!$isAdmin) {
+            $isCompanyCuartelero = ($user->role === 'cuartelero' && $user->company !== 'Comandancia');
+            if (!$isCompanyCuartelero && !$user->driverVehicles()->exists()) {
+                abort(403, 'Solo los conductores autorizados con unidades asignadas pueden registrar movimientos en la bitácora.');
+            }
+        }
 
         $vehicles = \App\Models\Vehicle::query()
-            ->when($isCuarteleroComandancia, function ($q) use ($user) {
+            ->when(!$isAdmin, function ($q) use ($user) {
                 $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
-                $q->whereIn('id', $assignedIds);
-            })
-            ->when(!$isCuarteleroComandancia && $user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
-                $driverIds = $user->driverVehicles()->pluck('vehicles.id');
-                $q->where(function ($query) use ($driverIds, $user) {
-                    $query->where('company', $user->company);
-                    if ($driverIds->isNotEmpty()) {
-                        $query->orWhereIn('id', $driverIds);
-                    }
-                });
+                if ($user->role === 'cuartelero' && $user->company !== 'Comandancia' && $assignedIds->isEmpty()) {
+                    $q->where('company', $user->company);
+                } else {
+                    $q->whereIn('id', $assignedIds);
+                }
             })
             ->addSelect([
                 'last_mileage' => \App\Models\VehicleLog::select('end_km')
@@ -134,6 +137,14 @@ class VehicleLogController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->role === 'maquinista') {
+            $isDriver = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+            if (!$isDriver) {
+                abort(403, 'Solo puede registrar movimientos para las unidades donde usted es conductor asignado.');
+            }
+        }
+
         if ($user->role === 'cuartelero') {
             if ($user->company === 'Comandancia') {
                 $isAssigned = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
@@ -141,9 +152,17 @@ class VehicleLogController extends Controller
                     abort(403, 'Solo puede registrar bitácoras para los carros que tiene asignados.');
                 }
             } else {
-                $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
-                if ($vehicle->company !== $user->company) {
-                    abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+                $hasDriverVehicles = $user->driverVehicles()->exists();
+                if ($hasDriverVehicles) {
+                    $isAssigned = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+                    if (!$isAssigned) {
+                        abort(403, 'Solo puede registrar bitácoras para los carros que tiene asignados.');
+                    }
+                } else {
+                    $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
+                    if ($vehicle->company !== $user->company) {
+                        abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
+                    }
                 }
             }
         }
@@ -156,17 +175,9 @@ class VehicleLogController extends Controller
         }
 
         if ($user->role === 'user' && $user->company !== 'Comandancia') {
-            $hasDriverVehicles = $user->driverVehicles()->exists();
-            if ($hasDriverVehicles) {
-                $isAssignedDriver = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
-                if (!$isAssignedDriver) {
-                    abort(403, 'Solo puede registrar movimientos para las unidades donde usted es conductor asignado.');
-                }
-            } else {
-                $vehicle = \App\Models\Vehicle::findOrFail($validated['vehicle_id']);
-                if ($vehicle->company !== $user->company) {
-                    abort(403, 'Solo puede registrar bitácoras para vehículos de su compañía.');
-                }
+            $isAssignedDriver = $user->driverVehicles()->where('vehicles.id', $validated['vehicle_id'])->exists();
+            if (!$isAssignedDriver) {
+                abort(403, 'Solo puede registrar movimientos para las unidades donde usted es conductor asignado.');
             }
         }
 
