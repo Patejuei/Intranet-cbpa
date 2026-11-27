@@ -1,17 +1,18 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, RotateCcw } from 'lucide-react';
 
 interface AssignedMaterial {
     id: number;
@@ -38,6 +39,26 @@ interface Props {
 }
 
 export default function AssignedMaterialsShow({ firefighter }: Props) {
+    const {
+        filteredItems,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+    } = useClientTableFilter<AssignedMaterial>(
+        firefighter.assigned_materials || [],
+        {
+            accessors: {
+                product_name: (item) => item.material.product_name,
+                code: (item) => item.material.code || '',
+                brand_model: (item) =>
+                    `${item.material.brand || ''} ${item.material.model || ''}`.trim(),
+                quantity: (item) => item.quantity,
+            },
+        },
+    );
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Material Menor',
@@ -86,49 +107,95 @@ export default function AssignedMaterialsShow({ firefighter }: Props) {
                 </div>
 
                 <Card>
-                    <CardHeader className="bg-muted/50 pb-4">
+                    <CardHeader className="flex flex-row items-center justify-between bg-muted/50 pb-4">
                         <CardTitle className="text-lg">
                             Materiales Asignados
                         </CardTitle>
+                        {hasActiveFilters && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                            >
+                                <RotateCcw className="size-4" />
+                                Limpiar filtros
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Material</TableHead>
-                                    <TableHead>Código</TableHead>
-                                    <TableHead>Marca / Modelo</TableHead>
-                                    <TableHead className="text-right">
-                                        Cantidad
-                                    </TableHead>
+                                    <SortableTableHead
+                                        column="product_name"
+                                        label="Material"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.product_name}
+                                        filterPlaceholder="Filtrar material..."
+                                        onFilterChange={(value) =>
+                                            setFilter('product_name', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="code"
+                                        label="Código"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.code}
+                                        filterPlaceholder="Filtrar código..."
+                                        onFilterChange={(value) =>
+                                            setFilter('code', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="brand_model"
+                                        label="Marca / Modelo"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.brand_model}
+                                        filterPlaceholder="Filtrar marca/modelo..."
+                                        onFilterChange={(value) =>
+                                            setFilter('brand_model', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="quantity"
+                                        label="Cantidad"
+                                        align="right"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                    />
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {firefighter.assigned_materials &&
-                                firefighter.assigned_materials.length > 0 ? (
-                                    firefighter.assigned_materials.map(
-                                        (assigned) => (
-                                            <TableRow key={assigned.id}>
-                                                <TableCell className="font-medium">
-                                                    {
-                                                        assigned.material
-                                                            .product_name
-                                                    }
-                                                </TableCell>
-                                                <TableCell>
-                                                    {assigned.material.code ||
-                                                        '-'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {assigned.material.brand}{' '}
-                                                    {assigned.material.model}
-                                                </TableCell>
-                                                <TableCell className="text-right text-lg font-bold">
-                                                    {assigned.quantity}
-                                                </TableCell>
-                                            </TableRow>
-                                        ),
-                                    )
+                                {filteredItems.length > 0 ? (
+                                    filteredItems.map((assigned) => (
+                                        <TableRow key={assigned.id}>
+                                            <TableCell className="font-medium">
+                                                {assigned.material.product_name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {assigned.material.code || '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {assigned.material.brand}{' '}
+                                                {assigned.material.model}
+                                            </TableCell>
+                                            <TableCell className="text-right text-lg font-bold">
+                                                {assigned.quantity}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
                                 ) : (
                                     <TableRow>
                                         <TableCell

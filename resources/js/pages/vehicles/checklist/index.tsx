@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,11 +18,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import Pagination from '@/components/Pagination';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, FileSpreadsheet, CheckCircle2, Clock } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Plus, FileSpreadsheet, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { ReportModal } from '@/components/report-modal';
 
@@ -44,30 +46,60 @@ interface Checklist {
     user: { name: string };
 }
 
+interface ChecklistFilters {
+    [key: string]: string | undefined;
+    vehicle_id?: string;
+    vehicle_ids?: string;
+    id?: string;
+    created_at?: string;
+    vehicle_name?: string;
+    user_name?: string;
+    status?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface Props {
     checklists: PaginationType<Checklist>;
     vehicles: { id: number; name: string }[];
-    filters: { vehicle_id?: string };
+    filters?: ChecklistFilters;
 }
+
+const emptyChecklistFilters: ChecklistFilters = {
+    vehicle_id: 'all',
+    vehicle_ids: '',
+    id: '',
+    created_at: '',
+    vehicle_name: '',
+    user_name: '',
+    status: 'all',
+    sort: undefined,
+    direction: undefined,
+};
 
 import { usePermissions } from '@/hooks/use-permissions';
 
 export default function IndexChecklist({
     checklists,
     vehicles,
-    filters,
+    filters: initialFilters = {},
 }: Props) {
     const { auth } = usePage<any>().props;
     const { canCreate } = usePermissions();
     const [reportModalOpen, setReportModalOpen] = useState(false);
 
-    const handleFilterChange = (val: string) => {
-        router.get(
-            '/vehicles/checklists',
-            { vehicle_id: val === 'all' ? undefined : val },
-            { preserveState: true, replace: true },
-        );
-    };
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<ChecklistFilters>('/vehicles/checklists', {
+            vehicle_id: initialFilters.vehicle_id || 'all',
+            vehicle_ids: initialFilters.vehicle_ids || '',
+            id: initialFilters.id || '',
+            created_at: initialFilters.created_at || '',
+            vehicle_name: initialFilters.vehicle_name || '',
+            user_name: initialFilters.user_name || '',
+            status: initialFilters.status || 'all',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -86,7 +118,9 @@ export default function IndexChecklist({
                         <div className="w-full sm:w-[220px]">
                             <Select
                                 value={filters.vehicle_id || 'all'}
-                                onValueChange={handleFilterChange}
+                                onValueChange={(val) =>
+                                    setFilter('vehicle_id', val)
+                                }
                             >
                                 <SelectTrigger className="h-9">
                                     <SelectValue placeholder="Filtrar por Vehículo" />
@@ -106,6 +140,20 @@ export default function IndexChecklist({
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    clearFilters(emptyChecklistFilters)
+                                }
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
 
                         {/* @ts-ignore */}
                         {canCreate('vehicles.checklist') && (
@@ -135,11 +183,88 @@ export default function IndexChecklist({
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-b border-border/60 bg-muted/20">
-                                        <TableHead className="w-16">ID</TableHead>
-                                        <TableHead>Fecha</TableHead>
-                                        <TableHead>Vehículo</TableHead>
-                                        <TableHead>Realizado Por</TableHead>
-                                        <TableHead>Estado</TableHead>
+                                        <SortableTableHead
+                                            column="id"
+                                            label="ID"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.id}
+                                            filterPlaceholder="Filtrar ID..."
+                                            onFilterChange={(val) =>
+                                                setFilter('id', val)
+                                            }
+                                            className="w-24"
+                                        />
+                                        <SortableTableHead
+                                            column="created_at"
+                                            label="Fecha"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.created_at}
+                                            filterPlaceholder="YYYY-MM-DD..."
+                                            onFilterChange={(val) =>
+                                                setFilter('created_at', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="vehicle"
+                                            label="Vehículo"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="multi-select"
+                                            filterValue={filters.vehicle_ids}
+                                            filterOptions={vehicles.map((v) => ({
+                                                value: v.id.toString(),
+                                                label: v.name,
+                                            }))}
+                                            onFilterChange={(val) =>
+                                                setFilter('vehicle_ids', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="user"
+                                            label="Realizado Por"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.user_name}
+                                            filterPlaceholder="Filtrar usuario..."
+                                            onFilterChange={(val) =>
+                                                setFilter('user_name', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="status"
+                                            label="Estado"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.status}
+                                            filterOptions={[
+                                                {
+                                                    value: 'Pending',
+                                                    label: 'Pendiente',
+                                                },
+                                                {
+                                                    value: 'Partially Reviewed',
+                                                    label: 'Parcialmente Revisado',
+                                                },
+                                                {
+                                                    value: 'Completed',
+                                                    label: 'Completado',
+                                                },
+                                            ]}
+                                            onFilterChange={(val) =>
+                                                setFilter('status', val)
+                                            }
+                                        />
                                         <TableHead className="text-right">
                                             Acciones
                                         </TableHead>

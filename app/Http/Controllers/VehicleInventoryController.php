@@ -18,21 +18,68 @@ class VehicleInventoryController extends Controller
 
         $query = \App\Models\WorkshopInventory::query();
 
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%");
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
+            });
         }
 
-        if ($request->has('category') && $request->input('category') !== 'all') {
+        if ($request->filled('sku')) {
+            $query->where('sku', 'like', '%' . trim($request->input('sku')) . '%');
+        }
+
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . trim($request->input('name')) . '%');
+        }
+
+        if ($request->filled('category') && $request->input('category') !== 'all') {
             $query->where('category', $request->input('category'));
         }
 
-        $items = $query->orderBy('name')->paginate(10)->withQueryString();
+        if ($request->filled('unit_of_measure')) {
+            $query->where('unit_of_measure', 'like', '%' . trim($request->input('unit_of_measure')) . '%');
+        }
+
+        if ($request->filled('location')) {
+            $query->where('location', 'like', '%' . trim($request->input('location')) . '%');
+        }
+
+        $sortable = [
+            'sku' => 'sku',
+            'name' => 'name',
+            'category' => 'category',
+            'unit_of_measure' => 'unit_of_measure',
+            'stock' => 'stock',
+            'unit_cost' => 'unit_cost',
+            'location' => 'location',
+        ];
+
+        $sort = $request->input('sort');
+        $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
+
+        if ($sort && isset($sortable[$sort])) {
+            $query->orderBy($sortable[$sort], $direction);
+        } else {
+            $query->orderBy('name');
+        }
+
+        $items = $query->paginate(10)->withQueryString();
 
         return Inertia::render('vehicles/inventory/index', [
             'items' => $items,
-            'filters' => $request->only(['search', 'category']),
+            'filters' => $request->only([
+                'search',
+                'sku',
+                'name',
+                'category',
+                'unit_of_measure',
+                'location',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

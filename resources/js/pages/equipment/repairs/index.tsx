@@ -1,6 +1,8 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -9,19 +11,36 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
+import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
-import { useState } from 'react';
-import { usePermissions } from '@/hooks/use-permissions';
+import { Plus, RotateCcw, Search } from 'lucide-react';
 // import { route } from 'ziggy-js';
 
 export default function RepairRequestsIndex({ requests }: { requests: any[] }) {
     const { canCreate } = usePermissions();
     const { auth } = usePage().props;
-    const [searchTerm, setSearchTerm] = useState('');
+
+    const {
+        filteredItems: filteredRequests,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+    } = useClientTableFilter<any>(requests, {
+        accessors: {
+            created_at: (req) => req.created_at,
+            material: (req) => req.material?.product_name || '',
+            requester: (req) => req.requester?.name || '',
+            status: (req) => req.status,
+            inspector: (req) => req.inspector?.name || '',
+        },
+        exactMatchColumns: ['status'],
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -29,12 +48,6 @@ export default function RepairRequestsIndex({ requests }: { requests: any[] }) {
             href: '/repairs',
         },
     ];
-
-    const filteredRequests = requests.filter((request) =>
-        request.material?.product_name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()),
-    );
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -93,28 +106,149 @@ export default function RepairRequestsIndex({ requests }: { requests: any[] }) {
                             )}
                         </CardHeader>
                         <CardContent>
-                            <div className="mb-4 flex items-center gap-2">
-                                <Search className="h-4 w-4 text-gray-500" />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por material..."
-                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                />
+                            <div className="mb-4 flex items-center justify-between gap-2">
+                                <div className="flex flex-1 items-center gap-2">
+                                    <Search className="h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Buscar por material..."
+                                        className="max-w-sm"
+                                        value={filters.material || ''}
+                                        onChange={(e) =>
+                                            setFilter(
+                                                'material',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                </div>
+                                {hasActiveFilters && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={clearFilters}
+                                        className="gap-1.5 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <RotateCcw className="size-4" />
+                                        Limpiar filtros
+                                    </Button>
+                                )}
                             </div>
 
                             <div className="rounded-md border">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Fecha</TableHead>
-                                            <TableHead>Material</TableHead>
-                                            <TableHead>Solicitante</TableHead>
-                                            <TableHead>Estado</TableHead>
-                                            <TableHead>Inspector</TableHead>
+                                            <SortableTableHead
+                                                column="created_at"
+                                                label="Fecha"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.created_at}
+                                                filterPlaceholder="YYYY-MM-DD..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'created_at',
+                                                        value,
+                                                    )
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="material"
+                                                label="Material"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.material}
+                                                filterPlaceholder="Filtrar material..."
+                                                onFilterChange={(value) =>
+                                                    setFilter('material', value)
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="requester"
+                                                label="Solicitante"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.requester}
+                                                filterPlaceholder="Filtrar solicitante..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'requester',
+                                                        value,
+                                                    )
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="status"
+                                                label="Estado"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="select"
+                                                filterValue={filters.status}
+                                                filterOptions={[
+                                                    {
+                                                        value: 'PENDING',
+                                                        label: 'Solicitado',
+                                                    },
+                                                    {
+                                                        value: 'RECEIVED_BY_INSPECTOR',
+                                                        label: 'Recepcionado',
+                                                    },
+                                                    {
+                                                        value: 'APPROVED',
+                                                        label: 'Aprobado',
+                                                    },
+                                                    {
+                                                        value: 'REJECTED',
+                                                        label: 'Rechazado',
+                                                    },
+                                                    {
+                                                        value: 'SENT_TO_PROVIDER',
+                                                        label: 'En Taller',
+                                                    },
+                                                    {
+                                                        value: 'FINISHED',
+                                                        label: 'Finalizado',
+                                                    },
+                                                ]}
+                                                onFilterChange={(value) =>
+                                                    setFilter('status', value)
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="inspector"
+                                                label="Inspector"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.inspector}
+                                                filterPlaceholder="Filtrar inspector..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'inspector',
+                                                        value,
+                                                    )
+                                                }
+                                            />
                                             <TableHead className="text-right">
                                                 Acciones
                                             </TableHead>

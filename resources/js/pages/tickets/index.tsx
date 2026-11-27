@@ -1,5 +1,6 @@
 import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,11 +14,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
-import { Eye, LifeBuoy, Plus, Search, Tag } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, LifeBuoy, Plus, RotateCcw, Search, Tag } from 'lucide-react';
 
 interface UserModel {
     id: number;
@@ -37,29 +38,73 @@ interface TicketModel {
     assigned_to: UserModel | null;
 }
 
+interface TicketFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    id?: string;
+    subject?: string;
+    category?: string;
+    priority?: string;
+    status?: string;
+    company?: string;
+    requester?: string;
+    assigned_to?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface PageProps {
     tickets: {
         data: TicketModel[];
         links: any[];
+        total?: number;
     };
     categories: Record<string, string>;
     can_create?: boolean;
+    filters?: TicketFilters;
 }
 
-export default function TicketIndex({ tickets, categories, can_create }: PageProps) {
+const emptyTicketFilters: TicketFilters = {
+    search: '',
+    id: '',
+    subject: '',
+    category: 'all',
+    priority: 'all',
+    status: 'all',
+    company: '',
+    requester: '',
+    assigned_to: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function TicketIndex({
+    tickets,
+    categories,
+    can_create,
+    filters: initialFilters = {},
+}: PageProps) {
     const { canCreate, user } = usePermissions();
-    const [searchTerm, setSearchTerm] = useState('');
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<TicketFilters>('/tickets', {
+            search: initialFilters.search || '',
+            id: initialFilters.id || '',
+            subject: initialFilters.subject || '',
+            category: initialFilters.category || 'all',
+            priority: initialFilters.priority || 'all',
+            status: initialFilters.status || 'all',
+            company: initialFilters.company || '',
+            requester: initialFilters.requester || '',
+            assigned_to: initialFilters.assigned_to || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     // Si viene can_create del backend lo usamos directamente, sino usamos canCreate hook
     const showCreateButton = can_create !== undefined ? can_create : canCreate('tickets');
 
-    const filteredTickets = tickets.data.filter(
-        (t) =>
-            t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (t.category && categories[t.category]?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            t.id.toString().includes(searchTerm),
-    );
+    const totalTickets = tickets.total ?? tickets.data.length;
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -147,8 +192,8 @@ export default function TicketIndex({ tickets, categories, can_create }: PagePro
                                 Soporte de Plataforma
                             </h1>
                             <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                {filteredTickets.length}{' '}
-                                {filteredTickets.length === 1 ? 'ticket' : 'tickets'}
+                                {totalTickets}{' '}
+                                {totalTickets === 1 ? 'ticket' : 'tickets'}
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -170,17 +215,30 @@ export default function TicketIndex({ tickets, categories, can_create }: PagePro
                     <div className="relative w-full max-w-md">
                         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                         <Input
-                            placeholder="Buscar por asunto, categoría, compañía o ID..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar por asunto, categoría, compañía, solicitante o ID..."
+                            value={filters.search || ''}
+                            onChange={(e) =>
+                                setFilter('search', e.target.value, {
+                                    debounce: true,
+                                })
+                            }
                             className="h-9 pl-9 pr-4 text-sm"
                         />
                     </div>
-                    {user?.role === 'admin' && (
-                        <div className="shrink-0">
-                            <CompanyFilter />
-                        </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => clearFilters(emptyTicketFilters)}
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
+                        {user?.role === 'admin' && <CompanyFilter />}
+                    </div>
                 </div>
 
                 {/* Tickets Table Card */}
@@ -189,21 +247,122 @@ export default function TicketIndex({ tickets, categories, can_create }: PagePro
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[80px]">ID</TableHead>
-                                    <TableHead className="min-w-[200px]">Asunto</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead>Prioridad</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Compañía</TableHead>
-                                    <TableHead>Solicitante</TableHead>
-                                    <TableHead>Asignado a</TableHead>
-                                    <TableHead>Fecha</TableHead>
+                                    <SortableTableHead
+                                        column="id"
+                                        label="ID"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.id}
+                                        filterPlaceholder="Filtrar por ID..."
+                                        onFilterChange={(value) => setFilter('id', value)}
+                                        className="w-[80px]"
+                                    />
+                                    <SortableTableHead
+                                        column="subject"
+                                        label="Asunto"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.subject}
+                                        filterPlaceholder="Filtrar por asunto..."
+                                        onFilterChange={(value) => setFilter('subject', value)}
+                                        className="min-w-[200px]"
+                                    />
+                                    <SortableTableHead
+                                        column="category"
+                                        label="Categoría"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.category}
+                                        filterOptions={Object.entries(categories).map(
+                                            ([value, label]) => ({
+                                                value,
+                                                label,
+                                            }),
+                                        )}
+                                        onFilterChange={(value) => setFilter('category', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="priority"
+                                        label="Prioridad"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.priority}
+                                        filterOptions={[
+                                            { value: 'ALTA', label: 'Alta' },
+                                            { value: 'MEDIA', label: 'Media' },
+                                            { value: 'BAJA', label: 'Baja' },
+                                        ]}
+                                        onFilterChange={(value) => setFilter('priority', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="status"
+                                        label="Estado"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.status}
+                                        filterOptions={[
+                                            { value: 'ABIERTO', label: 'Abierto' },
+                                            { value: 'EN_PROCESO', label: 'En Proceso' },
+                                            { value: 'CERRADO', label: 'Cerrado' },
+                                        ]}
+                                        onFilterChange={(value) => setFilter('status', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.company}
+                                        filterPlaceholder="Filtrar por compañía..."
+                                        onFilterChange={(value) => setFilter('company', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="requester"
+                                        label="Solicitante"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.requester}
+                                        filterPlaceholder="Filtrar por solicitante..."
+                                        onFilterChange={(value) => setFilter('requester', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="assigned_to"
+                                        label="Asignado a"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.assigned_to}
+                                        filterPlaceholder="Filtrar por asignado..."
+                                        onFilterChange={(value) => setFilter('assigned_to', value)}
+                                    />
+                                    <SortableTableHead
+                                        column="created_at"
+                                        label="Fecha"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredTickets.length > 0 ? (
-                                    filteredTickets.map((ticket) => (
+                                {tickets.data.length > 0 ? (
+                                    tickets.data.map((ticket) => (
                                         <TableRow
                                             key={ticket.id}
                                             className="transition-colors hover:bg-muted/40"
@@ -280,8 +439,8 @@ export default function TicketIndex({ tickets, categories, can_create }: PagePro
                                                     No se encontraron tickets.
                                                 </p>
                                                 <p className="text-xs text-muted-foreground/70">
-                                                    {searchTerm
-                                                        ? 'Pruebe modificando los términos de búsqueda.'
+                                                    {hasActiveFilters
+                                                        ? 'Pruebe modificando los filtros o términos de búsqueda.'
                                                         : 'No hay tickets registrados en esta sección.'}
                                                 </p>
                                             </div>

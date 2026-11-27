@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
@@ -34,12 +36,13 @@ import {
     Pencil,
     Plus,
     Printer,
+    RotateCcw,
     Save,
     Trash2,
     Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import ExternalWorkModal, {
     ExternalWork,
@@ -328,6 +331,46 @@ export default function WorkshopShow({
     const totalOrderCost = totalPartsCost + laborCost + externalWorksCost;
 
     const completedTasks = data.tasks.filter((t) => t.is_completed).length;
+
+    const {
+        filteredItems: filteredItems,
+        filters: partsFilters,
+        setFilter: setPartsFilter,
+        setSort: setPartsSort,
+        clearFilters: clearPartsFilters,
+        hasActiveFilters: hasActivePartsFilters,
+    } = useClientTableFilter(maintenance.items || [], {
+        accessors: {
+            name: (item) => `${item.name} ${item.sku || ''}`,
+            quantity: (item) => item.pivot.quantity,
+            unit_cost: (item) => item.pivot.unit_cost,
+            total_cost: (item) => item.pivot.total_cost,
+        },
+    });
+
+    const indexedExternalWorks = useMemo(
+        () =>
+            data.external_works.map((work, index) => ({
+                work,
+                index,
+            })),
+        [data.external_works],
+    );
+
+    const {
+        filteredItems: filteredExternalWorks,
+        filters: extFilters,
+        setFilter: setExtFilter,
+        setSort: setExtSort,
+        clearFilters: clearExtFilters,
+        hasActiveFilters: hasActiveExtFilters,
+    } = useClientTableFilter(indexedExternalWorks, {
+        accessors: {
+            description: (row) => row.work.description,
+            provider: (row) => row.work.provider,
+            cost: (row) => Number(row.work.cost) || 0,
+        },
+    });
 
     const { canEdit: canEditPermission, canConfigureHH, canEditWorkingHours } = usePermissions();
     const canEdit = canEditPermission('vehicles.workshop');
@@ -792,30 +835,86 @@ export default function WorkshopShow({
                                     </div>
                                 )}
 
+                                {hasActivePartsFilters && (
+                                    <div className="flex justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={clearPartsFilters}
+                                            className="gap-1.5"
+                                        >
+                                            <RotateCcw className="size-3.5" />
+                                            <span>Limpiar filtros</span>
+                                        </Button>
+                                    </div>
+                                )}
+
                                 <div className="rounded-md border">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b bg-muted/50 text-left">
-                                                <th className="p-3 font-medium">
-                                                    Ítem
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Cant.
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Costo Unit.
-                                                </th>
-                                                <th className="p-3 text-right font-medium">
-                                                    Total
-                                                </th>
+                                                <SortableTableHead
+                                                    column="name"
+                                                    label="Ítem"
+                                                    sortKey={partsFilters.sort}
+                                                    sortDirection={
+                                                        partsFilters.direction
+                                                    }
+                                                    onSort={setPartsSort}
+                                                    filterType="text"
+                                                    filterValue={
+                                                        partsFilters.name
+                                                    }
+                                                    filterPlaceholder="Filtrar ítem o SKU..."
+                                                    onFilterChange={(val) =>
+                                                        setPartsFilter(
+                                                            'name',
+                                                            val,
+                                                        )
+                                                    }
+                                                    className="p-3"
+                                                />
+                                                <SortableTableHead
+                                                    column="quantity"
+                                                    label="Cant."
+                                                    sortKey={partsFilters.sort}
+                                                    sortDirection={
+                                                        partsFilters.direction
+                                                    }
+                                                    onSort={setPartsSort}
+                                                    align="right"
+                                                    className="p-3"
+                                                />
+                                                <SortableTableHead
+                                                    column="unit_cost"
+                                                    label="Costo Unit."
+                                                    sortKey={partsFilters.sort}
+                                                    sortDirection={
+                                                        partsFilters.direction
+                                                    }
+                                                    onSort={setPartsSort}
+                                                    align="right"
+                                                    className="p-3"
+                                                />
+                                                <SortableTableHead
+                                                    column="total_cost"
+                                                    label="Total"
+                                                    sortKey={partsFilters.sort}
+                                                    sortDirection={
+                                                        partsFilters.direction
+                                                    }
+                                                    onSort={setPartsSort}
+                                                    align="right"
+                                                    className="p-3"
+                                                />
                                                 {!isContentLocked && (
                                                     <th className="w-[50px] p-3 text-right font-medium text-muted-foreground"></th>
                                                 )}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {!maintenance.items ||
-                                            maintenance.items.length === 0 ? (
+                                            {filteredItems.length === 0 ? (
                                                 <tr>
                                                     <td
                                                         colSpan={5}
@@ -826,7 +925,7 @@ export default function WorkshopShow({
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                maintenance.items.map(
+                                                filteredItems.map(
                                                     (item) => (
                                                         <tr
                                                             key={item.id}
@@ -1001,45 +1100,103 @@ export default function WorkshopShow({
                                 <Separator />
 
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-2">
                                         <Label className="text-base font-semibold">
                                             Trabajos Externos
                                         </Label>
-                                        {!isContentLocked && (
-                                            <Button
-                                                onClick={() => {
-                                                    setEditingWorkIndex(null);
-                                                    setIsExternalModalOpen(
-                                                        true,
-                                                    );
-                                                }}
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 gap-1"
-                                            >
-                                                <Plus className="h-3.5 w-3.5" />
-                                                Agregar Externo
-                                            </Button>
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {hasActiveExtFilters && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={clearExtFilters}
+                                                    className="h-8 gap-1.5"
+                                                >
+                                                    <RotateCcw className="size-3.5" />
+                                                    <span>Limpiar filtros</span>
+                                                </Button>
+                                            )}
+                                            {!isContentLocked && (
+                                                <Button
+                                                    onClick={() => {
+                                                        setEditingWorkIndex(null);
+                                                        setIsExternalModalOpen(
+                                                            true,
+                                                        );
+                                                    }}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 gap-1"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    Agregar Externo
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="rounded-md border">
                                         <table className="w-full text-sm">
                                             <thead>
                                                 <tr className="border-b bg-muted/50 text-left">
-                                                    <th className="p-3 font-medium">
-                                                        Descripción
-                                                    </th>
-                                                    <th className="p-3 font-medium">
-                                                        Proveedor
-                                                    </th>
-                                                    <th className="p-3 text-right font-medium">
-                                                        Costo
-                                                    </th>
+                                                    <SortableTableHead
+                                                        column="description"
+                                                        label="Descripción"
+                                                        sortKey={extFilters.sort}
+                                                        sortDirection={
+                                                            extFilters.direction
+                                                        }
+                                                        onSort={setExtSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            extFilters.description
+                                                        }
+                                                        filterPlaceholder="Filtrar descripción..."
+                                                        onFilterChange={(val) =>
+                                                            setExtFilter(
+                                                                'description',
+                                                                val,
+                                                            )
+                                                        }
+                                                        className="p-3"
+                                                    />
+                                                    <SortableTableHead
+                                                        column="provider"
+                                                        label="Proveedor"
+                                                        sortKey={extFilters.sort}
+                                                        sortDirection={
+                                                            extFilters.direction
+                                                        }
+                                                        onSort={setExtSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            extFilters.provider
+                                                        }
+                                                        filterPlaceholder="Filtrar proveedor..."
+                                                        onFilterChange={(val) =>
+                                                            setExtFilter(
+                                                                'provider',
+                                                                val,
+                                                            )
+                                                        }
+                                                        className="p-3"
+                                                    />
+                                                    <SortableTableHead
+                                                        column="cost"
+                                                        label="Costo"
+                                                        sortKey={extFilters.sort}
+                                                        sortDirection={
+                                                            extFilters.direction
+                                                        }
+                                                        onSort={setExtSort}
+                                                        align="right"
+                                                        className="p-3"
+                                                    />
                                                     <th className="w-[120px] p-3"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {data.external_works.length ===
+                                                {filteredExternalWorks.length ===
                                                 0 ? (
                                                     <tr>
                                                         <td
@@ -1052,8 +1209,8 @@ export default function WorkshopShow({
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    data.external_works.map(
-                                                        (work, index) => (
+                                                    filteredExternalWorks.map(
+                                                        ({ work, index }) => (
                                                             <tr
                                                                 key={index}
                                                                 className="border-b last:border-0 hover:bg-muted/10"

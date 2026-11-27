@@ -17,8 +17,7 @@ class VehicleMaintenanceController extends Controller
         $status = $request->input('status');
         $search = $request->input('search');
 
-        $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues', 'externalWorks'])
-            ->orderBy('id', 'desc');
+        $query = \App\Models\VehicleMaintenance::with(['vehicle', 'issues', 'externalWorks']);
 
         $user = $request->user();
         if ($user->role !== 'admin' && $user->company !== 'Comandancia') {
@@ -27,41 +26,122 @@ class VehicleMaintenanceController extends Controller
             });
         }
 
-        if ($status) {
+        $scopedVehicleIds = (clone $query)->whereNotNull('vehicle_id')->distinct()->pluck('vehicle_id');
+
+        if ($status && $status !== 'all') {
             if ($status === 'active') {
-                $query->whereNull('exit_date');
+                $query->whereNull('vehicle_maintenances.exit_date');
             } elseif ($status === 'history') {
-                $query->whereNotNull('exit_date');
+                $query->whereNotNull('vehicle_maintenances.exit_date');
             }
-        } else {
-            // Default to active if no filter? Or all? 
-            // User asked to "show all orders... and add filter".
-            // Let's default to ALL but typically "active" is more useful as default. 
-            // I'll default to 'active' for UI cleanliness, but user can select 'All'.
-            // Actually, let's look at the instruction "muestra todas las ordenes...". 
-            // It might be an instruction: "Show all orders [in the view] and add a filter".
-            // So if I default to All, it matches the request text literally.
-            // But 'active' is safer for performance/usability. I'll default to Active in the controller if param missing?
-            // "muestra todas las ordenes" might be "It currently shows all orders [active ones? No, it only shows active ones usually]". 
-            // The current code has `whereNull('exit_date')`. 
-            // Use case: user wants to see history.
-            // I will NOT apply default filter if 'status' is not present, effectively showing "All" IF I remove the `whereNull`.
-            // But wait, `whereNull` was there before.
-            // Let's add a default behaviour: if status is NOT provided, show ALL (as per "muestra todas las ordenes").
-            // And use the filter to narrow it down.
         }
 
         if ($search) {
-            $query->whereHas('vehicle', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $searchTerm = trim($search);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('vehicle_maintenances.workshop_name', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('vehicle', function ($vq) use ($searchTerm) {
+                        $vq->where('name', 'like', "%{$searchTerm}%")
+                            ->orWhere('plate', 'like', "%{$searchTerm}%");
+                    });
             });
         }
 
+        // Column Filters
+        if ($request->filled('vehicle_ids')) {
+            $vehicleIds = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('vehicle_ids')))));
+            if (!empty($vehicleIds)) {
+                $query->whereIn('vehicle_maintenances.vehicle_id', $vehicleIds);
+            }
+        }
+
+        if ($request->filled('vehicle_name')) {
+            $vehicleName = trim($request->input('vehicle_name'));
+            $query->whereHas('vehicle', function ($q) use ($vehicleName) {
+                $q->where('name', 'like', "%{$vehicleName}%")
+                    ->orWhere('plate', 'like', "%{$vehicleName}%");
+            });
+        }
+
+        if ($request->filled('company') && $request->input('company') !== 'all') {
+            $company = trim($request->input('company'));
+            $query->whereHas('vehicle', function ($q) use ($company) {
+                $q->where('company', $company);
+            });
+        }
+
+        if ($request->filled('workshop_name')) {
+            $query->where('vehicle_maintenances.workshop_name', 'like', '%' . trim($request->input('workshop_name')) . '%');
+        }
+
+        if ($request->filled('entry_date')) {
+            $query->where('vehicle_maintenances.entry_date', 'like', '%' . trim($request->input('entry_date')) . '%');
+        }
+
+        if ($request->filled('tentative_exit_date')) {
+            $query->where('vehicle_maintenances.tentative_exit_date', 'like', '%' . trim($request->input('tentative_exit_date')) . '%');
+        }
+
+        if ($request->filled('order_status') && $request->input('order_status') !== 'all') {
+            $query->where('vehicle_maintenances.status', $request->input('order_status'));
+        }
+
+        // Whitelisted Sorting
+        $sort = $request->input('sort');
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+
+        switch ($sort) {
+            case 'vehicle':
+                $query->leftJoin('vehicles', 'vehicle_maintenances.vehicle_id', '=', 'vehicles.id')
+                    ->select('vehicle_maintenances.*')
+                    ->orderBy('vehicles.name', $direction);
+                break;
+            case 'company':
+                $query->leftJoin('vehicles', 'vehicle_maintenances.vehicle_id', '=', 'vehicles.id')
+                    ->select('vehicle_maintenances.*')
+                    ->orderBy('vehicles.company', $direction);
+                break;
+            case 'workshop_name':
+                $query->orderBy('vehicle_maintenances.workshop_name', $direction);
+                break;
+            case 'entry_date':
+                $query->orderBy('vehicle_maintenances.entry_date', $direction);
+                break;
+            case 'tentative_exit_date':
+                $query->orderBy('vehicle_maintenances.tentative_exit_date', $direction);
+                break;
+            case 'status':
+                $query->orderBy('vehicle_maintenances.status', $direction);
+                break;
+            default:
+                $query->orderBy('vehicle_maintenances.id', 'desc');
+                break;
+        }
+
         $maintenances = $query->paginate(20)->withQueryString();
+        $scopedVehicles = \App\Models\Vehicle::whereIn('id', $scopedVehicleIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'plate', 'company']);
+        $scopedCompanies = $scopedVehicles->pluck('company')->filter()->unique()->sort()->values();
 
         return Inertia::render('vehicles/workshop/index', [
             'maintenances' => $maintenances,
-            'filters' => $request->only(['status', 'search', 'page'])
+            'vehicles' => $scopedVehicles,
+            'companies' => $scopedCompanies,
+            'filters' => $request->only([
+                'status',
+                'search',
+                'vehicle_ids',
+                'vehicle_name',
+                'company',
+                'workshop_name',
+                'entry_date',
+                'tentative_exit_date',
+                'order_status',
+                'sort',
+                'direction',
+                'page',
+            ]),
         ]);
     }
 

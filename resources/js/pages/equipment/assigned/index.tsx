@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,11 +17,11 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, Pagination as PaginationType } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Eye, RotateCcw, Search } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -41,46 +42,66 @@ interface Firefighter {
     assigned_materials?: any[]; // We only need count really, but relationship was loaded
 }
 
+interface AssignedFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    full_name?: string;
+    rut?: string;
+    company?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface Props {
     firefighters: PaginationType<Firefighter>;
-    filters: {
-        search?: string;
-        company?: string;
-    };
+    filters: AssignedFilters;
     can_filter_company: boolean;
 }
 
+const companiesList = [
+    'Primera Compañía',
+    'Segunda Compañía',
+    'Tercera Compañía',
+    'Cuarta Compañía',
+    'Quinta Compañía',
+    'Séptima Compañía',
+    'Octava Compañía',
+    'Novena Compañía',
+    'Décima Compañía',
+    'Comandancia',
+];
+
+const emptyAssignedFilters: AssignedFilters = {
+    search: '',
+    full_name: '',
+    rut: '',
+    company: 'all',
+    sort: undefined,
+    direction: undefined,
+};
+
 export default function AssignedMaterialsIndex({
     firefighters,
-    filters,
+    filters: initialFilters = {},
     can_filter_company,
 }: Props) {
-    const [search, setSearch] = useState(filters.search || '');
-    const [company, setCompany] = useState(filters.company || 'all');
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<AssignedFilters>('/assigned-materials', {
+            search: initialFilters.search || '',
+            full_name: initialFilters.full_name || '',
+            rut: initialFilters.rut || '',
+            company: initialFilters.company || 'all',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const handleSearch = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        router.get(
-            '/assigned-materials',
-            {
-                search,
-                company: company === 'all' ? undefined : company,
-            },
-            { preserveState: true, preserveScroll: true },
-        );
+        setFilter('search', filters.search || '');
     };
 
     const handleCompanyChange = (val: string) => {
-        setCompany(val);
-        // Trigger search immediately on filter change
-        router.get(
-            '/assigned-materials',
-            {
-                search,
-                company: val === 'all' ? undefined : val,
-            },
-            { preserveState: true, preserveScroll: true },
-        );
+        setFilter('company', val);
     };
 
     return (
@@ -111,8 +132,12 @@ export default function AssignedMaterialsIndex({
                                 type="search"
                                 placeholder="Buscar bombero (Nombre o RUT)..."
                                 className="pl-8"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                value={filters.search || ''}
+                                onChange={(e) =>
+                                    setFilter('search', e.target.value, {
+                                        debounce: true,
+                                    })
+                                }
                             />
                         </div>
                         <Button type="submit" variant="secondary">
@@ -120,10 +145,23 @@ export default function AssignedMaterialsIndex({
                         </Button>
                     </form>
 
+                    {hasActiveFilters && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => clearFilters(emptyAssignedFilters)}
+                            className="gap-1.5 text-muted-foreground hover:text-foreground"
+                        >
+                            <RotateCcw className="size-4" />
+                            Limpiar filtros
+                        </Button>
+                    )}
+
                     {can_filter_company && (
                         <div className="w-full md:w-[200px]">
                             <Select
-                                value={company}
+                                value={filters.company || 'all'}
                                 onValueChange={handleCompanyChange}
                             >
                                 <SelectTrigger>
@@ -133,36 +171,11 @@ export default function AssignedMaterialsIndex({
                                     <SelectItem value="all">
                                         Todas las Compañías
                                     </SelectItem>
-                                    <SelectItem value="Primera Compañía">
-                                        Primera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Segunda Compañía">
-                                        Segunda Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Tercera Compañía">
-                                        Tercera Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Cuarta Compañía">
-                                        Cuarta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Quinta Compañía">
-                                        Quinta Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Séptima Compañía">
-                                        Séptima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Octava Compañía">
-                                        Octava Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Novena Compañía">
-                                        Novena Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Décima Compañía">
-                                        Décima Compañía
-                                    </SelectItem>
-                                    <SelectItem value="Comandancia">
-                                        Comandancia
-                                    </SelectItem>
+                                    {companiesList.map((c) => (
+                                        <SelectItem key={c} value={c}>
+                                            {c}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -179,9 +192,54 @@ export default function AssignedMaterialsIndex({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>RUT</TableHead>
-                                    <TableHead>Compañía</TableHead>
+                                    <SortableTableHead
+                                        column="full_name"
+                                        label="Nombre"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.full_name}
+                                        filterPlaceholder="Filtrar por nombre..."
+                                        onFilterChange={(value) =>
+                                            setFilter('full_name', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="rut"
+                                        label="RUT"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.rut}
+                                        filterPlaceholder="Filtrar por RUT..."
+                                        onFilterChange={(value) =>
+                                            setFilter('rut', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType={
+                                            can_filter_company
+                                                ? 'select'
+                                                : undefined
+                                        }
+                                        filterValue={filters.company}
+                                        filterOptions={companiesList.map(
+                                            (c) => ({
+                                                value: c,
+                                                label: c,
+                                            }),
+                                        )}
+                                        onFilterChange={(value) =>
+                                            setFilter('company', value)
+                                        }
+                                    />
                                     <TableHead className="text-right">
                                         Acción
                                     </TableHead>

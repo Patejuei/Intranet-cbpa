@@ -1,4 +1,6 @@
 import ActionOtpVerificationModal from '@/components/action-otp-verification-modal';
+import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,9 +21,10 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useOtpAction } from '@/hooks/use-otp-action';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { CheckCircle2, Download, Eye, FileText, Plus, Receipt } from 'lucide-react';
+import { CheckCircle2, Download, Eye, Plus, Receipt, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
 interface Rendition {
@@ -38,19 +41,60 @@ interface Rendition {
     vehicle?: { name: string; company: string };
 }
 
+interface RenditionFilters {
+    [key: string]: string | undefined;
+    status?: string;
+    expense_type?: string;
+    description?: string;
+    invoice_number?: string;
+    supplier_rut?: string;
+    vehicle?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface Props {
     renditions: {
         data: Rendition[];
         links: any[];
+        total?: number;
     };
     userRole: string;
     userDepartment: string;
+    filters?: RenditionFilters;
 }
 
-export default function RenditionIndex({ renditions, userRole, userDepartment }: Props) {
+const emptyRenditionFilters: RenditionFilters = {
+    status: 'all',
+    expense_type: 'all',
+    description: '',
+    invoice_number: '',
+    supplier_rut: '',
+    vehicle: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function RenditionIndex({
+    renditions,
+    userRole,
+    userDepartment,
+    filters: initialFilters = {},
+}: Props) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [expenseFilter, setExpenseFilter] = useState('all');
     const { isOtpModalOpen, performWithOtp, handleVerified, closeOtpModal } = useOtpAction();
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<RenditionFilters>('/vehicles/renditions', {
+            status: initialFilters.status || 'all',
+            expense_type: initialFilters.expense_type || 'all',
+            description: initialFilters.description || '',
+            invoice_number: initialFilters.invoice_number || '',
+            supplier_rut: initialFilters.supplier_rut || '',
+            vehicle: initialFilters.vehicle || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
@@ -84,11 +128,11 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
             form.appendChild(input);
         }
 
-        if (expenseFilter !== 'all') {
+        if (filters.expense_type && filters.expense_type !== 'all') {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'expense_type';
-            input.value = expenseFilter;
+            input.value = filters.expense_type;
             form.appendChild(input);
         }
 
@@ -229,7 +273,7 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                                 Rendiciones y Gastos
                             </h1>
                             <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                {renditions.data.length} registros
+                                {renditions.total ?? renditions.data.length} registros
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -249,22 +293,38 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
 
                 {/* Filter and Actions Bar */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="w-full sm:w-[240px]">
-                        <Select
-                            value={expenseFilter}
-                            onValueChange={setExpenseFilter}
-                        >
-                            <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Tipo de Gasto" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos los gastos</SelectItem>
-                                <SelectItem value="repair_supplies">Insumos Reparación</SelectItem>
-                                <SelectItem value="spare_parts">Repuestos</SelectItem>
-                                <SelectItem value="tools">Herramientas</SelectItem>
-                                <SelectItem value="other_tools">Otras Herramientas</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="w-full sm:w-[240px]">
+                            <Select
+                                value={filters.expense_type || 'all'}
+                                onValueChange={(value) =>
+                                    setFilter('expense_type', value)
+                                }
+                            >
+                                <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Tipo de Gasto" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos los gastos</SelectItem>
+                                    <SelectItem value="repair_supplies">Insumos Reparación</SelectItem>
+                                    <SelectItem value="spare_parts">Repuestos</SelectItem>
+                                    <SelectItem value="tools">Herramientas</SelectItem>
+                                    <SelectItem value="other_tools">Otras Herramientas</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => clearFilters(emptyRenditionFilters)}
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -309,14 +369,135 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                                             aria-label="Seleccionar todo"
                                         />
                                     </TableHead>
-                                    <TableHead className="w-[110px]">Fecha Doc.</TableHead>
-                                    <TableHead className="min-w-[180px]">Concepto</TableHead>
-                                    <TableHead>Nº Factura</TableHead>
-                                    <TableHead>Proveedor (RUT)</TableHead>
-                                    <TableHead>Destino / Carro</TableHead>
-                                    <TableHead>Tipo</TableHead>
-                                    <TableHead className="text-right">Monto</TableHead>
-                                    <TableHead>Estado</TableHead>
+                                    <SortableTableHead
+                                        column="invoice_date"
+                                        label="Fecha Doc."
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        className="w-[110px]"
+                                    />
+                                    <SortableTableHead
+                                        column="description"
+                                        label="Concepto"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.description}
+                                        filterPlaceholder="Filtrar por concepto..."
+                                        onFilterChange={(value) =>
+                                            setFilter('description', value)
+                                        }
+                                        className="min-w-[180px]"
+                                    />
+                                    <SortableTableHead
+                                        column="invoice_number"
+                                        label="Nº Factura"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.invoice_number}
+                                        filterPlaceholder="Filtrar por factura..."
+                                        onFilterChange={(value) =>
+                                            setFilter('invoice_number', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="supplier_rut"
+                                        label="Proveedor (RUT)"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.supplier_rut}
+                                        filterPlaceholder="Filtrar por RUT..."
+                                        onFilterChange={(value) =>
+                                            setFilter('supplier_rut', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="vehicle"
+                                        label="Destino / Carro"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.vehicle}
+                                        filterPlaceholder="Filtrar por carro..."
+                                        onFilterChange={(value) =>
+                                            setFilter('vehicle', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="expense_type"
+                                        label="Tipo"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.expense_type}
+                                        filterOptions={[
+                                            {
+                                                value: 'repair_supplies',
+                                                label: 'Insumos Reparación',
+                                            },
+                                            {
+                                                value: 'spare_parts',
+                                                label: 'Repuestos',
+                                            },
+                                            {
+                                                value: 'tools',
+                                                label: 'Herramientas',
+                                            },
+                                            {
+                                                value: 'other_tools',
+                                                label: 'Otras Herramientas',
+                                            },
+                                        ]}
+                                        onFilterChange={(value) =>
+                                            setFilter('expense_type', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="amount"
+                                        label="Monto"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        align="right"
+                                    />
+                                    <SortableTableHead
+                                        column="status"
+                                        label="Estado"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.status}
+                                        filterOptions={[
+                                            {
+                                                value: 'pending_inspector',
+                                                label: 'Pendiente Inspector',
+                                            },
+                                            {
+                                                value: 'pending_secretary',
+                                                label: 'Pendiente Secretaria',
+                                            },
+                                            {
+                                                value: 'approved',
+                                                label: 'Aprobado',
+                                            },
+                                            {
+                                                value: 'rejected',
+                                                label: 'Rechazado',
+                                            },
+                                        ]}
+                                        onFilterChange={(value) =>
+                                            setFilter('status', value)
+                                        }
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -406,6 +587,8 @@ export default function RenditionIndex({ renditions, userRole, userDepartment }:
                         </Table>
                     </CardContent>
                 </Card>
+
+                <Pagination links={renditions.links} />
 
                 <ActionOtpVerificationModal
                     isOpen={isOtpModalOpen}

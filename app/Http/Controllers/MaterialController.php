@@ -63,7 +63,7 @@ class MaterialController extends Controller
         $query = Material::query();
         $this->applyCompanyScope($query, request());
 
-        if ($search = request('search')) {
+        if ($search = trim((string) request('search', ''))) {
             $query->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
@@ -73,9 +73,61 @@ class MaterialController extends Controller
             });
         }
 
+        if ($code = trim((string) request('code', ''))) {
+            $query->where('code', 'like', "%{$code}%");
+        }
+
+        if ($productName = trim((string) request('product_name', ''))) {
+            $query->where('product_name', 'like', "%{$productName}%");
+        }
+
+        if ($brand = trim((string) request('brand', ''))) {
+            $query->where(function ($q) use ($brand) {
+                $q->where('brand', 'like', "%{$brand}%")
+                    ->orWhere('model', 'like', "%{$brand}%");
+            });
+        }
+
+        if ($stockStatus = trim((string) request('stock_status', ''))) {
+            if ($stockStatus === 'in_stock') {
+                $query->where('stock_quantity', '>', 0);
+            } elseif ($stockStatus === 'out_of_stock') {
+                $query->where('stock_quantity', '<=', 0);
+            }
+        }
+
+        if ($category = trim((string) request('category', ''))) {
+            $query->where('category', 'like', "%{$category}%");
+        }
+
+        if ($dependency = trim((string) request('dependency', ''))) {
+            $query->where('dependency', 'like', "%{$dependency}%");
+        }
+
+        $sortableColumns = ['code', 'product_name', 'brand', 'stock_quantity', 'category', 'dependency'];
+        $sort = request('sort');
+        $direction = strtolower((string) request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('product_name');
+        }
+
         return Inertia::render('inventory/index', [
-            'materials' => $query->orderBy('product_name')->paginate(10)->withQueryString(),
-            'filters' => request()->only(['search']) // Pass filters back to view to maintain state if needed
+            'materials' => $query->paginate(10)->withQueryString(),
+            'filters' => request()->only([
+                'search',
+                'company',
+                'code',
+                'product_name',
+                'brand',
+                'stock_status',
+                'category',
+                'dependency',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

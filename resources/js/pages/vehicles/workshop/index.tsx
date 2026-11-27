@@ -1,4 +1,5 @@
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { ReportModal } from '@/components/report-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,12 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Eye, FileSpreadsheet, FileText, Plus, Search, Wrench } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Eye, FileSpreadsheet, FileText, Plus, RotateCcw, Search, Wrench } from 'lucide-react';
+import { useState } from 'react';
 
 interface Maintenance {
     id: number;
@@ -48,56 +50,72 @@ interface PaginationLink {
     active: boolean;
 }
 
+interface WorkshopFilters {
+    [key: string]: string | undefined;
+    status?: string;
+    search?: string;
+    vehicle_ids?: string;
+    vehicle_name?: string;
+    company?: string;
+    workshop_name?: string;
+    entry_date?: string;
+    tentative_exit_date?: string;
+    order_status?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
+const emptyWorkshopFilters: WorkshopFilters = {
+    status: 'all',
+    search: '',
+    vehicle_ids: '',
+    vehicle_name: '',
+    company: 'all',
+    workshop_name: '',
+    entry_date: '',
+    tentative_exit_date: '',
+    order_status: 'all',
+    sort: undefined,
+    direction: undefined,
+};
+
 export default function VehicleWorkshop() {
-    const { maintenances, filters } = usePage<{
+    const {
+        maintenances,
+        vehicles = [],
+        companies = [],
+        filters: initialFilters = {},
+    } = usePage<{
         maintenances: {
             data: Maintenance[];
             links: PaginationLink[];
         };
-        filters: {
-            status?: string;
-            search?: string;
-            page?: number;
-        };
+        vehicles?: {
+            id: number;
+            name: string;
+            plate?: string;
+            company?: string;
+        }[];
+        companies?: string[];
+        filters?: WorkshopFilters;
     }>().props;
 
     const { canCreate } = usePermissions();
     const [reportModalOpen, setReportModalOpen] = useState(false);
-    const [search, setSearch] = useState(filters.search || '');
-    const [debouncedSearch, setDebouncedSearch] = useState(search);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [search]);
-
-    const handleSearch = (val: string) => {
-        setSearch(val);
-    };
-
-    const handleStatusChange = (val: string) => {
-        router.get(
-            '/vehicles/workshop',
-            { status: val, search },
-            { preserveState: true, replace: true },
-        );
-    };
-
-    useEffect(() => {
-        if (debouncedSearch !== (filters.search || '')) {
-            router.get(
-                '/vehicles/workshop',
-                {
-                    status: filters.status,
-                    search: debouncedSearch,
-                },
-                { preserveState: true, replace: true },
-            );
-        }
-    }, [debouncedSearch]);
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<WorkshopFilters>('/vehicles/workshop', {
+            status: initialFilters.status || 'all',
+            search: initialFilters.search || '',
+            vehicle_ids: initialFilters.vehicle_ids || '',
+            vehicle_name: initialFilters.vehicle_name || '',
+            company: initialFilters.company || 'all',
+            workshop_name: initialFilters.workshop_name || '',
+            entry_date: initialFilters.entry_date || '',
+            tentative_exit_date: initialFilters.tentative_exit_date || '',
+            order_status: initialFilters.order_status || 'all',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -192,26 +210,48 @@ export default function VehicleWorkshop() {
                         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                         <Input
                             placeholder="Buscar por código de vehículo, patente o taller..."
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
+                            value={filters.search || ''}
+                            onChange={(e) =>
+                                setFilter('search', e.target.value, {
+                                    debounce: true,
+                                })
+                            }
                             className="h-9 pl-9 pr-4 text-sm"
                         />
                     </div>
 
-                    <div className="w-full sm:w-[220px] shrink-0">
-                        <Select
-                            defaultValue={filters.status || 'all'}
-                            onValueChange={handleStatusChange}
-                        >
-                            <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Filtrar por estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas las órdenes</SelectItem>
-                                <SelectItem value="active">Activas (En Taller)</SelectItem>
-                                <SelectItem value="history">Historial (Finalizadas / Entregadas)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <div className="w-full sm:w-[220px]">
+                            <Select
+                                value={filters.status || 'all'}
+                                onValueChange={(val) =>
+                                    setFilter('status', val)
+                                }
+                            >
+                                <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Filtrar por estado" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todas las órdenes</SelectItem>
+                                    <SelectItem value="active">Activas (En Taller)</SelectItem>
+                                    <SelectItem value="history">Historial (Finalizadas / Entregadas)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    clearFilters(emptyWorkshopFilters)
+                                }
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -221,12 +261,118 @@ export default function VehicleWorkshop() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="min-w-[160px]">Vehículo</TableHead>
-                                    <TableHead>Compañía</TableHead>
-                                    <TableHead>Taller / Proveedor</TableHead>
-                                    <TableHead>Fecha Ingreso</TableHead>
-                                    <TableHead>Salida Estimada</TableHead>
-                                    <TableHead>Estado</TableHead>
+                                    <SortableTableHead
+                                        column="vehicle"
+                                        label="Vehículo"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="multi-select"
+                                        filterValue={filters.vehicle_ids}
+                                        filterOptions={vehicles.map((v) => ({
+                                            value: v.id.toString(),
+                                            label: v.plate
+                                                ? `${v.name} (${v.plate})`
+                                                : v.name,
+                                        }))}
+                                        onFilterChange={(val) =>
+                                            setFilter('vehicle_ids', val)
+                                        }
+                                        className="min-w-[160px]"
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.company}
+                                        filterOptions={companies.map((c) => ({
+                                            value: c,
+                                            label: c,
+                                        }))}
+                                        onFilterChange={(val) =>
+                                            setFilter('company', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="workshop_name"
+                                        label="Taller / Proveedor"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.workshop_name}
+                                        filterPlaceholder="Filtrar taller..."
+                                        onFilterChange={(val) =>
+                                            setFilter('workshop_name', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="entry_date"
+                                        label="Fecha Ingreso"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.entry_date}
+                                        filterPlaceholder="YYYY-MM-DD..."
+                                        onFilterChange={(val) =>
+                                            setFilter('entry_date', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="tentative_exit_date"
+                                        label="Salida Estimada"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.tentative_exit_date}
+                                        filterPlaceholder="YYYY-MM-DD..."
+                                        onFilterChange={(val) =>
+                                            setFilter('tentative_exit_date', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="status"
+                                        label="Estado"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.order_status}
+                                        filterOptions={[
+                                            {
+                                                value: 'En Taller',
+                                                label: 'En Taller',
+                                            },
+                                            {
+                                                value: 'Trabajando',
+                                                label: 'Trabajando',
+                                            },
+                                            {
+                                                value: 'En Espera de Repuestos',
+                                                label: 'En Espera de Repuestos',
+                                            },
+                                            {
+                                                value: 'Pruebas Finales',
+                                                label: 'Pruebas Finales',
+                                            },
+                                            {
+                                                value: 'Finalizado',
+                                                label: 'Finalizado',
+                                            },
+                                            {
+                                                value: 'Entregado',
+                                                label: 'Entregado',
+                                            },
+                                        ]}
+                                        onFilterChange={(val) =>
+                                            setFilter('order_status', val)
+                                        }
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -241,7 +387,7 @@ export default function VehicleWorkshop() {
                                                 <Wrench className="size-8 text-muted-foreground/40" />
                                                 <p className="text-sm font-medium">No se encontraron órdenes de trabajo.</p>
                                                 <p className="text-xs text-muted-foreground/70">
-                                                    {search
+                                                    {filters.search
                                                         ? 'Pruebe con otros términos de búsqueda.'
                                                         : 'No hay vehículos ingresados en este filtro.'}
                                                 </p>

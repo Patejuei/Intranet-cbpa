@@ -1,4 +1,5 @@
 
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { ExportIncidentsDialog } from '@/components/vehicles/export-incidents-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,10 @@ import {
 } from '@/components/ui/table';
 import Pagination from '@/components/Pagination';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import { Eye, FileSpreadsheet, Image as ImageIcon, Plus } from 'lucide-react';
+import { Eye, FileSpreadsheet, Image as ImageIcon, Plus, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
 interface Vehicle {
@@ -45,15 +47,55 @@ interface Issue {
     images_count?: number;
 }
 
+interface IssueFilters {
+    [key: string]: string | undefined;
+    date?: string;
+    vehicle_ids?: string;
+    vehicle_name?: string;
+    severity?: string;
+    description?: string;
+    status?: string;
+    reporter_name?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
+const emptyIssueFilters: IssueFilters = {
+    date: '',
+    vehicle_ids: '',
+    vehicle_name: '',
+    severity: 'all',
+    description: '',
+    status: 'all',
+    reporter_name: '',
+    sort: undefined,
+    direction: undefined,
+};
+
 export default function VehicleIncidents({
     issues,
     vehicles,
+    filters: initialFilters = {},
 }: {
     issues: any;
     vehicles: Vehicle[];
+    filters?: IssueFilters;
 }) {
     const { canCreate } = usePermissions();
     const [reportModalOpen, setReportModalOpen] = useState(false);
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<IssueFilters>('/vehicles/incidents', {
+            date: initialFilters.date || '',
+            vehicle_ids: initialFilters.vehicle_ids || '',
+            vehicle_name: initialFilters.vehicle_name || '',
+            severity: initialFilters.severity || 'all',
+            description: initialFilters.description || '',
+            status: initialFilters.status || 'all',
+            reporter_name: initialFilters.reporter_name || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
@@ -87,6 +129,17 @@ export default function VehicleIncidents({
                         </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2.5">
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => clearFilters(emptyIssueFilters)}
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             onClick={() => setReportModalOpen(true)}
@@ -117,12 +170,122 @@ export default function VehicleIncidents({
                             <Table>
                                 <TableHeader>
                                     <TableRow className="border-b border-border/60 bg-muted/20">
-                                        <TableHead className="w-28">Fecha</TableHead>
-                                        <TableHead>Unidad</TableHead>
-                                        <TableHead>Gravedad</TableHead>
-                                        <TableHead className="min-w-[280px]">Descripción</TableHead>
-                                        <TableHead>Estado</TableHead>
-                                        <TableHead>Reportado Por</TableHead>
+                                        <SortableTableHead
+                                            column="date"
+                                            label="Fecha"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.date}
+                                            filterPlaceholder="YYYY-MM-DD..."
+                                            onFilterChange={(val) =>
+                                                setFilter('date', val)
+                                            }
+                                            className="w-32"
+                                        />
+                                        <SortableTableHead
+                                            column="vehicle"
+                                            label="Unidad"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="multi-select"
+                                            filterValue={filters.vehicle_ids}
+                                            filterOptions={vehicles.map((v) => ({
+                                                value: v.id.toString(),
+                                                label: v.company
+                                                    ? `${v.name} (${v.company})`
+                                                    : v.name,
+                                            }))}
+                                            onFilterChange={(val) =>
+                                                setFilter('vehicle_ids', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="severity"
+                                            label="Gravedad"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.severity}
+                                            filterOptions={[
+                                                {
+                                                    value: 'Critical',
+                                                    label: 'Critical',
+                                                },
+                                                {
+                                                    value: 'High',
+                                                    label: 'High',
+                                                },
+                                                {
+                                                    value: 'Medium',
+                                                    label: 'Medium',
+                                                },
+                                                { value: 'Low', label: 'Low' },
+                                            ]}
+                                            onFilterChange={(val) =>
+                                                setFilter('severity', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="description"
+                                            label="Descripción"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.description}
+                                            filterPlaceholder="Filtrar descripción..."
+                                            onFilterChange={(val) =>
+                                                setFilter('description', val)
+                                            }
+                                            className="min-w-[280px]"
+                                        />
+                                        <SortableTableHead
+                                            column="status"
+                                            label="Estado"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.status}
+                                            filterOptions={[
+                                                {
+                                                    value: 'pending_review',
+                                                    label: 'Pendiente Revisión',
+                                                },
+                                                {
+                                                    value: 'reviewed',
+                                                    label: 'Revisado',
+                                                },
+                                                {
+                                                    value: 'En Taller',
+                                                    label: 'En Taller',
+                                                },
+                                                {
+                                                    value: 'Resolved',
+                                                    label: 'Resuelto',
+                                                },
+                                            ]}
+                                            onFilterChange={(val) =>
+                                                setFilter('status', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="reporter"
+                                            label="Reportado Por"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.reporter_name}
+                                            filterPlaceholder="Filtrar reportante..."
+                                            onFilterChange={(val) =>
+                                                setFilter('reporter_name', val)
+                                            }
+                                        />
                                         <TableHead className="text-right">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>

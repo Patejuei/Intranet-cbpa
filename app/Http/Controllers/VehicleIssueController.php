@@ -13,10 +13,10 @@ class VehicleIssueController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $user = request()->user();
-        $query = \App\Models\VehicleIssue::with(['vehicle', 'reporter'])->withCount('images')->latest();
+        $user = $request->user();
+        $query = \App\Models\VehicleIssue::with(['vehicle', 'reporter'])->withCount('images');
         $driverIds = $user->driverVehicles()->pluck('vehicles.id');
 
         $isInspectorMM = $user->role === 'inspector' && $user->department === 'Material Mayor';
@@ -35,25 +35,109 @@ class VehicleIssueController extends Controller
             });
         }
         if ($user->role === 'mechanic') {
-            $query->where('sent_to_workshop', '=', 1);
+            $query->where('vehicle_issues.sent_to_workshop', '=', 1);
         }
         if ($user->role === 'commander') {
-            $query->where('reported_to_commander', '=', 1);
+            $query->where('vehicle_issues.reported_to_commander', '=', 1);
+        }
+
+        $scopedVehicleIds = (clone $query)->whereNotNull('vehicle_id')->distinct()->pluck('vehicle_id');
+
+        // Column Filters
+        if ($request->filled('date')) {
+            $query->where('vehicle_issues.date', 'like', '%' . trim($request->input('date')) . '%');
+        }
+
+        if ($request->filled('vehicle_ids')) {
+            $vehicleIds = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('vehicle_ids')))));
+            if (!empty($vehicleIds)) {
+                $query->whereIn('vehicle_issues.vehicle_id', $vehicleIds);
+            }
+        }
+
+        if ($request->filled('vehicle_name')) {
+            $vehicleName = trim($request->input('vehicle_name'));
+            $query->whereHas('vehicle', function ($q) use ($vehicleName) {
+                $q->where('name', 'like', "%{$vehicleName}%");
+            });
+        }
+
+        if ($request->filled('severity') && $request->input('severity') !== 'all') {
+            $query->where('vehicle_issues.severity', $request->input('severity'));
+        }
+
+        if ($request->filled('description')) {
+            $query->where('vehicle_issues.description', 'like', '%' . trim($request->input('description')) . '%');
+        }
+
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $status = $request->input('status');
+            if ($status === 'Resolved' || $status === 'En Taller') {
+                $query->where('vehicle_issues.status', $status);
+            } elseif ($status === 'pending_review') {
+                $query->whereNotIn('vehicle_issues.status', ['Resolved', 'En Taller'])
+                    ->whereNull('vehicle_issues.reviewed_at');
+            } elseif ($status === 'reviewed') {
+                $query->whereNotIn('vehicle_issues.status', ['Resolved', 'En Taller'])
+                    ->whereNotNull('vehicle_issues.reviewed_at');
+            }
+        }
+
+        if ($request->filled('reporter_name')) {
+            $reporterName = trim($request->input('reporter_name'));
+            $query->whereHas('reporter', function ($q) use ($reporterName) {
+                $q->where('name', 'like', "%{$reporterName}%");
+            });
+        }
+
+        // Whitelisted Sorting
+        $sort = $request->input('sort');
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+
+        switch ($sort) {
+            case 'date':
+                $query->orderBy('vehicle_issues.date', $direction);
+                break;
+            case 'vehicle':
+                $query->leftJoin('vehicles', 'vehicle_issues.vehicle_id', '=', 'vehicles.id')
+                    ->select('vehicle_issues.*')
+                    ->orderBy('vehicles.name', $direction);
+                break;
+            case 'severity':
+                $query->orderBy('vehicle_issues.severity', $direction);
+                break;
+            case 'description':
+                $query->orderBy('vehicle_issues.description', $direction);
+                break;
+            case 'status':
+                $query->orderBy('vehicle_issues.status', $direction);
+                break;
+            case 'reporter':
+                $query->leftJoin('users', 'vehicle_issues.reporter_id', '=', 'users.id')
+                    ->select('vehicle_issues.*')
+                    ->orderBy('users.name', $direction);
+                break;
+            default:
+                $query->latest('vehicle_issues.created_at');
+                break;
         }
 
         return Inertia::render('vehicles/incidents/index', [
-            'issues' => $query->paginate(10),
-            'vehicles' => \App\Models\Vehicle::when($isCuarteleroComandancia, function ($q) {
-                $q->where('company', 'Comandancia');
-            })->when(!$isCuarteleroComandancia && $user->company !== 'Comandancia' && $user->role !== 'admin' && !$isInspectorMM, function ($q) use ($user, $driverIds) {
-                // Allow both Company vehicles AND Driver Assigned vehicles
-                $q->where(function ($query) use ($driverIds, $user) {
-                    $query->where('company', $user->company);
-                    if ($driverIds->isNotEmpty()) {
-                        $query->orWhereIn('id', $driverIds);
-                    }
-                });
-            })->orderBy('name')->get(['id', 'name', 'company']),
+            'issues' => $query->paginate(10)->withQueryString(),
+            'vehicles' => \App\Models\Vehicle::whereIn('id', $scopedVehicleIds)
+                ->orderBy('name')
+                ->get(['id', 'name', 'company']),
+            'filters' => $request->only([
+                'date',
+                'vehicle_ids',
+                'vehicle_name',
+                'severity',
+                'description',
+                'status',
+                'reporter_name',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

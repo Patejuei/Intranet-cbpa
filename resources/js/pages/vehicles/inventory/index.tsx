@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +28,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -36,11 +38,12 @@ import {
     Edit,
     Package,
     Plus,
+    RotateCcw,
     Save,
     Search,
     Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 declare let route: any;
 
@@ -56,49 +59,58 @@ interface InventoryItem {
     unit_of_measure: string;
 }
 
+interface InventoryFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    sku?: string;
+    name?: string;
+    category?: string;
+    unit_of_measure?: string;
+    location?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface Props {
     items: {
         data: InventoryItem[];
         links: any[];
     };
-    filters: {
-        search?: string;
-        category?: string;
-    };
+    filters?: InventoryFilters;
     defaultHourRate: number;
 }
 
-export default function InventoryIndex({ items, filters, defaultHourRate }: Props) {
+const emptyInventoryFilters: InventoryFilters = {
+    search: '',
+    sku: '',
+    name: '',
+    category: 'all',
+    unit_of_measure: '',
+    location: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function InventoryIndex({
+    items,
+    filters: initialFilters = {},
+    defaultHourRate,
+}: Props) {
     const { canCreate, canEdit, hasPermission, canConfigureHH } = usePermissions();
-    const [search, setSearch] = useState(filters.search || '');
-    const [category, setCategory] = useState(filters.category || 'all');
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<InventoryFilters>('/vehicles/inventory', {
+            search: initialFilters.search || '',
+            sku: initialFilters.sku || '',
+            name: initialFilters.name || '',
+            category: initialFilters.category || 'all',
+            unit_of_measure: initialFilters.unit_of_measure || '',
+            location: initialFilters.location || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
     const [hourRate, setHourRate] = useState(defaultHourRate);
     const [isSavingRate, setIsSavingRate] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            const currentSearch = filters.search || '';
-            const currentCategory = filters.category || 'all';
-
-            if (search !== currentSearch || category !== currentCategory) {
-                router.get(
-                    '/vehicles/inventory',
-                    {
-                        search: search,
-                        category: category !== 'all' ? category : undefined,
-                    },
-                    { preserveState: true, replace: true },
-                );
-            }
-        }, 300);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [search, category, filters.search, filters.category]);
-
-    const handleCategoryChange = (val: string) => {
-        setCategory(val);
-    };
 
     const handleDelete = (id: number) => {
         if (confirm('¿Está seguro de eliminar este ítem?')) {
@@ -225,26 +237,48 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                         <Input
                             placeholder="Buscar por nombre, SKU o ubicación..."
                             className="h-9 pl-9 pr-4 text-sm"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            value={filters.search || ''}
+                            onChange={(e) =>
+                                setFilter('search', e.target.value, {
+                                    debounce: true,
+                                })
+                            }
                         />
                     </div>
 
-                    <div className="w-full sm:w-[200px] shrink-0">
-                        <Select
-                            value={category}
-                            onValueChange={handleCategoryChange}
-                        >
-                            <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Filtrar categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todas las categorías</SelectItem>
-                                <SelectItem value="insumo">Insumos</SelectItem>
-                                <SelectItem value="repuesto">Repuestos</SelectItem>
-                                <SelectItem value="herramienta">Herramientas</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <div className="w-full sm:w-[200px]">
+                            <Select
+                                value={filters.category || 'all'}
+                                onValueChange={(val) =>
+                                    setFilter('category', val)
+                                }
+                            >
+                                <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Filtrar categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todas las categorías</SelectItem>
+                                    <SelectItem value="insumo">Insumos</SelectItem>
+                                    <SelectItem value="repuesto">Repuestos</SelectItem>
+                                    <SelectItem value="herramienta">Herramientas</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    clearFilters(emptyInventoryFilters)
+                                }
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -254,13 +288,99 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[110px]">SKU</TableHead>
-                                    <TableHead className="min-w-[200px]">Nombre</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead>Unidad</TableHead>
-                                    <TableHead className="text-right">Stock</TableHead>
-                                    <TableHead className="text-right">Costo Unit.</TableHead>
-                                    <TableHead>Ubicación</TableHead>
+                                    <SortableTableHead
+                                        column="sku"
+                                        label="SKU"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.sku}
+                                        filterPlaceholder="Filtrar SKU..."
+                                        onFilterChange={(val) =>
+                                            setFilter('sku', val)
+                                        }
+                                        className="w-[120px]"
+                                    />
+                                    <SortableTableHead
+                                        column="name"
+                                        label="Nombre"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.name}
+                                        filterPlaceholder="Filtrar nombre..."
+                                        onFilterChange={(val) =>
+                                            setFilter('name', val)
+                                        }
+                                        className="min-w-[200px]"
+                                    />
+                                    <SortableTableHead
+                                        column="category"
+                                        label="Categoría"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.category}
+                                        filterOptions={[
+                                            { value: 'insumo', label: 'Insumos' },
+                                            {
+                                                value: 'repuesto',
+                                                label: 'Repuestos',
+                                            },
+                                            {
+                                                value: 'herramienta',
+                                                label: 'Herramientas',
+                                            },
+                                        ]}
+                                        onFilterChange={(val) =>
+                                            setFilter('category', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="unit_of_measure"
+                                        label="Unidad"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.unit_of_measure}
+                                        filterPlaceholder="Filtrar unidad..."
+                                        onFilterChange={(val) =>
+                                            setFilter('unit_of_measure', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="stock"
+                                        label="Stock"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        align="right"
+                                    />
+                                    <SortableTableHead
+                                        column="unit_cost"
+                                        label="Costo Unit."
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        align="right"
+                                    />
+                                    <SortableTableHead
+                                        column="location"
+                                        label="Ubicación"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.location}
+                                        filterPlaceholder="Filtrar ubicación..."
+                                        onFilterChange={(val) =>
+                                            setFilter('location', val)
+                                        }
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -275,7 +395,7 @@ export default function InventoryIndex({ items, filters, defaultHourRate }: Prop
                                                 <Package className="size-8 text-muted-foreground/40" />
                                                 <p className="text-sm font-medium">No se encontraron ítems en la bodega.</p>
                                                 <p className="text-xs text-muted-foreground/70">
-                                                    {search
+                                                    {filters.search
                                                         ? 'Pruebe modificando los términos de búsqueda.'
                                                         : 'No hay elementos registrados en esta categoría.'}
                                                 </p>

@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import { usePermissions } from '@/hooks/use-permissions';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
@@ -31,6 +33,7 @@ import {
     DollarSign,
     Eye,
     FileText,
+    RotateCcw,
     Wrench,
     FileDown,
 } from 'lucide-react';
@@ -103,6 +106,25 @@ export default function VehicleShow({
     const { canEdit } = usePermissions();
     const activeIssue = vehicle.issues?.[0];
     const activeMaintenance = vehicle.maintenances?.[0];
+
+    const {
+        filteredItems: filteredMaintenances,
+        filters: maintFilters,
+        setFilter: setMaintFilter,
+        setSort: setMaintSort,
+        clearFilters: clearMaintFilters,
+        hasActiveFilters: hasActiveMaintFilters,
+        getUniqueOptions: getMaintOptions,
+    } = useClientTableFilter(vehicle.maintenances || [], {
+        accessors: {
+            entry_date: (m) => m.entry_date,
+            workshop_name: (m) => m.workshop_name,
+            description: (m) => m.description,
+            status: (m) => m.status,
+            cost: (m) => m.cost,
+        },
+        exactMatchColumns: ['status'],
+    });
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -734,33 +756,125 @@ export default function VehicleShow({
                 {/* Maintenance History */}
                 {vehicle.maintenances && vehicle.maintenances.length > 0 && (
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between gap-4">
                             <CardTitle>
                                 Historial de Órdenes de Trabajo
                             </CardTitle>
+                            {hasActiveMaintFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearMaintFilters}
+                                    className="gap-1.5 shrink-0"
+                                >
+                                    <RotateCcw className="size-3.5" />
+                                    <span>Limpiar filtros</span>
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm">
                                     <thead className="border-b bg-muted/50">
                                         <tr>
-                                            <th className="p-2 py-3 font-medium">
-                                                Fecha Ingreso
-                                            </th>
-                                            <th className="p-2 py-3 font-medium">
-                                                Taller
-                                            </th>
-                                            <th className="p-2 py-3 font-medium">
-                                                Trabajo
-                                            </th>
-                                            <th className="p-2 py-3 font-medium">
-                                                Estado
-                                            </th>
+                                            <SortableTableHead
+                                                column="entry_date"
+                                                label="Fecha Ingreso"
+                                                sortKey={maintFilters.sort}
+                                                sortDirection={
+                                                    maintFilters.direction
+                                                }
+                                                onSort={setMaintSort}
+                                                filterType="text"
+                                                filterValue={
+                                                    maintFilters.entry_date
+                                                }
+                                                filterPlaceholder="YYYY-MM-DD..."
+                                                onFilterChange={(val) =>
+                                                    setMaintFilter(
+                                                        'entry_date',
+                                                        val,
+                                                    )
+                                                }
+                                                className="p-2 py-3"
+                                            />
+                                            <SortableTableHead
+                                                column="workshop_name"
+                                                label="Taller"
+                                                sortKey={maintFilters.sort}
+                                                sortDirection={
+                                                    maintFilters.direction
+                                                }
+                                                onSort={setMaintSort}
+                                                filterType="text"
+                                                filterValue={
+                                                    maintFilters.workshop_name
+                                                }
+                                                filterPlaceholder="Filtrar taller..."
+                                                onFilterChange={(val) =>
+                                                    setMaintFilter(
+                                                        'workshop_name',
+                                                        val,
+                                                    )
+                                                }
+                                                className="p-2 py-3"
+                                            />
+                                            <SortableTableHead
+                                                column="description"
+                                                label="Trabajo"
+                                                sortKey={maintFilters.sort}
+                                                sortDirection={
+                                                    maintFilters.direction
+                                                }
+                                                onSort={setMaintSort}
+                                                filterType="text"
+                                                filterValue={
+                                                    maintFilters.description
+                                                }
+                                                filterPlaceholder="Filtrar trabajo..."
+                                                onFilterChange={(val) =>
+                                                    setMaintFilter(
+                                                        'description',
+                                                        val,
+                                                    )
+                                                }
+                                                className="p-2 py-3"
+                                            />
+                                            <SortableTableHead
+                                                column="status"
+                                                label="Estado"
+                                                sortKey={maintFilters.sort}
+                                                sortDirection={
+                                                    maintFilters.direction
+                                                }
+                                                onSort={setMaintSort}
+                                                filterType="select"
+                                                filterValue={
+                                                    maintFilters.status
+                                                }
+                                                filterOptions={getMaintOptions(
+                                                    'status',
+                                                )}
+                                                onFilterChange={(val) =>
+                                                    setMaintFilter(
+                                                        'status',
+                                                        val,
+                                                    )
+                                                }
+                                                className="p-2 py-3"
+                                            />
                                             {allProps.auth.user.company ===
                                                 'Comandancia' && (
-                                                <th className="p-2 py-3 font-medium">
-                                                    Costo
-                                                </th>
+                                                <SortableTableHead
+                                                    column="cost"
+                                                    label="Costo"
+                                                    sortKey={maintFilters.sort}
+                                                    sortDirection={
+                                                        maintFilters.direction
+                                                    }
+                                                    onSort={setMaintSort}
+                                                    className="p-2 py-3"
+                                                />
                                             )}
                                             {allProps.auth.user.role !==
                                                 'cuartelero' && (
@@ -771,7 +885,17 @@ export default function VehicleShow({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {vehicle.maintenances.map((m) => (
+                                        {filteredMaintenances.length === 0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan={6}
+                                                    className="p-6 text-center text-muted-foreground"
+                                                >
+                                                    No se encontraron órdenes con los filtros aplicados.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredMaintenances.map((m) => (
                                             <tr
                                                 key={m.id}
                                                 className="border-b transition-colors hover:bg-muted/20"
@@ -825,7 +949,8 @@ export default function VehicleShow({
                                                     </td>
                                                 )}
                                             </tr>
-                                        ))}
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

@@ -13,20 +13,68 @@ class WorkshopInventoryController extends Controller
   {
     $query = WorkshopInventory::query();
 
-    if ($request->has('search')) {
-      $query->where('name', 'like', '%' . $request->search . '%')
-        ->orWhere('sku', 'like', '%' . $request->search . '%');
+    if ($request->filled('search')) {
+      $search = trim($request->input('search'));
+      $query->where(function ($q) use ($search) {
+        $q->where('name', 'like', "%{$search}%")
+          ->orWhere('sku', 'like', "%{$search}%")
+          ->orWhere('location', 'like', "%{$search}%");
+      });
     }
 
-    if ($request->has('category') && $request->category !== 'all') {
+    if ($request->filled('sku')) {
+      $query->where('sku', 'like', '%' . trim($request->input('sku')) . '%');
+    }
+
+    if ($request->filled('name')) {
+      $query->where('name', 'like', '%' . trim($request->input('name')) . '%');
+    }
+
+    if ($request->filled('category') && $request->category !== 'all') {
       $query->where('category', $request->category);
+    }
+
+    if ($request->filled('unit_of_measure')) {
+      $query->where('unit_of_measure', 'like', '%' . trim($request->input('unit_of_measure')) . '%');
+    }
+
+    if ($request->filled('location')) {
+      $query->where('location', 'like', '%' . trim($request->input('location')) . '%');
+    }
+
+    $sortable = [
+      'sku' => 'sku',
+      'name' => 'name',
+      'category' => 'category',
+      'unit_of_measure' => 'unit_of_measure',
+      'stock' => 'stock',
+      'unit_cost' => 'unit_cost',
+      'location' => 'location',
+    ];
+
+    $sort = $request->input('sort');
+    $direction = $request->input('direction') === 'desc' ? 'desc' : 'asc';
+
+    if ($sort && isset($sortable[$sort])) {
+      $query->orderBy($sortable[$sort], $direction);
+    } else {
+      $query->orderBy('name');
     }
 
     $defaultHourRate = WorkshopSetting::getDefaultHourRate();
 
     return Inertia::render('vehicles/inventory/index', [
-      'items' => $query->orderBy('name')->paginate(10),
-      'filters' => $request->only(['search', 'category']),
+      'items' => $query->paginate(10)->withQueryString(),
+      'filters' => $request->only([
+        'search',
+        'sku',
+        'name',
+        'category',
+        'unit_of_measure',
+        'location',
+        'sort',
+        'direction',
+      ]),
       'defaultHourRate' => (int)$defaultHourRate,
     ]);
   }

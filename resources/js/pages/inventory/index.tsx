@@ -1,4 +1,5 @@
 import MaterialForm from '@/components/inventory/MaterialForm';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,38 +10,110 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { Material } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Material, User } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
     FileText,
     Pencil,
     PlusCircle,
+    RotateCcw,
     Search,
     Upload,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import * as XLSX from 'xlsx';
 
-import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
+
+interface InventoryFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    company?: string;
+    code?: string;
+    product_name?: string;
+    brand?: string;
+    stock_status?: string;
+    category?: string;
+    dependency?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
 
 interface PageProps {
     materials: {
         data: Material[];
         links: any[];
     };
-    filters?: {
-        search?: string;
-    };
+    filters?: InventoryFilters;
 }
 
-export default function InventoryIndex({ materials, filters }: PageProps) {
+const companiesList = [
+    'Primera Compañía',
+    'Segunda Compañía',
+    'Tercera Compañía',
+    'Cuarta Compañía',
+    'Quinta Compañía',
+    'Séptima Compañía',
+    'Octava Compañía',
+    'Novena Compañía',
+    'Décima Compañía',
+    'Comandancia',
+];
+
+const emptyInventoryFilters: InventoryFilters = {
+    search: '',
+    company: 'all',
+    code: '',
+    product_name: '',
+    brand: '',
+    stock_status: 'all',
+    category: '',
+    dependency: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function InventoryIndex({
+    materials,
+    filters: initialFilters = {},
+}: PageProps) {
+    const { auth } = usePage<{ auth: { user: User } }>().props;
+    const canFilterCompany =
+        auth.user.company === 'Comandancia' || auth.user.role === 'admin';
     const { canCreate, canEdit } = usePermissions();
-    const [searchTerm, setSearchTerm] = useState(filters?.search || '');
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<InventoryFilters>('/inventory', {
+            search: initialFilters.search || '',
+            company: initialFilters.company || 'all',
+            code: initialFilters.code || '',
+            product_name: initialFilters.product_name || '',
+            brand: initialFilters.brand || '',
+            stock_status: initialFilters.stock_status || 'all',
+            category: initialFilters.category || '',
+            dependency: initialFilters.dependency || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
     const [isOpen, setIsOpen] = useState(false);
     const [currentMaterial, setCurrentMaterial] = useState<Material | null>(
         null,
@@ -155,30 +228,6 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
         });
     };
 
-    const isFirstRun = useRef(true);
-
-    // Server-side search implementation with debounce
-    useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false;
-            return;
-        }
-
-        const timeoutId = setTimeout(() => {
-            router.get(
-                '/inventory',
-                { search: searchTerm },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                },
-            );
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm]);
-
     // Use materials directly as they are now filtered on the server
     const displayMaterials = materials.data;
 
@@ -230,136 +279,237 @@ export default function InventoryIndex({ materials, filters }: PageProps) {
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex max-w-sm items-center gap-2">
-                        <Search className="size-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Buscar en esta página..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="h-9"
-                        />
+                    <div className="flex flex-1 items-center gap-2">
+                        <div className="flex max-w-sm flex-1 items-center gap-2">
+                            <Search className="size-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Buscar en inventario..."
+                                value={filters.search || ''}
+                                onChange={(e) =>
+                                    setFilter('search', e.target.value, {
+                                        debounce: true,
+                                    })
+                                }
+                                className="h-9"
+                            />
+                        </div>
+                        {hasActiveFilters && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                    clearFilters(emptyInventoryFilters)
+                                }
+                                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                            >
+                                <RotateCcw className="size-4" />
+                                Limpiar filtros
+                            </Button>
+                        )}
                     </div>
-                    <CompanyFilter />
+                    {canFilterCompany && (
+                        <Select
+                            value={filters.company || 'all'}
+                            onValueChange={(val) => setFilter('company', val)}
+                        >
+                            <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Filtrar por Compañía" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Todas las Compañías
+                                </SelectItem>
+                                {companiesList.map((c) => (
+                                    <SelectItem key={c} value={c}>
+                                        {c}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 <div className="rounded-xl border bg-card shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50 text-muted-foreground">
-                                <tr>
-                                    <th className="px-4 py-3 font-medium">
-                                        Cód / N° Inv
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Producto
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Marca / Modelo
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Stock
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Categoría
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Dependencia
-                                    </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {displayMaterials.length > 0 ? (
-                                    displayMaterials.map((material) => (
-                                        <tr
-                                            key={material.id}
-                                            className="hover:bg-muted/30"
-                                        >
-                                            <td className="px-4 py-3 font-mono text-muted-foreground">
-                                                {material.code || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium">
-                                                {material.product_name}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {material.brand}{' '}
-                                                {material.model}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span
-                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                        material.stock_quantity >
-                                                        0
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : 'bg-red-100 text-red-700'
-                                                    }`}
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow>
+                                <SortableTableHead
+                                    column="code"
+                                    label="Cód / N° Inv"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="text"
+                                    filterValue={filters.code}
+                                    filterPlaceholder="Filtrar código..."
+                                    onFilterChange={(value) =>
+                                        setFilter('code', value)
+                                    }
+                                />
+                                <SortableTableHead
+                                    column="product_name"
+                                    label="Producto"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="text"
+                                    filterValue={filters.product_name}
+                                    filterPlaceholder="Filtrar producto..."
+                                    onFilterChange={(value) =>
+                                        setFilter('product_name', value)
+                                    }
+                                />
+                                <SortableTableHead
+                                    column="brand"
+                                    label="Marca / Modelo"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="text"
+                                    filterValue={filters.brand}
+                                    filterPlaceholder="Filtrar marca/modelo..."
+                                    onFilterChange={(value) =>
+                                        setFilter('brand', value)
+                                    }
+                                />
+                                <SortableTableHead
+                                    column="stock_quantity"
+                                    label="Stock"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="select"
+                                    filterValue={filters.stock_status}
+                                    filterOptions={[
+                                        {
+                                            value: 'in_stock',
+                                            label: 'Con stock (> 0)',
+                                        },
+                                        {
+                                            value: 'out_of_stock',
+                                            label: 'Sin stock (0)',
+                                        },
+                                    ]}
+                                    onFilterChange={(value) =>
+                                        setFilter('stock_status', value)
+                                    }
+                                />
+                                <SortableTableHead
+                                    column="category"
+                                    label="Categoría"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="text"
+                                    filterValue={filters.category}
+                                    filterPlaceholder="Filtrar categoría..."
+                                    onFilterChange={(value) =>
+                                        setFilter('category', value)
+                                    }
+                                />
+                                <SortableTableHead
+                                    column="dependency"
+                                    label="Dependencia"
+                                    sortKey={filters.sort}
+                                    sortDirection={filters.direction}
+                                    onSort={setSort}
+                                    filterType="text"
+                                    filterValue={filters.dependency}
+                                    filterPlaceholder="Filtrar dependencia..."
+                                    onFilterChange={(value) =>
+                                        setFilter('dependency', value)
+                                    }
+                                />
+                                <TableHead>Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {displayMaterials.length > 0 ? (
+                                displayMaterials.map((material) => (
+                                    <TableRow
+                                        key={material.id}
+                                        className="hover:bg-muted/30"
+                                    >
+                                        <TableCell className="font-mono text-muted-foreground">
+                                            {material.code || '-'}
+                                        </TableCell>
+                                        <TableCell className="font-medium">
+                                            {material.product_name}
+                                        </TableCell>
+                                        <TableCell>
+                                            {material.brand} {material.model}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span
+                                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                                    material.stock_quantity > 0
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                }`}
+                                            >
+                                                {material.stock_quantity} un.
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {material.category || '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {material.dependency || '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                    title="Ver Detalle"
                                                 >
-                                                    {material.stock_quantity}{' '}
-                                                    un.
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {material.category || '-'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {material.dependency || '-'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        href={`/inventory/${material.id}`}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                    </Link>
+                                                </Button>
+                                                {material.document_path && (
+                                                    <a
+                                                        href={`/storage/${material.document_path}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                                                        title="Ver Documento"
+                                                    >
+                                                        <FileText className="size-4" />
+                                                    </a>
+                                                )}
+                                                {canEdit('equipment') && (
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        asChild
-                                                        title="Ver Detalle"
+                                                        onClick={() =>
+                                                            openEdit(material)
+                                                        }
                                                     >
-                                                        <Link
-                                                            href={`/inventory/${material.id}`}
-                                                        >
-                                                            <Eye className="size-4" />
-                                                        </Link>
+                                                        <Pencil className="size-4" />
                                                     </Button>
-                                                    {material.document_path && (
-                                                        <a
-                                                            href={`/storage/${material.document_path}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-input bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-                                                            title="Ver Documento"
-                                                        >
-                                                            <FileText className="size-4" />
-                                                        </a>
-                                                    )}
-                                                    {canEdit('equipment') && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() =>
-                                                                openEdit(material)
-                                                            }
-                                                        >
-                                                            <Pencil className="size-4" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="px-4 py-8 text-center text-muted-foreground"
-                                        >
-                                            No se encontraron materiales en esta
-                                            página.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={7}
+                                        className="py-8 text-center text-muted-foreground"
+                                    >
+                                        No se encontraron materiales en esta
+                                        página.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <Pagination links={materials.links} />

@@ -12,24 +12,19 @@ class VehicleLogController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $user = request()->user();
+        $user = $request->user();
 
-        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver', 'obac'])->latest();
+        $logQuery = \App\Models\VehicleLog::with(['vehicle', 'driver', 'obac']);
 
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
         // If not admin/comandancia, filter logs by user's company
         if ($isCuarteleroComandancia) {
             $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
-            $logQuery->whereIn('vehicle_id', $assignedIds);
+            $logQuery->whereIn('vehicle_logs.vehicle_id', $assignedIds);
         } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin') {
-            // But if user has 'vehicles.logs' or 'vehicles.logs.view' permission, maybe they should see everything?
-            // The requirement says: "el usuario de Comandancia pueda ver los registros de todos los vehículos."
-            // Also Mechanic is typically focused on Maintenance, but if they have Read Only logs they might need to see all?
-            // Let's stick to the specific request: Comandancia users see all.
-            // If user is mechanic, they usually see all because they fix all cars.
             $driverIds = $user->driverVehicles()->pluck('vehicles.id');
             if ($driverIds->isEmpty()) {
                 $logQuery->whereHas('vehicle', function ($q) use ($user) {
@@ -45,34 +40,140 @@ class VehicleLogController extends Controller
             }
         }
 
-        // Vehicle Filter
-        if (request()->has('vehicle_id') && request()->vehicle_id && request()->vehicle_id !== 'all') {
-            $logQuery->where('vehicle_id', request()->vehicle_id);
+        $scopedVehicleIds = (clone $logQuery)->whereNotNull('vehicle_id')->distinct()->pluck('vehicle_id');
+        $scopedDriverIds = (clone $logQuery)->whereNotNull('driver_id')->distinct()->pluck('driver_id');
+
+        // Vehicle Filter (single or multi-select)
+        if ($request->filled('vehicle_ids')) {
+            $vehicleIds = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('vehicle_ids')))));
+            if (!empty($vehicleIds)) {
+                $logQuery->whereIn('vehicle_logs.vehicle_id', $vehicleIds);
+            }
+        } elseif ($request->filled('vehicle_id') && $request->input('vehicle_id') !== 'all') {
+            $logQuery->where('vehicle_logs.vehicle_id', $request->input('vehicle_id'));
+        }
+
+        // Driver Multi-Select Filter
+        if ($request->filled('driver_ids')) {
+            $driverIdsFilter = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('driver_ids')))));
+            if (!empty($driverIdsFilter)) {
+                $logQuery->whereIn('vehicle_logs.driver_id', $driverIdsFilter);
+            }
         }
 
         // Movement Key Filter
-        if (request()->has('movement_key') && request()->movement_key) {
-            $logQuery->where('movement_key', 'like', '%' . request()->movement_key . '%');
+        if ($request->filled('movement_key')) {
+            $logQuery->where('vehicle_logs.movement_key', 'like', '%' . trim($request->input('movement_key')) . '%');
+        }
+
+        // Column Filters
+        if ($request->filled('date')) {
+            $logQuery->where('vehicle_logs.date', 'like', '%' . trim($request->input('date')) . '%');
+        }
+
+        if ($request->filled('vehicle_name')) {
+            $vehicleName = trim($request->input('vehicle_name'));
+            $logQuery->whereHas('vehicle', function ($q) use ($vehicleName) {
+                $q->where('name', 'like', "%{$vehicleName}%");
+            });
+        }
+
+        if ($request->filled('activity_types')) {
+            $activityTypes = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('activity_types')))));
+            if (!empty($activityTypes)) {
+                $logQuery->whereIn('vehicle_logs.activity_type', $activityTypes);
+            }
+        } elseif ($request->filled('activity_type') && $request->input('activity_type') !== 'all') {
+            $logQuery->where('vehicle_logs.activity_type', trim((string) $request->input('activity_type')));
+        }
+
+        if ($request->filled('destination')) {
+            $logQuery->where('vehicle_logs.destination', 'like', '%' . trim($request->input('destination')) . '%');
+        }
+
+        if ($request->filled('fuel') && $request->input('fuel') !== 'all') {
+            if ($request->input('fuel') === 'yes') {
+                $logQuery->where(function ($q) {
+                    $q->whereNotNull('vehicle_logs.fuel_liters')
+                        ->orWhereNotNull('vehicle_logs.fuel_coupon');
+                });
+            } elseif ($request->input('fuel') === 'no') {
+                $logQuery->whereNull('vehicle_logs.fuel_liters')
+                    ->whereNull('vehicle_logs.fuel_coupon');
+            }
+        }
+
+        if ($request->filled('driver_name')) {
+            $driverName = trim($request->input('driver_name'));
+            $logQuery->whereHas('driver', function ($q) use ($driverName) {
+                $q->where('name', 'like', "%{$driverName}%");
+            });
+        }
+
+        // Whitelisted Sorting
+        $sort = $request->input('sort');
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+
+        switch ($sort) {
+            case 'date':
+                $logQuery->orderBy('vehicle_logs.date', $direction);
+                break;
+            case 'departure_time':
+                $logQuery->orderBy('vehicle_logs.departure_time', $direction);
+                break;
+            case 'vehicle':
+                $logQuery->leftJoin('vehicles', 'vehicle_logs.vehicle_id', '=', 'vehicles.id')
+                    ->select('vehicle_logs.*')
+                    ->orderBy('vehicles.name', $direction);
+                break;
+            case 'activity_type':
+                $logQuery->orderBy('vehicle_logs.activity_type', $direction);
+                break;
+            case 'destination':
+                $logQuery->orderBy('vehicle_logs.destination', $direction);
+                break;
+            case 'movement_key':
+                $logQuery->orderBy('vehicle_logs.movement_key', $direction);
+                break;
+            case 'start_km':
+                $logQuery->orderBy('vehicle_logs.start_km', $direction);
+                break;
+            case 'end_km':
+                $logQuery->orderBy('vehicle_logs.end_km', $direction);
+                break;
+            case 'driver':
+                $logQuery->leftJoin('users', 'vehicle_logs.driver_id', '=', 'users.id')
+                    ->select('vehicle_logs.*')
+                    ->orderBy('users.name', $direction);
+                break;
+            default:
+                $logQuery->latest('vehicle_logs.created_at');
+                break;
         }
 
         return Inertia::render('vehicles/logs/index', [
-            'logs' => $logQuery->paginate(15)->appends(request()->all()),
-            'vehicles' => \App\Models\Vehicle::query()
-                ->when($isCuarteleroComandancia, function ($q) use ($user) {
-                    $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
-                    $q->whereIn('id', $assignedIds);
-                })
-                ->when(!$isCuarteleroComandancia && $user->role !== 'admin' && $user->role !== 'mechanic' && $user->company !== 'Comandancia', function ($q) use ($user) {
-                    $driverIds = $user->driverVehicles()->pluck('vehicles.id');
-                    $q->where(function ($query) use ($driverIds, $user) {
-                        $query->where('company', $user->company);
-                        if ($driverIds->isNotEmpty()) {
-                            $query->orWhereIn('id', $driverIds);
-                        }
-                    });
-                })
-                ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company']),
-            'filters' => request()->only(['vehicle_id', 'movement_key']),
+            'logs' => $logQuery->paginate(15)->withQueryString(),
+            'vehicles' => \App\Models\Vehicle::whereIn('id', $scopedVehicleIds)
+                ->orderBy('name')
+                ->get(['vehicles.id', 'vehicles.name', 'vehicles.company']),
+            'drivers' => \App\Models\User::whereIn('id', $scopedDriverIds)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'filters' => $request->only([
+                'vehicle_id',
+                'vehicle_ids',
+                'driver_ids',
+                'movement_key',
+                'date',
+                'vehicle_name',
+                'activity_type',
+                'activity_types',
+                'destination',
+                'fuel',
+                'driver_name',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 
@@ -101,13 +202,17 @@ class VehicleLogController extends Controller
                     $q->whereIn('id', $assignedIds);
                 }
             })
+            ->select(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number'])
             ->addSelect([
                 'last_mileage' => \App\Models\VehicleLog::select('end_km')
                     ->whereColumn('vehicle_id', 'vehicles.id')
-                    ->latest('date')
+                    ->whereNotNull('end_km')
+                    ->orderByDesc('date')
+                    ->orderByDesc('id')
                     ->limit(1)
             ])
-            ->orderBy('name')->get(['vehicles.id', 'vehicles.name', 'vehicles.company', 'vehicles.coupon_number', 'last_mileage']);
+            ->orderBy('name')
+            ->get();
 
         $firefighters = \App\Models\Firefighter::query()
             ->orderBy('first_name')

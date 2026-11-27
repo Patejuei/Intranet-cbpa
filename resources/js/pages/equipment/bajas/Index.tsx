@@ -1,11 +1,21 @@
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData, User } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { Eye, PlusCircle } from 'lucide-react';
+import { Eye, PlusCircle, RotateCcw } from 'lucide-react';
 
 interface MaterialBajaRequest {
     id: number;
@@ -33,6 +43,26 @@ interface Props extends SharedData {
 }
 
 export default function IndexBajas({ auth, requests }: Props) {
+    const {
+        filteredItems,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+    } = useClientTableFilter<MaterialBajaRequest>(requests.data, {
+        accessors: {
+            id: (req) => req.id,
+            created_at: (req) => req.created_at,
+            requester: (req) =>
+                `${req.user.name} ${req.user.company || ''}`.trim(),
+            material: (req) =>
+                `${req.material.product_name} ${req.material.code}`.trim(),
+            quantity: (req) => req.quantity,
+            status: (req) => req.status,
+        },
+        exactMatchColumns: ['status'],
+    });
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'PENDIENTE':
@@ -116,110 +146,191 @@ export default function IndexBajas({ auth, requests }: Props) {
                 </div>
 
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Historial de Solicitudes</CardTitle>
+                        {hasActiveFilters && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                            >
+                                <RotateCcw className="size-4" />
+                                Limpiar filtros
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-muted/50 text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3 font-medium">
-                                            ID
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Fecha
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Solicitante
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Material
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Cant.
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Estado
-                                        </th>
-                                        <th className="px-4 py-3 text-right font-medium">
-                                            Acciones
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {requests.data.length > 0 ? (
-                                        requests.data.map((req) => (
-                                            <tr
-                                                key={req.id}
-                                                className="hover:bg-muted/30"
-                                            >
-                                                <td className="px-4 py-3 font-mono">
-                                                    #{req.id}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {new Date(
-                                                        req.created_at,
-                                                    ).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span>
-                                                            {req.user.name}
-                                                        </span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {req.user.company ||
-                                                                'Sin Compañía'}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium">
-                                                            {
-                                                                req.material
-                                                                    .product_name
-                                                            }
-                                                        </span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {req.material.code}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {req.quantity}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {getStatusBadge(req.status)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        asChild
+                        <Table>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow>
+                                    <SortableTableHead
+                                        column="id"
+                                        label="ID"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.id}
+                                        filterPlaceholder="ID..."
+                                        onFilterChange={(value) =>
+                                            setFilter('id', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="created_at"
+                                        label="Fecha"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.created_at}
+                                        filterPlaceholder="YYYY-MM-DD..."
+                                        onFilterChange={(value) =>
+                                            setFilter('created_at', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="requester"
+                                        label="Solicitante"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.requester}
+                                        filterPlaceholder="Filtrar solicitante..."
+                                        onFilterChange={(value) =>
+                                            setFilter('requester', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="material"
+                                        label="Material"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.material}
+                                        filterPlaceholder="Filtrar material..."
+                                        onFilterChange={(value) =>
+                                            setFilter('material', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="quantity"
+                                        label="Cant."
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                    />
+                                    <SortableTableHead
+                                        column="status"
+                                        label="Estado"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.status}
+                                        filterOptions={[
+                                            {
+                                                value: 'PENDIENTE',
+                                                label: 'Pendiente',
+                                            },
+                                            {
+                                                value: 'VALIDADO',
+                                                label: 'Validado',
+                                            },
+                                            {
+                                                value: 'APROBADO',
+                                                label: 'Aprobado',
+                                            },
+                                            {
+                                                value: 'RECHAZADO',
+                                                label: 'Rechazado',
+                                            },
+                                            {
+                                                value: 'EN_REPARACION',
+                                                label: 'En Reparación',
+                                            },
+                                        ]}
+                                        onFilterChange={(value) =>
+                                            setFilter('status', value)
+                                        }
+                                    />
+                                    <TableHead className="text-right">
+                                        Acciones
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredItems.length > 0 ? (
+                                    filteredItems.map((req) => (
+                                        <TableRow
+                                            key={req.id}
+                                            className="hover:bg-muted/30"
+                                        >
+                                            <TableCell className="font-mono">
+                                                #{req.id}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(
+                                                    req.created_at,
+                                                ).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span>{req.user.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {req.user.company ||
+                                                            'Sin Compañía'}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">
+                                                        {
+                                                            req.material
+                                                                .product_name
+                                                        }
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {req.material.code}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{req.quantity}</TableCell>
+                                            <TableCell>
+                                                {getStatusBadge(req.status)}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/equipment/bajas/${req.id}`}
                                                     >
-                                                        <Link
-                                                            href={`/equipment/bajas/${req.id}`}
-                                                        >
-                                                            <Eye className="size-4" />
-                                                        </Link>
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan={7}
-                                                className="px-4 py-8 text-center text-muted-foreground"
-                                            >
-                                                No hay solicitudes registradas.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                        <Eye className="size-4" />
+                                                    </Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={7}
+                                            className="py-8 text-center text-muted-foreground"
+                                        >
+                                            No hay solicitudes registradas.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                         <div className="mt-4">
                             <Pagination links={requests.links} />
                         </div>

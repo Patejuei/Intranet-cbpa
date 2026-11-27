@@ -1,7 +1,12 @@
+import CompanyFilter from '@/components/app/CompanyFilter';
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
+import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Activity, Battery, Calendar, ClipboardList, Save } from 'lucide-react';
+import { Activity, Battery, Calendar, ClipboardList, RotateCcw, Save } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface Log {
@@ -16,20 +21,49 @@ interface Log {
     user: { name: string };
 }
 
-import CompanyFilter from '@/components/app/CompanyFilter';
+interface BatteryFilters {
+    [key: string]: string | undefined;
+    company?: string;
+    equipment_id?: string;
+    equipment_type?: string;
+    responsible_name?: string;
+    observations?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
 
 interface PageProps {
     logs: {
         data: Log[];
         links: any[];
     };
+    filters?: BatteryFilters;
 }
 
-import { usePermissions } from '@/hooks/use-permissions';
+const emptyBatteryFilters: BatteryFilters = {
+    company: 'all',
+    equipment_id: '',
+    equipment_type: 'all',
+    responsible_name: '',
+    observations: '',
+    sort: undefined,
+    direction: undefined,
+};
 
-export default function BatteryIndex({ logs }: PageProps) {
+export default function BatteryIndex({ logs, filters: initialFilters = {} }: PageProps) {
     const [activeTab, setActiveTab] = useState<'log' | 'new'>('log');
     const { canCreate } = usePermissions();
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<BatteryFilters>('/batteries', {
+            company: initialFilters.company || 'all',
+            equipment_id: initialFilters.equipment_id || '',
+            equipment_type: initialFilters.equipment_type || 'all',
+            responsible_name: initialFilters.responsible_name || '',
+            observations: initialFilters.observations || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const { data, setData, post, processing, reset, errors } = useForm({
         change_date: new Date().toISOString().split('T')[0],
@@ -88,7 +122,20 @@ export default function BatteryIndex({ logs }: PageProps) {
                         )}
                     </div>
 
-                    <CompanyFilter />
+                    <div className="flex flex-wrap items-center gap-2">
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => clearFilters(emptyBatteryFilters)}
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
+                        <CompanyFilter />
+                    </div>
                 </div>
 
                 {activeTab === 'new' ? (
@@ -246,24 +293,85 @@ export default function BatteryIndex({ logs }: PageProps) {
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-muted/50 text-muted-foreground">
                                     <tr>
-                                        <th className="px-4 py-3 font-medium">
-                                            Fecha Cambio
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Equipo
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Tipo
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Responsable
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Próx. Cambio
-                                        </th>
-                                        <th className="px-4 py-3 font-medium">
-                                            Observaciones
-                                        </th>
+                                        <SortableTableHead
+                                            column="change_date"
+                                            label="Fecha Cambio"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                        />
+                                        <SortableTableHead
+                                            column="equipment_id"
+                                            label="Equipo"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.equipment_id}
+                                            filterPlaceholder="Filtrar por equipo..."
+                                            onFilterChange={(value) =>
+                                                setFilter('equipment_id', value)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="equipment_type"
+                                            label="Tipo"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.equipment_type}
+                                            filterOptions={[
+                                                {
+                                                    value: 'Equipo de Respiracion',
+                                                    label: 'Equipo de Respiración',
+                                                },
+                                                {
+                                                    value: 'Toma presion',
+                                                    label: 'Toma Presión',
+                                                },
+                                                {
+                                                    value: 'Saturometro',
+                                                    label: 'Saturómetro',
+                                                },
+                                            ]}
+                                            onFilterChange={(value) =>
+                                                setFilter('equipment_type', value)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="responsible_name"
+                                            label="Responsable"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.responsible_name}
+                                            filterPlaceholder="Filtrar por responsable..."
+                                            onFilterChange={(value) =>
+                                                setFilter('responsible_name', value)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="next_change_date"
+                                            label="Próx. Cambio"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                        />
+                                        <SortableTableHead
+                                            column="observations"
+                                            label="Observaciones"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.observations}
+                                            filterPlaceholder="Filtrar por observaciones..."
+                                            onFilterChange={(value) =>
+                                                setFilter('observations', value)
+                                            }
+                                        />
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">

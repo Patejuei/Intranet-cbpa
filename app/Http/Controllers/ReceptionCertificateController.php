@@ -23,11 +23,73 @@ class ReceptionCertificateController extends Controller
       abort(403);
     }
 
-    $query = ReceptionCertificate::with('firefighter', 'user', 'items.material')->latest();
+    $query = ReceptionCertificate::with('firefighter', 'user', 'items.material')
+      ->withCount('items');
     $this->applyCompanyScope($query, request());
 
+    if ($search = trim((string) request('search', ''))) {
+      $query->where(function ($q) use ($search) {
+        $q->whereHas('firefighter', function ($fq) use ($search) {
+          $fq->where('full_name', 'like', "%{$search}%");
+        })->orWhereHas('user', function ($uq) use ($search) {
+          $uq->where('name', 'like', "%{$search}%");
+        });
+      });
+    }
+
+    if ($date = trim((string) request('date', ''))) {
+      $query->where('date', 'like', "%{$date}%");
+    }
+
+    if ($firefighterName = trim((string) request('firefighter_name', ''))) {
+      $query->whereHas('firefighter', function ($q) use ($firefighterName) {
+        $q->where('full_name', 'like', "%{$firefighterName}%");
+      });
+    }
+
+    if ($userName = trim((string) request('user_name', ''))) {
+      $query->whereHas('user', function ($q) use ($userName) {
+        $q->where('name', 'like', "%{$userName}%");
+      });
+    }
+
+    $sortableColumns = ['date', 'firefighter_name', 'user_name', 'items_count', 'company'];
+    $sort = request('sort');
+    $direction = strtolower((string) request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+    if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+      if ($sort === 'firefighter_name') {
+        $query->orderBy(
+          Firefighter::select('full_name')
+            ->whereColumn('firefighters.id', 'reception_certificates.firefighter_id')
+            ->limit(1),
+          $direction
+        );
+      } elseif ($sort === 'user_name') {
+        $query->orderBy(
+          \App\Models\User::select('name')
+            ->whereColumn('users.id', 'reception_certificates.user_id')
+            ->limit(1),
+          $direction
+        );
+      } else {
+        $query->orderBy($sort, $direction);
+      }
+    } else {
+      $query->latest();
+    }
+
     return Inertia::render('receptions/index', [
-      'certificates' => $query->paginate(10)
+      'certificates' => $query->paginate(10)->withQueryString(),
+      'filters' => request()->only([
+        'search',
+        'company',
+        'date',
+        'firefighter_name',
+        'user_name',
+        'sort',
+        'direction',
+      ]),
     ]);
   }
 

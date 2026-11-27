@@ -1,5 +1,15 @@
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
+import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -10,6 +20,7 @@ import {
     History,
     LayoutList,
     PlusCircle,
+    RotateCcw,
     Save,
     Trash,
 } from 'lucide-react';
@@ -33,6 +44,17 @@ interface Log {
     user: { name: string };
 }
 
+interface EquipmentLogFilters {
+    [key: string]: string | undefined;
+    item_name?: string;
+    type?: string;
+    user_name?: string;
+    created_at?: string;
+    reason?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface PageProps {
     logs: {
         data: Log[];
@@ -47,7 +69,25 @@ interface PageProps {
         data: MaterialBajaRequest[];
         links: any[];
     };
+    filters?: EquipmentLogFilters & {
+        tab?: string;
+        bajas_id?: string;
+        bajas_date?: string;
+        bajas_requester?: string;
+        bajas_material?: string;
+        bajas_status?: string;
+    };
 }
+
+const emptyEquipmentLogFilters: EquipmentLogFilters = {
+    item_name: '',
+    type: 'all',
+    user_name: '',
+    created_at: '',
+    reason: '',
+    sort: undefined,
+    direction: undefined,
+};
 
 export default function EquipmentIndex({
     logs,
@@ -55,20 +95,37 @@ export default function EquipmentIndex({
     materials,
     companies, // Add prop
     bajaRequests,
+    filters: initialFilters = {},
 }: PageProps) {
     const { userRole, userCompany, url } = usePage<any>().props; // Destructure userCompany here from page props if needed or use from props
     const { canCreate } = usePermissions();
 
     // Determine initial tab
     const initialTab =
-        typeof window !== 'undefined' &&
-        window.location.search.includes('bajas_page')
+        initialFilters.tab === 'BAJAS' ||
+        (typeof window !== 'undefined' &&
+            (window.location.search.includes('bajas_page') ||
+                window.location.search.includes('tab=BAJAS')))
             ? 'BAJAS'
             : 'GESTION';
     const [activeTab, setActiveTab] = useState<'GESTION' | 'ALTA' | 'BAJAS'>(
         initialTab,
     );
     const [showRequestForm, setShowRequestForm] = useState(false);
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<EquipmentLogFilters>('/equipment', {
+            item_name: initialFilters.item_name || '',
+            type: initialFilters.type || 'all',
+            user_name: initialFilters.user_name || '',
+            created_at: initialFilters.created_at || '',
+            reason: initialFilters.reason || '',
+            sort: initialFilters.tab === 'BAJAS' ? undefined : initialFilters.sort,
+            direction:
+                initialFilters.tab === 'BAJAS'
+                    ? undefined
+                    : initialFilters.direction,
+        });
 
     interface EquipmentFormData {
         type: 'ALTA';
@@ -287,90 +344,203 @@ export default function EquipmentIndex({
 
                                 {/* Logs History Moved Here */}
                                 <div className="rounded-xl border bg-card p-6 shadow-sm">
-                                    <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-                                        <History className="size-5" />
-                                        <h3 className="font-semibold text-foreground">
-                                            Historial de Movimientos
-                                        </h3>
+                                    <div className="mb-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <History className="size-5" />
+                                            <h3 className="font-semibold text-foreground">
+                                                Historial de Movimientos
+                                            </h3>
+                                        </div>
+                                        {hasActiveFilters && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    clearFilters(
+                                                        emptyEquipmentLogFilters,
+                                                    )
+                                                }
+                                                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                                            >
+                                                <RotateCcw className="size-4" />
+                                                Limpiar filtros
+                                            </Button>
+                                        )}
                                     </div>
 
-                                    <div className="space-y-3">
-                                        {logs.data.length === 0 ? (
-                                            <p className="text-center text-sm text-muted-foreground">
-                                                Sin registros.
-                                            </p>
-                                        ) : (
-                                            <div className="overflow-hidden rounded-md border">
-                                                <table className="w-full text-sm">
-                                                    <thead className="bg-muted/50">
-                                                        <tr>
-                                                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                                                                Ítem
-                                                            </th>
-                                                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                                                                Tipo
-                                                            </th>
-                                                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                                                                Usuario
-                                                            </th>
-                                                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                                                                Fecha
-                                                            </th>
-                                                            <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                                                                Motivo
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y">
-                                                        {logs.data.map(
-                                                            (log) => (
-                                                                <tr
-                                                                    key={log.id}
-                                                                    className="hover:bg-muted/30"
+                                    <div className="overflow-hidden rounded-md border">
+                                        <Table>
+                                            <TableHeader className="bg-muted/50">
+                                                <TableRow>
+                                                    <SortableTableHead
+                                                        column="item_name"
+                                                        label="Ítem"
+                                                        sortKey={filters.sort}
+                                                        sortDirection={
+                                                            filters.direction
+                                                        }
+                                                        onSort={setSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            filters.item_name
+                                                        }
+                                                        filterPlaceholder="Filtrar ítem..."
+                                                        onFilterChange={(
+                                                            value,
+                                                        ) =>
+                                                            setFilter(
+                                                                'item_name',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <SortableTableHead
+                                                        column="type"
+                                                        label="Tipo"
+                                                        sortKey={filters.sort}
+                                                        sortDirection={
+                                                            filters.direction
+                                                        }
+                                                        onSort={setSort}
+                                                        filterType="select"
+                                                        filterValue={
+                                                            filters.type
+                                                        }
+                                                        filterOptions={[
+                                                            {
+                                                                value: 'ALTA',
+                                                                label: 'ALTA',
+                                                            },
+                                                            {
+                                                                value: 'BAJA',
+                                                                label: 'BAJA',
+                                                            },
+                                                        ]}
+                                                        onFilterChange={(
+                                                            value,
+                                                        ) =>
+                                                            setFilter(
+                                                                'type',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <SortableTableHead
+                                                        column="user_name"
+                                                        label="Usuario"
+                                                        sortKey={filters.sort}
+                                                        sortDirection={
+                                                            filters.direction
+                                                        }
+                                                        onSort={setSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            filters.user_name
+                                                        }
+                                                        filterPlaceholder="Filtrar usuario..."
+                                                        onFilterChange={(
+                                                            value,
+                                                        ) =>
+                                                            setFilter(
+                                                                'user_name',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <SortableTableHead
+                                                        column="created_at"
+                                                        label="Fecha"
+                                                        sortKey={filters.sort}
+                                                        sortDirection={
+                                                            filters.direction
+                                                        }
+                                                        onSort={setSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            filters.created_at
+                                                        }
+                                                        filterPlaceholder="YYYY-MM-DD..."
+                                                        onFilterChange={(
+                                                            value,
+                                                        ) =>
+                                                            setFilter(
+                                                                'created_at',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                    <SortableTableHead
+                                                        column="reason"
+                                                        label="Motivo"
+                                                        sortKey={filters.sort}
+                                                        sortDirection={
+                                                            filters.direction
+                                                        }
+                                                        onSort={setSort}
+                                                        filterType="text"
+                                                        filterValue={
+                                                            filters.reason
+                                                        }
+                                                        filterPlaceholder="Filtrar motivo..."
+                                                        onFilterChange={(
+                                                            value,
+                                                        ) =>
+                                                            setFilter(
+                                                                'reason',
+                                                                value,
+                                                            )
+                                                        }
+                                                    />
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {logs.data.length === 0 ? (
+                                                    <TableRow>
+                                                        <TableCell
+                                                            colSpan={5}
+                                                            className="py-6 text-center text-sm text-muted-foreground"
+                                                        >
+                                                            Sin registros.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : (
+                                                    logs.data.map((log) => (
+                                                        <TableRow
+                                                            key={log.id}
+                                                            className="hover:bg-muted/30"
+                                                        >
+                                                            <TableCell className="font-medium">
+                                                                {log.item_name}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <span
+                                                                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                                                        log.type ===
+                                                                        'ALTA'
+                                                                            ? 'bg-green-100 text-green-700'
+                                                                            : 'bg-red-100 text-red-700'
+                                                                    }`}
                                                                 >
-                                                                    <td className="px-4 py-2 font-medium">
-                                                                        {
-                                                                            log.item_name
-                                                                        }
-                                                                    </td>
-                                                                    <td className="px-4 py-2">
-                                                                        <span
-                                                                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                                                                log.type ===
-                                                                                'ALTA'
-                                                                                    ? 'bg-green-100 text-green-700'
-                                                                                    : 'bg-red-100 text-red-700'
-                                                                            }`}
-                                                                        >
-                                                                            {
-                                                                                log.type
-                                                                            }
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-4 py-2 text-muted-foreground">
-                                                                        {
-                                                                            log
-                                                                                .user
-                                                                                .name
-                                                                        }
-                                                                    </td>
-                                                                    <td className="px-4 py-2 text-muted-foreground">
-                                                                        {new Date(
-                                                                            log.created_at,
-                                                                        ).toLocaleDateString()}
-                                                                    </td>
-                                                                    <td className="px-4 py-2 text-muted-foreground">
-                                                                        {
-                                                                            log.reason
-                                                                        }
-                                                                    </td>
-                                                                </tr>
-                                                            ),
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
+                                                                    {log.type}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {log.user.name}
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {new Date(
+                                                                    log.created_at,
+                                                                ).toLocaleDateString()}
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {log.reason}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                )}
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                     <div className="mt-4">
                                         <Pagination links={logs.links} />
@@ -703,6 +873,17 @@ export default function EquipmentIndex({
                             <BajasList
                                 requests={bajaRequests}
                                 userRole={userRole}
+                                filters={{
+                                    ...initialFilters,
+                                    sort:
+                                        initialFilters.tab === 'BAJAS'
+                                            ? initialFilters.sort
+                                            : undefined,
+                                    direction:
+                                        initialFilters.tab === 'BAJAS'
+                                            ? initialFilters.direction
+                                            : undefined,
+                                }}
                             />
                         )}
                     </div>

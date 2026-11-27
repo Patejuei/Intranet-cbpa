@@ -31,8 +31,10 @@ import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { usePermissions } from '@/hooks/use-permissions';
 import { Combobox } from '@/components/ui/combobox';
+import { SortableTableHead } from '@/components/SortableTableHead';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Circle, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, X } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -83,54 +85,23 @@ export default function DutyLogs({
         end_time: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     });
 
-    const [sortConfig, setSortConfig] = useState<{
-        key: 'vehicle' | 'user' | 'start_time';
-        direction: 'asc' | 'desc';
-    }>({ key: 'start_time', direction: 'desc' });
-
-    const sortedDuties = useMemo(() => {
-        const items = [...activeDuties];
-        items.sort((a, b) => {
-            let aValue: any;
-            let bValue: any;
-
-            if (sortConfig.key === 'vehicle') {
-                aValue = a.vehicle.name;
-                bValue = b.vehicle.name;
-            } else if (sortConfig.key === 'user') {
-                aValue = a.user.name;
-                bValue = b.user.name;
-            } else if (sortConfig.key === 'start_time') {
-                aValue = new Date(a.start_time).getTime();
-                bValue = new Date(b.start_time).getTime();
-            }
-
-            if (aValue < bValue) {
-                return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return sortConfig.direction === 'asc' ? 1 : -1;
-            }
-            return 0;
-        });
-        return items;
-    }, [activeDuties, sortConfig]);
-
-    const handleSort = (key: 'vehicle' | 'user' | 'start_time') => {
-        setSortConfig((prev) => ({
-            key,
-            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-        }));
-    };
-
-    const SortIcon = ({ column }: { column: typeof sortConfig.key }) => {
-        if (sortConfig.key !== column) return <ArrowUpDown className="ml-2 h-3 w-3" />;
-        return sortConfig.direction === 'asc' ? (
-            <ArrowUp className="ml-2 h-3 w-3 text-primary" />
-        ) : (
-            <ArrowDown className="ml-2 h-3 w-3 text-primary" />
-        );
-    };
+    const {
+        filteredItems: sortedDuties,
+        filters: tableFilters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+    } = useClientTableFilter(activeDuties, {
+        accessors: {
+            vehicle: (d) => d.vehicle?.name || '',
+            user: (d) => d.user?.name || '',
+            is_primary: (d) => (d.is_primary ? 'Primario' : 'Secundario'),
+            start_time: (d) => (d.start_time ? new Date(d.start_time).getTime() : 0),
+        },
+        exactMatchColumns: ['is_primary'],
+        initialSort: { key: 'start_time', direction: 'desc' },
+    });
 
     const selectedDriverId = data.user_id;
     
@@ -309,43 +280,73 @@ export default function DutyLogs({
                             <h2 className="text-lg font-semibold flex items-center gap-2">
                                 Conductores Activos
                                 <Badge variant="secondary" className="rounded-full px-2">
-                                    {activeDuties.length}
+                                    {sortedDuties.length}
                                 </Badge>
                             </h2>
+                            {hasActiveFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-8 gap-1.5 text-xs"
+                                >
+                                    <X className="size-3.5" />
+                                    Limpiar filtros
+                                </Button>
+                            )}
                         </div>
                         
                         <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
-                                        <TableHead 
-                                            className="font-bold cursor-pointer hover:bg-muted/50 transition-colors"
-                                            onClick={() => handleSort('vehicle')}
-                                        >
-                                            <div className="flex items-center">
-                                                Unidad
-                                                <SortIcon column="vehicle" />
-                                            </div>
-                                        </TableHead>
-                                        <TableHead 
-                                            className="font-bold cursor-pointer hover:bg-muted/50 transition-colors"
-                                            onClick={() => handleSort('user')}
-                                        >
-                                            <div className="flex items-center">
-                                                Conductor
-                                                <SortIcon column="user" />
-                                            </div>
-                                        </TableHead>
-                                        <TableHead className="font-bold">Tipo</TableHead>
-                                        <TableHead 
-                                            className="font-bold cursor-pointer hover:bg-muted/50 transition-colors"
-                                            onClick={() => handleSort('start_time')}
-                                        >
-                                            <div className="flex items-center">
-                                                Hora de Inicio
-                                                <SortIcon column="start_time" />
-                                            </div>
-                                        </TableHead>
+                                        <SortableTableHead
+                                            column="vehicle"
+                                            label="Unidad"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.vehicle || ''}
+                                            filterPlaceholder="Buscar unidad..."
+                                            onFilterChange={(val) => setFilter('vehicle', val)}
+                                            className="font-bold"
+                                        />
+                                        <SortableTableHead
+                                            column="user"
+                                            label="Conductor"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.user || ''}
+                                            filterPlaceholder="Buscar conductor..."
+                                            onFilterChange={(val) => setFilter('user', val)}
+                                            className="font-bold"
+                                        />
+                                        <SortableTableHead
+                                            column="is_primary"
+                                            label="Tipo"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={tableFilters.is_primary || 'all'}
+                                            filterOptions={[
+                                                { value: 'Primario', label: 'Primario' },
+                                                { value: 'Secundario', label: 'Secundario' },
+                                            ]}
+                                            onFilterChange={(val) => setFilter('is_primary', val)}
+                                            className="font-bold"
+                                        />
+                                        <SortableTableHead
+                                            column="start_time"
+                                            label="Hora de Inicio"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setSort}
+                                            className="font-bold"
+                                        />
                                         {canEdit('central') && (
                                             <TableHead className="text-right font-bold">Acciones</TableHead>
                                         )}
@@ -358,7 +359,9 @@ export default function DutyLogs({
                                                 colSpan={canEdit('central') ? 5 : 4}
                                                 className="h-32 text-center text-muted-foreground italic"
                                             >
-                                                No hay conductores activos en este momento.
+                                                {activeDuties.length > 0 && hasActiveFilters
+                                                    ? 'No hay conductores que coincidan con los filtros.'
+                                                    : 'No hay conductores activos en este momento.'}
                                             </TableCell>
                                         </TableRow>
                                     ) : (

@@ -25,22 +25,32 @@ class AssignedMaterialController extends Controller
       abort(403, 'Acceso denegado a este módulo.');
     }
 
-    $search = $request->input('search');
+    $search = trim((string) $request->input('search', ''));
+    $fullName = trim((string) $request->input('full_name', ''));
+    $rut = trim((string) $request->input('rut', ''));
     $companyFilter = $request->input('company');
 
     $query = Firefighter::with(['assignedMaterials.material']);
     // Removed the whereHas('assignedMaterials') constraint to show ALL firefighters
 
-    if ($search) {
+    if ($search !== '') {
       $query->where(function ($q) use ($search) {
         $q->where('full_name', 'like', "%{$search}%")
           ->orWhere('rut', 'like', "%{$search}%");
       });
     }
 
+    if ($fullName !== '') {
+      $query->where('full_name', 'like', "%{$fullName}%");
+    }
+
+    if ($rut !== '') {
+      $query->where('rut', 'like', "%{$rut}%");
+    }
+
     // Company Permissions logic
     if ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'comandante') {
-      if ($companyFilter) {
+      if ($companyFilter && $companyFilter !== 'all') {
         $query->where('company', $companyFilter);
       }
     } else {
@@ -48,9 +58,19 @@ class AssignedMaterialController extends Controller
       $query->where('company', $user->company);
     }
 
+    $sortableColumns = ['full_name', 'rut', 'company'];
+    $sort = $request->input('sort');
+    $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+    if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+      $query->orderBy($sort, $direction);
+    } else {
+      $query->orderBy('full_name', 'asc');
+    }
+
     return Inertia::render('equipment/assigned/index', [
       'firefighters' => $query->paginate(20)->withQueryString(),
-      'filters' => $request->only(['search', 'company']),
+      'filters' => $request->only(['search', 'full_name', 'rut', 'company', 'sort', 'direction']),
       'can_filter_company' => ($user->company === 'Comandancia' || $user->role === 'admin' || $user->role === 'comandante')
     ]);
   }

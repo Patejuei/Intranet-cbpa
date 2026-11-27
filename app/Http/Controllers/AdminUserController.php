@@ -6,17 +6,113 @@ use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
-    public function index()
+    private const COMPANIES = [
+        'Primera Compañía',
+        'Segunda Compañía',
+        'Tercera Compañía',
+        'Cuarta Compañía',
+        'Quinta Compañía',
+        'Séptima Compañía',
+        'Octava Compañía',
+        'Novena Compañía',
+        'Décima Compañía',
+        'Comandancia',
+    ];
+
+    private const ROLES = [
+        'user' => 'Usuario Estándar',
+        'admin' => 'Administrador',
+        'comandante' => 'Comandante',
+        'inspector' => 'Inspector',
+        'capitan' => 'Capitán',
+        'teniente' => 'Teniente',
+        'maquinista' => 'Maquinista',
+        'ayudante' => 'Ayudante',
+        'comandancia' => 'Comandancia',
+        'cuartelero' => 'Cuartelero',
+        'mechanic' => 'Taller Mecánico',
+        'secretaria_adquisiciones' => 'Secretaria de Adquisiciones',
+        'central_operator' => 'Operador Central',
+    ];
+
+    public function index(Request $request)
     {
-        $user = request()->user();
+        $user = $request->user();
         if ($user->role !== 'admin') {
             abort(403);
         }
 
         $query = \App\Models\User::query();
 
+        if ($search = trim((string) $request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('rut', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        foreach (['name', 'rut', 'email'] as $column) {
+            if ($value = trim((string) $request->input($column, ''))) {
+                $query->where($column, 'like', "%{$value}%");
+            }
+        }
+
+        if ($company = trim((string) $request->input('company', ''))) {
+            if ($company !== 'all') {
+                $query->where('company', $company);
+            }
+        }
+
+        if ($role = trim((string) $request->input('role', ''))) {
+            if ($role !== 'all') {
+                $query->where('role', $role);
+            }
+        }
+
+        if ($status = trim((string) $request->input('status', ''))) {
+            if ($status === 'enabled') {
+                $query->where('is_enabled', true);
+            } elseif ($status === 'disabled') {
+                $query->where('is_enabled', false);
+            }
+        }
+
+        if ($permission = trim((string) $request->input('permission', ''))) {
+            $query->where(function ($q) use ($permission) {
+                $q->where('permissions', 'like', "%{$permission}%");
+                if (stripos('acceso total', $permission) !== false) {
+                    $q->orWhere('role', 'admin');
+                }
+            });
+        }
+
+        $sortableColumns = ['name', 'rut', 'email', 'company', 'role', 'is_enabled'];
+        $sort = $request->input('sort');
+        $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
         return \Inertia\Inertia::render('admin/users/index', [
-            'users' => $query->paginate(10)
+            'users' => $query->paginate(10)->withQueryString(),
+            'filters' => $request->only([
+                'search',
+                'name',
+                'rut',
+                'email',
+                'company',
+                'role',
+                'status',
+                'permission',
+                'sort',
+                'direction',
+            ]),
+            'companies' => self::COMPANIES,
+            'roles' => self::ROLES,
         ]);
     }
 

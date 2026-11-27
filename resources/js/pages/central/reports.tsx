@@ -18,10 +18,12 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
+import { SortableTableHead } from '@/components/SortableTableHead';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear, setMonth, setYear } from 'date-fns';
-import { CalendarDays, FileSpreadsheet, FileText, Filter, Search } from 'lucide-react';
+import { CalendarDays, FileSpreadsheet, FileText, Filter, Search, X } from 'lucide-react';
 
 interface ReportItem {
     user_name: string;
@@ -41,6 +43,25 @@ export default function CentralReports({
 }) {
     const [startDate, setStartDate] = useState(filters.start_date);
     const [endDate, setEndDate] = useState(filters.end_date);
+
+    const {
+        filteredItems: filteredReports,
+        filters: tableFilters,
+        setFilter: setTableFilter,
+        setSort: setTableSort,
+        clearFilters: clearTableFilters,
+        hasActiveFilters,
+    } = useClientTableFilter(reportData, {
+        accessors: {
+            user_name: (item) => item.user_name,
+            vehicle_name: (item) => item.vehicle_name,
+            start_time: (item) => item.start_time,
+            end_time: (item) => item.end_time,
+            is_primary: (item) => (item.is_primary ? 'Primario' : 'Secundario'),
+            duration_human: (item) => item.duration_human,
+        },
+        exactMatchColumns: ['is_primary'],
+    });
 
     const applyFilter = (start: string, end: string) => {
         setStartDate(start);
@@ -196,11 +217,24 @@ export default function CentralReports({
 
                 <Card className="shadow-sm">
                     <CardHeader className="py-3 px-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                             <CardTitle className="text-base text-muted-foreground">Resultados del Período</CardTitle>
-                            <span className="text-xs font-medium">
-                                {format(new Date(startDate + 'T12:00:00'), 'dd/MM/yyyy')} - {format(new Date(endDate + 'T12:00:00'), 'dd/MM/yyyy')}
-                            </span>
+                            <div className="flex items-center gap-3">
+                                {hasActiveFilters && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={clearTableFilters}
+                                        className="h-7 gap-1.5 px-2.5 text-xs"
+                                    >
+                                        <X className="size-3.5" />
+                                        Limpiar filtros
+                                    </Button>
+                                )}
+                                <span className="text-xs font-medium">
+                                    {format(new Date(startDate + 'T12:00:00'), 'dd/MM/yyyy')} - {format(new Date(endDate + 'T12:00:00'), 'dd/MM/yyyy')}
+                                </span>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -208,16 +242,82 @@ export default function CentralReports({
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
-                                        <TableHead className="h-9 px-4 text-xs">Conductor</TableHead>
-                                        <TableHead className="h-9 px-4 text-xs">Vehículo</TableHead>
-                                        <TableHead className="h-9 px-4 text-xs font-mono">Inicio</TableHead>
-                                        <TableHead className="h-9 px-4 text-xs font-mono">Término</TableHead>
-                                        <TableHead className="h-9 px-4 text-xs">Tipo</TableHead>
-                                        <TableHead className="h-9 px-4 text-right text-xs">Horas Totales</TableHead>
+                                        <SortableTableHead
+                                            column="user_name"
+                                            label="Conductor"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.user_name || ''}
+                                            filterPlaceholder="Buscar conductor..."
+                                            onFilterChange={(val) => setTableFilter('user_name', val)}
+                                            className="h-9 px-4 text-xs"
+                                        />
+                                        <SortableTableHead
+                                            column="vehicle_name"
+                                            label="Vehículo"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.vehicle_name || ''}
+                                            filterPlaceholder="Buscar vehículo..."
+                                            onFilterChange={(val) => setTableFilter('vehicle_name', val)}
+                                            className="h-9 px-4 text-xs"
+                                        />
+                                        <SortableTableHead
+                                            column="start_time"
+                                            label="Inicio"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.start_time || ''}
+                                            filterPlaceholder="Buscar inicio..."
+                                            onFilterChange={(val) => setTableFilter('start_time', val)}
+                                            className="h-9 px-4 text-xs font-mono"
+                                        />
+                                        <SortableTableHead
+                                            column="end_time"
+                                            label="Término"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            filterType="text"
+                                            filterValue={tableFilters.end_time || ''}
+                                            filterPlaceholder="Buscar término..."
+                                            onFilterChange={(val) => setTableFilter('end_time', val)}
+                                            className="h-9 px-4 text-xs font-mono"
+                                        />
+                                        <SortableTableHead
+                                            column="is_primary"
+                                            label="Tipo"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            filterType="select"
+                                            filterValue={tableFilters.is_primary || 'all'}
+                                            filterOptions={[
+                                                { value: 'Primario', label: 'Primario' },
+                                                { value: 'Secundario', label: 'Secundario' },
+                                            ]}
+                                            onFilterChange={(val) => setTableFilter('is_primary', val)}
+                                            className="h-9 px-4 text-xs"
+                                        />
+                                        <SortableTableHead
+                                            column="duration_human"
+                                            label="Horas Totales"
+                                            sortKey={tableFilters.sort}
+                                            sortDirection={tableFilters.direction}
+                                            onSort={setTableSort}
+                                            align="right"
+                                            className="h-9 px-4 text-right text-xs"
+                                        />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {reportData.map((item, idx) => (
+                                    {filteredReports.map((item, idx) => (
                                         <TableRow key={idx} className="hover:bg-muted/10 transition-colors text-xs sm:text-sm">
                                             <TableCell className="py-2 px-4 font-medium">{item.user_name}</TableCell>
                                             <TableCell className="py-2 px-4">{item.vehicle_name}</TableCell>
@@ -235,10 +335,12 @@ export default function CentralReports({
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                    {reportData.length === 0 && (
+                                    {filteredReports.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={6} className="py-12 text-center text-muted-foreground italic text-sm">
-                                                Sin registros para las fechas seleccionadas.
+                                                {reportData.length > 0 && hasActiveFilters
+                                                    ? 'Sin registros que coincidan con los filtros.'
+                                                    : 'Sin registros para las fechas seleccionadas.'}
                                             </TableCell>
                                         </TableRow>
                                     )}

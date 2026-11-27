@@ -1,4 +1,5 @@
 import MaterialForm from '@/components/inventory/MaterialForm';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,10 +17,25 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { Material } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Box, Edit, FileText, History } from 'lucide-react';
+import {
+    ArrowLeft,
+    Box,
+    Edit,
+    FileText,
+    History,
+    RotateCcw,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface Log {
@@ -55,6 +71,26 @@ interface PageProps {
 
 export default function InventoryShow({ material, logs, history }: PageProps) {
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const {
+        filteredItems: filteredHistory,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+        getUniqueOptions,
+    } = useClientTableFilter<MaterialHistory>(history, {
+        accessors: {
+            created_at: (record) => record.created_at,
+            type: (record) => record.type,
+            quantity_change: (record) => record.quantity_change,
+            description: (record) => record.description,
+            user: (record) => record.user?.name || '',
+            reference: (record) =>
+                record.reference_id ? `Acta #${record.reference_id}` : 'Manual',
+        },
+        exactMatchColumns: ['type'],
+    });
 
     return (
         <AppLayout
@@ -221,171 +257,262 @@ export default function InventoryShow({ material, logs, history }: PageProps) {
 
                     {/* Unified History Card */}
                     <Card className="md:col-span-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <History className="size-5 text-primary" />
-                                Historial de Movimientos Unificado
-                            </CardTitle>
-                            <CardDescription>
-                                Registro completo de Entregas, Recepciones y
-                                Ajustes
-                            </CardDescription>
+                        <CardHeader className="flex flex-row items-start justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <History className="size-5 text-primary" />
+                                    Historial de Movimientos Unificado
+                                </CardTitle>
+                                <CardDescription>
+                                    Registro completo de Entregas, Recepciones y
+                                    Ajustes
+                                </CardDescription>
+                            </div>
+                            {hasActiveFilters && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                                >
+                                    <RotateCcw className="size-4" />
+                                    Limpiar filtros
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent>
                             <div className="rounded-md border">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead className="bg-muted text-muted-foreground">
-                                            <tr>
-                                                <th className="p-3 font-medium">
-                                                    Fecha
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Tipo
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Cambio
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Descripción
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Usuario
-                                                </th>
-                                                <th className="p-3 font-medium">
-                                                    Ref
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {history.length > 0 ? (
-                                                history.map((record) => (
-                                                    <tr
-                                                        key={record.id}
-                                                        className="hover:bg-muted/50"
-                                                    >
-                                                        <td className="p-3">
-                                                            {new Date(
-                                                                record.created_at,
-                                                            ).toLocaleString()}
-                                                        </td>
-                                                        <td className="p-3">
-                                                            <Badge
-                                                                variant={
-                                                                    record.type ===
-                                                                    'DELIVERY'
-                                                                        ? 'outline'
+                                <Table>
+                                    <TableHeader className="bg-muted">
+                                        <TableRow>
+                                            <SortableTableHead
+                                                column="created_at"
+                                                label="Fecha"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.created_at}
+                                                filterPlaceholder="YYYY-MM-DD..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'created_at',
+                                                        value,
+                                                    )
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="type"
+                                                label="Tipo"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="select"
+                                                filterValue={filters.type}
+                                                filterOptions={getUniqueOptions(
+                                                    'type',
+                                                )}
+                                                onFilterChange={(value) =>
+                                                    setFilter('type', value)
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="quantity_change"
+                                                label="Cambio"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                            />
+                                            <SortableTableHead
+                                                column="description"
+                                                label="Descripción"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={
+                                                    filters.description
+                                                }
+                                                filterPlaceholder="Filtrar descripción..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'description',
+                                                        value,
+                                                    )
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="user"
+                                                label="Usuario"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.user}
+                                                filterPlaceholder="Filtrar usuario..."
+                                                onFilterChange={(value) =>
+                                                    setFilter('user', value)
+                                                }
+                                            />
+                                            <SortableTableHead
+                                                column="reference"
+                                                label="Ref"
+                                                sortKey={filters.sort}
+                                                sortDirection={
+                                                    filters.direction
+                                                }
+                                                onSort={setSort}
+                                                filterType="text"
+                                                filterValue={filters.reference}
+                                                filterPlaceholder="Filtrar ref..."
+                                                onFilterChange={(value) =>
+                                                    setFilter(
+                                                        'reference',
+                                                        value,
+                                                    )
+                                                }
+                                            />
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredHistory.length > 0 ? (
+                                            filteredHistory.map((record) => (
+                                                <TableRow
+                                                    key={record.id}
+                                                    className="hover:bg-muted/50"
+                                                >
+                                                    <TableCell>
+                                                        {new Date(
+                                                            record.created_at,
+                                                        ).toLocaleString()}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge
+                                                            variant={
+                                                                record.type ===
+                                                                'DELIVERY'
+                                                                    ? 'outline'
+                                                                    : record.type ===
+                                                                        'RECEPTION'
+                                                                      ? 'outline'
+                                                                      : record.type ===
+                                                                          'ADD'
+                                                                        ? 'secondary'
                                                                         : record.type ===
-                                                                            'RECEPTION'
-                                                                          ? 'outline'
-                                                                          : record.type ===
-                                                                              'ADD'
-                                                                            ? 'secondary'
-                                                                            : record.type ===
-                                                                                'REMOVE'
-                                                                              ? 'destructive'
-                                                                              : 'default'
-                                                                }
-                                                                className={
-                                                                    record.type ===
-                                                                    'DELIVERY'
-                                                                        ? 'bg-blue-50 text-blue-700'
+                                                                            'REMOVE'
+                                                                          ? 'destructive'
+                                                                          : 'default'
+                                                            }
+                                                            className={
+                                                                record.type ===
+                                                                'DELIVERY'
+                                                                    ? 'bg-blue-50 text-blue-700'
+                                                                    : record.type ===
+                                                                        'RECEPTION'
+                                                                      ? 'bg-green-50 text-green-700'
+                                                                      : record.type ===
+                                                                          'ADD'
+                                                                        ? 'bg-green-100 text-green-700'
                                                                         : record.type ===
-                                                                            'RECEPTION'
-                                                                          ? 'bg-green-50 text-green-700'
-                                                                          : record.type ===
-                                                                              'ADD'
-                                                                            ? 'bg-green-100 text-green-700'
-                                                                            : record.type ===
-                                                                                'REMOVE'
-                                                                              ? 'bg-red-100 text-red-700'
-                                                                              : ''
-                                                                }
-                                                            >
-                                                                {record.type}
-                                                            </Badge>
-                                                        </td>
-                                                        <td className="p-3 font-medium">
-                                                            <span
-                                                                className={
-                                                                    record.quantity_change >
-                                                                    0
-                                                                        ? 'text-green-600'
-                                                                        : 'text-red-600'
-                                                                }
-                                                            >
-                                                                {record.quantity_change >
-                                                                0
-                                                                    ? '+'
-                                                                    : ''}
-                                                                {
-                                                                    record.quantity_change
-                                                                }
-                                                            </span>
-                                                        </td>
-                                                        <td
-                                                            className="max-w-[200px] truncate p-3"
-                                                            title={
-                                                                record.description
+                                                                            'REMOVE'
+                                                                          ? 'bg-red-100 text-red-700'
+                                                                          : ''
                                                             }
                                                         >
-                                                            {record.description}
-                                                        </td>
-                                                        <td className="p-3 text-muted-foreground">
-                                                            {record.user
-                                                                ?.name || '-'}
-                                                        </td>
-                                                        <td className="p-3">
-                                                            {record.reference_type?.includes(
-                                                                'DeliveryCertificate',
-                                                            ) && (
-                                                                <Link
-                                                                    href={`/deliveries/${record.reference_id}`}
-                                                                    className="text-blue-500 hover:underline"
-                                                                >
-                                                                    Acta #
-                                                                    {
-                                                                        record.reference_id
-                                                                    }
-                                                                </Link>
-                                                            )}
-                                                            {record.reference_type?.includes(
-                                                                'ReceptionCertificate',
-                                                            ) && (
-                                                                <Link
-                                                                    href={`/receptions/${record.reference_id}`}
-                                                                    className="text-blue-500 hover:underline"
-                                                                >
-                                                                    Acta #
-                                                                    {
-                                                                        record.reference_id
-                                                                    }
-                                                                </Link>
-                                                            )}
-                                                            {record.reference_type?.includes(
-                                                                'EquipmentLog',
-                                                            ) && (
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    Manual
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td
-                                                        colSpan={6}
-                                                        className="p-8 text-center text-muted-foreground"
+                                                            {record.type}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">
+                                                        <span
+                                                            className={
+                                                                record.quantity_change >
+                                                                0
+                                                                    ? 'text-green-600'
+                                                                    : 'text-red-600'
+                                                            }
+                                                        >
+                                                            {record.quantity_change >
+                                                            0
+                                                                ? '+'
+                                                                : ''}
+                                                            {
+                                                                record.quantity_change
+                                                            }
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell
+                                                        className="max-w-[200px] truncate"
+                                                        title={
+                                                            record.description
+                                                        }
                                                     >
-                                                        No hay historial
-                                                        unificado disponible.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                        {record.description}
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">
+                                                        {record.user?.name ||
+                                                            '-'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {record.reference_type?.includes(
+                                                            'DeliveryCertificate',
+                                                        ) && (
+                                                            <Link
+                                                                href={`/deliveries/${record.reference_id}`}
+                                                                className="text-blue-500 hover:underline"
+                                                            >
+                                                                Acta #
+                                                                {
+                                                                    record.reference_id
+                                                                }
+                                                            </Link>
+                                                        )}
+                                                        {record.reference_type?.includes(
+                                                            'ReceptionCertificate',
+                                                        ) && (
+                                                            <Link
+                                                                href={`/receptions/${record.reference_id}`}
+                                                                className="text-blue-500 hover:underline"
+                                                            >
+                                                                Acta #
+                                                                {
+                                                                    record.reference_id
+                                                                }
+                                                            </Link>
+                                                        )}
+                                                        {record.reference_type?.includes(
+                                                            'EquipmentLog',
+                                                        ) && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                Manual
+                                                            </span>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan={6}
+                                                    className="p-8 text-center text-muted-foreground"
+                                                >
+                                                    No hay historial unificado
+                                                    disponible.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
                             </div>
                         </CardContent>
                     </Card>

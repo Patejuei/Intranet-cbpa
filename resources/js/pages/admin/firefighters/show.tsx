@@ -13,6 +13,8 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { Firefighter } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { SortableTableHead } from '@/components/SortableTableHead';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import {
     ArrowLeft,
     Building2,
@@ -26,6 +28,7 @@ import {
     Pencil,
     Shield,
     User,
+    X,
 } from 'lucide-react';
 import React from 'react';
 
@@ -68,6 +71,44 @@ export default function FirefighterShow({ firefighter }: Props) {
 
     const assignedMaterials = firefighter.assigned_materials || [];
     const deliveryCertificates = firefighter.delivery_certificates || [];
+
+    const {
+        filteredItems: filteredMaterials,
+        filters: materialFilters,
+        setFilter: setMaterialFilter,
+        setSort: setMaterialSort,
+        clearFilters: clearMaterialFilters,
+        hasActiveFilters: hasMaterialFilters,
+    } = useClientTableFilter(assignedMaterials, {
+        accessors: {
+            product_name: (item) =>
+                item.material?.product_name || `Material #${item.material_id}`,
+            code: (item) => item.material?.code || '',
+            brand_model: (item) =>
+                [item.material?.brand, item.material?.model]
+                    .filter(Boolean)
+                    .join(' '),
+            created_at: (item) =>
+                item.created_at ? new Date(item.created_at).getTime() : 0,
+        },
+    });
+
+    const {
+        filteredItems: filteredCertificates,
+        filters: certificateFilters,
+        setFilter: setCertificateFilter,
+        setSort: setCertificateSort,
+        clearFilters: clearCertificateFilters,
+        hasActiveFilters: hasCertificateFilters,
+        getUniqueOptions: getCertificateOptions,
+    } = useClientTableFilter(deliveryCertificates, {
+        accessors: {
+            correlative: (cert) => `Acta #${cert.correlative || cert.id}`,
+            date: (cert) => (cert.date ? new Date(cert.date).getTime() : 0),
+            company: (cert) => cert.company || '',
+        },
+        exactMatchColumns: ['company'],
+    });
 
     return (
         <AppLayout
@@ -229,53 +270,112 @@ export default function FirefighterShow({ firefighter }: Props) {
 
                 {/* Prendas Asignadas */}
                 <Card className="rounded-2xl border border-border/70 shadow-xs">
-                    <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
+                    <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between gap-2">
                         <CardTitle className="text-base font-semibold flex items-center gap-2">
                             <Package className="size-4 text-primary" />
-                            <span>Material Menor Asignado ({assignedMaterials.length})</span>
+                            <span>Material Menor Asignado ({filteredMaterials.length})</span>
                         </CardTitle>
-                        {assignedMaterials.length > 0 && (
-                            <Button variant="outline" size="sm" asChild>
-                                <a
-                                    href={`/assigned-materials/${firefighter.id}/pdf`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="gap-2"
+                        <div className="flex items-center gap-2">
+                            {hasMaterialFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearMaterialFilters}
+                                    className="gap-1.5 text-xs"
                                 >
-                                    <FileText className="size-3.5" />
-                                    <span>Certificado de Asignación</span>
-                                </a>
-                            </Button>
-                        )}
+                                    <X className="size-3.5" />
+                                    Limpiar filtros
+                                </Button>
+                            )}
+                            {assignedMaterials.length > 0 && (
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href={`/assigned-materials/${firefighter.id}/pdf`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="gap-2"
+                                    >
+                                        <FileText className="size-3.5" />
+                                        <span>Certificado de Asignación</span>
+                                    </a>
+                                </Button>
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent className="p-0">
                         {assignedMaterials.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Prenda / Equipo</TableHead>
-                                        <TableHead>Código</TableHead>
-                                        <TableHead>Marca / Modelo</TableHead>
-                                        <TableHead className="text-right">Fecha Asignación</TableHead>
+                                        <SortableTableHead
+                                            column="product_name"
+                                            label="Prenda / Equipo"
+                                            sortKey={materialFilters.sort}
+                                            sortDirection={materialFilters.direction}
+                                            onSort={setMaterialSort}
+                                            filterType="text"
+                                            filterValue={materialFilters.product_name || ''}
+                                            filterPlaceholder="Buscar prenda..."
+                                            onFilterChange={(val) => setMaterialFilter('product_name', val)}
+                                        />
+                                        <SortableTableHead
+                                            column="code"
+                                            label="Código"
+                                            sortKey={materialFilters.sort}
+                                            sortDirection={materialFilters.direction}
+                                            onSort={setMaterialSort}
+                                            filterType="text"
+                                            filterValue={materialFilters.code || ''}
+                                            filterPlaceholder="Buscar código..."
+                                            onFilterChange={(val) => setMaterialFilter('code', val)}
+                                        />
+                                        <SortableTableHead
+                                            column="brand_model"
+                                            label="Marca / Modelo"
+                                            sortKey={materialFilters.sort}
+                                            sortDirection={materialFilters.direction}
+                                            onSort={setMaterialSort}
+                                            filterType="text"
+                                            filterValue={materialFilters.brand_model || ''}
+                                            filterPlaceholder="Buscar marca / modelo..."
+                                            onFilterChange={(val) => setMaterialFilter('brand_model', val)}
+                                        />
+                                        <SortableTableHead
+                                            column="created_at"
+                                            label="Fecha Asignación"
+                                            sortKey={materialFilters.sort}
+                                            sortDirection={materialFilters.direction}
+                                            onSort={setMaterialSort}
+                                            align="right"
+                                            className="text-right"
+                                        />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {assignedMaterials.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">
-                                                {item.material?.product_name || `Material #${item.material_id}`}
-                                            </TableCell>
-                                            <TableCell className="font-mono text-xs text-muted-foreground">
-                                                {item.material?.code || '-'}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {[item.material?.brand, item.material?.model].filter(Boolean).join(' ') || '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right text-xs text-muted-foreground">
-                                                {item.created_at ? formatDate(item.created_at) : '-'}
+                                    {filteredMaterials.length > 0 ? (
+                                        filteredMaterials.map((item) => (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="font-medium">
+                                                    {item.material?.product_name || `Material #${item.material_id}`}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                                    {item.material?.code || '-'}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {[item.material?.brand, item.material?.model].filter(Boolean).join(' ') || '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right text-xs text-muted-foreground">
+                                                    {item.created_at ? formatDate(item.created_at) : '-'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                                                No hay prendas que coincidan con los filtros.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                         ) : (
@@ -289,49 +389,94 @@ export default function FirefighterShow({ firefighter }: Props) {
                 {/* Últimas Actas de Entrega */}
                 {deliveryCertificates.length > 0 && (
                     <Card className="rounded-2xl border border-border/70 shadow-xs">
-                        <CardHeader className="border-b border-border/60 pb-4">
+                        <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between gap-2">
                             <CardTitle className="text-base font-semibold flex items-center gap-2">
                                 <FileText className="size-4 text-primary" />
                                 <span>Historial de Actas de Entrega Recientes</span>
                             </CardTitle>
+                            {hasCertificateFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearCertificateFilters}
+                                    className="gap-1.5 text-xs"
+                                >
+                                    <X className="size-3.5" />
+                                    Limpiar filtros
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>N° Acta</TableHead>
-                                        <TableHead>Fecha</TableHead>
-                                        <TableHead>Compañía</TableHead>
+                                        <SortableTableHead
+                                            column="correlative"
+                                            label="N° Acta"
+                                            sortKey={certificateFilters.sort}
+                                            sortDirection={certificateFilters.direction}
+                                            onSort={setCertificateSort}
+                                            filterType="text"
+                                            filterValue={certificateFilters.correlative || ''}
+                                            filterPlaceholder="Buscar acta..."
+                                            onFilterChange={(val) => setCertificateFilter('correlative', val)}
+                                        />
+                                        <SortableTableHead
+                                            column="date"
+                                            label="Fecha"
+                                            sortKey={certificateFilters.sort}
+                                            sortDirection={certificateFilters.direction}
+                                            onSort={setCertificateSort}
+                                        />
+                                        <SortableTableHead
+                                            column="company"
+                                            label="Compañía"
+                                            sortKey={certificateFilters.sort}
+                                            sortDirection={certificateFilters.direction}
+                                            onSort={setCertificateSort}
+                                            filterType="select"
+                                            filterValue={certificateFilters.company || 'all'}
+                                            filterOptions={getCertificateOptions('company')}
+                                            onFilterChange={(val) => setCertificateFilter('company', val)}
+                                        />
                                         <TableHead className="text-right">Documento</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {deliveryCertificates.map((cert) => (
-                                        <TableRow key={cert.id}>
-                                            <TableCell className="font-mono font-medium">
-                                                Acta #{cert.correlative || cert.id}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {formatDate(cert.date)}
-                                            </TableCell>
-                                            <TableCell className="text-xs font-medium">
-                                                {cert.company}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" asChild>
-                                                    <a
-                                                        href={`/deliveries/${cert.id}/pdf`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="gap-1.5 text-xs text-primary hover:underline"
-                                                    >
-                                                        <FileText className="size-3.5" />
-                                                        <span>Ver PDF</span>
-                                                    </a>
-                                                </Button>
+                                    {filteredCertificates.length > 0 ? (
+                                        filteredCertificates.map((cert) => (
+                                            <TableRow key={cert.id}>
+                                                <TableCell className="font-mono font-medium">
+                                                    Acta #{cert.correlative || cert.id}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {formatDate(cert.date)}
+                                                </TableCell>
+                                                <TableCell className="text-xs font-medium">
+                                                    {cert.company}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <a
+                                                            href={`/deliveries/${cert.id}/pdf`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="gap-1.5 text-xs text-primary hover:underline"
+                                                        >
+                                                            <FileText className="size-3.5" />
+                                                            <span>Ver PDF</span>
+                                                        </a>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                                                No hay actas que coincidan con los filtros.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>

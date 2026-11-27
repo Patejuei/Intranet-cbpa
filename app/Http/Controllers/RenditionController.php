@@ -37,24 +37,81 @@ class RenditionController extends Controller
       abort(403, 'No tienes permiso para acceder a este módulo.');
     }
 
-    $query->with(['user', 'vehicle', 'attachments'])->latest();
+    $query->with(['user', 'vehicle', 'attachments']);
 
     // Status filter
-    if ($request->has('status') && $request->status !== 'all') {
-      $query->where('status', $request->status);
+    if ($status = trim((string) $request->input('status', ''))) {
+      if ($status !== 'all') {
+        $query->where('status', $status);
+      }
     }
 
     // Expense type filter
-    if ($request->has('expense_type') && $request->expense_type !== 'all') {
-      $query->where('expense_type', $request->expense_type);
+    if ($expenseType = trim((string) $request->input('expense_type', ''))) {
+      if ($expenseType !== 'all') {
+        $query->where('expense_type', $expenseType);
+      }
     }
 
-    $renditions = $query->paginate(15);
+    foreach (['description', 'invoice_number', 'supplier_rut'] as $column) {
+      if ($value = trim((string) $request->input($column, ''))) {
+        $query->where($column, 'like', "%{$value}%");
+      }
+    }
+
+    if ($vehicleFilter = trim((string) $request->input('vehicle', ''))) {
+      $query->where(function ($q) use ($vehicleFilter) {
+        $q->whereHas('vehicle', function ($vq) use ($vehicleFilter) {
+          $vq->where('name', 'like', "%{$vehicleFilter}%")
+            ->orWhere('company', 'like', "%{$vehicleFilter}%");
+        });
+        if (stripos('Taller / General', $vehicleFilter) !== false) {
+          $q->orWhereNull('vehicle_id');
+        }
+      });
+    }
+
+    $sortableColumns = [
+      'invoice_date',
+      'description',
+      'invoice_number',
+      'supplier_rut',
+      'expense_type',
+      'amount',
+      'status',
+    ];
+    $sort = $request->input('sort');
+    $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+    if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+      $query->orderBy($sort, $direction);
+    } elseif ($sort === 'vehicle') {
+      $query->orderBy(
+        Vehicle::select('name')
+          ->whereColumn('vehicles.id', 'petty_cash_renditions.vehicle_id')
+          ->limit(1),
+        $direction
+      );
+    } else {
+      $query->latest();
+    }
+
+    $renditions = $query->paginate(15)->withQueryString();
 
     return Inertia::render('vehicles/renditions/index', [
       'renditions' => $renditions,
       'userRole' => $user->role,
       'userDepartment' => $userDepartment,
+      'filters' => $request->only([
+        'status',
+        'expense_type',
+        'description',
+        'invoice_number',
+        'supplier_rut',
+        'vehicle',
+        'sort',
+        'direction',
+      ]),
     ]);
   }
 

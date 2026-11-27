@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,10 +6,10 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AuthenticatedLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -20,6 +21,7 @@ import {
     History,
     MapPin,
     Package,
+    RotateCcw,
     Tag,
     User,
 } from 'lucide-react';
@@ -53,6 +55,26 @@ interface Props {
 }
 
 export default function WorkshopInventoryShow({ item, history }: Props) {
+    const {
+        filteredItems: filteredHistory,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+        getUniqueOptions,
+    } = useClientTableFilter(history, {
+        accessors: {
+            created_at: (r) => r.created_at,
+            type: (r) => r.type,
+            quantity_change: (r) => r.quantity_change,
+            current_balance: (r) => r.current_balance,
+            description: (r) => r.description,
+            user: (r) => r.user?.name || 'Sistema',
+        },
+        exactMatchColumns: ['type'],
+    });
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -228,30 +250,110 @@ export default function WorkshopInventoryShow({ item, history }: Props) {
 
                     {/* History Card */}
                     <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden lg:col-span-2">
-                        <CardHeader className="border-b border-border/60 bg-muted/20 px-5 py-4 sm:px-6">
-                            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
-                                <History className="size-4 text-primary" />
-                                <span>Historial de Movimientos y Entregas</span>
-                            </CardTitle>
-                            <CardDescription className="text-xs text-muted-foreground">
-                                Registro cronológico de ingresos, egresos y consumos en taller.
-                            </CardDescription>
+                        <CardHeader className="border-b border-border/60 bg-muted/20 px-5 py-4 sm:px-6 flex flex-row items-center justify-between gap-4">
+                            <div>
+                                <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-foreground">
+                                    <History className="size-4 text-primary" />
+                                    <span>Historial de Movimientos y Entregas</span>
+                                </CardTitle>
+                                <CardDescription className="text-xs text-muted-foreground">
+                                    Registro cronológico de ingresos, egresos y consumos en taller.
+                                </CardDescription>
+                            </div>
+                            {hasActiveFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="gap-1.5 shrink-0"
+                                >
+                                    <RotateCcw className="size-3.5" />
+                                    <span>Limpiar filtros</span>
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[140px]">Fecha</TableHead>
-                                        <TableHead>Tipo</TableHead>
-                                        <TableHead className="text-right">Variación</TableHead>
-                                        <TableHead className="text-right">Saldo</TableHead>
-                                        <TableHead className="min-w-[180px]">Descripción</TableHead>
-                                        <TableHead className="text-right">Usuario</TableHead>
+                                        <SortableTableHead
+                                            column="created_at"
+                                            label="Fecha"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.created_at}
+                                            filterPlaceholder="YYYY-MM-DD..."
+                                            onFilterChange={(val) =>
+                                                setFilter('created_at', val)
+                                            }
+                                            className="w-[140px]"
+                                        />
+                                        <SortableTableHead
+                                            column="type"
+                                            label="Tipo"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.type}
+                                            filterOptions={getUniqueOptions(
+                                                'type',
+                                            )}
+                                            onFilterChange={(val) =>
+                                                setFilter('type', val)
+                                            }
+                                        />
+                                        <SortableTableHead
+                                            column="quantity_change"
+                                            label="Variación"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            align="right"
+                                        />
+                                        <SortableTableHead
+                                            column="current_balance"
+                                            label="Saldo"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            align="right"
+                                        />
+                                        <SortableTableHead
+                                            column="description"
+                                            label="Descripción"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.description}
+                                            filterPlaceholder="Filtrar descripción..."
+                                            onFilterChange={(val) =>
+                                                setFilter('description', val)
+                                            }
+                                            className="min-w-[180px]"
+                                        />
+                                        <SortableTableHead
+                                            column="user"
+                                            label="Usuario"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.user}
+                                            filterPlaceholder="Filtrar usuario..."
+                                            onFilterChange={(val) =>
+                                                setFilter('user', val)
+                                            }
+                                            align="right"
+                                        />
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {history.length > 0 ? (
-                                        history.map((record) => (
+                                    {filteredHistory.length > 0 ? (
+                                        filteredHistory.map((record) => (
                                             <TableRow
                                                 key={record.id}
                                                 className="transition-colors hover:bg-muted/40"

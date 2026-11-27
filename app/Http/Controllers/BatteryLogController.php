@@ -20,12 +20,50 @@ class BatteryLogController extends Controller
             abort(403);
         }
 
-        $query = BatteryLog::with('user')->latest();
+        $query = BatteryLog::with('user');
         $this->applyCompanyScope($query, $request);
 
+        foreach (['equipment_id', 'responsible_name', 'observations'] as $column) {
+            if ($value = trim((string) $request->input($column, ''))) {
+                $query->where($column, 'like', "%{$value}%");
+            }
+        }
+
+        if ($equipmentType = trim((string) $request->input('equipment_type', ''))) {
+            if ($equipmentType !== 'all') {
+                $query->where('equipment_type', $equipmentType);
+            }
+        }
+
+        $sortableColumns = [
+            'change_date',
+            'equipment_id',
+            'equipment_type',
+            'responsible_name',
+            'next_change_date',
+            'observations',
+        ];
+        $sort = $request->input('sort');
+        $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->latest();
+        }
+
         return Inertia::render('batteries/index', [
-            'logs' => $query->paginate(10),
-            'userCompany' => $request->user()->company
+            'logs' => $query->paginate(10)->withQueryString(),
+            'userCompany' => $request->user()->company,
+            'filters' => $request->only([
+                'company',
+                'equipment_id',
+                'equipment_type',
+                'responsible_name',
+                'observations',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

@@ -1,7 +1,16 @@
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -10,10 +19,11 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Pencil, Shield, Trash, UserPlus, Users } from 'lucide-react';
+import { Pencil, RotateCcw, Search, Shield, Trash, UserPlus, Users } from 'lucide-react';
 
 interface User {
     id: number;
@@ -26,17 +36,67 @@ interface User {
     is_enabled?: boolean;
 }
 
+interface UserFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    name?: string;
+    rut?: string;
+    email?: string;
+    company?: string;
+    role?: string;
+    status?: string;
+    permission?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
 interface PageProps {
     users: {
         data: User[];
         links: any[];
+        total?: number;
     };
+    filters?: UserFilters;
+    companies?: string[];
+    roles?: Record<string, string>;
 }
 
-export default function UserIndex({ users }: PageProps) {
+const emptyUserFilters: UserFilters = {
+    search: '',
+    name: '',
+    rut: '',
+    email: '',
+    company: 'all',
+    role: 'all',
+    status: 'all',
+    permission: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function UserIndex({
+    users,
+    filters: initialFilters = {},
+    companies = [],
+    roles = {},
+}: PageProps) {
     const { props } = usePage<SharedData>();
     const user = props.auth.user;
     const currentUserRole = user?.role || 'user';
+
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<UserFilters>('/admin/users', {
+            search: initialFilters.search || '',
+            name: initialFilters.name || '',
+            rut: initialFilters.rut || '',
+            email: initialFilters.email || '',
+            company: initialFilters.company || 'all',
+            role: initialFilters.role || 'all',
+            status: initialFilters.status || 'all',
+            permission: initialFilters.permission || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
 
     const handleDelete = (id: number) => {
         if (confirm('¿Estás seguro de eliminar este usuario?')) {
@@ -105,7 +165,10 @@ export default function UserIndex({ users }: PageProps) {
                                 Gestión de Usuarios
                             </h1>
                             <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                {users.data.length} {users.data.length === 1 ? 'usuario' : 'usuarios'}
+                                {users.total ?? users.data.length}{' '}
+                                {(users.total ?? users.data.length) === 1
+                                    ? 'usuario'
+                                    : 'usuarios'}
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -121,18 +184,147 @@ export default function UserIndex({ users }: PageProps) {
                     </Button>
                 </div>
 
+                {/* Search & Quick Filters */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="relative w-full max-w-md">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                            <Input
+                                placeholder="Buscar por nombre, RUT o correo..."
+                                value={filters.search || ''}
+                                onChange={(e) =>
+                                    setFilter('search', e.target.value, {
+                                        debounce: true,
+                                    })
+                                }
+                                className="h-9 pl-9 pr-4 text-sm"
+                            />
+                        </div>
+
+                        <Select
+                            value={filters.status || 'all'}
+                            onValueChange={(value) => setFilter('status', value)}
+                        >
+                            <SelectTrigger className="h-9 w-full sm:w-[170px] text-sm">
+                                <SelectValue placeholder="Estado" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los estados</SelectItem>
+                                <SelectItem value="enabled">Activos</SelectItem>
+                                <SelectItem value="disabled">Inactivos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => clearFilters(emptyUserFilters)}
+                            className="gap-1.5 shrink-0"
+                        >
+                            <RotateCcw className="size-3.5" />
+                            <span>Limpiar filtros</span>
+                        </Button>
+                    )}
+                </div>
+
                 {/* Users Table */}
                 <Card className="rounded-2xl border border-border/70 shadow-xs overflow-hidden">
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="min-w-[180px]">Nombre</TableHead>
-                                    <TableHead className="min-w-[130px]">RUT</TableHead>
-                                    <TableHead className="min-w-[200px]">Correo Electrónico</TableHead>
-                                    <TableHead>Compañía</TableHead>
-                                    <TableHead>Rol del Sistema</TableHead>
-                                    <TableHead className="min-w-[220px]">Permisos</TableHead>
+                                    <SortableTableHead
+                                        column="name"
+                                        label="Nombre"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.name}
+                                        filterPlaceholder="Filtrar por nombre..."
+                                        onFilterChange={(value) =>
+                                            setFilter('name', value)
+                                        }
+                                        className="min-w-[180px]"
+                                    />
+                                    <SortableTableHead
+                                        column="rut"
+                                        label="RUT"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.rut}
+                                        filterPlaceholder="Filtrar por RUT..."
+                                        onFilterChange={(value) =>
+                                            setFilter('rut', value)
+                                        }
+                                        className="min-w-[130px]"
+                                    />
+                                    <SortableTableHead
+                                        column="email"
+                                        label="Correo Electrónico"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.email}
+                                        filterPlaceholder="Filtrar por correo..."
+                                        onFilterChange={(value) =>
+                                            setFilter('email', value)
+                                        }
+                                        className="min-w-[200px]"
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.company}
+                                        filterOptions={companies.map((c) => ({
+                                            value: c,
+                                            label: c,
+                                        }))}
+                                        onFilterChange={(value) =>
+                                            setFilter('company', value)
+                                        }
+                                        className="min-w-[160px]"
+                                    />
+                                    <SortableTableHead
+                                        column="role"
+                                        label="Rol del Sistema"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.role}
+                                        filterOptions={Object.entries(
+                                            roles,
+                                        ).map(([value, label]) => ({
+                                            value,
+                                            label,
+                                        }))}
+                                        onFilterChange={(value) =>
+                                            setFilter('role', value)
+                                        }
+                                        className="min-w-[160px]"
+                                    />
+                                    <SortableTableHead
+                                        column="permission"
+                                        label="Permisos"
+                                        sortable={false}
+                                        filterType="text"
+                                        filterValue={filters.permission}
+                                        filterPlaceholder="Filtrar por permiso..."
+                                        onFilterChange={(value) =>
+                                            setFilter('permission', value)
+                                        }
+                                        className="min-w-[220px]"
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -229,7 +421,7 @@ export default function UserIndex({ users }: PageProps) {
                                 ) : (
                                     <TableRow>
                                         <TableCell
-                                            colSpan={6}
+                                            colSpan={7}
                                             className="h-32 text-center text-muted-foreground"
                                         >
                                             <div className="flex flex-col items-center justify-center gap-2">

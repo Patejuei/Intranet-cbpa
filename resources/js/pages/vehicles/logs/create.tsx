@@ -100,7 +100,6 @@ export default function VehicleLogCreate({
     };
 
     const handleVehicleChange = (val: string) => {
-        setData('vehicle_id', val);
         const selectedVehicle = vehicles.find((v) => v.id.toString() === val);
         if (selectedVehicle) {
             setData((prev) => ({
@@ -110,7 +109,7 @@ export default function VehicleLogCreate({
                     selectedVehicle.last_mileage !== undefined &&
                     selectedVehicle.last_mileage !== null
                         ? String(selectedVehicle.last_mileage)
-                        : prev.start_km,
+                        : '',
                 fuel_coupon:
                     prev.has_fuel && selectedVehicle.coupon_number
                         ? selectedVehicle.coupon_number
@@ -118,6 +117,8 @@ export default function VehicleLogCreate({
                           ? ''
                           : prev.fuel_coupon,
             }));
+        } else {
+            setData('vehicle_id', val);
         }
     };
 

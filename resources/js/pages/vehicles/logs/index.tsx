@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,13 +20,15 @@ import {
 } from '@/components/ui/select';
 import { ExportLogsDialog } from '@/components/vehicles/export-logs-dialog';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     Check,
     FileSpreadsheet,
     Plus,
+    RotateCcw,
     X,
 } from 'lucide-react';
 
@@ -60,17 +63,79 @@ interface Log {
     fuel_coupon?: string | null;
 }
 
+interface LogFilters {
+    [key: string]: string | undefined;
+    vehicle_id?: string;
+    vehicle_ids?: string;
+    driver_ids?: string;
+    movement_key?: string;
+    date?: string;
+    vehicle_name?: string;
+    activity_type?: string;
+    activity_types?: string;
+    destination?: string;
+    fuel?: string;
+    driver_name?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
+
+const ACTIVITY_TYPE_OPTIONS = [
+    { value: 'Emergencia', label: 'Emergencia' },
+    { value: 'Academia', label: 'Academia / Ejercicio' },
+    { value: 'Tramite', label: 'Trámite Administrativo' },
+    { value: 'Taller', label: 'Traslado a Taller' },
+    { value: 'CargaCombustible', label: 'Carga de Combustible' },
+    {
+        value: 'RecuperacionMaterial',
+        label: 'Recuperación de Material (6-15)',
+    },
+];
+
+const emptyLogFilters: LogFilters = {
+    vehicle_id: 'all',
+    vehicle_ids: '',
+    driver_ids: '',
+    movement_key: '',
+    date: '',
+    vehicle_name: '',
+    activity_type: 'all',
+    activity_types: '',
+    destination: '',
+    fuel: 'all',
+    driver_name: '',
+    sort: undefined,
+    direction: undefined,
+};
+
 export default function VehicleLogs({
     logs,
     vehicles,
-    filters,
+    drivers = [],
+    filters: initialFilters = {},
 }: {
     logs: any;
     vehicles: Vehicle[];
-    filters: { vehicle_id?: string; movement_key?: string };
+    drivers?: { id: number; name: string }[];
+    filters?: LogFilters;
 }) {
     const { canCreate } = usePermissions();
-    const [searchKey, setSearchKey] = useState(filters?.movement_key || '');
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<LogFilters>('/vehicles/logs', {
+            vehicle_id: initialFilters.vehicle_id || 'all',
+            vehicle_ids: initialFilters.vehicle_ids || '',
+            driver_ids: initialFilters.driver_ids || '',
+            movement_key: initialFilters.movement_key || '',
+            date: initialFilters.date || '',
+            vehicle_name: initialFilters.vehicle_name || '',
+            activity_type: initialFilters.activity_type || 'all',
+            activity_types: initialFilters.activity_types || '',
+            destination: initialFilters.destination || '',
+            fuel: initialFilters.fuel || 'all',
+            driver_name: initialFilters.driver_name || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
     return (
@@ -117,17 +182,10 @@ export default function VehicleLogs({
                         <CardTitle className="text-lg">Historial de Bitácoras</CardTitle>
                         <div className="flex flex-wrap items-center gap-2">
                             <Select
-                                value={filters?.vehicle_id || 'all'}
-                                onValueChange={(val) => {
-                                    router.get(
-                                        '/vehicles/logs',
-                                        {
-                                            vehicle_id: val === 'all' ? undefined : val,
-                                            movement_key: searchKey || undefined,
-                                        },
-                                        { preserveState: true, preserveScroll: true, replace: true }
-                                    );
-                                }}
+                                value={filters.vehicle_id || 'all'}
+                                onValueChange={(val) =>
+                                    setFilter('vehicle_id', val)
+                                }
                             >
                                 <SelectTrigger className="h-9 w-[190px]">
                                     <SelectValue placeholder="Filtrar por Vehículo" />
@@ -149,38 +207,24 @@ export default function VehicleLogs({
                             <Input
                                 className="h-9 w-[160px]"
                                 placeholder="Buscar Clave..."
-                                value={searchKey}
-                                onChange={(e) => setSearchKey(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        router.get(
-                                            '/vehicles/logs',
-                                            {
-                                                vehicle_id: filters?.vehicle_id || undefined,
-                                                movement_key: searchKey || undefined,
-                                            },
-                                            { preserveState: true, preserveScroll: true, replace: true }
-                                        );
-                                    }
-                                }}
+                                value={filters.movement_key || ''}
+                                onChange={(e) =>
+                                    setFilter('movement_key', e.target.value, {
+                                        debounce: true,
+                                    })
+                                }
                             />
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="h-9"
-                                onClick={() => {
-                                    router.get(
-                                        '/vehicles/logs',
-                                        {
-                                            vehicle_id: filters?.vehicle_id || undefined,
-                                            movement_key: searchKey || undefined,
-                                        },
-                                        { preserveState: true, preserveScroll: true, replace: true }
-                                    );
-                                }}
-                            >
-                                Filtrar
-                            </Button>
+                            {hasActiveFilters && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => clearFilters(emptyLogFilters)}
+                                    className="gap-1.5 shrink-0 h-9"
+                                >
+                                    <RotateCcw className="size-3.5" />
+                                    <span>Limpiar filtros</span>
+                                </Button>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent className="pt-4">
@@ -188,36 +232,144 @@ export default function VehicleLogs({
                             <table className="w-full min-w-[800px] text-sm md:min-w-full">
                                 <thead className="bg-muted/50">
                                     <tr className="border-b border-border/60">
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Fecha
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Horas
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Unidad
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Actividad
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Destino
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Clave
-                                        </th>
-                                        <th className="h-10 px-4 text-center font-medium">
-                                            Combustible
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Km Salida
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Km Llegada
-                                        </th>
-                                        <th className="h-10 px-4 text-left font-medium">
-                                            Conductor
-                                        </th>
+                                        <SortableTableHead
+                                            column="date"
+                                            label="Fecha"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.date}
+                                            filterPlaceholder="YYYY-MM-DD..."
+                                            onFilterChange={(val) =>
+                                                setFilter('date', val)
+                                            }
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="departure_time"
+                                            label="Horas"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="vehicle"
+                                            label="Unidad"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="multi-select"
+                                            filterValue={filters.vehicle_ids}
+                                            filterOptions={vehicles.map((v) => ({
+                                                value: v.id.toString(),
+                                                label: v.company
+                                                    ? `${v.name} (${v.company})`
+                                                    : v.name,
+                                            }))}
+                                            onFilterChange={(val) =>
+                                                setFilter('vehicle_ids', val)
+                                            }
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="activity_type"
+                                            label="Actividad"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="select"
+                                            filterValue={filters.activity_type}
+                                            filterOptions={ACTIVITY_TYPE_OPTIONS}
+                                            onFilterChange={(val) =>
+                                                setFilter('activity_type', val)
+                                            }
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="destination"
+                                            label="Destino"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.destination}
+                                            filterPlaceholder="Filtrar destino..."
+                                            onFilterChange={(val) =>
+                                                setFilter('destination', val)
+                                            }
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="movement_key"
+                                            label="Clave"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="text"
+                                            filterValue={filters.movement_key}
+                                            filterPlaceholder="Filtrar clave..."
+                                            onFilterChange={(val) =>
+                                                setFilter('movement_key', val)
+                                            }
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="fuel"
+                                            label="Combustible"
+                                            sortable={false}
+                                            filterType="select"
+                                            filterValue={filters.fuel}
+                                            filterOptions={[
+                                                {
+                                                    value: 'yes',
+                                                    label: 'Con combustible',
+                                                },
+                                                {
+                                                    value: 'no',
+                                                    label: 'Sin combustible',
+                                                },
+                                            ]}
+                                            onFilterChange={(val) =>
+                                                setFilter('fuel', val)
+                                            }
+                                            align="center"
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="start_km"
+                                            label="Km Salida"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="end_km"
+                                            label="Km Llegada"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            className="px-4"
+                                        />
+                                        <SortableTableHead
+                                            column="driver"
+                                            label="Conductor"
+                                            sortKey={filters.sort}
+                                            sortDirection={filters.direction}
+                                            onSort={setSort}
+                                            filterType="multi-select"
+                                            filterValue={filters.driver_ids}
+                                            filterOptions={drivers.map((d) => ({
+                                                value: d.id.toString(),
+                                                label: d.name,
+                                            }))}
+                                            onFilterChange={(val) =>
+                                                setFilter('driver_ids', val)
+                                            }
+                                            className="px-4"
+                                        />
                                         <th className="h-10 px-4 text-right font-medium">
                                             Acciones
                                         </th>
@@ -333,7 +485,7 @@ export default function VehicleLogs({
                 open={isExportDialogOpen}
                 onOpenChange={setIsExportDialogOpen}
                 vehicles={vehicles}
-                currentMovementKey={searchKey || filters?.movement_key}
+                currentMovementKey={filters.movement_key}
             />
         </AppLayout>
     );

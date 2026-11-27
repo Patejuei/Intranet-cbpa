@@ -44,13 +44,13 @@ class TicketController extends Controller
         return true;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         if (! $this->canAccessTickets()) {
             abort(403);
         }
 
-        $user = request()->user();
+        $user = $request->user();
         $query = Ticket::with(['user', 'assignedTo']);
 
         $isStandardManager = in_array($user->role, ['capitan', 'secretaria_adquisiciones'])
@@ -68,10 +68,103 @@ class TicketController extends Controller
             }
         }
 
+        if ($search = trim((string) $request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                    ->orWhere('company', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($id = trim((string) $request->input('id', ''))) {
+            $query->where('id', 'like', "%{$id}%");
+        }
+
+        if ($subject = trim((string) $request->input('subject', ''))) {
+            $query->where('subject', 'like', "%{$subject}%");
+        }
+
+        if ($category = trim((string) $request->input('category', ''))) {
+            if ($category !== 'all') {
+                $query->where('category', $category);
+            }
+        }
+
+        if ($priority = trim((string) $request->input('priority', ''))) {
+            if ($priority !== 'all') {
+                $query->where('priority', $priority);
+            }
+        }
+
+        if ($status = trim((string) $request->input('status', ''))) {
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+        }
+
+        if ($company = trim((string) $request->input('company', ''))) {
+            if ($company !== 'all') {
+                $query->where('company', 'like', "%{$company}%");
+            }
+        }
+
+        if ($requester = trim((string) $request->input('requester', ''))) {
+            $query->whereHas('user', function ($q) use ($requester) {
+                $q->where('name', 'like', "%{$requester}%");
+            });
+        }
+
+        if ($assignedTo = trim((string) $request->input('assigned_to', ''))) {
+            $query->whereHas('assignedTo', function ($q) use ($assignedTo) {
+                $q->where('name', 'like', "%{$assignedTo}%");
+            });
+        }
+
+        $sortableColumns = ['id', 'subject', 'category', 'priority', 'status', 'company', 'created_at'];
+        $sort = $request->input('sort');
+        $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+            $query->orderBy($sort, $direction);
+        } elseif ($sort === 'requester') {
+            $query->orderBy(
+                \App\Models\User::select('name')
+                    ->whereColumn('users.id', 'tickets.user_id')
+                    ->limit(1),
+                $direction
+            );
+        } elseif ($sort === 'assigned_to') {
+            $query->orderBy(
+                \App\Models\User::select('name')
+                    ->whereColumn('users.id', 'tickets.assigned_to')
+                    ->limit(1),
+                $direction
+            );
+        } else {
+            $query->latest();
+        }
+
         return Inertia::render('tickets/index', [
-            'tickets' => $query->latest()->paginate(15),
+            'tickets' => $query->paginate(15)->withQueryString(),
             'categories' => self::CATEGORIES,
             'can_create' => $this->canCreateTickets(),
+            'filters' => $request->only([
+                'search',
+                'id',
+                'subject',
+                'category',
+                'priority',
+                'status',
+                'company',
+                'requester',
+                'assigned_to',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

@@ -19,11 +19,54 @@ class EquipmentLogController extends Controller
         }
 
         // Equipment Logs (Historial de Movimientos Alta/Baja Manual)
-        $logsQuery = EquipmentLog::with('user')->latest();
+        $logsQuery = EquipmentLog::with('user');
         if ($user->role !== 'admin' && $user->role !== 'secretaria_adquisiciones' && $user->company && $user->company !== 'Comandancia') {
             $logsQuery->whereHas('user', function ($q) use ($user) {
                 $q->where('company', $user->company);
             });
+        }
+
+        if ($itemName = trim((string) request('item_name', ''))) {
+            $logsQuery->where('item_name', 'like', "%{$itemName}%");
+        }
+
+        if ($type = trim((string) request('type', ''))) {
+            if ($type !== 'all') {
+                $logsQuery->where('type', $type);
+            }
+        }
+
+        if ($userName = trim((string) request('user_name', ''))) {
+            $logsQuery->whereHas('user', function ($q) use ($userName) {
+                $q->where('name', 'like', "%{$userName}%");
+            });
+        }
+
+        if ($createdAt = trim((string) request('created_at', ''))) {
+            $logsQuery->where('created_at', 'like', "%{$createdAt}%");
+        }
+
+        if ($reason = trim((string) request('reason', ''))) {
+            $logsQuery->where('reason', 'like', "%{$reason}%");
+        }
+
+        $logsSortableColumns = ['item_name', 'type', 'user_name', 'created_at', 'reason'];
+        $logsSort = request('sort');
+        $logsDirection = strtolower((string) request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($logsSort) && in_array($logsSort, $logsSortableColumns, true)) {
+            if ($logsSort === 'user_name') {
+                $logsQuery->orderBy(
+                    \App\Models\User::select('name')
+                        ->whereColumn('users.id', 'equipment_logs.user_id')
+                        ->limit(1),
+                    $logsDirection
+                );
+            } else {
+                $logsQuery->orderBy($logsSort, $logsDirection);
+            }
+        } else {
+            $logsQuery->latest();
         }
 
         // Acquisitions Logic
@@ -52,7 +95,7 @@ class EquipmentLogController extends Controller
         ];
 
         // Baja Requests Logic
-        $bajaRequestsQuery = \App\Models\MaterialBajaRequest::with(['user', 'material'])->latest();
+        $bajaRequestsQuery = \App\Models\MaterialBajaRequest::with(['user', 'material']);
 
         if ($user->role === 'capitan') {
             $bajaRequestsQuery->whereHas('user', function ($q) use ($user) {
@@ -64,6 +107,63 @@ class EquipmentLogController extends Controller
             });
         }
 
+        if ($bajasId = trim((string) request('bajas_id', ''))) {
+            $cleanId = ltrim($bajasId, '#');
+            if ($cleanId !== '') {
+                $bajaRequestsQuery->where('id', $cleanId);
+            }
+        }
+
+        if ($bajasDate = trim((string) request('bajas_date', ''))) {
+            $bajaRequestsQuery->where('created_at', 'like', "%{$bajasDate}%");
+        }
+
+        if ($bajasRequester = trim((string) request('bajas_requester', ''))) {
+            $bajaRequestsQuery->whereHas('user', function ($q) use ($bajasRequester) {
+                $q->where('name', 'like', "%{$bajasRequester}%")
+                    ->orWhere('company', 'like', "%{$bajasRequester}%");
+            });
+        }
+
+        if ($bajasMaterial = trim((string) request('bajas_material', ''))) {
+            $bajaRequestsQuery->whereHas('material', function ($q) use ($bajasMaterial) {
+                $q->where('product_name', 'like', "%{$bajasMaterial}%")
+                    ->orWhere('code', 'like', "%{$bajasMaterial}%");
+            });
+        }
+
+        if ($bajasStatus = trim((string) request('bajas_status', ''))) {
+            if ($bajasStatus !== 'all') {
+                $bajaRequestsQuery->where('status', $bajasStatus);
+            }
+        }
+
+        $bajasSortableColumns = ['id', 'created_at', 'requester', 'material', 'quantity', 'status'];
+        $bajasSort = request('tab') === 'BAJAS' ? request('sort') : null;
+        $bajasDirection = strtolower((string) request('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($bajasSort) && in_array($bajasSort, $bajasSortableColumns, true)) {
+            if ($bajasSort === 'requester') {
+                $bajaRequestsQuery->orderBy(
+                    \App\Models\User::select('name')
+                        ->whereColumn('users.id', 'material_baja_requests.user_id')
+                        ->limit(1),
+                    $bajasDirection
+                );
+            } elseif ($bajasSort === 'material') {
+                $bajaRequestsQuery->orderBy(
+                    \App\Models\Material::select('product_name')
+                        ->whereColumn('materials.id', 'material_baja_requests.material_id')
+                        ->limit(1),
+                    $bajasDirection
+                );
+            } else {
+                $bajaRequestsQuery->orderBy($bajasSort, $bajasDirection);
+            }
+        } else {
+            $bajaRequestsQuery->latest();
+        }
+
         return Inertia::render('equipment/index', [
             'logs' => $logsQuery->paginate(10)->withQueryString(),
             'acquisitions' => $acquisitionsQuery->get(), // List for Tabs
@@ -71,7 +171,22 @@ class EquipmentLogController extends Controller
             'materials' => \App\Models\Material::where('company', $user->company)->get(),
             'userRole' => $user->role,
             'userCompany' => $user->company,
-            'companies' => $companies // Passed for Alta Manual Selector
+            'companies' => $companies, // Passed for Alta Manual Selector
+            'filters' => request()->only([
+                'tab',
+                'item_name',
+                'type',
+                'user_name',
+                'created_at',
+                'reason',
+                'sort',
+                'direction',
+                'bajas_id',
+                'bajas_date',
+                'bajas_requester',
+                'bajas_material',
+                'bajas_status',
+            ]),
         ]);
     }
 

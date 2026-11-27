@@ -220,7 +220,7 @@ class VehicleChecklistController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = \App\Models\VehicleChecklist::with(['vehicle', 'user'])->latest();
+        $query = \App\Models\VehicleChecklist::with(['vehicle', 'user']);
 
         $isCuarteleroComandancia = ($user->role === 'cuartelero' && $user->company === 'Comandancia');
 
@@ -228,7 +228,7 @@ class VehicleChecklistController extends Controller
         // Comandancia Logic: "podrán Visualizar todos los registros"
         if ($isCuarteleroComandancia) {
             $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
-            $query->whereIn('vehicle_id', $assignedIds);
+            $query->whereIn('vehicle_checklists.vehicle_id', $assignedIds);
         } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
             $query->whereHas('vehicle', function ($q) use ($user) {
                 // Same visibility logic as logs: Company OR Assigned
@@ -242,33 +242,94 @@ class VehicleChecklistController extends Controller
             });
         }
 
-        // Comandancia View All implied by NOT entering the if block above.
+        $scopedVehicleIds = (clone $query)->whereNotNull('vehicle_id')->distinct()->pluck('vehicle_id');
 
-        // Vehicle Filter
-        if ($request->has('vehicle_id') && $request->vehicle_id) {
-            $query->where('vehicle_id', $request->vehicle_id);
+        // Vehicle Filter (single or multi-select)
+        if ($request->filled('vehicle_ids')) {
+            $vehicleIds = array_values(array_filter(array_map('trim', explode(',', (string) $request->input('vehicle_ids')))));
+            if (!empty($vehicleIds)) {
+                $query->whereIn('vehicle_checklists.vehicle_id', $vehicleIds);
+            }
+        } elseif ($request->filled('vehicle_id') && $request->input('vehicle_id') !== 'all') {
+            $query->where('vehicle_checklists.vehicle_id', $request->input('vehicle_id'));
         }
 
-        // Vehicles list for filter
-        $vehiclesQuery = \App\Models\Vehicle::query()->orderBy('name');
-        if ($isCuarteleroComandancia) {
-            $assignedIds = $user->driverVehicles()->pluck('vehicles.id');
-            $vehiclesQuery->whereIn('id', $assignedIds);
-        } elseif ($user->company !== 'Comandancia' && $user->role !== 'admin' && $user->role !== 'mechanic') {
-            // Apply same filter for the dropdown
-            $driverIds = $user->driverVehicles()->pluck('vehicles.id');
-            $vehiclesQuery->where(function ($query) use ($driverIds, $user) {
-                $query->where('company', $user->company);
-                if ($driverIds->isNotEmpty()) {
-                    $query->orWhereIn('id', $driverIds);
-                }
+        // Column Filters
+        if ($request->filled('id')) {
+            $idSearch = ltrim(trim($request->input('id')), '#');
+            $query->where('vehicle_checklists.id', 'like', "%{$idSearch}%");
+        }
+
+        if ($request->filled('created_at')) {
+            $dateSearch = trim($request->input('created_at'));
+            $query->where('vehicle_checklists.created_at', 'like', "%{$dateSearch}%");
+        }
+
+        if ($request->filled('vehicle_name')) {
+            $vehicleName = trim($request->input('vehicle_name'));
+            $query->whereHas('vehicle', function ($q) use ($vehicleName) {
+                $q->where('name', 'like', "%{$vehicleName}%")
+                    ->orWhere('company', 'like', "%{$vehicleName}%");
             });
         }
 
+        if ($request->filled('user_name')) {
+            $userName = trim($request->input('user_name'));
+            $query->whereHas('user', function ($q) use ($userName) {
+                $q->where('name', 'like', "%{$userName}%");
+            });
+        }
+
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('vehicle_checklists.status', $request->input('status'));
+        }
+
+        // Whitelisted Sorting
+        $sort = $request->input('sort');
+        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
+
+        switch ($sort) {
+            case 'id':
+                $query->orderBy('vehicle_checklists.id', $direction);
+                break;
+            case 'created_at':
+                $query->orderBy('vehicle_checklists.created_at', $direction);
+                break;
+            case 'status':
+                $query->orderBy('vehicle_checklists.status', $direction);
+                break;
+            case 'vehicle':
+                $query->leftJoin('vehicles', 'vehicle_checklists.vehicle_id', '=', 'vehicles.id')
+                    ->select('vehicle_checklists.*')
+                    ->orderBy('vehicles.name', $direction);
+                break;
+            case 'user':
+                $query->leftJoin('users', 'vehicle_checklists.user_id', '=', 'users.id')
+                    ->select('vehicle_checklists.*')
+                    ->orderBy('users.name', $direction);
+                break;
+            default:
+                $query->latest('vehicle_checklists.created_at');
+                break;
+        }
+
+        // Vehicles list for filter (only vehicles with checklist records in scope)
+        $vehiclesQuery = \App\Models\Vehicle::whereIn('id', $scopedVehicleIds)->orderBy('name');
+
         return \Inertia\Inertia::render('vehicles/checklist/index', [
-            'checklists' => $query->paginate(15)->appends($request->all()),
+            'checklists' => $query->paginate(15)->withQueryString(),
             'vehicles' => $vehiclesQuery->get(['id', 'name']),
-            'filters' => $request->only(['vehicle_id']),
+            'filters' => $request->only([
+                'vehicle_id',
+                'vehicle_ids',
+                'id',
+                'created_at',
+                'vehicle_name',
+                'user_name',
+                'status',
+                'sort',
+                'direction',
+            ]),
         ]);
     }
 

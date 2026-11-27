@@ -1,4 +1,5 @@
 import Pagination from '@/components/Pagination';
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -26,23 +27,36 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useTableFilters } from '@/hooks/use-table-filters';
 import AppLayout from '@/layouts/app-layout';
 import { Firefighter } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Eye, Flame, Pencil, Search, Trash, UserPlus, Users } from 'lucide-react';
+import { Eye, Flame, Pencil, RotateCcw, Search, Trash, UserPlus, Users } from 'lucide-react';
 import { useState } from 'react';
+
+interface FirefighterFilters {
+    [key: string]: string | undefined;
+    search?: string;
+    general_registry_number?: string;
+    name?: string;
+    rut?: string;
+    company?: string;
+    email?: string;
+    sort?: string;
+    direction?: 'asc' | 'desc';
+}
 
 interface PageProps {
     firefighters: {
         data: Firefighter[];
         links: any[];
+        total?: number;
     };
-    filters: {
-        search: string;
-    };
+    filters?: FirefighterFilters;
+    companies?: string[];
 }
 
-const companies = [
+const defaultCompanies = [
     'Primera Compañía',
     'Segunda Compañía',
     'Tercera Compañía',
@@ -55,9 +69,35 @@ const companies = [
     'Comandancia',
 ];
 
-export default function FirefighterIndex({ firefighters, filters }: PageProps) {
+const emptyFirefighterFilters: FirefighterFilters = {
+    search: '',
+    general_registry_number: '',
+    name: '',
+    rut: '',
+    company: 'all',
+    email: '',
+    sort: undefined,
+    direction: undefined,
+};
+
+export default function FirefighterIndex({
+    firefighters,
+    filters: initialFilters = {},
+    companies = defaultCompanies,
+}: PageProps) {
     const { canCreate, canEdit } = usePermissions();
-    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const { filters, setFilter, setSort, clearFilters, hasActiveFilters } =
+        useTableFilters<FirefighterFilters>('/admin/firefighters', {
+            search: initialFilters.search || '',
+            general_registry_number:
+                initialFilters.general_registry_number || '',
+            name: initialFilters.name || '',
+            rut: initialFilters.rut || '',
+            company: initialFilters.company || 'all',
+            email: initialFilters.email || '',
+            sort: initialFilters.sort,
+            direction: initialFilters.direction,
+        });
     const [isEdit, setIsEdit] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -115,30 +155,6 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
         }
     };
 
-    // Effect for debounce
-    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout>();
-
-    const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-
-        if (typingTimeout) clearTimeout(typingTimeout);
-
-        setTypingTimeout(
-            setTimeout(() => {
-                router.get(
-                    '/admin/firefighters',
-                    { search: value },
-                    {
-                        preserveState: true,
-                        preserveScroll: true,
-                        replace: true,
-                    },
-                );
-            }, 300),
-        );
-    };
-
     return (
         <AppLayout
             breadcrumbs={[
@@ -157,7 +173,10 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                 Gestión de Bomberos
                             </h1>
                             <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                {firefighters.data.length} en página
+                                {firefighters.total ?? firefighters.data.length}{' '}
+                                {(firefighters.total ?? firefighters.data.length) === 1
+                                    ? 'bombero'
+                                    : 'bomberos'}
                             </span>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -175,15 +194,33 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                     )}
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative w-full max-w-md">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                    <Input
-                        placeholder="Buscar por nombre, RUT o N° de registro..."
-                        value={searchTerm}
-                        onChange={onSearchChange}
-                        className="h-9 pl-9 pr-4 text-sm"
-                    />
+                {/* Search Bar & Clear Filters */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="relative w-full max-w-md">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                        <Input
+                            placeholder="Buscar por nombre, RUT o N° de registro..."
+                            value={filters.search || ''}
+                            onChange={(e) =>
+                                setFilter('search', e.target.value, {
+                                    debounce: true,
+                                })
+                            }
+                            className="h-9 pl-9 pr-4 text-sm"
+                        />
+                    </div>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => clearFilters(emptyFirefighterFilters)}
+                            className="gap-1.5 shrink-0"
+                        >
+                            <RotateCcw className="size-3.5" />
+                            <span>Limpiar filtros</span>
+                        </Button>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -192,11 +229,84 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[140px]">N° Reg. General</TableHead>
-                                    <TableHead className="min-w-[200px]">Nombre</TableHead>
-                                    <TableHead>RUT</TableHead>
-                                    <TableHead>Compañía</TableHead>
-                                    <TableHead className="min-w-[180px]">Correo Electrónico</TableHead>
+                                    <SortableTableHead
+                                        column="general_registry_number"
+                                        label="N° Reg. General"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={
+                                            filters.general_registry_number
+                                        }
+                                        filterPlaceholder="Filtrar por N°..."
+                                        onFilterChange={(value) =>
+                                            setFilter(
+                                                'general_registry_number',
+                                                value,
+                                            )
+                                        }
+                                        className="w-[155px]"
+                                    />
+                                    <SortableTableHead
+                                        column="full_name"
+                                        label="Nombre"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.name}
+                                        filterPlaceholder="Filtrar por nombre..."
+                                        onFilterChange={(value) =>
+                                            setFilter('name', value)
+                                        }
+                                        className="min-w-[200px]"
+                                    />
+                                    <SortableTableHead
+                                        column="rut"
+                                        label="RUT"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.rut}
+                                        filterPlaceholder="Filtrar por RUT..."
+                                        onFilterChange={(value) =>
+                                            setFilter('rut', value)
+                                        }
+                                        className="min-w-[130px]"
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.company}
+                                        filterOptions={companies.map((c) => ({
+                                            value: c,
+                                            label: c,
+                                        }))}
+                                        onFilterChange={(value) =>
+                                            setFilter('company', value)
+                                        }
+                                        className="min-w-[160px]"
+                                    />
+                                    <SortableTableHead
+                                        column="email"
+                                        label="Correo Electrónico"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.email}
+                                        filterPlaceholder="Filtrar por correo..."
+                                        onFilterChange={(value) =>
+                                            setFilter('email', value)
+                                        }
+                                        className="min-w-[180px]"
+                                    />
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -285,8 +395,8 @@ export default function FirefighterIndex({ firefighters, filters }: PageProps) {
                                                 <Users className="size-8 text-muted-foreground/40" />
                                                 <p className="text-sm font-medium">No se encontraron bomberos.</p>
                                                 <p className="text-xs text-muted-foreground/70">
-                                                    {searchTerm
-                                                        ? 'Pruebe modificando los términos de búsqueda.'
+                                                    {hasActiveFilters
+                                                        ? 'Pruebe modificando los términos de búsqueda o filtros.'
                                                         : 'No hay registros cargados en esta vista.'}
                                                 </p>
                                             </div>

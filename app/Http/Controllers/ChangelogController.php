@@ -14,6 +14,14 @@ class ChangelogController extends Controller
     {
         return [
             [
+                'version' => 'v1.1.15',
+                'date' => '27-11-2026',
+                'changes' => [
+                    'BugFix de Kilometraje de Inicio en Bitácoras',
+                    'Agregar Filtros en Tablas',
+                ],
+            ],
+            [
                 'version' => 'v1.1.14',
                 'date' => '24-11-2026',
                 'changes' => [

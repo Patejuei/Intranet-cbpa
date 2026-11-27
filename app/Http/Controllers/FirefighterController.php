@@ -23,16 +23,15 @@ class FirefighterController extends Controller
 
     public function index(Request $request)
     {
-        $user = request()->user();
+        $user = $request->user();
         if ($user->role !== 'admin') {
             abort(403, 'Solo el Administrador del sistema puede acceder al módulo de bomberos.');
         }
 
         $query = Firefighter::query();
 
-        // Search Filter
-        if ($request->has('search')) {
-            $search = $request->input('search');
+        // Global Search Filter
+        if ($search = trim((string) $request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
                     ->orWhere('rut', 'like', "%{$search}%")
@@ -41,9 +40,53 @@ class FirefighterController extends Controller
             });
         }
 
+        // Column Filters
+        if ($registryNumber = trim((string) $request->input('general_registry_number', ''))) {
+            $query->where('general_registry_number', 'like', "%{$registryNumber}%");
+        }
+
+        if ($name = trim((string) $request->input('name', ''))) {
+            $query->where('full_name', 'like', "%{$name}%");
+        }
+
+        if ($rut = trim((string) $request->input('rut', ''))) {
+            $query->where('rut', 'like', "%{$rut}%");
+        }
+
+        if ($company = trim((string) $request->input('company', ''))) {
+            if ($company !== 'all') {
+                $query->where('company', $company);
+            }
+        }
+
+        if ($email = trim((string) $request->input('email', ''))) {
+            $query->where('email', 'like', "%{$email}%");
+        }
+
+        // Sorting
+        $sortableColumns = ['general_registry_number', 'full_name', 'rut', 'company', 'email'];
+        $sort = $request->input('sort');
+        $direction = strtolower((string) $request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        if (is_string($sort) && in_array($sort, $sortableColumns, true)) {
+            $query->orderBy($sort, $direction);
+        } else {
+            $query->latest();
+        }
+
         return Inertia::render('admin/firefighters/index', [
-            'firefighters' => $query->latest()->paginate(10)->appends($request->all()),
-            'filters' => $request->only(['search'])
+            'firefighters' => $query->paginate(10)->withQueryString(),
+            'filters' => $request->only([
+                'search',
+                'general_registry_number',
+                'name',
+                'rut',
+                'company',
+                'email',
+                'sort',
+                'direction',
+            ]),
+            'companies' => self::COMPANIES,
         ]);
     }
 

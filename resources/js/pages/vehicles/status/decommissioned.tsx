@@ -1,3 +1,4 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -14,9 +15,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, RotateCcw } from 'lucide-react';
 
 interface Vehicle {
     id: number;
@@ -33,6 +35,25 @@ export default function DecommissionedVehicles({
 }: {
     vehicles: Vehicle[];
 }) {
+    const {
+        filteredItems: filteredVehicles,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+        getUniqueOptions,
+    } = useClientTableFilter(vehicles, {
+        accessors: {
+            name: (v) => v.name,
+            plate: (v) => v.plate,
+            model: (v) => `${v.make} ${v.model}`,
+            company: (v) => v.company,
+            deleted_at: (v) => v.deleted_at,
+        },
+        exactMatchColumns: ['company'],
+    });
+
     const restoreVehicle = (id: number) => {
         if (confirm('¿Está seguro de restaurar este vehículo?')) {
             router.patch(`/vehicles/${id}/restore`);
@@ -65,28 +86,103 @@ export default function DecommissionedVehicles({
                 </div>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Listado de Unidades</CardTitle>
-                        <CardDescription>
-                            Estos vehículos no aparecen en los listados activos.
-                        </CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between gap-4">
+                        <div>
+                            <CardTitle>Listado de Unidades</CardTitle>
+                            <CardDescription>
+                                Estos vehículos no aparecen en los listados activos.
+                            </CardDescription>
+                        </div>
+                        {hasActiveFilters && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="gap-1.5 shrink-0"
+                            >
+                                <RotateCcw className="size-3.5" />
+                                <span>Limpiar filtros</span>
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Unidad</TableHead>
-                                    <TableHead>Patente</TableHead>
-                                    <TableHead>Marca/Modelo</TableHead>
-                                    <TableHead>Compañía</TableHead>
-                                    <TableHead>Fecha Baja</TableHead>
+                                    <SortableTableHead
+                                        column="name"
+                                        label="Unidad"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.name}
+                                        filterPlaceholder="Filtrar unidad..."
+                                        onFilterChange={(val) =>
+                                            setFilter('name', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="plate"
+                                        label="Patente"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.plate}
+                                        filterPlaceholder="Filtrar patente..."
+                                        onFilterChange={(val) =>
+                                            setFilter('plate', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="model"
+                                        label="Marca/Modelo"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.model}
+                                        filterPlaceholder="Filtrar marca/modelo..."
+                                        onFilterChange={(val) =>
+                                            setFilter('model', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="company"
+                                        label="Compañía"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="select"
+                                        filterValue={filters.company}
+                                        filterOptions={getUniqueOptions(
+                                            'company',
+                                        )}
+                                        onFilterChange={(val) =>
+                                            setFilter('company', val)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="deleted_at"
+                                        label="Fecha Baja"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.deleted_at}
+                                        filterPlaceholder="YYYY-MM-DD..."
+                                        onFilterChange={(val) =>
+                                            setFilter('deleted_at', val)
+                                        }
+                                    />
                                     <TableHead className="text-right">
                                         Acciones
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {vehicles.map((vehicle) => (
+                                {filteredVehicles.map((vehicle) => (
                                     <TableRow key={vehicle.id}>
                                         <TableCell className="font-medium">
                                             {vehicle.name}
@@ -115,7 +211,7 @@ export default function DecommissionedVehicles({
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {vehicles.length === 0 && (
+                                {filteredVehicles.length === 0 && (
                                     <TableRow>
                                         <TableCell
                                             colSpan={6}

@@ -1,14 +1,39 @@
+import { SortableTableHead } from '@/components/SortableTableHead';
 import { Button } from '@/components/ui/button';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { useClientTableFilter } from '@/hooks/use-client-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { ReceptionCertificate } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, RotateCcw } from 'lucide-react';
 
 export default function ReceptionShow({
     certificate,
 }: {
     certificate: ReceptionCertificate;
 }) {
+    const {
+        filteredItems,
+        filters,
+        setFilter,
+        setSort,
+        clearFilters,
+        hasActiveFilters,
+    } = useClientTableFilter<any>(certificate.items || [], {
+        accessors: {
+            product_name: (item) => item.material?.product_name || '',
+            brand_model: (item) =>
+                `${item.material?.brand || ''} ${item.material?.model || ''}`.trim(),
+            code: (item) => item.material?.code || '',
+            quantity: (item) => item.quantity,
+        },
+    });
     return (
         <AppLayout
             breadcrumbs={[
@@ -85,38 +110,105 @@ export default function ReceptionShow({
                     </div>
 
                     <div>
-                        <h3 className="mb-3 border-b pb-2 text-lg font-semibold">
-                            Materiales Recibidos
-                        </h3>
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-muted/50 text-muted-foreground">
-                                <tr>
-                                    <th className="px-4 py-2">Item</th>
-                                    <th className="px-4 py-2">Marca/Modelo</th>
-                                    <th className="px-4 py-2">Código</th>
-                                    <th className="px-4 py-2">Cantidad</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {certificate.items?.map((item, index) => (
-                                    <tr key={index}>
-                                        <td className="px-4 py-2 font-medium">
-                                            {item.material?.product_name}
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            {item.material?.brand}{' '}
-                                            {item.material?.model}
-                                        </td>
-                                        <td className="px-4 py-2 text-muted-foreground">
-                                            {item.material?.code || '-'}
-                                        </td>
-                                        <td className="px-4 py-2 font-bold">
-                                            {item.quantity}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="mb-3 flex items-center justify-between border-b pb-2">
+                            <h3 className="text-lg font-semibold">
+                                Materiales Recibidos
+                            </h3>
+                            {hasActiveFilters && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="gap-1.5 text-muted-foreground hover:text-foreground print:hidden"
+                                >
+                                    <RotateCcw className="size-4" />
+                                    Limpiar filtros
+                                </Button>
+                            )}
+                        </div>
+                        <Table>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow>
+                                    <SortableTableHead
+                                        column="product_name"
+                                        label="Item"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.product_name}
+                                        filterPlaceholder="Filtrar item..."
+                                        onFilterChange={(value) =>
+                                            setFilter('product_name', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="brand_model"
+                                        label="Marca/Modelo"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.brand_model}
+                                        filterPlaceholder="Filtrar marca/modelo..."
+                                        onFilterChange={(value) =>
+                                            setFilter('brand_model', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="code"
+                                        label="Código"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                        filterType="text"
+                                        filterValue={filters.code}
+                                        filterPlaceholder="Filtrar código..."
+                                        onFilterChange={(value) =>
+                                            setFilter('code', value)
+                                        }
+                                    />
+                                    <SortableTableHead
+                                        column="quantity"
+                                        label="Cantidad"
+                                        sortKey={filters.sort}
+                                        sortDirection={filters.direction}
+                                        onSort={setSort}
+                                    />
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredItems.length > 0 ? (
+                                    filteredItems.map((item, index) => (
+                                        <TableRow key={item.id ?? index}>
+                                            <TableCell className="font-medium">
+                                                {item.material?.product_name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {item.material?.brand}{' '}
+                                                {item.material?.model}
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">
+                                                {item.material?.code || '-'}
+                                            </TableCell>
+                                            <TableCell className="font-bold">
+                                                {item.quantity}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={4}
+                                            className="py-6 text-center text-muted-foreground"
+                                        >
+                                            No se encontraron materiales.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
 
                     {certificate.observations && (
